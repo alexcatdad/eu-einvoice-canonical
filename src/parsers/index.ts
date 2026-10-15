@@ -3,7 +3,7 @@
  * returns one or more canonical invoices (FatturaPA lots, Facturae batches and
  * e-arve files can hold several).
  *
- * Which families are implemented is derived from the registry (IMPLEMENTED_FAMILIES below);
+ * Every family is implemented (see IMPLEMENTED_FAMILIES below);
  * build order and mapping notes are in the README.
  */
 import type { CanonicalInvoice } from '../canonical.js';
@@ -44,15 +44,6 @@ export class NotImplementedError extends Error {
   }
 }
 
-const STUBS = new WeakSet<Parser>();
-const _stub = (family: ParserFamily): Parser => {
-  const p: Parser = () => {
-    throw new NotImplementedError(family);
-  };
-  STUBS.add(p);
-  return p;
-};
-
 export const PARSERS: Record<ParserFamily, Parser> = {
   ubl: parseUbl, // Peppol BIS 3, XRechnung UBL, NLCIUS, CIUS-RO/PT, HR-CIUS, OIOUBL 2/3, BIS 2, PINT
   cii: parseCii, // Factur-X/ZUGFeRD 2, XRechnung CII, NLCIUS CII, France CII (D16B and D22B)
@@ -71,4 +62,8 @@ export const PARSERS: Record<ParserFamily, Parser> = {
 };
 
 /** Families with a real parser (derived from the registry, so it stays right as stubs are replaced). */
-export const IMPLEMENTED_FAMILIES: readonly ParserFamily[] = (Object.keys(PARSERS) as ParserFamily[]).filter((f) => !STUBS.has(PARSERS[f]));
+/**
+ * Families with a real parser. Every family has one today; a new family can start as a parser that
+ * throws NotImplementedError, and should then be left out of this list.
+ */
+export const IMPLEMENTED_FAMILIES: readonly ParserFamily[] = Object.keys(PARSERS) as ParserFamily[];
