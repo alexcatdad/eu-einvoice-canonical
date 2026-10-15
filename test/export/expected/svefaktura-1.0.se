@@ -1,0 +1,19 @@
+#FLAGGA 0
+#PROGRAM "einvoice-test" 1.0
+#FORMAT PC8
+#GEN 20261016
+#SIETYP 4
+#FNAMN "Exempelkommunen"
+#VALUTA SEK
+#KONTO 2440 "Leverant”rsskulder"
+#KONTO 2641 "Debiterad ing†ende moms"
+#KONTO 3740 "™res- och kronutj„mning"
+#KONTO 4010 "Ink”p material och varor"
+#VER "LF" "1" 20261001 "Snickeri Exempel AB invoice SF-2026-17"
+{
+#TRANS 4010 {} 3574.65 20261001 "Expenses (3)"
+#TRANS 4010 {} 45.00 20261001 "Fakturaavgift"
+#TRANS 2641 {} 904.91 20261001 "VAT S 25 %"
+#TRANS 3740 {} 0.44 20261001 "Rounding"
+#TRANS 2440 {} -4525.00 20261001 "Snickeri Exempel AB SF-2026-17"
+}

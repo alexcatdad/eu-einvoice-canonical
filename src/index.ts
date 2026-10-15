@@ -13,6 +13,7 @@ export { checkTotals, type Finding } from './checks.js';
 export * from './codes.js';
 export { type Detection, detectXml } from './detect.js';
 export { DEFAULT_LIMITS, decodeXml, type Skipped, type UnwrapLimits, type UnwrapOptions, unwrap, type XmlPayload } from './envelope.js';
+export * from './export/index.js';
 export { FORMATS, FORMATS_BY_ID, type FormatDef, type FormatId, type ParserFamily } from './formats.js';
 export { IMPLEMENTED_FAMILIES, NotImplementedError, ParseError } from './parsers/index.js';
 export {

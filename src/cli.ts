@@ -5,7 +5,22 @@
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { type CanonicalInvoice, convert, DEFAULT_LIMITS, type Detection, inspect, type UnwrapLimits } from './index.js';
+import {
+  BAS_EXAMPLE_MAPPING,
+  buildJournalEntry,
+  type CanonicalInvoice,
+  convert,
+  DEFAULT_LIMITS,
+  type Detection,
+  inspect,
+  type JournalEntry,
+  JournalError,
+  journalToCsv,
+  journalToJson,
+  parseAccountMapping,
+  toSie4,
+  type UnwrapLimits,
+} from './index.js';
 import { runSweep } from './sweep.js';
 
 export const EXIT = {
@@ -29,6 +44,8 @@ export interface Validator {
 
 export interface IO {
   stdout(text: string): void;
+  /** Raw bytes to stdout (SIE files are CP437, not UTF-8). */
+  stdoutBytes?(bytes: Uint8Array): void;
   stderr(line: string): void;
   readStdin(): Promise<Uint8Array>;
 }
@@ -42,9 +59,13 @@ const USAGE = `Usage:
   einvoice detect  <file...>                 format id, version and profile per document
   einvoice inspect <file...>                 unwrap and detect result as JSON
   einvoice convert <file...> [--out <dir>]   canonical JSON (stdout, or one <invoice-id>.json per invoice in <dir>)
+  einvoice export  <file...> --format sie|journal|csv [--accounts mapping.json] [--out <file>]
+                                             bookkeeping entries for received invoices (SIE 4I, JSON or CSV)
   einvoice sweep   <dir...> [--expect answers.json]
 
 A file argument of "-" reads stdin.
+Export flags: --accounts <mapping.json> (default: an example BAS mapping)  --currency <code> (SIE ledger currency, default SEK)
+              --series <id> (SIE series, default LF)  --granularity account|line  --generated YYYY-MM-DD (SIE #GEN date)
 Flags: --pretty  --quiet  --limits '<json>'  --validate  --help
 Exit codes: 0 ok, 1 usage, 2 unsafe/malformed input, 3 unsupported format, 4 validation failed,
             5 partially converted, 6 validator unavailable, 7 internal error.`;
@@ -59,12 +80,28 @@ interface Parsed {
   validate: boolean;
   out?: string;
   expect?: string;
+  format?: string;
+  accounts?: string;
+  currency?: string;
+  series?: string;
+  granularity?: string;
+  generated?: string;
   limits?: Partial<UnwrapLimits>;
 }
 
 function parseArgs(argv: string[]): Parsed {
   const p: Parsed = { command: '', files: [], pretty: false, quiet: false, validate: false };
-  const takesValue = new Set(['--out', '--expect', '--limits']);
+  const takesValue = new Set([
+    '--out',
+    '--expect',
+    '--limits',
+    '--format',
+    '--accounts',
+    '--currency',
+    '--series',
+    '--granularity',
+    '--generated',
+  ]);
   for (let i = 0; i < argv.length; i++) {
     let a = argv[i]!;
     if (a === '-' || !a.startsWith('-')) {
@@ -97,6 +134,24 @@ function parseArgs(argv: string[]): Parsed {
         break;
       case '--expect':
         p.expect = value;
+        break;
+      case '--format':
+        p.format = value;
+        break;
+      case '--accounts':
+        p.accounts = value;
+        break;
+      case '--currency':
+        p.currency = value;
+        break;
+      case '--series':
+        p.series = value;
+        break;
+      case '--granularity':
+        p.granularity = value;
+        break;
+      case '--generated':
+        p.generated = value;
         break;
       case '--limits':
         p.limits = parseLimits(value!);
@@ -166,7 +221,7 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     io.stdout(`${USAGE}\n`);
     return EXIT.ok;
   }
-  const commands = ['detect', 'inspect', 'convert', 'sweep'];
+  const commands = ['detect', 'inspect', 'convert', 'export', 'sweep'];
   if (!commands.includes(args.command)) {
     io.stderr(`einvoice: unknown command "${args.command}" (try --help)`);
     return EXIT.usage;
@@ -174,6 +229,16 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
   if (args.files.length === 0) {
     io.stderr(`einvoice: ${args.command} needs at least one ${args.command === 'sweep' ? 'directory' : 'file'}`);
     return EXIT.usage;
+  }
+  if (args.command === 'export') {
+    if (!['sie', 'journal', 'csv'].includes(args.format ?? '')) {
+      io.stderr('einvoice: export needs --format sie, journal or csv');
+      return EXIT.usage;
+    }
+    if (args.granularity !== undefined && !['account', 'line'].includes(args.granularity)) {
+      io.stderr('einvoice: --granularity must be account or line');
+      return EXIT.usage;
+    }
   }
   const err = (line: string) => io.stderr(`einvoice: ${oneLine(line)}`);
   const note = (line: string) => {
@@ -194,7 +259,20 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
       else note('--validate: the validation module is not available in this build; documents are converted without validation');
     }
 
+    let mapping = BAS_EXAMPLE_MAPPING;
+    if (args.command === 'export') {
+      if (args.accounts) {
+        try {
+          mapping = parseAccountMapping(JSON.parse(readFileSync(args.accounts, 'utf8')));
+        } catch (e) {
+          err(`${args.accounts}: ${e instanceof JournalError ? e.message : `cannot read the account mapping: ${(e as Error).message}`}`);
+          return EXIT.usage;
+        }
+      } else note('no --accounts given: using the example BAS mapping, which is a demonstration and not advice on how to book anything');
+    }
+
     const tally = new Tally();
+    const entries: JournalEntry[] = [];
     const inspected: unknown[] = [];
     const invoices: CanonicalInvoice[] = [];
     const seenNames = new Set<string>();
@@ -259,8 +337,18 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
                 continue;
               }
             }
+            if (args.command === 'export') {
+              try {
+                entries.push(buildJournalEntry(inv, mapping, { granularity: args.granularity as 'account' | 'line' | undefined }));
+              } catch (e) {
+                if (!(e instanceof JournalError)) throw e;
+                err(`${label}: invoice ${inv.id}: ${e.message}`);
+                valid = false;
+                continue;
+              }
+            }
             invoices.push(inv);
-            if (args.out) {
+            if (args.command === 'convert' && args.out) {
               const name = uniqueName(inv.id, seenNames);
               writeFileSync(join(resolve(args.out), `${name}.json`), json(inv));
               written++;
@@ -285,6 +373,30 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
       skippedFailure(r.skipped);
     }
 
+    if (args.command === 'export' && entries.length > 0) {
+      let out: string | Uint8Array;
+      if (args.format === 'sie') {
+        let sie: ReturnType<typeof toSie4>;
+        try {
+          sie = toSie4(entries, { currency: args.currency, series: args.series, generated: args.generated });
+        } catch (e) {
+          if (!(e instanceof JournalError)) throw e;
+          err(e.message);
+          return EXIT.validation;
+        }
+        for (const w of sie.warnings) note(w);
+        out = sie.bytes;
+      } else out = args.format === 'csv' ? journalToCsv(entries) : journalToJson(entries, args.pretty);
+      if (args.out) {
+        writeFileSync(resolve(args.out), out);
+        note(`wrote ${entries.length} journal entr${entries.length === 1 ? 'y' : 'ies'} to ${args.out}`);
+      } else if (typeof out === 'string') io.stdout(out);
+      else if (io.stdoutBytes) io.stdoutBytes(out);
+      else {
+        err('this environment cannot write binary output to stdout; use --out <file>');
+        return EXIT.internal;
+      }
+    }
     if (args.command === 'inspect') io.stdout(json(inspected));
     if (args.command === 'convert' && !args.out) io.stdout(json(invoices));
     if (args.command === 'convert' && args.out) note(`wrote ${written} invoice file(s) to ${args.out}`);
@@ -319,6 +431,9 @@ if (import.meta.main) {
     },
     stderr: (l) => {
       process.stderr.write(`${l}\n`);
+    },
+    stdoutBytes: (b) => {
+      process.stdout.write(b);
     },
     readStdin: async () => new Uint8Array(await Bun.stdin.arrayBuffer()),
   };

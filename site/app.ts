@@ -2,6 +2,8 @@
 
 import {
   applyModelLabels,
+  BAS_EXAMPLE_MAPPING,
+  buildJournalEntry,
   type CanonicalInvoice,
   type ConvertOutcome,
   type ConvertResult,
@@ -10,10 +12,12 @@ import {
   FORMATS,
   type FormatDef,
   IMPLEMENTED_FAMILIES,
+  JournalError,
   type Line,
   type LineRelation,
   type LineRole,
   type Party,
+  toSie4,
 } from '../src/index.js';
 import { ENGINES, loadEngine } from './model.js';
 
@@ -489,7 +493,8 @@ function jsonPanel(item: Item): string {
     : `<button type="button" data-view="full" aria-pressed="true">Detection result</button>`;
   return `<section class="json-panel" aria-label="JSON">
     <div class="json-bar"><div class="views">${views}</div>
-      <div class="actions"><button type="button" class="btn quiet" data-act="copy">Copy JSON</button><button type="button" class="btn" data-act="download">Download JSON</button></div></div>
+      <div class="actions"><button type="button" class="btn quiet" data-act="copy">Copy JSON</button><button type="button" class="btn" data-act="download">Download JSON</button>${item.invoice ? '<button type="button" class="btn quiet" data-act="journal">Download journal entry</button>' : ''}</div></div>
+    ${item.invoice ? '<p class="journal-note">The journal entry is a SIE 4 file (type 4I) booked with an <strong>example</strong> mapping onto the Swedish BAS chart, in the invoice currency. It shows the shape of the export; map your own accounts with the library or the <code>einvoice export</code> command.</p>' : ''}
     <pre class="json" tabindex="0" aria-label="JSON output"></pre>
   </section>`;
 }
@@ -528,6 +533,22 @@ function wireJson(item: Item, result: ConvertResult) {
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     toast('JSON downloaded');
+  });
+  resultEl.querySelector<HTMLButtonElement>('[data-act="journal"]')?.addEventListener('click', () => {
+    const inv = item.invoice;
+    if (!inv) return;
+    try {
+      const sie = toSie4([buildJournalEntry(inv, BAS_EXAMPLE_MAPPING)], { currency: inv.currency });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([sie.bytes as BlobPart], { type: 'application/octet-stream' }));
+      a.download = `${inv.id.replace(/[^\w.-]+/g, '_')}.se`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      toast('Journal entry downloaded (example mapping)');
+    } catch (e) {
+      if (!(e instanceof JournalError)) throw e;
+      showNotice('No journal entry for this invoice.', e.message);
+    }
   });
 }
 

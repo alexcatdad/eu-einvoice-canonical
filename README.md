@@ -77,6 +77,7 @@ Parsers get this from `Ctx` in `src/parsers/context.ts`: construct it with `new 
 einvoice detect  <file...>                 format id, version and profile per document (tab separated)
 einvoice inspect <file...>                 the unwrap and detect result as JSON
 einvoice convert <file...> [--out <dir>]   canonical JSON array on stdout, or one <invoice-id>.json per invoice in <dir>
+einvoice export  <file...> --format sie|journal|csv [--accounts mapping.json] [--out <file>]   bookkeeping entries
 einvoice sweep   <dir...> [--expect answers.json]   detection coverage / known-answer check
 ```
 
@@ -95,6 +96,16 @@ JSON goes to stdout only; every error is one line on stderr.
 | 7 | internal error (including unreadable files) |
 
 With several failures and no success the code of the first failure is used; with at least one success it is 5.
+
+## Bookkeeping export
+
+`src/export/` turns a received invoice into a balanced journal entry (`buildJournalEntry(invoice, mapping)`), and the entry into a SIE 4 file (type 4I, CP437, `#VER`/`#TRANS`), JSON or CSV.
+
+- The caller supplies an `AccountMapping`: accounts payable, input VAT (one account or per rate), expense accounts by rule (line id, VAT category and rate, seller, item classification; first match wins, with a default) and one account each for reverse-charge VAT, withholding (per scheme), split-payment VAT, rounding, prepaid amounts, other taxes and KSeF settlement differences. `--accounts mapping.json` takes the same shape; without it the CLI and the site use `BAS_EXAMPLE_MAPPING`, an **example** onto the Swedish BAS chart (2440 payable, 2641 input VAT, 4010 / 5410 / 6xxx expenses) that is a demonstration and not advice on how to book anything.
+- Accounts payable is credited with `totals.payable`. Credit notes reverse every posting through `effectiveSign()` (a credit note that keeps negative source amounts, like Finvoice INV02, is not reversed twice). Reverse charge (AE) books input and output VAT; the invoice states no VAT, so the rate comes from the invoice if it gives one and otherwise from `reverseCharge.rate` in the mapping, and a note records it. Corrections whose lines are before/after pairs (KSeF KOR) are booked per VAT category from the stated differences.
+- The builder never invents a value and never emits an unbalanced entry: when the invoice's own totals disagree with its lines, or an account the invoice needs is missing from the mapping, it throws a `JournalError` that names the amounts or the missing account. `roundingTolerance` books a stated small residual to the rounding account instead.
+- SIE amounts are in the ledger currency (`--currency`, default SEK); an invoice in another currency is refused, no exchange rate is applied. Exports are byte-compared with `test/export/expected/*.se` in the tests.
+- The demo site has a "Download journal entry" button that exports the shown invoice as SIE with the example mapping.
 
 ## The canonical model
 
