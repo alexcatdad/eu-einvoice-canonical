@@ -1,0 +1,28 @@
+{
+  "id": "xrechnung-3.0.2-cii",
+  "title": "XRechnung 3.0.2 Schematron 2.6.0, CII",
+  "layer": "profile",
+  "syntax": "cii",
+  "version": "2.6.0",
+  "releaseDate": "2026-09-02",
+  "effectiveFrom": "2026-09-02",
+  "effectiveUntil": null,
+  "license": "Apache-2.0",
+  "upstream": "https://github.com/itplr-kosit/xrechnung-schematron/releases/tag/v2.6.0",
+  "note": "BR-DE rules only; the EN 16931 rules come from the semantic bundle.",
+  "format": "sef",
+  "entry": "XRechnung-CII-validation.sef.json.gz",
+  "source": [
+    {
+      "url": "https://github.com/itplr-kosit/xrechnung-schematron/releases/download/v2.6.0/xrechnung-3.0.2-schematron-2.6.0.zip",
+      "sha256": "ca5e07afd04e72cd283d581590ffff3a15f4aac9d2f40c993345d78e67ea22b4"
+    }
+  ],
+  "files": [
+    {
+      "path": "XRechnung-CII-validation.sef.json.gz",
+      "sha256": "a3c5889edd41d096b4ef88a45857e9f21f9e9c267fb4129095625ede12392618",
+      "bytes": 60695
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "id": "xsd-cii-d16b",
+  "title": "UN/CEFACT CrossIndustryInvoice D16B XSD",
+  "layer": "schema",
+  "syntax": "cii",
+  "version": "100.D16B",
+  "releaseDate": "2016-10-10",
+  "effectiveFrom": "2016-10-10",
+  "effectiveUntil": null,
+  "license": "UN/CEFACT copyright notice (copying and derivative works permitted, notice kept in each file)",
+  "upstream": "https://unece.org/trade/uncefact/xml-schemas",
+  "note": "As repackaged in the KoSIT XRechnung validator configuration (Apache-2.0).",
+  "format": "xsd",
+  "entries": {
+    "CrossIndustryInvoice": "CrossIndustryInvoice_100pD16B.xsd"
+  },
+  "source": [
+    {
+      "url": "https://github.com/itplr-kosit/validator-configuration-xrechnung/releases/download/v2026-08-31/xrechnung-3.0.2-validator-configuration-2026-08-31.zip",
+      "sha256": "2530cd107c414511c5d0462ec10f886910395abfca820db82e83d70bf01221a8"
+    }
+  ],
+  "files": [
+    {
+      "path": "CrossIndustryInvoice_100pD16B.xsd",
+      "sha256": "3baf143b90f289d62c5dfb086aa51fa183490a2d0b38a40c6b31dcae0760f2ba",
+      "bytes": 3078
+    },
+    {
+      "path": "CrossIndustryInvoice_QualifiedDataType_100pD16B.xsd",
+      "sha256": "6649215914728652e883662bec1d3eab008c215e86a59f3bb417db9723ee8c5c",
+      "bytes": 36806
+    },
+    {
+      "path": "CrossIndustryInvoice_ReusableAggregateBusinessInformationEntity_100pD16B.xsd",
+      "sha256": "1c42244298a863bcc0b5196983ff0a5d084fcabe58aea77ef82b242e7cd0ddfd",
+      "bytes": 99402
+    },
+    {
+      "path": "CrossIndustryInvoice_UnqualifiedDataType_100pD16B.xsd",
+      "sha256": "04fce6f6f28521886731294be18a4e6bb5cb3003456457d99ad5c4d3e652f497",
+      "bytes": 6967
+    }
+  ]
+}
