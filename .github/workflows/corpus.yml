@@ -3,6 +3,8 @@ name: Public corpora
 # Detection against public sample collections: weekly and on demand, never on a pull request.
 # 1. coverage: every file under the corpora goes through detection (what is found, what is unknown)
 # 2. correctness: a manifest of files whose format is clear from their folder must all match
+# 3. parse results: for the UBL and CII files among them, id, issue date, currency, payable amount and line
+#    count read from the XML text (scripts/corpus-parse.ts, test/corpus/parse-expected.json) must match the parser
 # The clones are pinned in scripts/fetch-corpora.sh.
 
 on:
@@ -38,6 +40,9 @@ jobs:
       - name: Known-answer sweep
         if: always()
         run: bun scripts/sweep.ts --expect test/corpus/expected.json | tee corpus-expect.txt
+      - name: Parse known-answer check
+        if: always()
+        run: bun scripts/corpus-parse.ts | tee corpus-parse.txt
       - name: Summary
         if: always()
         run: |
@@ -45,6 +50,7 @@ jobs:
             echo '## Public corpora'
             echo '### Pinned commits'; echo '```'; cat corpus-pins.txt; echo '```'
             echo '### Known answers'; echo '```'; tail -n 40 corpus-expect.txt; echo '```'
+            echo '### Parse results'; echo '```'; tail -n 40 corpus-parse.txt; echo '```'
             echo '### Coverage (counts per format)'; echo '```'; head -n 200 corpus-report.txt; echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload reports
@@ -56,3 +62,4 @@ jobs:
             corpus-pins.txt
             corpus-report.txt
             corpus-expect.txt
+            corpus-parse.txt

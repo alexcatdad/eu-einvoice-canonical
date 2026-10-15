@@ -1,5 +1,5 @@
 {
-  "$comment": "Hand-maintained facts the conformance checklist cannot derive from code. publicSamples: fixtures that are real public samples, not written for the test suite. mappingSource: the specification a parser's mapping follows, taken from the parser's header comment; formats without one show 'not recorded'. Validation layers are not listed here: scripts/conformance.ts derives them from planFor() in src/validation/plan.ts.",
+  "$comment": "Hand-maintained facts the conformance checklist cannot derive from code. publicSamples: fixtures that are real public samples, not written for the test suite (paths relative to test/fixtures; hand-written header-only stubs are not listed even where they imitate a real format). mappingSource: the specification a parser's mapping follows, taken from the parser's header comment; formats without one show 'not recorded'. Validation layers are not listed here: scripts/conformance.ts derives them from planFor() in src/validation/plan.ts.",
   "publicSamples": [
     "peppol-in-sbdh.xml",
     "peppol-utf16.xml",
@@ -8,17 +8,28 @@
     "anaf-download.zip",
     "finvoice-with-soap.xml",
     "invoice.isdocx",
-    "ksef-fa3.xml",
-    "eslog2.xml",
-    "e-arve-two-invoices.xml",
-    "facturae-322-signed.xsig",
-    "ebinterface-61.xml",
-    "fattura-semplificata.xml",
-    "mydata.xml",
-    "sdi-metadata.xml",
     "IT01234567890_FPR12.xml.p7m",
     "IT01234567890_FPR12.base64.xml.p7m",
-    "facturx-en16931.pdf"
+    "facturx-en16931.pdf",
+    "real/fatturapa-ade-FPR12-1.xml",
+    "real/fatturapa-ade-FPA12-1.xml",
+    "real/fatturapa-ade-FPR12-3-lot.xml",
+    "real/ksef-fa3-pdf-generator.xml",
+    "real/isdoc-test001.isdoc",
+    "real/isdoc-priklad.isdoc",
+    "real/ebinterface-4.1-sample.xml",
+    "real/ebinterface-4.3-sample.xml",
+    "real/oioubl-2.01-invoice.xml",
+    "real/oioubl-2.01-creditnote.xml",
+    "real/mydata-requested-invoice.xml",
+    "real/mydata-requested-two-invoices.xml",
+    "real/zugferd1-comfort-einfach.pdf",
+    "real/xrechnung-ubl-01.01a.xml",
+    "real/xrechnung-cii-01.01a.xml",
+    "real/en16931-ubl-UC1.xml",
+    "real/en16931-cii-UC13.xml",
+    "real/fr-ctc-ubl-UC12.xml",
+    "real/fr-ctc-cii-UC10.xml"
   ],
   "mappingSource": {
     "ubl": "EN 16931-3-2 (UBL binding) as documented in the Peppol BIS Billing 3.0 syntax pages",
@@ -36,5 +47,18 @@
     "eslog": "e-SLOG 2.0 Electronic Invoice, Part 2: Document Composition (April 2018)",
     "eslog-1": "Not mapped: the eslog parser reads eSLOG 2.0 only",
     "mydata": "AADE myDATA InvoicesDoc XSD, invoice namespace v1.0 and income/expenses classification v1.0"
+  },
+  "sampleSearch": {
+    "$comment": "Formats for which no public sample under a licence that allows committing it was found; see test/fixtures/README.md. Nothing is committed for these.",
+    "notFound": {
+      "peppol-bis3": "OpenPEPPOL/peppol-bis-invoice-3 examples: repository has no licence file",
+      "nlcius-ubl / nlcius-cii": "SimplerInvoicing examples are only in phive-rules and Pagero, no licence stated",
+      "cius-pt": "only in phive-rules (licence of test files not stated) and pagero/integration-resources (no licence)",
+      "ubl-be / pl-pef / oioubl-3 / peppol-bis2 / peppol-bis3-selfbilling": "no licensed public sample found",
+      "facturae": "facturae.gob.es examples carry no licence; the only licensed GitHub copy found (ctt-gob-es/FirmaXadesNet45) is Facturae 3.0, which the parser does not read",
+      "finvoice": "Finanssiala and VismaSolutionsOy/InvoiceXMLExamples carry no licence",
+      "fatturapa-semplificata": "no FSM10 example found in a licensed repository",
+      "e-arve / eslog-2 / eslog-1 / teappsxml / svefaktura-1": "no public sample found in a licensed repository"
+    }
   }
 }

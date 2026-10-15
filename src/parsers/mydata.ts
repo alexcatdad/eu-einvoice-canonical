@@ -60,9 +60,17 @@ export function parseMydata(input: ParseInput): CanonicalInvoice[] {
   const root = parseXml(input.payload.xml);
   const ns = { m: root.namespaceURI ?? '' };
   const probe = new Ctx(ns);
-  const docs = probe.all(root, 'm:invoice');
-  if (docs.length === 0) throw new ParseError('InvoicesDoc holds no invoice');
-  return docs.map((el, i) => finish(parseInvoice(input, root, el, new Ctx(ns), i)));
+  const docs = probe.all(root, root.localName === 'RequestedDoc' ? 'm:invoicesDoc/m:invoice' : 'm:invoice');
+  if (docs.length === 0) throw new ParseError(`${root.localName} holds no invoice`);
+  // AADE's retrieval services list a cancelled invoice as a bare invoice with its cancelledByMark and no header.
+  const stubs = docs.filter((el) => !probe.el(el, 'm:invoiceHeader') && probe.text(el, 'm:cancelledByMark'));
+  const full = docs.filter((el) => !stubs.includes(el));
+  const out = full.map((el) => finish(parseInvoice(input, root, el, new Ctx(ns), docs.indexOf(el))));
+  if (out.length > 0 && stubs.length > 0) {
+    const message = `${stubs.length} entry(ies) with cancelledByMark and no invoiceHeader are cancellation markers, not invoices, and were not converted`;
+    for (const inv of out) inv.source.warnings.push({ code: 'GR-CANCELLED-MARKER', path: '/', message });
+  }
+  return out.length > 0 ? out : docs.map((el, i) => finish(parseInvoice(input, root, el, new Ctx(ns), i)));
 }
 
 function parseInvoice(input: ParseInput, root: Element, inv: Element, c: Ctx, index: number): CanonicalInvoice {
