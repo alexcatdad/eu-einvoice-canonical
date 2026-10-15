@@ -330,10 +330,11 @@ export const FORMATS = [
     match: (p) => (p.rootNs === NS.svefaktura && p.rootName === 'Invoice' ? { version: '1.0' } : null),
   },
   {
-    id: 'gr-mydata', name: 'Greece myDATA invoice XML', family: 'mydata', countries: ['GR'], status: 'unverified', phase: 3,
-    notes: 'AADE myDATA document. Greek B2B mandate phases from Feb 2026 (large) and Oct 2026 (others). '
-      + 'Greek EN 16931 invoices are detected by the UBL/CII rules; this rule is for raw myDATA files.',
-    match: (p) => (p.rootName === 'InvoicesDoc' && /aade\.gr\/myDATA/i.test(p.rootNs) ? { profile: p.values.myDataInvoiceType } : null),
+    id: 'gr-mydata', name: 'Greece myDATA invoice XML', family: 'mydata', countries: ['GR'], status: 'current', phase: 3,
+    notes: 'AADE myDATA document (InvoicesDoc, namespace http://www.aade.gr/myDATA/invoice/v1.0 in the AADE XSD; checked against '
+      + 'AADE\'s published InvoicesDoc schema and sample XML). One file can hold several invoices. Greek B2B mandate phases from '
+      + 'Feb 2026 (large) and Oct 2026 (others). Greek EN 16931 invoices are detected by the UBL/CII rules; this rule is for raw myDATA files.',
+    match: (p) => (p.rootName === 'InvoicesDoc' && /^https?:\/\/www\.aade\.gr\/myDATA\/invoice\/v\d/i.test(p.rootNs) ? { profile: p.values.myDataInvoiceType } : null),
   },
 ] as const satisfies readonly FormatDef[];
 

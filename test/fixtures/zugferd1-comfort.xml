@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic ZUGFeRD 1.0 COMFORT invoice, standalone XML (the test suite also wraps it in a PDF). Fictitious parties; totals are consistent. -->
+<rsm:CrossIndustryDocument xmlns:rsm="urn:ferd:CrossIndustryDocument:invoice:1p0"
+    xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:12"
+    xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:15">
+  <rsm:SpecifiedExchangedDocumentContext>
+    <ram:TestIndicator><udt:Indicator>false</udt:Indicator></ram:TestIndicator>
+    <ram:GuidelineSpecifiedDocumentContextParameter>
+      <ram:ID>urn:ferd:CrossIndustryDocument:invoice:1p0:comfort</ram:ID>
+    </ram:GuidelineSpecifiedDocumentContextParameter>
+  </rsm:SpecifiedExchangedDocumentContext>
+  <rsm:HeaderExchangedDocument>
+    <ram:ID>RE-2026-0815</ram:ID>
+    <ram:Name>RECHNUNG</ram:Name>
+    <ram:TypeCode>380</ram:TypeCode>
+    <ram:IssueDateTime><udt:DateTimeString format="102">20261008</udt:DateTimeString></ram:IssueDateTime>
+    <ram:IncludedNote><ram:Content>Zahlbar innerhalb von 14 Tagen netto.</ram:Content></ram:IncludedNote>
+  </rsm:HeaderExchangedDocument>
+  <rsm:SpecifiedSupplyChainTradeTransaction>
+    <ram:ApplicableSupplyChainTradeAgreement>
+      <ram:BuyerReference>04011000-12345-34</ram:BuyerReference>
+      <ram:SellerTradeParty>
+        <ram:Name>Musterbau GmbH</ram:Name>
+        <ram:DefinedTradeContact>
+          <ram:PersonName>Erika Muster</ram:PersonName>
+          <ram:TelephoneUniversalCommunication><ram:CompleteNumber>+49 30 1234567</ram:CompleteNumber></ram:TelephoneUniversalCommunication>
+          <ram:EmailURIUniversalCommunication><ram:URIID>rechnung@musterbau.example</ram:URIID></ram:EmailURIUniversalCommunication>
+        </ram:DefinedTradeContact>
+        <ram:PostalTradeAddress>
+          <ram:PostcodeCode>10115</ram:PostcodeCode>
+          <ram:LineOne>Beispielstrasse 1</ram:LineOne>
+          <ram:CityName>Berlin</ram:CityName>
+          <ram:CountryID>DE</ram:CountryID>
+        </ram:PostalTradeAddress>
+        <ram:SpecifiedTaxRegistration><ram:ID schemeID="VA">DE123456789</ram:ID></ram:SpecifiedTaxRegistration>
+        <ram:SpecifiedTaxRegistration><ram:ID schemeID="FC">30/123/45678</ram:ID></ram:SpecifiedTaxRegistration>
+      </ram:SellerTradeParty>
+      <ram:BuyerTradeParty>
+        <ram:ID>KD-4711</ram:ID>
+        <ram:Name>Beispiel Handels AG</ram:Name>
+        <ram:PostalTradeAddress>
+          <ram:PostcodeCode>80331</ram:PostcodeCode>
+          <ram:LineOne>Hauptplatz 2</ram:LineOne>
+          <ram:CityName>Muenchen</ram:CityName>
+          <ram:CountryID>DE</ram:CountryID>
+        </ram:PostalTradeAddress>
+        <ram:SpecifiedTaxRegistration><ram:ID schemeID="VA">DE987654321</ram:ID></ram:SpecifiedTaxRegistration>
+      </ram:BuyerTradeParty>
+      <ram:BuyerOrderReferencedDocument><ram:ID>B-2026-77</ram:ID></ram:BuyerOrderReferencedDocument>
+      <ram:ContractReferencedDocument><ram:ID>V-100</ram:ID></ram:ContractReferencedDocument>
+      <ram:AdditionalReferencedDocument>
+        <ram:ID>ANL-1</ram:ID>
+        <ram:TypeCode>916</ram:TypeCode>
+        <ram:Name>Leistungsnachweis</ram:Name>
+        <ram:AttachmentBinaryObject mimeCode="text/plain" filename="nachweis.txt">aGVsbG8=</ram:AttachmentBinaryObject>
+      </ram:AdditionalReferencedDocument>
+    </ram:ApplicableSupplyChainTradeAgreement>
+    <ram:ApplicableSupplyChainTradeDelivery>
+      <ram:ActualDeliverySupplyChainEvent>
+        <ram:OccurrenceDateTime><udt:DateTimeString format="102">20261001</udt:DateTimeString></ram:OccurrenceDateTime>
+      </ram:ActualDeliverySupplyChainEvent>
+      <ram:DeliveryNoteReferencedDocument><ram:ID>LS-7001</ram:ID></ram:DeliveryNoteReferencedDocument>
+    </ram:ApplicableSupplyChainTradeDelivery>
+    <ram:ApplicableSupplyChainTradeSettlement>
+      <ram:PaymentReference>RE-2026-0815</ram:PaymentReference>
+      <ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>
+      <ram:SpecifiedTradeSettlementPaymentMeans>
+        <ram:TypeCode>31</ram:TypeCode>
+        <ram:Information>Ueberweisung</ram:Information>
+        <ram:PayeePartyCreditorFinancialAccount>
+          <ram:IBANID>DE02120300000000202051</ram:IBANID>
+          <ram:AccountName>Musterbau GmbH</ram:AccountName>
+        </ram:PayeePartyCreditorFinancialAccount>
+        <ram:PayeeSpecifiedCreditorFinancialInstitution>
+          <ram:BICID>BYLADEM1001</ram:BICID>
+          <ram:GermanBankleitzahlID>12030000</ram:GermanBankleitzahlID>
+        </ram:PayeeSpecifiedCreditorFinancialInstitution>
+      </ram:SpecifiedTradeSettlementPaymentMeans>
+      <ram:ApplicableTradeTax>
+        <ram:CalculatedAmount currencyID="EUR">175.18</ram:CalculatedAmount>
+        <ram:TypeCode>VAT</ram:TypeCode>
+        <ram:BasisAmount currencyID="EUR">922.00</ram:BasisAmount>
+        <ram:ApplicablePercent>19.00</ram:ApplicablePercent>
+      </ram:ApplicableTradeTax>
+      <ram:ApplicableTradeTax>
+        <ram:CalculatedAmount currencyID="EUR">6.86</ram:CalculatedAmount>
+        <ram:TypeCode>VAT</ram:TypeCode>
+        <ram:BasisAmount currencyID="EUR">98.00</ram:BasisAmount>
+        <ram:ApplicablePercent>7.00</ram:ApplicablePercent>
+      </ram:ApplicableTradeTax>
+      <ram:BillingSpecifiedPeriod>
+        <ram:StartDateTime><udt:DateTimeString format="102">20260901</udt:DateTimeString></ram:StartDateTime>
+        <ram:EndDateTime><udt:DateTimeString format="102">20260930</udt:DateTimeString></ram:EndDateTime>
+      </ram:BillingSpecifiedPeriod>
+      <ram:SpecifiedTradeAllowanceCharge>
+        <ram:ChargeIndicator><udt:Indicator>false</udt:Indicator></ram:ChargeIndicator>
+        <ram:ActualAmount currencyID="EUR">48.00</ram:ActualAmount>
+        <ram:Reason>Treuerabatt</ram:Reason>
+        <ram:CategoryTradeTax><ram:TypeCode>VAT</ram:TypeCode><ram:ApplicablePercent>19.00</ram:ApplicablePercent></ram:CategoryTradeTax>
+      </ram:SpecifiedTradeAllowanceCharge>
+      <ram:SpecifiedTradeAllowanceCharge>
+        <ram:ChargeIndicator><udt:Indicator>true</udt:Indicator></ram:ChargeIndicator>
+        <ram:ActualAmount currencyID="EUR">20.00</ram:ActualAmount>
+        <ram:Reason>Versand</ram:Reason>
+        <ram:CategoryTradeTax><ram:TypeCode>VAT</ram:TypeCode><ram:ApplicablePercent>19.00</ram:ApplicablePercent></ram:CategoryTradeTax>
+      </ram:SpecifiedTradeAllowanceCharge>
+      <ram:SpecifiedTradePaymentTerms>
+        <ram:Description>Zahlbar innerhalb von 14 Tagen netto.</ram:Description>
+        <ram:DueDateDateTime><udt:DateTimeString format="102">20261022</udt:DateTimeString></ram:DueDateDateTime>
+      </ram:SpecifiedTradePaymentTerms>
+      <ram:SpecifiedTradeSettlementMonetarySummation>
+        <ram:LineTotalAmount currencyID="EUR">1048.00</ram:LineTotalAmount>
+        <ram:ChargeTotalAmount currencyID="EUR">20.00</ram:ChargeTotalAmount>
+        <ram:AllowanceTotalAmount currencyID="EUR">48.00</ram:AllowanceTotalAmount>
+        <ram:TaxBasisTotalAmount currencyID="EUR">1020.00</ram:TaxBasisTotalAmount>
+        <ram:TaxTotalAmount currencyID="EUR">182.04</ram:TaxTotalAmount>
+        <ram:GrandTotalAmount currencyID="EUR">1202.04</ram:GrandTotalAmount>
+        <ram:TotalPrepaidAmount currencyID="EUR">200.00</ram:TotalPrepaidAmount>
+        <ram:DuePayableAmount currencyID="EUR">1002.04</ram:DuePayableAmount>
+      </ram:SpecifiedTradeSettlementMonetarySummation>
+    </ram:ApplicableSupplyChainTradeSettlement>
+    <ram:IncludedSupplyChainTradeLineItem>
+      <ram:AssociatedDocumentLineDocument>
+        <ram:LineID>1</ram:LineID>
+        <ram:IncludedNote><ram:Content>Stundensatz nach Vertrag</ram:Content></ram:IncludedNote>
+      </ram:AssociatedDocumentLineDocument>
+      <ram:SpecifiedSupplyChainTradeAgreement>
+        <ram:GrossPriceProductTradePrice>
+          <ram:ChargeAmount currencyID="EUR">100.00</ram:ChargeAmount>
+          <ram:BasisQuantity unitCode="HUR">1</ram:BasisQuantity>
+          <ram:AppliedTradeAllowanceCharge>
+            <ram:ChargeIndicator><udt:Indicator>false</udt:Indicator></ram:ChargeIndicator>
+            <ram:ActualAmount currencyID="EUR">5.00</ram:ActualAmount>
+          </ram:AppliedTradeAllowanceCharge>
+        </ram:GrossPriceProductTradePrice>
+        <ram:NetPriceProductTradePrice>
+          <ram:ChargeAmount currencyID="EUR">95.00</ram:ChargeAmount>
+          <ram:BasisQuantity unitCode="HUR">1</ram:BasisQuantity>
+        </ram:NetPriceProductTradePrice>
+      </ram:SpecifiedSupplyChainTradeAgreement>
+      <ram:SpecifiedSupplyChainTradeDelivery>
+        <ram:BilledQuantity unitCode="HUR">10</ram:BilledQuantity>
+      </ram:SpecifiedSupplyChainTradeDelivery>
+      <ram:SpecifiedSupplyChainTradeSettlement>
+        <ram:ApplicableTradeTax>
+          <ram:TypeCode>VAT</ram:TypeCode>
+          <ram:ApplicablePercent>19.00</ram:ApplicablePercent>
+        </ram:ApplicableTradeTax>
+        <ram:SpecifiedTradeSettlementMonetarySummation>
+          <ram:LineTotalAmount currencyID="EUR">950.00</ram:LineTotalAmount>
+        </ram:SpecifiedTradeSettlementMonetarySummation>
+      </ram:SpecifiedSupplyChainTradeSettlement>
+      <ram:SpecifiedTradeProduct>
+        <ram:SellerAssignedID>BER-01</ram:SellerAssignedID>
+        <ram:Name>Beratung Bauplanung</ram:Name>
+        <ram:Description>Projektbegleitung September</ram:Description>
+      </ram:SpecifiedTradeProduct>
+    </ram:IncludedSupplyChainTradeLineItem>
+    <ram:IncludedSupplyChainTradeLineItem>
+      <ram:AssociatedDocumentLineDocument><ram:LineID>2</ram:LineID></ram:AssociatedDocumentLineDocument>
+      <ram:SpecifiedSupplyChainTradeAgreement>
+        <ram:GrossPriceProductTradePrice><ram:ChargeAmount currencyID="EUR">24.50</ram:ChargeAmount></ram:GrossPriceProductTradePrice>
+        <ram:NetPriceProductTradePrice><ram:ChargeAmount currencyID="EUR">24.50</ram:ChargeAmount></ram:NetPriceProductTradePrice>
+      </ram:SpecifiedSupplyChainTradeAgreement>
+      <ram:SpecifiedSupplyChainTradeDelivery>
+        <ram:BilledQuantity unitCode="C62">4</ram:BilledQuantity>
+      </ram:SpecifiedSupplyChainTradeDelivery>
+      <ram:SpecifiedSupplyChainTradeSettlement>
+        <ram:ApplicableTradeTax>
+          <ram:TypeCode>VAT</ram:TypeCode>
+          <ram:ApplicablePercent>7.00</ram:ApplicablePercent>
+        </ram:ApplicableTradeTax>
+        <ram:SpecifiedTradeSettlementMonetarySummation>
+          <ram:LineTotalAmount currencyID="EUR">98.00</ram:LineTotalAmount>
+        </ram:SpecifiedTradeSettlementMonetarySummation>
+      </ram:SpecifiedSupplyChainTradeSettlement>
+      <ram:SpecifiedTradeProduct>
+        <ram:GlobalID schemeID="0160">4012345000009</ram:GlobalID>
+        <ram:Name>Fachbuch Baurecht</ram:Name>
+      </ram:SpecifiedTradeProduct>
+    </ram:IncludedSupplyChainTradeLineItem>
+  </rsm:SpecifiedSupplyChainTradeTransaction>
+</rsm:CrossIndustryDocument>
