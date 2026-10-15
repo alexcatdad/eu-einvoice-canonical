@@ -122,7 +122,9 @@ describe('field provenance', () => {
   });
 
   // Svefaktura has no BT-24 and maps schemes and units by table; those leaves are mapped, not read.
-  const SVEFAKTURA_MAPPED = [/^\/specificationId$/, /\/legalRegistrationId\/schemeId$/, /\/(identifiers\/\d+|locationId|standardId)\/schemeId$/, /\/unitCode$/, /\/meansCode$/];
+  const SVEFAKTURA_MAPPED = [/^\/specificationId$/, /\/legalRegistrationId\/schemeId$/, /\/(identifiers\/\d+|locationId|standardId)\/schemeId$/, /\/unitCode$/, /\/meansCode$/,
+    // composed or normalised text: F-skatt wording, "Säte <city>", note + penalty, giro codes
+    /^\/seller\/(taxRegistrationId|additionalLegalInfo)$/, /^\/paymentTerms$/, /\/serviceProviderId$/];
 
   test('Svefaktura invoice: every XPath resolves to the canonical value, coverage > 95%', async () => {
     const { prov } = await check('svefaktura-1.0.xml', SVEFAKTURA_MAPPED);
