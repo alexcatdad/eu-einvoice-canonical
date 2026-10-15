@@ -60,13 +60,12 @@ const traced = await convert(bytes, 'invoice.xml', undefined, { provenance: true
 // '/totals/payable' -> '/Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount', '/lines/1/netAmount' -> '/Invoice/cac:InvoiceLine[2]/cbc:LineExtensionAmount'
 ```
 
-<<<<<<< HEAD
 ### Field provenance in a parser
 
 XPaths use the qualified names as written in the document, with a positional predicate only where siblings share a name; attributes end in `/@name`. Values built from several nodes list them joined with ` | `. Values the mapper computed, defaulted or translated (code mappings, sums) have no entry and are listed in `source.derived` or `source.warnings` instead.
 
 Parsers get this from `Ctx` in `src/parsers/context.ts`: construct it with `new Ctx(ns, input.provenance)`, take a scope for a canonical path (`const s = c.in('')`, `s.in('seller')`, `s.in('lines').in(i)`), and read through the scope with the field key as the last argument: `s.text(node, 'cbc:ID', 'id')`, `s.dec(m, 'cbc:PayableAmount', 'payable')`, `s.id(el, 'cbc:EndpointID', 'endpoint')` (records `/value` and `/schemeId`). Use `c.mark(path, el)` / `c.markAll(path, els)` for values assembled by hand, and `c.nonEmpty(els)` before mapping to arrays so indexes match the output. Entries for values that did not survive into the output are pruned by `finish()`.
-=======
+
 ## Command line
 
 `src/cli.ts` is exposed as the `einvoice` bin (`bun src/cli.ts ...` in a checkout; tagged releases attach standalone binaries for linux-x64, darwin-arm64 and windows-x64). A file argument of `-` reads stdin.
@@ -93,7 +92,6 @@ JSON goes to stdout only; every error is one line on stderr.
 | 7 | internal error (including unreadable files) |
 
 With several failures and no success the code of the first failure is used; with at least one success it is 5.
->>>>>>> origin/main
 
 ## The canonical model
 
