@@ -246,7 +246,7 @@ function parseBody(c: Ctx, root: Element, body: Element, frag: string): Canonica
     // ImportoTotaleDocumento exceeds the VAT-inclusive total by exactly the stamp, it is on top.
     const extra = docTotal !== undefined && !isZero(stamp) && cmp(sub(docTotal, add(taxInclusive, rounding ?? '0')), stamp) === 0;
     if (extra) c.warn('IT_BOLLO_ON_TOP', 'ImportoTotaleDocumento includes the stamp duty on top of the VAT-inclusive total; taxInclusive excludes it');
-    otherTaxes.push({ scheme: 'IT:BOLLO', amount: stamp, includedInTotal: !extra });
+    otherTaxes.push({ scheme: 'IT:BOLLO', amount: stamp, includedInTotal: !extra, inTaxExclusive: !extra });
   }
 
   const orders = c.all(body, 'DatiGenerali/DatiOrdineAcquisto');
