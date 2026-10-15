@@ -9,9 +9,13 @@
  * them to make a PR pass. Files listed in `exclude` are covered by other means (for
  * example the CLI and the sweep module, whose tests run them as subprocesses that Bun's
  * coverage cannot see).
+ *
+ * With `--cobertura <path>` it also writes the gated files as Cobertura XML, the format
+ * GitHub's code-coverage upload (actions/upload-code-coverage) and the "Restrict code
+ * coverage" ruleset read, so GitHub's line coverage is computed over the same files as this gate.
  */
-import { appendFileSync, existsSync, readFileSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join, relative } from 'node:path';
 
 interface Floors {
   /** Minimum line coverage over all of src/, in percent. */
@@ -24,7 +28,7 @@ interface Floors {
   exclude: string[];
 }
 
-interface FileCov { file: string; lf: number; lh: number; fnf: number; fnh: number }
+interface FileCov { file: string; lf: number; lh: number; fnf: number; fnh: number; lines: [number, number][] }
 
 const root = join(import.meta.dir, '..');
 const lcovPath = join(root, 'coverage', 'lcov.info');
@@ -39,12 +43,13 @@ const files: FileCov[] = [];
 let cur: FileCov | undefined;
 for (const line of readFileSync(lcovPath, 'utf8').split('\n')) {
   const [tag, value = ''] = line.split(/:(.*)/s);
-  if (tag === 'SF') cur = { file: relative(root, value.startsWith('/') ? value : join(root, value)), lf: 0, lh: 0, fnf: 0, fnh: 0 };
+  if (tag === 'SF') cur = { file: relative(root, value.startsWith('/') ? value : join(root, value)), lf: 0, lh: 0, fnf: 0, fnh: 0, lines: [] };
   else if (!cur) continue;
   else if (tag === 'LF') cur.lf = Number(value);
   else if (tag === 'LH') cur.lh = Number(value);
   else if (tag === 'FNF') cur.fnf = Number(value);
   else if (tag === 'FNH') cur.fnh = Number(value);
+  else if (tag === 'DA') { const [n, hits] = value.split(','); cur.lines.push([Number(n), Number(hits)]); }
   else if (tag === 'end_of_record') { files.push(cur); cur = undefined; }
 }
 
@@ -85,4 +90,39 @@ const report = [
 
 console.log(report);
 if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, report);
+
+const coberturaIdx = process.argv.indexOf('--cobertura');
+if (coberturaIdx >= 0) {
+  const out = process.argv[coberturaIdx + 1];
+  if (!out) { console.error('--cobertura needs an output path'); process.exit(1); }
+  mkdirSync(dirname(out), { recursive: true });
+  writeFileSync(out, cobertura(gated));
+  console.log(`Wrote Cobertura report for ${gated.length} files to ${out}`);
+}
+
 process.exit(failures.length ? 1 : 0);
+
+/** Cobertura XML with one package per directory; branch data is not collected by Bun, so branch rates are 0/0. */
+function cobertura(fs: FileCov[]): string {
+  const rate = (hit: number, found: number) => (found === 0 ? '1' : (hit / found).toFixed(4));
+  const attr = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  const byDir = new Map<string, FileCov[]>();
+  for (const f of fs) byDir.set(dirname(f.file), [...(byDir.get(dirname(f.file)) ?? []), f]);
+  const lh = sum(fs, 'lh');
+  const lf = sum(fs, 'lf');
+  const packages = [...byDir].map(([dir, list]) => {
+    const classes = list.map((f) => {
+      const lines = [...f.lines].sort((a, b) => a[0] - b[0]).map(([n, hits]) => `<line number="${n}" hits="${hits}" branch="false"/>`).join('');
+      return `<class name="${attr(f.file.slice(dir.length + 1))}" filename="${attr(f.file)}" line-rate="${rate(f.lh, f.lf)}" branch-rate="0" complexity="0"><methods/><lines>${lines}</lines></class>`;
+    }).join('\n');
+    return `<package name="${attr(dir)}" line-rate="${rate(sum(list, 'lh'), sum(list, 'lf'))}" branch-rate="0" complexity="0"><classes>\n${classes}\n</classes></package>`;
+  }).join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<coverage line-rate="${rate(lh, lf)}" branch-rate="0" lines-covered="${lh}" lines-valid="${lf}" branches-covered="0" branches-valid="0" complexity="0" version="1" timestamp="${Date.now()}">
+<sources><source>.</source></sources>
+<packages>
+${packages}
+</packages>
+</coverage>
+`;
+}
