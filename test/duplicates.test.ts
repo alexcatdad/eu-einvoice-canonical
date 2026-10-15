@@ -319,3 +319,14 @@ describe('einvoice duplicates (CLI)', () => {
     expect((await run(['duplicates'])).code).toBe(1);
   });
 });
+
+describe('hostile input', () => {
+  test('long runs of zeros normalise in linear time (no regex backtracking)', () => {
+    const zeros = '0'.repeat(200_000);
+    const started = performance.now();
+    expect(normaliseInvoiceNumber(`${zeros}1`).normalised).toBe('1');
+    expect(normaliseInvoiceNumber(`${zeros}A`).normalised).toBe('0-A');
+    expect(normaliseInvoiceNumber(zeros).normalised).toBe('0');
+    expect(performance.now() - started).toBeLessThan(500);
+  });
+});

@@ -119,16 +119,32 @@ export function normaliseInvoiceNumber(raw: string): NormalisedNumber {
   s = upper;
   const tokens = s.match(/\p{N}+|\p{L}+/gu) ?? [];
   if (s !== tokens.join('-')) steps.push('separators');
-  const stripped = tokens.map((t) => (/^\p{N}+$/u.test(t) ? t.replace(/^0+(?=.)/u, '') : t));
+  const stripped = tokens.map((t) => (/^\p{N}+$/u.test(t) ? stripLeadingZeros(t) : t));
   if (stripped.some((t, i) => t !== tokens[i])) steps.push('leading-zeros');
   return { raw, normalised: stripped.join('-'), steps };
+}
+
+/**
+ * Leading/trailing zero stripping as plain loops: regexes such as /0+$/ backtrack quadratically on long runs of
+ * zeros, and invoice numbers and amounts are untrusted input (CodeQL js/polynomial-redos).
+ */
+function stripLeadingZeros(t: string): string {
+  let i = 0;
+  while (i < t.length - 1 && t[i] === '0') i++;
+  return t.slice(i);
+}
+
+function stripTrailingZeros(t: string): string {
+  let end = t.length;
+  while (end > 0 && t[end - 1] === '0') end--;
+  return t.slice(0, end);
 }
 
 const normDecimal = (v: string): string => {
   const m = /^([+-]?)(\d*)(?:\.(\d*))?$/.exec(v.trim());
   if (!m) return v.trim();
-  const int = (m[2] || '0').replace(/^0+(?=.)/, '');
-  const frac = (m[3] ?? '').replace(/0+$/, '');
+  const int = stripLeadingZeros(m[2] || '0');
+  const frac = stripTrailingZeros(m[3] ?? '');
   const neg = m[1] === '-' && (int !== '0' || frac !== '');
   return `${neg ? '-' : ''}${int}${frac ? `.${frac}` : ''}`;
 };
