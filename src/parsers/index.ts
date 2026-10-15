@@ -3,7 +3,7 @@
  * returns one or more canonical invoices (FatturaPA lots, Facturae batches and
  * e-arve files can hold several).
  *
- * Implemented: ubl, cii, svefaktura, zugferd1, teappsxml, mydata. The national families are stubs; build order
+ * Implemented: see IMPLEMENTED_FAMILIES below. The national families are stubs; build order
  * and mapping notes are in the README.
  */
 import type { CanonicalInvoice } from '../canonical.js';
@@ -34,7 +34,12 @@ export class NotImplementedError extends Error {
   }
 }
 
-const stub = (family: ParserFamily): Parser => () => { throw new NotImplementedError(family); };
+const STUBS = new WeakSet<Parser>();
+const stub = (family: ParserFamily): Parser => {
+  const p: Parser = () => { throw new NotImplementedError(family); };
+  STUBS.add(p);
+  return p;
+};
 
 export const PARSERS: Record<ParserFamily, Parser> = {
   ubl: parseUbl,                  // Peppol BIS 3, XRechnung UBL, NLCIUS, CIUS-RO/PT, HR-CIUS, OIOUBL 2/3, BIS 2, PINT
@@ -53,4 +58,6 @@ export const PARSERS: Record<ParserFamily, Parser> = {
   mydata: parseMydata,            // Greek AADE myDATA InvoicesDoc
 };
 
-export const IMPLEMENTED_FAMILIES: readonly ParserFamily[] = ['ubl', 'cii', 'svefaktura', 'zugferd1', 'teappsxml', 'mydata'];
+/** Families with a real parser (derived from the registry, so it stays right as stubs are replaced). */
+export const IMPLEMENTED_FAMILIES: readonly ParserFamily[] =
+  (Object.keys(PARSERS) as ParserFamily[]).filter((f) => !STUBS.has(PARSERS[f]));
