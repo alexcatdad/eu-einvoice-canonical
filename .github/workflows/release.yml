@@ -9,10 +9,10 @@ permissions:
 
 jobs:
   binaries:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2.2.0
         with:
           bun-version: 1.4.2
       - run: bun install --frozen-lockfile
