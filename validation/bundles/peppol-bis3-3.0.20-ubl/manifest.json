@@ -1,0 +1,44 @@
+{
+  "id": "peppol-bis3-3.0.20-ubl",
+  "title": "Peppol BIS Billing 3.0 Schematron, UBL",
+  "layer": "profile",
+  "syntax": "ubl",
+  "version": "3.0.20",
+  "releaseDate": "2026-03-16",
+  "effectiveFrom": "2026-03-16",
+  "effectiveUntil": null,
+  "license": "EUPL-1.2",
+  "upstream": "https://github.com/OpenPEPPOL/peppol-bis-invoice-3/releases/tag/v3.0.20",
+  "note": "Peppol-specific rules only (PEPPOL-EN16931-*); the EN 16931 rules come from the semantic bundle.",
+  "format": "sef",
+  "entry": "PEPPOL-EN16931-UBL.sef.json.gz",
+  "source": [
+    {
+      "url": "https://raw.githubusercontent.com/OpenPEPPOL/peppol-bis-invoice-3/v3.0.20/rules/sch/PEPPOL-EN16931-UBL.sch",
+      "sha256": "5ddf3a2f6633147b20b7805df9902d825af1a984f10014fcee186d4170364b1d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Schematron/schematron/77dcd36c53d12ed786c144ece3b2af7694abdc56/trunk/schematron/code/iso_dsdl_include.xsl",
+      "sha256": "43ff20a1afd89d8a744d1c0b8df94ac5559ffa6a820d1ffbf508d6431ee4fdd9"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Schematron/schematron/77dcd36c53d12ed786c144ece3b2af7694abdc56/trunk/schematron/code/iso_abstract_expand.xsl",
+      "sha256": "c5267f124abf23eeb6669884e40a98607c055bfaa1f39e73b7d578feceeb6e46"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Schematron/schematron/77dcd36c53d12ed786c144ece3b2af7694abdc56/trunk/schematron/code/iso_schematron_skeleton_for_saxon.xsl",
+      "sha256": "95f3195d9f437ea8ff5f75d1a27f4e68ae20b236fe0d4a217bb4209f498a10a3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Schematron/schematron/77dcd36c53d12ed786c144ece3b2af7694abdc56/trunk/schematron/code/iso_svrl_for_xslt2.xsl",
+      "sha256": "0588d617924a0686255f6d182633d434c7986d561be8fcc3b363907d3f671b26"
+    }
+  ],
+  "files": [
+    {
+      "path": "PEPPOL-EN16931-UBL.sef.json.gz",
+      "sha256": "c16b41677595e02b6571d6dbdd16de22e603e2be3469171efdac698013936746",
+      "bytes": 70855
+    }
+  ]
+}
