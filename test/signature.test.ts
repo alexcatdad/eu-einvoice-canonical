@@ -199,12 +199,13 @@ describe('opting out', () => {
 });
 
 describe('existing fixtures report their real result', () => {
-  test('the .p7m fixtures carry a signature that was checked', async () => {
+  test('the .p7m fixtures (throwaway certificate) verify, signer not checked against a trust list', async () => {
     for (const f of ['IT01234567890_FPR12.xml.p7m', 'IT01234567890_FPR12.base64.xml.p7m']) {
       const [s] = await sigsOf(fixture(f), f);
       assert.equal(s.type, 'CAdES');
-      console.log(`${f}: verified=${s.verified} reason=${s.reason} signer=${s.signer} trust=${s.trust}`);
-      assert.equal(typeof s.verified, 'boolean', f);
+      assert.equal(s.verified, true, s.reason ?? '');
+      assert.equal(s.signer, 'Test Signer IT');
+      assert.equal(s.trust, 'not-checked');
     }
   });
 

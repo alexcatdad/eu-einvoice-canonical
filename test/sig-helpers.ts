@@ -21,8 +21,8 @@ export async function makeIdentity(cn: string, alg: 'rsa' | 'ec' = 'rsa', issuer
   const name = (n: string) => new pkijs.AttributeTypeAndValue({ type: '2.5.4.3', value: new asn1js.Utf8String({ value: n }) });
   cert.subject.typesAndValues.push(name(cn));
   if (issuer) cert.issuer = issuer.cert.subject; else cert.issuer.typesAndValues.push(name(cn));
-  cert.notBefore.value = new Date(Date.now() - 86_400_000);
-  cert.notAfter.value = new Date(Date.now() + 365 * 86_400_000);
+  cert.notBefore.value = new Date(Date.now() - 800 * 86_400_000);
+  cert.notAfter.value = new Date(Date.now() + 3650 * 86_400_000);
   if (ca) {
     const bc = new pkijs.BasicConstraints({ cA: true });
     cert.extensions = [new pkijs.Extension({ extnID: '2.5.29.19', critical: true, extnValue: bc.toSchema().toBER(false), parsedValue: bc })];
