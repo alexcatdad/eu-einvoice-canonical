@@ -143,9 +143,13 @@ export const FORMATS = [
     match: ublRule(/urn:mfin\.gov\.(hr|en):/i),
   },
   {
-    id: 'fr-ctc-ubl', name: 'France CTC (UBL)', family: 'ubl', countries: ['FR'], status: 'unverified', phase: 1,
-    notes: 'French reform (XP Z12-012), receiving obligation from 1 Sep 2026. Exact BT-24 string for '
-      + 'EXTENDED-CTC-FR not confirmed; plain EN16931 French invoices fall through to en16931-ubl.',
+    id: 'fr-ctc-ubl', name: 'France CTC (UBL)', family: 'ubl', countries: ['FR'], status: 'current', phase: 1,
+    // Source: FNFE-MPE France_RFE v1.4.0.04 (github.com/fnfempe/France_RFE, Apache-2.0), example invoices under
+    // FNFE_RFE_INVOICE/Z.example/TEST/UBL/EXTENDED-CTC-FR: BT-24 is
+    // 'urn:cen.eu:en16931:2017#conformant#urn.cpro.gouv.fr:1p0:extended-ctc-fr' (note 'urn.', not 'urn:').
+    // The same folder's EN16931 examples use the plain 'urn:cen.eu:en16931:2017' and fall through to en16931-ubl.
+    notes: 'French reform (XP Z12-012), receiving obligation from 1 Sep 2026. EXTENDED-CTC-FR identifier is '
+      + 'urn.cpro.gouv.fr:1p0:extended-ctc-fr; plain EN16931 French invoices fall through to en16931-ubl.',
     match: ublRule(/ctc[-_]?fr|cpro\.gouv\.fr/i),
   },
   {
@@ -154,9 +158,13 @@ export const FORMATS = [
     match: ublRule(/urn:fdc:oioubl\.dk/i),
   },
   {
-    id: 'pl-pef', name: 'Poland PEF (Peppol BIS 3 + PL extension)', family: 'ubl', countries: ['PL'], status: 'unverified', phase: 1,
-    notes: 'Public-procurement invoices via PEF/KSeF. Detected by urn:pl:extended namespaces on the root.',
-    match: (p) => (isUbl(p) && p.nsDecls.some((n) => n.startsWith('urn:pl:extended:')) ? { profile: extensionOf(cid(p)) } : null),
+    id: 'pl-pef', name: 'Poland PEF (Peppol BIS 3 + PL extension)', family: 'ubl', countries: ['PL'], status: 'current', phase: 1,
+    // Source: Peppol document type identifier list (Poland, PEF): Invoice/CreditNote customization is
+    // 'urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0#extended#urn:fdc:www.efaktura.gov.pl:ver2.0'
+    // (ver1.0 for the earlier account/correction documents). There is no 'urn:pl:extended' namespace.
+    notes: 'Public-procurement invoices via PEF (efaktura.gov.pl). Detected by the efaktura.gov.pl extension in the CustomizationID.',
+    match: (p) => (isUbl(p) && /efaktura\.gov\.pl/i.test(cid(p))
+      ? { profile: cid(p).split('#').find((s) => /efaktura\.gov\.pl/i.test(s)) } : null),
   },
   {
     id: 'peppol-bis3', name: 'Peppol BIS Billing 3.0', family: 'ubl', countries: ['EU'], status: 'current', phase: 1,
@@ -213,8 +221,10 @@ export const FORMATS = [
     match: ciiRule(/urn:fdc:nen\.nl:nlcius/i),
   },
   {
-    id: 'fr-ctc-cii', name: 'France CTC (CII / Factur-X EXTENDED-CTC-FR)', family: 'cii', countries: ['FR'], status: 'unverified', phase: 1,
-    notes: 'French reform uses CII D22B. Exact guideline ID not confirmed.',
+    id: 'fr-ctc-cii', name: 'France CTC (CII / Factur-X EXTENDED-CTC-FR)', family: 'cii', countries: ['FR'], status: 'current', phase: 1,
+    // Source: FNFE-MPE France_RFE v1.4.0.04, Z.example/TEST/CII/EXTENDED-CTC-FR: the guideline ID (BT-24) is
+    // 'urn:cen.eu:en16931:2017#conformant#urn.cpro.gouv.fr:1p0:extended-ctc-fr', as in the UBL syntax.
+    notes: 'French reform uses CII D22B. Guideline ID is urn.cpro.gouv.fr:1p0:extended-ctc-fr.',
     match: ciiRule(/ctc[-_]?fr|cpro\.gouv\.fr/i),
   },
   {
@@ -320,9 +330,11 @@ export const FORMATS = [
     match: (p) => (p.rootNs === NS.eslog2 && p.rootName === 'Invoice' ? { version: p.rootAttrs.Version ?? '2.00' } : null),
   },
   {
-    id: 'eslog-1', name: 'eSLOG 1.6', family: 'eslog', countries: ['SI'], status: 'unverified', phase: 3,
-    notes: 'Pre-EN Slovenian format. Root element name not confirmed against a real file.',
-    match: (p) => (p.rootName === 'IzdaniRacunEnostavni' ? { version: '1.6' } : null),
+    id: 'eslog-1', name: 'eSLOG 1.6', family: 'eslog', countries: ['SI'], status: 'current', phase: 3,
+    // Source: GZS schema eSLOG_1-6_EnostavniRacun.xsd (gzs.si/e-poslovanje/sheme): global element
+    // IzdaniRacunEnostavni, no targetNamespace, so the root has no namespace.
+    notes: 'Pre-EN Slovenian format (simple invoice, root IzdaniRacunEnostavni, no namespace).',
+    match: (p) => (p.rootName === 'IzdaniRacunEnostavni' && p.rootNs === '' ? { version: '1.6' } : null),
   },
   {
     id: 'svefaktura-1', name: 'Svefaktura 1.0', family: 'svefaktura', countries: ['SE'], status: 'legacy', phase: 3,
@@ -330,7 +342,9 @@ export const FORMATS = [
     match: (p) => (p.rootNs === NS.svefaktura && p.rootName === 'Invoice' ? { version: '1.0' } : null),
   },
   {
-    id: 'gr-mydata', name: 'Greece myDATA invoice XML', family: 'mydata', countries: ['GR'], status: 'unverified', phase: 3,
+    id: 'gr-mydata', name: 'Greece myDATA invoice XML', family: 'mydata', countries: ['GR'], status: 'current', phase: 3,
+    // Source: namespace http://www.aade.gr/myDATA/invoice/v1.0 as used by AADE's InvoicesDoc XSDs and by clients
+    // generating them (e.g. github.com/firebed/aade-mydata InvoicesDocWriter, Odoo l10n_gr_edi).
     notes: 'AADE myDATA document. Greek B2B mandate phases from Feb 2026 (large) and Oct 2026 (others). '
       + 'Greek EN 16931 invoices are detected by the UBL/CII rules; this rule is for raw myDATA files.',
     match: (p) => (p.rootName === 'InvoicesDoc' && /aade\.gr\/myDATA/i.test(p.rootNs) ? { profile: p.values.myDataInvoiceType } : null),

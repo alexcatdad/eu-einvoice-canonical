@@ -158,7 +158,7 @@ Skipped files and the reason are returned by both `inspect()` and `convert()`, s
 
 ## Known gaps
 
-- **Unverified detection rules:** `fr-ctc-*` (exact EXTENDED-CTC-FR identifier), `pl-pef`, `eslog-1` root name and `gr-mydata`. They are marked `unverified` in the registry. The Croatian spec spells its own identifier inconsistently, so `hr-cius` only checks for `urn:mfin.gov.`.
+- **Unverified detection rules:** `ubl-unknown` and `cii-unknown` are fallbacks, not confirmed formats. The Croatian spec spells its own identifier inconsistently, so `hr-cius` only checks for `urn:mfin.gov.`.
 - **EN 16931-1:2026** was published in March 2026. Detection accepts the `urn:cen.eu:en16931:2026` identifier, but the model only contains the 2017 business terms. Add the new terms once Peppol BIS adopts the revision.
 - **Signatures** are detected and recorded, not verified.
 - **No schema or Schematron validation yet.** `source.validation` exists in the model but nothing fills it. The BR-CO arithmetic checks are the only rules run. Use phive or the KoSIT validator for conformance.
