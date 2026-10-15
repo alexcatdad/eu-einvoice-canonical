@@ -17,7 +17,7 @@ describe('trust evaluation', () => {
     const leaf = await makeIdentity('Leaf', 'ec', root);
     assert.equal((await evaluateTrust(root.cert, [], [root.cert], now)).trust, 'trusted');
     const r = await evaluateTrust(leaf.cert, [], [root.cert], now);
-    assert.equal(r.trust, 'trusted', r.reason);
+    assert.equal(r.trust, 'trusted', r.reason ?? '');
   });
 
   test('chain building through an intermediate carried in the file', async () => {
@@ -25,7 +25,7 @@ describe('trust evaluation', () => {
     const mid = await makeIdentity('Intermediate CA', 'rsa', root, true);
     const leaf = await makeIdentity('Leaf', 'rsa', mid);
     const ok = await evaluateTrust(leaf.cert, [mid.cert, leaf.cert], [root.cert], now);
-    assert.equal(ok.trust, 'trusted', ok.reason);
+    assert.equal(ok.trust, 'trusted', ok.reason ?? '');
     const missing = await evaluateTrust(leaf.cert, [], [root.cert], now);
     assert.equal(missing.trust, 'untrusted');
     assert.ok(missing.reason);

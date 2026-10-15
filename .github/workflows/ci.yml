@@ -25,7 +25,7 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
       - name: Unit, parser and hostile-input tests
-        run: bun test
+        run: bun test --coverage
       - name: Known-answer detection sweep over the fixtures
         run: bun run sweep:fixtures
       - name: Build the browser converter
