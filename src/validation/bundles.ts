@@ -15,7 +15,8 @@ export interface BundleManifest {
   id: string;
   title: string;
   layer: 'schema' | 'semantic' | 'profile';
-  syntax: 'ubl' | 'cii';
+  /** 'ubl' / 'cii' for the EN 16931 syntaxes, the format family for national schemas. */
+  syntax: string;
   version: string;
   releaseDate: string;
   effectiveFrom: string;

@@ -507,6 +507,10 @@ function line(c: Ctx, l: Element, s: Scope): Line {
   const noteEls = [c.el(l, 'Note'), c.el(l, 'DespatchLineReference/DocumentReference/ID')].filter((e): e is Element => !!e && !!c.text(e));
   c.markAll(s.path('note'), noteEls);
   const p = s.in('price');
+  // Svefaktura names the order on each line (BuyersID); the relation rules and PO matching read it from here.
+  const orderEl = c.el(l, 'OrderLineReference/OrderReference/BuyersID');
+  const orderReference = c.text(orderEl);
+  if (orderReference) c.mark(s.path('national/orderReference'), orderEl);
   return {
     id: lineId,
     note: noteEls.map((e) => c.text(e)).join('\n') || undefined,
@@ -515,6 +519,7 @@ function line(c: Ctx, l: Element, s: Scope): Line {
     unitText: unitText && unitText !== unitCode ? unitText : undefined,
     netAmount,
     orderLineRef: s.text(l, 'OrderLineReference/BuyersLineID', 'orderLineRef'),
+    national: orderReference ? { orderReference } : undefined,
     allowances: allowanceCharges(c, l, false, s.in('allowances')).map(({ vat: _vat, ...a }) => a),
     charges: allowanceCharges(c, l, true, s.in('charges')).map(({ vat: _vat, ...a }) => a),
     price:

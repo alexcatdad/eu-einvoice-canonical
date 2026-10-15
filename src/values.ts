@@ -118,6 +118,33 @@ export function sum(values: readonly string[]): Decimal {
   return values.reduce<Decimal>((acc, v) => add(acc, v), '0' as Decimal);
 }
 
+/** Exact `a * b`, without rounding. */
+export function mul(a: string, b: string): Decimal {
+  const x = parse(a);
+  const y = parse(b);
+  return format(x.n * y.n, x.scale + y.scale);
+}
+
+export function abs(a: string): Decimal {
+  const p = parse(a);
+  return format(p.n < 0n ? -p.n : p.n, p.scale);
+}
+
+/** `a / b` rounded to `places` decimals (halves away from zero). Throws on division by zero. */
+export function div(a: string, b: string, places = 6): Decimal {
+  const x = parse(a);
+  const y = parse(b);
+  if (y.n === 0n) throw new ValueError('Division by zero');
+  const num = x.n * 10n ** BigInt(places + 1 + y.scale);
+  const den = y.n * 10n ** BigInt(x.scale);
+  const q = num / den; // one guard digit, truncated towards zero
+  const last = q % 10n;
+  let r = q / 10n;
+  if (last >= 5n) r += 1n;
+  else if (last <= -5n) r -= 1n;
+  return format(r, places);
+}
+
 /** Exact `a * rate / 100`, without rounding. */
 export function percentOf(a: string, rate: string): Decimal {
   const x = parse(a);

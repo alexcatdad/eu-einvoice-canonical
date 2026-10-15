@@ -37,10 +37,66 @@ const NOT_EN16931 = new Set([
 const NOT_UBL21 = new Set(['oioubl-2']);
 const FACTURX_EN16931_PROFILES = new Set(['EN 16931']);
 
+/**
+ * The XSD bundle of a national format. Formats with several schema versions pick the bundle by the
+ * root namespace; a namespace without a bundle (FA(1), Facturae 3.1, ebInterface 4.0-4.2) gets no
+ * schema layer rather than a wrong one. Without a probe the newest bundle is named, which is what
+ * the conformance checklist wants.
+ */
+const NATIONAL_XSD: Record<string, { latest: string; byNamespace?: Record<string, string> }> = {
+  fatturapa: {
+    latest: 'xsd-fatturapa-1.2.2',
+    byNamespace: { 'http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2': 'xsd-fatturapa-1.2.2' },
+  },
+  'fatturapa-semplificata': {
+    latest: 'xsd-fatturapa-semplificata-1.0',
+    byNamespace: { 'http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.0': 'xsd-fatturapa-semplificata-1.0' },
+  },
+  ksef: {
+    latest: 'xsd-ksef-fa3',
+    byNamespace: {
+      'http://crd.gov.pl/wzor/2023/06/29/12648/': 'xsd-ksef-fa2',
+      'http://crd.gov.pl/wzor/2025/06/25/13775/': 'xsd-ksef-fa3',
+      'http://crd.gov.pl/wzor/2026/03/06/14189/': 'xsd-ksef-fa-rr',
+    },
+  },
+  facturae: {
+    latest: 'xsd-facturae-3.2.2',
+    byNamespace: {
+      'http://www.facturae.es/Facturae/2009/v3.2/Facturae': 'xsd-facturae-3.2',
+      'http://www.facturae.es/Facturae/2014/v3.2.1/Facturae': 'xsd-facturae-3.2.1',
+      'http://www.facturae.gob.es/formato/Versiones/Facturaev3_2_2.xml': 'xsd-facturae-3.2.2',
+    },
+  },
+  isdoc: { latest: 'xsd-isdoc-6.0.2', byNamespace: { 'http://isdoc.cz/namespace/2013': 'xsd-isdoc-6.0.2' } },
+  ebinterface: {
+    latest: 'xsd-ebinterface-6.1',
+    byNamespace: {
+      'http://www.ebinterface.at/schema/4p3/': 'xsd-ebinterface-4.3',
+      'http://www.ebinterface.at/schema/5p0/': 'xsd-ebinterface-5.0',
+      'http://www.ebinterface.at/schema/6p0/': 'xsd-ebinterface-6.0',
+      'http://www.ebinterface.at/schema/6p1/': 'xsd-ebinterface-6.1',
+    },
+  },
+  finvoice: { latest: 'xsd-finvoice-3.0', byNamespace: { '': 'xsd-finvoice-3.0' } },
+  'e-arve': { latest: 'xsd-earve-1.2', byNamespace: { '': 'xsd-earve-1.2' } },
+  'eslog-2': { latest: 'xsd-eslog-2.0', byNamespace: { 'urn:eslog:2.00': 'xsd-eslog-2.0' } },
+};
+
+function nationalSchema(detection: Extract<Detection, { kind: 'invoice' }>): string | undefined {
+  const entry = NATIONAL_XSD[detection.format.id];
+  if (!entry) return undefined;
+  if (!detection.probe) return entry.latest;
+  // The Italian namespaces are sometimes written with stray whitespace; the schema would reject that, so the lookup is exact.
+  return entry.byNamespace?.[detection.probe.rootNs];
+}
+
 /** Which bundle covers which layer for this document. Layers without an entry do not apply and report 'not-run'. */
 export function planFor(detection: Detection): Plan {
   if (detection.kind !== 'invoice') return {};
   const { format, details } = detection;
+  const national = nationalSchema(detection);
+  if (national) return { schema: national };
   const syntax = format.family === 'ubl' ? 'ubl' : format.family === 'cii' ? 'cii' : null;
   if (!syntax) return {};
   const plan: Plan = {};

@@ -1,7 +1,7 @@
 /**
  * Conformance validation for UBL 2.1 and UN/CEFACT CII invoices, one layer at a time:
  *
- *   schema    XSD (UBL 2.1, CII D16B) through xmllint-wasm
+ *   schema    XSD through xmllint-wasm: UBL 2.1, CII D16B and the national formats (FatturaPA, KSeF, Facturae, ISDOC, ebInterface, Finvoice, e-arve, eSLOG 2.0)
  *   semantic  the EN 16931 Schematron, compiled ahead of time to SaxonJS SEF
  *   profile   the CIUS / network rules: Peppol BIS 3, XRechnung
  *

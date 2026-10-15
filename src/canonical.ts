@@ -155,8 +155,10 @@ export interface PrecedingInvoiceRef {
   // BG-3
   id: string; // BT-25
   issueDate?: IsoDate; // BT-26
-  /** Clearance ID of the referenced invoice (KSeF number, SdI ID...). */
+  /** Clearance ID of the referenced invoice (KSeF number, SdI ID, CFDI UUID...). */
   clearanceId?: string;
+  /** How this document relates to the referenced one, in the source code list (CFDI TipoRelacion '01' = credit note of the related document, '04' = substitution...). */
+  relationType?: string;
 }
 
 /** Why and how a corrective document corrects (KSeF KOR, Facturae rectificativa, ISDOC 2/3...). */
@@ -408,8 +410,12 @@ export interface ClearanceInfo {
   previousHash?: string;
   /** Hash of this invoice as carried in the document (SA invoice hash), not recomputed. */
   hash?: string;
-  /** Cryptographic stamp: the signature value the issuer or the authority put on the invoice (SA, base64). */
+  /** Number of the authority's certificate that stamped the document (CFDI NoCertificadoSAT). */
+  certificateNumber?: string;
+  /** The stamp as written: the authority's stamp over the document (CFDI SelloSAT, not verified) or the signature value on the invoice (SA, base64). */
   stamp?: string;
+  /** Authorised intermediary that submitted the document to the authority (CFDI PAC, RfcProvCertif). */
+  intermediary?: string;
 }
 
 export interface SignatureInfo {
@@ -668,6 +674,32 @@ export interface SaQr {
   certificateSignature?: string;
 }
 
+/** Mexico, CFDI 3.3 / 4.0. Fields with no EN or generic equivalent; codes are SAT catalogue keys. */
+export interface MxExtension {
+  cfdiVersion?: string; // '4.0', '3.3'
+  series?: string; // Serie
+  folio?: string; // Folio
+  /** Postal code of the place of issue (LugarExpedicion). The issuer's own address is not in a CFDI. */
+  placeOfIssue?: string;
+  exportation?: string; // c_Exportacion (4.0)
+  confirmation?: string; // Confirmacion
+  /** MetodoPago: 'PUE' paid in one payment, 'PPD' in instalments or deferred. */
+  paymentMethod?: string;
+  paymentForm?: string; // FormaPago (c_FormaPago), also mapped to payments[].nationalMeansCode
+  issuer?: { taxRegime?: string; sealCertificateNumber?: string; seal?: string }; // RegimenFiscal, NoCertificado, Sello
+  receiver?: {
+    taxRegime?: string; // RegimenFiscalReceptor (4.0)
+    fiscalPostalCode?: string; // DomicilioFiscalReceptor (4.0)
+    cfdiUse?: string; // UsoCFDI
+    taxResidence?: string; // ResidenciaFiscal (c_Pais, alpha-3), foreign receivers only
+  };
+  /** InformacionGlobal: invoice summarising sales to the general public. */
+  globalInformation?: { periodicity?: string; months?: string; year?: string };
+  /** Sum of the line discounts and the pre-discount subtotal as the CFDI states them (SubTotal, Descuento). */
+  subTotal?: Amount;
+  discount?: Amount;
+}
+
 export interface CountryExtensions {
   it?: ItExtension;
   pl?: PlExtension;
@@ -688,6 +720,7 @@ export interface CountryExtensions {
   my?: MyExtension;
   ae?: AeExtension;
   sa?: SaExtension;
+  mx?: MxExtension;
 }
 
 // ---------------------------------------------------------------------------

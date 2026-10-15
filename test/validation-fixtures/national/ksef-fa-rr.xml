@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Faktura xmlns="http://crd.gov.pl/wzor/2026/03/06/14189/" xmlns:etd="http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/01/05/eD/DefinicjeTypy/">
+  <Naglowek><KodFormularza kodSystemowy="FA_RR (1)" wersjaSchemy="1-1E">FA_RR</KodFormularza><WariantFormularza>1</WariantFormularza><DataWytworzeniaFa>2026-10-06T08:00:00Z</DataWytworzeniaFa></Naglowek>
+  <Podmiot1><DaneIdentyfikacyjne><NIP>5170000007</NIP><Nazwa>Gospodarstwo Rolne Przykład</Nazwa></DaneIdentyfikacyjne><Adres><KodKraju>PL</KodKraju><AdresL1>Wieś Polna 3, 26-600 Radom</AdresL1></Adres></Podmiot1>
+  <Podmiot2><DaneIdentyfikacyjne><NIP>1234563218</NIP><Nazwa>Skup Zbóż Wzorcowy sp. z o.o.</Nazwa></DaneIdentyfikacyjne><Adres><KodKraju>PL</KodKraju><AdresL1>ul. Młyńska 5, 26-600 Radom</AdresL1></Adres></Podmiot2>
+  <FakturaRR>
+    <KodWaluty>PLN</KodWaluty><P_4A>2026-10-05</P_4A><P_4B>2026-10-06</P_4B><P_4C>RR/2026/10/0007</P_4C>
+    <P_11_1>11000.00</P_11_1><P_11_2>770.00</P_11_2><P_12_1>11770.00</P_12_1><P_12_2>jedenaście tysięcy siedemset siedemdziesiąt złotych</P_12_2>
+    <RodzajFaktury>VAT_RR</RodzajFaktury>
+    <FakturaRRWiersz><NrWierszaFa>1</NrWierszaFa><P_5>Pszenica konsumpcyjna</P_5><P_6A>t</P_6A><P_6B>10</P_6B><P_6C>klasa A</P_6C><P_7>800.00</P_7><P_8>8000.00</P_8><P_9>7</P_9><P_10>560.00</P_10><P_11>8560.00</P_11></FakturaRRWiersz>
+    <FakturaRRWiersz><NrWierszaFa>2</NrWierszaFa><P_5>Rzepak</P_5><P_6A>t</P_6A><P_6B>2</P_6B><P_6C>klasa I</P_6C><P_7>1500.00</P_7><P_8>3000.00</P_8><P_9>7</P_9><P_10>210.00</P_10><P_11>3210.00</P_11></FakturaRRWiersz>
+    <Platnosc><FormaPlatnosci>1</FormaPlatnosci><RachunekBankowy1><NrRB>61109010140000071219812874</NrRB></RachunekBankowy1></Platnosc>
+  </FakturaRR>
+</Faktura>
