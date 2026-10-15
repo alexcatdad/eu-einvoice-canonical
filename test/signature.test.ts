@@ -39,7 +39,7 @@ describe('XAdES / XMLDSig', () => {
     const id = await makeIdentity('Test Signer One');
     const [s] = await sigsOf(utf8(await signXml(DOC, { signer: id })), 'x.xsig');
     assert.equal(s.type, 'XAdES');
-    assert.equal(s.verified, true, s.reason);
+    assert.equal(s.verified, true, s.reason ?? "");
     assert.equal(s.signer, 'Test Signer One');
     assert.equal(s.trust, 'not-checked');
     assert.equal(s.signedAt, '2026-01-02T03:04:05.000Z');
@@ -50,7 +50,7 @@ describe('XAdES / XMLDSig', () => {
     const id = await makeIdentity('Test Signer EC', 'ec');
     const [s] = await sigsOf(utf8(await signXml(DOC, { signer: id, c14n: 'exc', xades: false })), 'x.xml');
     assert.equal(s.type, 'XMLDSig');
-    assert.equal(s.verified, true, s.reason);
+    assert.equal(s.verified, true, s.reason ?? "");
   });
 
   test('changed content is detected', async () => {
@@ -82,8 +82,8 @@ describe('XAdES / XMLDSig', () => {
     const other = await makeIdentity('Other CA', 'rsa', undefined, true);
     const bytes = utf8(await signXml(DOC, { signer: leaf }));
     const [trusted] = await sigsOf(bytes, 'x.xsig', [ca.der]);
-    assert.equal(trusted.verified, true, trusted.reason);
-    assert.equal(trusted.trust, 'trusted', trusted.trustReason);
+    assert.equal(trusted.verified, true, trusted.reason ?? "");
+    assert.equal(trusted.trust, 'trusted', trusted.trustReason ?? "");
     const [untrusted] = await sigsOf(bytes, 'x.xsig', [other.der]);
     assert.equal(untrusted.verified, true);
     assert.equal(untrusted.trust, 'untrusted');
@@ -123,7 +123,7 @@ describe('detached XMLDSig in a ZIP (ANAF)', () => {
     const s = r.documents[0].payload.signatures;
     assert.equal(s.length, 1);
     assert.equal(s[0].type, 'detached');
-    assert.equal(s[0].verified, true, s[0].reason);
+    assert.equal(s[0].verified, true, s[0].reason ?? "");
   });
 
   test('a changed invoice entry fails', async () => {
@@ -140,7 +140,7 @@ describe('CAdES (.p7m)', () => {
     const id = await makeIdentity('Test Signer One');
     const [s] = await sigsOf(await signCms(content, id), 'inv.xml.p7m');
     assert.equal(s.type, 'CAdES');
-    assert.equal(s.verified, true, s.reason);
+    assert.equal(s.verified, true, s.reason ?? "");
     assert.equal(s.signer, 'Test Signer One');
     assert.equal(s.trust, 'not-checked');
     assert.equal(s.signedAt, '2026-03-04T05:06:07.000Z');
@@ -149,7 +149,7 @@ describe('CAdES (.p7m)', () => {
   test('base64 .p7m (PEM-less) verifies too', async () => {
     const id = await makeIdentity('Test Signer One');
     const [s] = await sigsOf(utf8(b64(await signCms(content, id))), 'inv.xml.p7m');
-    assert.equal(s.verified, true, s.reason);
+    assert.equal(s.verified, true, s.reason ?? "");
   });
 
   test('changed content is detected', async () => {
