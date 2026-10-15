@@ -47,5 +47,10 @@
   "ksef-fa3-kor-before-after.xml": ["ksef"],
   "ksef-fa3-kor-delta-increase.xml": ["ksef"],
   "ksef-fa3-zal.xml": ["ksef"],
-  "ksef-fa-rr.xml": ["ksef"]
+  "ksef-fa-rr.xml": ["ksef"],
+  "finvoice-invoice.xml": ["finvoice"],
+  "finvoice-credit.xml": ["finvoice"],
+  "e-arve-1.2-two-invoices.xml": ["e-arve"],
+  "eslog-2-invoice.xml": ["eslog-2"],
+  "eslog-2-credit.xml": ["eslog-2"]
 }

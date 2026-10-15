@@ -10,9 +10,12 @@ import type { CanonicalInvoice } from '../canonical.js';
 import type { XmlPayload } from '../envelope.js';
 import type { FormatDef, MatchDetails, ParserFamily } from '../formats.js';
 import { parseCii } from './cii.js';
+import { parseEarve } from './earve.js';
 import { parseEbinterface } from './ebinterface.js';
+import { parseEslog } from './eslog.js';
 import { parseFacturae } from './facturae.js';
 import { parseFatturaPa } from './fatturapa.js';
+import { parseFinvoice } from './finvoice.js';
 import { parseIsdoc } from './isdoc.js';
 import { parseKsef } from './ksef.js';
 import { parseMydata } from './mydata.js';
@@ -58,10 +61,10 @@ export const PARSERS: Record<ParserFamily, Parser> = {
   facturae: parseFacturae,        // Facturae 3.2, 3.2.1, 3.2.2
   isdoc: parseIsdoc,              // ISDOC 5.2+ and 6.x (Czechia)
   ebinterface: parseEbinterface,  // ebInterface 4.3 to 6.1 (Austria)
-  finvoice: stub('finvoice'),
+  finvoice: parseFinvoice,        // Finvoice 3.0 (Finland)
   teappsxml: parseTeappsxml,      // Finnish TEAPPSXML (INVOICE_CENTER)
-  'e-arve': stub('e-arve'),
-  eslog: stub('eslog'),
+  'e-arve': parseEarve,           // Estonian e-invoice 1.2 / 1.2.EN
+  eslog: parseEslog,              // eSLOG 2.0 (Slovenia)
   mydata: parseMydata,            // Greek AADE myDATA InvoicesDoc
 };
 
