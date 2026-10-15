@@ -183,7 +183,7 @@ describe('CAdES (.p7m)', () => {
     assert.equal(u.trust, 'untrusted');
   });
 
-  test('convert(): tampered p7m still converts, signature failed', async () => {
+  test('convert(): a signed p7m converts and reports signature passed', async () => {
     const id = await makeIdentity('Test Signer One');
     const r = await convert(await signCms(content, id), 'inv.xml.p7m');
     assert.equal((r.outcomes[0] as any).invoices[0].source.validation.signature, 'passed');
