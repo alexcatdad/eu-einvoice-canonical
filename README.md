@@ -32,6 +32,7 @@ received file ──► unwrap() ──► XML payload(s) ──► detectXml() 
 | `src/index.ts` | `inspect(bytes)` (unwrap + detect) and `convert(bytes)` (unwrap + detect + parse). Both return everything that was skipped, with the reason. |
 | `test/` | Detection, parser, hostile-input and value tests (about 160), plus `fixtures/expected.json` for the known-answer sweep. |
 | `scripts/sweep.ts` | Runs detection over a directory tree. Without `--expect` it counts formats; with `--expect answers.json` it checks each file against a known answer and exits 1 on a mismatch. |
+| `schemas/` | Generated JSON Schemas (draft 2020-12) for `CanonicalInvoice` and `ConvertResult`. `bun run build:schemas` regenerates them from `src/canonical.ts`; CI fails when they are stale. |
 | `site/` | The browser converter published to GitHub Pages (`bun run build:site` builds it into `dist/`). |
 
 Development uses [Bun](https://bun.sh) 1.4+. The library itself has no Bun or Node dependency: it runs in Node 20+, Bun and browsers.
@@ -136,6 +137,22 @@ relations: [
 - `method` says how a relation was found (`rule`, `arithmetic` or `model`); `confidence` is `proven`, `likely` or `review`, and is absent for structural rules that cannot be wrong.
 
 An optional language model can label what the rules leave as plain items (freight, labour, discount in Swedish and other languages) and propose links. It runs in the browser only (`site/model.ts`: WebLLM with Qwen3, or Chrome's Gemini Nano), is held to a JSON schema, never overrides a rule and marks everything `method: 'model'`, `confidence: 'review'`. `applyModelLabels(invoice, labeller)` merges its output. `site/eval.html` (built next to the converter) scores the rules and the models on the labelled set in `src/relations/labelled.ts` and records accuracy, time, download size and memory.
+
+## JSON Schema
+
+Consumers that are not written in TypeScript can validate and generate code from the output with two JSON Schemas (draft 2020-12), generated from the types and published with the site:
+
+- [`canonical-invoice.v1.schema.json`](https://alexcatdad.github.io/eu-einvoice-canonical/schemas/canonical-invoice.v1.schema.json): one `CanonicalInvoice`
+- [`convert-result.v1.schema.json`](https://alexcatdad.github.io/eu-einvoice-canonical/schemas/convert-result.v1.schema.json): what `convert()` returns (`outcomes[].invoices[]` are `CanonicalInvoice`s)
+
+Decimals, dates and times are strings with a `pattern`; open code lists (currency, country, VAT category, unit...) are plain strings whose common values are listed under `examples`; the BT/BG comments are the `description`s. Objects are open (`additionalProperties` is not false), so a payload from a newer minor release still validates. `bun run build:schemas` rewrites the files and the CI `test` job runs `bun run check:schemas`, which fails when the committed files differ from the types. Every test fixture's converted output is validated against them in `test/schema.test.ts`.
+
+### Schema versioning
+
+The library exports `schemaVersion` (`'v1'`), the major version in the schema file names and `$id`s.
+
+- **Additive changes keep v1**: new optional fields, new extension blocks, new code-list examples, new formats, new warning codes. Files are regenerated in place.
+- **Breaking changes go to v2**: removing or renaming a field, changing a field's type or meaning, making an optional field required, or narrowing a pattern. `*.v2.schema.json` is published next to the v1 files, which stay available at their URLs.
 
 ## EU coverage
 

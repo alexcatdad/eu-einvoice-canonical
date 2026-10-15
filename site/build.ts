@@ -2,7 +2,7 @@
  * Builds the static GitHub Pages site into dist/:
  *   bun run site/build.ts
  */
-import { cpSync, mkdirSync, rmSync } from 'node:fs';
+import { cpSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
 const root = join(import.meta.dir, '..');
@@ -41,5 +41,9 @@ if (!build.success) {
 cpSync(join(root, 'site/index.html'), join(out, 'index.html'));
 cpSync(join(root, 'site/eval.html'), join(out, 'eval.html'));
 cpSync(join(root, 'site/style.css'), join(out, 'style.css'));
+// JSON Schemas, published at /schemas/ (their $id points there). Regenerate with `bun run build:schemas`.
+mkdirSync(join(out, 'schemas'), { recursive: true });
+for (const file of readdirSync(join(root, 'schemas')).filter((f) => f.endsWith('.schema.json')))
+  cpSync(join(root, 'schemas', file), join(out, 'schemas', file));
 for (const s of SAMPLES) cpSync(join(root, 'test/fixtures', s), join(out, 'samples', s));
 console.log(`Built ${out} (${build.outputs.map((o) => `${o.path.split('/').pop()} ${(o.size / 1024).toFixed(0)} KB`).join(', ')})`);
