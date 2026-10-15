@@ -9,6 +9,7 @@
 import type { CanonicalInvoice } from '../canonical.js';
 import type { XmlPayload } from '../envelope.js';
 import type { FormatDef, MatchDetails, ParserFamily } from '../formats.js';
+import { parseCfdi } from './cfdi.js';
 import { parseCii } from './cii.js';
 import { parseEarve } from './earve.js';
 import { parseEbinterface } from './ebinterface.js';
@@ -59,6 +60,7 @@ export const PARSERS: Record<ParserFamily, Parser> = {
   'e-arve': parseEarve, // Estonian e-invoice 1.2 / 1.2.EN
   eslog: parseEslog, // eSLOG 2.0 (Slovenia)
   mydata: parseMydata, // Greek AADE myDATA InvoicesDoc
+  cfdi: parseCfdi, // Mexican CFDI 4.0 and 3.3 (ingreso, egreso)
 };
 
 /** Families with a real parser (derived from the registry, so it stays right as stubs are replaced). */
