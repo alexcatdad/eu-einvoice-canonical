@@ -22,6 +22,7 @@ import type { EnvelopeStep, SignatureInfo } from './canonical.js';
 import { NS } from './formats.js';
 import { sha256Hex } from './hash.js';
 import { probeXml } from './probe.js';
+import { verifyCadesLazy, verifyXmlLazy, type VerifyOptions } from './signature/index.js';
 
 export interface XmlPayload {
   xml: string;
@@ -35,6 +36,8 @@ export interface XmlPayload {
   sha256: string;
   /** Size of the XML payload in bytes, UTF-8 encoded. */
   byteLength: number;
+  /** Names of the other files in the ZIP this payload came from (ISDOCX attachments); only set for ZIP members. */
+  siblingEntries?: string[];
 }
 
 export interface Skipped {
@@ -65,6 +68,9 @@ export interface UnwrapLimits {
   maxDepth: number;
 }
 
+/** Signature verification settings (trust anchors, opt-out). */
+export type UnwrapOptions = VerifyOptions;
+
 export const DEFAULT_LIMITS: UnwrapLimits = {
   maxFileBytes: 50 * 1024 * 1024,
   maxEntryBytes: 50 * 1024 * 1024,
@@ -77,6 +83,7 @@ export const DEFAULT_LIMITS: UnwrapLimits = {
 interface Ctx {
   out: UnwrapResult;
   limits: UnwrapLimits;
+  verify: VerifyOptions;
   unpacked: number;
   entries: number;
 }
@@ -84,10 +91,11 @@ interface Ctx {
 /** Attachment names used by Factur-X, ZUGFeRD 2.0, XRechnung-in-PDF and ZUGFeRD 1.0 (compared case-insensitively). */
 const PDF_XML_NAMES = ['factur-x.xml', 'zugferd-invoice.xml', 'xrechnung.xml'];
 
-export async function unwrap(bytes: Uint8Array, filename?: string, limits: Partial<UnwrapLimits> = {}): Promise<UnwrapResult> {
+export async function unwrap(bytes: Uint8Array, filename?: string, limits: Partial<UnwrapLimits> = {}, options: UnwrapOptions = {}): Promise<UnwrapResult> {
   const ctx: Ctx = {
     out: { fileSha256: await sha256Hex(bytes), payloads: [], skipped: [] },
     limits: { ...DEFAULT_LIMITS, ...limits },
+    verify: options,
     unpacked: 0,
     entries: 0,
   };
@@ -141,13 +149,27 @@ async function walk(
     } catch (e) { out.skipped.push({ name, reason: `ZIP unreadable: ${(e as Error).message}` }); return; }
     out.skipped.push(...refused);
     const before = out.payloads.length;
-    const sigs: SignatureInfo[] = [];
+    const sigFiles: [string, Uint8Array][] = [];
     for (const [entry, data] of Object.entries(entries)) {
       if (entry.endsWith('/') || data.length === 0) continue;
-      if (isDetachedSignature(data)) { sigs.push({ type: 'detached' }); out.skipped.push({ name: entry, reason: 'Detached XML signature' }); continue; }
+      if (isDetachedSignature(data)) { sigFiles.push([entry, data]); out.skipped.push({ name: entry, reason: 'Detached XML signature' }); continue; }
       await walk(data, entry, [...path, { kind: 'zip', name: entry }], signatures, fromPdf, depth + 1, ctx);
     }
-    for (const p of out.payloads.slice(before)) p.signatures.push(...sigs);
+    // Each detached signature is checked against the archive entry its Reference names; the result is recorded on every invoice in the archive.
+    const siblings = out.payloads.slice(before);
+    for (const [entry, data] of sigFiles) {
+      const sigs = ctx.verify.verifySignatures === false ? [{ type: 'detached' as const }] : await verifyXmlLazy(decodeXml(data).text, {
+        ...ctx.verify, type: 'detached',
+        resolve: (uri) => findEntry(entries, uri, entry),
+      });
+      for (const sig of sigs) for (const p of siblings) p.signatures.push({ ...sig });
+    }
+    for (const p of siblings) {
+      const own = p.envelope.find((s) => s.kind === 'zip' && s.name !== undefined && s.name in entries && !s.name.endsWith('/'))?.name;
+      const others = Object.keys(entries).filter((n) => !n.endsWith('/') && entries[n].length > 0 && n !== own
+        && !siblings.some((q) => q.filename === n) && !sigFiles.some(([s]) => s === n));
+      if (others.length) p.siblingEntries = others;
+    }
     return;
   }
 
@@ -156,7 +178,8 @@ async function walk(
     const { extractCms } = await import('./envelope-cms.js');
     const cms = extractCms(bytes);
     if (cms) {
-      await walk(cms.content, stripP7m(name), [...path, { kind: 'cms-p7m', name }], [...signatures, { type: 'CAdES', signer: cms.signer }], fromPdf, depth + 1, ctx);
+      const cades = ctx.verify.verifySignatures === false ? [{ type: 'CAdES' as const, signer: cms.signer }] : await verifyCadesLazy(bytes, ctx.verify);
+      await walk(cms.content, stripP7m(name), [...path, { kind: 'cms-p7m', name }], [...signatures, ...cades], fromPdf, depth + 1, ctx);
       return;
     }
   }
@@ -205,7 +228,10 @@ async function walkXml(
   if (probe.rootNs === NS.xmldsig) { out.skipped.push({ name, reason: 'Detached XML signature' }); return; }
 
   const sigs = [...signatures];
-  if (text.includes(NS.xmldsig) && /<(?:[\w.-]+:)?Signature[\s>]/.test(text)) sigs.push({ type: text.includes('uri.etsi.org/01903') ? 'XAdES' : 'XMLDSig' });
+  if (text.includes(NS.xmldsig) && /<(?:[\w.-]+:)?Signature[\s>]/.test(text)) {
+    if (ctx.verify.verifySignatures === false) sigs.push({ type: text.includes('uri.etsi.org/01903') ? 'XAdES' : 'XMLDSig' });
+    else sigs.push(...await verifyXmlLazy(text, ctx.verify));
+  }
   const utf8 = new TextEncoder().encode(text);
   out.payloads.push({
     xml: text, encoding, envelope: [...path, { kind: 'xml', name }], filename: name, signatures: sigs, fromPdf,
@@ -262,6 +288,16 @@ function asBase64(bytes: Uint8Array): Uint8Array | null {
   // Only accept if it decodes to something we can handle.
   const looksUseful = b[0] === 0x30 || b[0] === 0x3c || startsWith(b, [0xef, 0xbb, 0xbf]) || startsWith(b, [0x25, 0x50, 0x44, 0x46]) || startsWith(b, [0x50, 0x4b, 0x03, 0x04]);
   return looksUseful ? b : null;
+}
+
+/** Finds the ZIP entry a detached signature's Reference URI names (exact path, then file name). */
+function findEntry(entries: Record<string, Uint8Array>, uri: string, signatureEntry: string): Uint8Array | undefined {
+  let name = uri;
+  try { name = decodeURIComponent(uri); } catch { /* keep as written */ }
+  if (name in entries && name !== signatureEntry) return entries[name];
+  const base = (n: string) => n.split('/').pop();
+  const hit = Object.keys(entries).find((k) => k !== signatureEntry && base(k) === base(name));
+  return hit ? entries[hit] : undefined;
 }
 
 function isDetachedSignature(bytes: Uint8Array): boolean {

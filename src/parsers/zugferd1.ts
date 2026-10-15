@@ -13,7 +13,7 @@ import type {
   AllowanceCharge, Attachment, CanonicalInvoice, Decimal, Line, Totals, VatBreakdown, VatInfo,
 } from '../canonical.js';
 import { cmp } from '../values.js';
-import { dateOf, delivery, party, payment, period, withScheme } from './cii.js';
+import { type DirectDebitEls, dateOf, delivery, party, payment, period, withScheme } from './cii.js';
 import { CREDIT_TYPE_CODES, Ctx, ParseError, SELF_BILLED_TYPE_CODES, finish, parseXml, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 import { recordUnmapped } from './leftover.js';
@@ -55,7 +55,7 @@ export function parseZugferd1(input: ParseInput): CanonicalInvoice[] {
   const attachmentDocs = addDocs.filter((d) => !['130', '50'].includes(c.text(d, 'ram:TypeCode') ?? ''));
 
   const sellerEl = c.el(agreement, 'ram:SellerTradeParty');
-  const seller = party(c, sellerEl) as CanonicalInvoice['seller'];
+  const seller = party(c, sellerEl, c.in('/seller')) as CanonicalInvoice['seller'];
   seller.taxRegistrationId = c.all(sellerEl, 'ram:SpecifiedTaxRegistration/ram:ID').filter((e) => c.attr(e, undefined, 'schemeID') === 'FC').map((e) => c.text(e)).find(Boolean);
   seller.additionalLegalInfo = c.text(sellerEl, 'ram:Description');
   const buyerEl = c.el(agreement, 'ram:BuyerTradeParty');
@@ -63,12 +63,12 @@ export function parseZugferd1(input: ParseInput): CanonicalInvoice[] {
   const inviteeEl = c.el(settlement, 'ram:InvoiceeTradeParty');
   const payeeEl = c.el(settlement, 'ram:PayeeTradeParty');
   const terms = c.all(settlement, 'ram:SpecifiedTradePaymentTerms');
-  const remittance = c.text(settlement, 'ram:PaymentReference');
+  const direct: DirectDebitEls = { remittance: c.el(settlement, 'ram:PaymentReference') };
 
   const taxes = c.all(settlement, 'ram:ApplicableTradeTax');
   const { totals, vatBreakdown } = totalsAndVat(c, settlement, taxes);
 
-  const lines = c.all(tx, 'ram:IncludedSupplyChainTradeLineItem').map((l) => line(c, l));
+  const lines = c.all(tx, 'ram:IncludedSupplyChainTradeLineItem').map((l, i) => line(c, l, i));
   if (lines.length === 0) c.warn('NO_LINES', 'The document has no invoice lines');
 
   const logistics = c.all(settlement, 'ram:SpecifiedLogisticsServiceCharge').map((s): AllowanceCharge => ({
@@ -123,17 +123,17 @@ export function parseZugferd1(input: ParseInput): CanonicalInvoice[] {
     notes: c.all(doc, 'ram:IncludedNote').map((n) => ({ subjectCode: c.text(n, 'ram:SubjectCode'), text: c.text(n, 'ram:Content') ?? '' })),
     specificationId: guideline ?? '',
     precedingInvoices: [],
-    invoicePeriod: period(c, c.el(settlement, 'ram:BillingSpecifiedPeriod')),
+    invoicePeriod: period(c, c.el(settlement, 'ram:BillingSpecifiedPeriod'), c.in('/invoicePeriod')),
     seller,
-    buyer: party(c, buyerEl),
+    buyer: party(c, buyerEl, c.in('/buyer')),
     payee: payeeEl ? {
       name: c.text(payeeEl, 'ram:Name') ?? '',
       identifier: c.id(payeeEl, 'ram:ID') ?? c.id(payeeEl, 'ram:GlobalID'),
       legalRegistrationId: c.id(payeeEl, 'ram:SpecifiedLegalOrganization/ram:ID'),
     } : undefined,
-    additionalParties: inviteeEl ? [{ role: 'invoicee', party: party(c, inviteeEl) }] : [],
-    delivery: delivery(c, deliveryEl),
-    payments: c.all(settlement, 'ram:SpecifiedTradeSettlementPaymentMeans').map((pm) => payment(c, pm, remittance, undefined, undefined)),
+    additionalParties: inviteeEl ? [{ role: 'invoicee', party: party(c, inviteeEl, c.in('/additionalParties/0/party')) }] : [],
+    delivery: delivery(c, deliveryEl, c.in('/delivery')),
+    payments: c.all(settlement, 'ram:SpecifiedTradeSettlementPaymentMeans').map((pm, i) => payment(c, pm, direct, c.in(`/payments/${i}`))),
     paymentSchedule: [],
     allowances: allowanceCharges(c, settlement, false),
     charges: [...allowanceCharges(c, settlement, true), ...logistics],
@@ -247,7 +247,7 @@ function attachment(c: Ctx, d: Element): Attachment {
   return { kind: 'reference', id, description, typeCode: c.text(d, 'ram:TypeCode') };
 }
 
-function line(c: Ctx, l: Element): Line {
+function line(c: Ctx, l: Element, index: number): Line {
   const docLine = c.el(l, 'ram:AssociatedDocumentLineDocument');
   const product = c.el(l, 'ram:SpecifiedTradeProduct');
   const agreement = c.el(l, 'ram:SpecifiedSupplyChainTradeAgreement');
@@ -275,7 +275,7 @@ function line(c: Ctx, l: Element): Line {
     netAmount,
     orderLineRef: c.text(agreement, 'ram:BuyerOrderReferencedDocument/ram:LineID'),
     accountingRef: c.text(lineSettlement, 'ram:ReceivableSpecifiedTradeAccountingAccount/ram:ID'),
-    period: period(c, c.el(lineSettlement, 'ram:BillingSpecifiedPeriod')),
+    period: period(c, c.el(lineSettlement, 'ram:BillingSpecifiedPeriod'), c.in(`/lines/${index}/period`)),
     allowances: allowanceCharges(c, lineSettlement, false),
     charges: allowanceCharges(c, lineSettlement, true),
     price: net ? {

@@ -19,7 +19,43 @@ Synthetic documents with fictitious parties. Their numbers are consistent (the E
 | `zugferd1-comfort.xml` | ZUGFeRD 1.0 COMFORT: two VAT rates, document allowance and charge, line discount, prepayment, GTIN, embedded attachment, BLZ (the test also wraps it in a PDF) |
 | `teappsxml-invoices.xml` | TEAPPSXML 3.0 batch: a sales invoice (row discount, charge, advance payment, an INFO row, Finnish payment reference, e-invoice address) and a credit note with SIGN="-" amounts and no currency element |
 | `mydata-two-invoices.xml` | myDATA InvoicesDoc with a 1.1 sales invoice (MARK, UID, line classifications, two VAT categories) and a 5.1 credit invoice (withholding, correlated MARK, no currency element) |
+| `isdoc-6.0.2-invoice.isdoc` | ISDOC 6.0.2 invoice in CZK: IČO/DIČ, two VAT rates, taxed and untaxed deposits, rounding, variable/constant/specific symbols, alternate account, supplement |
+| `isdoc-6.0.2-credit-eur.isdoc` | ISDOC DocumentType 2 with negative amounts in EUR (ForeignCurrencyCode, CurrRate), ParentDocumentID |
+| `ebinterface-6.1-invoice.xml` | ebInterface 6.1 invoice: line and document reductions/surcharges, two VAT rates, GTIN, prepayment, bank transfer, early-payment discount |
+| `ebinterface-4.3-creditmemo.xml` | ebInterface 4.3 CreditMemo (old Tax/VAT/VATItem structure, exempt line, delivery period, bank account without IBAN) |
+| `ksef-fa3-vat-multirate.xml` | KSeF FA(3) VAT invoice: 23/8/5/0 KR/zw lines, Podmiot3 recipient and factor, two due dates, factor account, GLN, KRS/REGON footer, contract and order references |
+| `ksef-fa3-kor-before-after.xml` | KSeF FA(3) KOR that reduces the amount, lines listed before (StanPrzed) and after, KSeF number of the corrected invoice |
+| `ksef-fa3-kor-delta-increase.xml` | KSeF FA(3) KOR in EUR with difference lines that increases the amount, VAT in PLN (P_14_1W), Obciazenia/Odliczenia, payment term as text, corrected invoice issued outside KSeF |
+| `ksef-fa3-zal.xml` | KSeF FA(3) ZAL advance invoice, already paid, with the Zamowienie it relates to |
+| `ksef-fa-rr.xml` | KSeF FA_RR(1) flat-rate farmer purchase invoice, two lines at 7 % refund |
+| `facturae-322-iva-irpf.xml` | Facturae 3.2.2 by an individual: IVA 21 % + IRPF 15 % (header and line), line discount, DIR3 administrative centres, series + number, operation date |
+| `facturae-322-recargo.xml` | Facturae 3.2.2 with recargo de equivalencia at 5.2 % and 1.4 %, 8-decimal line amounts, direct debit, registry data |
+| `facturae-322-batch.xml` | Facturae 3.2.2 batch (Modality L): two invoices, one with IVA, one with IGIC and two installments |
+| `facturae-322-rectificativa.xml` | Facturae 3.2.2 rectificativa by differences with negative amounts (a reduction) |
+| `fatturapa-b2b.xml` | FatturaPA FPR12 TD01: two VAT rates and a Natura N4 line, REA data, PEC routing, order/contract/DDT references, EAN code, embedded PDF, credit-transfer payment |
+| `fatturapa-credit-note.xml` | FatturaPA TD04 credit note referencing the B2B invoice (DatiFattureCollegate) |
+| `fatturapa-ritenuta-cassa-bollo.xml` | FatturaPA TD06 from a natural-person professional: RT01 ritenuta, TC22 cassa previdenziale, virtual stamp duty as an N1 line |
+| `fatturapa-split-payment.xml` | FatturaPA FPA12 to a public body: EsigibilitaIVA S, 6-character office code, CUP/CIG |
+| `fatturapa-lot.xml` | FatturaPA file with two FatturaElettronicaBody; the second has two instalments (TP01) |
+| `fatturapa-fsm10.xml` | FatturaPA semplificata FSM10 (TD07): VAT-inclusive Importo blocks, one with Natura N4 |
 
-## From public sample collections
+## Provenance of the other fixtures
 
-The remaining fixtures were assembled by the earlier version of this project from public samples, mainly [phive-rules](https://github.com/phax/phive-rules) and [Mustang](https://github.com/ZUGFeRD/mustangproject) (both Apache License 2.0), some trimmed or re-wrapped to exercise one envelope or encoding (UTF-16, SBDH, SOAP, ZIP, CAdES). The `.p7m` files are signed with a throwaway test certificate. The origin of each individual file was not re-verified when this repository was created.
+Re-checked against the public corpora (phive-rules `58e8c83`, mustangproject `68520f6`, FNFE France_RFE `97ba0f3`; all three are Apache License 2.0). "Derived" means the file differs from the named source only in the stated way. Where a file is not a copy of anything found, it is a hand-written header-only stub with fictitious values (written for this project, so no third-party licence applies).
+
+| File | Origin | Licence |
+|---|---|---|
+| `facturx-en16931.pdf` | Byte-identical to Mustang `library/src/test/resources/EN16931_Einfach.pdf` | Apache-2.0 (mustangproject) |
+| `invoice.isdocx` | `faktura.isdoc` inside is identical (line endings aside) to phive-rules `phive-rules-isdoc/.../test-files/6.0.1/doklad.isdoc`, the sample from the ISDOC specification (isdoc.cz); `priloha.txt` is a dummy attachment | phive-rules Apache-2.0; the ISDOC sample's own licence is not stated |
+| `anaf-download.zip` | `4567890123.xml` inside is byte-identical to phive-rules `phive-rules-cius-ro/.../test-files/1.0.8/ubl_b2g_example1.xml` (CIUS-RO B2G example); `semnatura_4567890123.xml` is a placeholder signature file | phive-rules Apache-2.0; the CIUS-RO example's own licence is not stated |
+| `peppol-utf16.xml` | Derived from the Peppol AU/NZ example `AU Credit_note.xml` (phive-rules `phive-rules-peppol/.../test-files/aunz-peppol/1.0.12/`): comment line changed, re-encoded as UTF-16 | phive-rules Apache-2.0; upstream is the Peppol AU/NZ authority's example set, licence not stated |
+| `peppol-in-sbdh.xml` | The same credit note wrapped in a hand-written SBDH | as above |
+| `hr-cius.xml` | The same credit note with CustomizationID replaced by the Croatian identifier | as above |
+| `en16931-2026.xml` | The same credit note with CustomizationID `urn:cen.eu:en16931:2026` (the identifier is invented to test the 2026 revision) | as above |
+| `IT01234567890_FPR12.xml.p7m`, `IT01234567890_FPR12.base64.xml.p7m` | The invoice inside (Società Alpha Srl to Beta Gamma) is the well-known Agenzia delle Entrate specimen FatturaPA; not found in the clones, so the exact source and licence are **not verified**. The CMS wrapper is generated here with a throwaway certificate | Specimen: unclear. Wrapper: this project |
+| `finvoice-with-soap.xml` | Finvoice 3.0 sample (identifier `Inv900375418`, operators OPERAATTORI1/2) inside a hand-written SOAP/ebXML envelope. The Finvoice part resembles Finanssiala's published Finvoice 3.0 examples but was **not found** in the clones, so the source and licence are **not verified** | Unclear |
+| `ksef-fa3.xml`, `eslog2.xml`, `e-arve-two-invoices.xml`, `ebinterface-61.xml`, `fattura-semplificata.xml`, `sdi-metadata.xml`, `mydata.xml`, `facturae-322-signed.xsig` | Hand-written header-only stubs, not found in any corpus | This project |
+
+If you can name the original of a "not verified" file, say so in the table; do not delete the fixture, the tests depend on it.
+
+The known-answer manifest for the public corpora themselves (`test/corpus/expected.json`) is described in `.github/workflows/corpus.yml` and `scripts/corpus-manifest.ts`; those files are fetched at run time and are not stored in this repository.

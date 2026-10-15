@@ -1,0 +1,58 @@
+name: Public corpora
+
+# Detection against public sample collections: weekly and on demand, never on a pull request.
+# 1. coverage: every file under the corpora goes through detection (what is found, what is unknown)
+# 2. correctness: a manifest of files whose format is clear from their folder must all match
+# The clones are pinned in scripts/fetch-corpora.sh.
+
+on:
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: corpus-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  corpus:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - name: Fetch the corpora at their pinned commits
+        run: scripts/fetch-corpora.sh test/corpus/repos | tee corpus-pins.txt
+      - name: Coverage sweep (never fails the job)
+        run: bun scripts/sweep.ts test/corpus/repos | tee corpus-report.txt
+      - name: Known-answer sweep
+        if: always()
+        run: bun scripts/sweep.ts --expect test/corpus/expected.json | tee corpus-expect.txt
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo '## Public corpora'
+            echo '### Pinned commits'; echo '```'; cat corpus-pins.txt; echo '```'
+            echo '### Known answers'; echo '```'; tail -n 40 corpus-expect.txt; echo '```'
+            echo '### Coverage (counts per format)'; echo '```'; head -n 200 corpus-report.txt; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: corpus-reports
+          path: |
+            corpus-pins.txt
+            corpus-report.txt
+            corpus-expect.txt

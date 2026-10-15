@@ -11,7 +11,7 @@ import type {
   Address, AllowanceCharge, Attachment, CanonicalInvoice, Contact, CountryExtensions, Identifier, IsoDate,
   Line, Party, PaymentInstructions, Period, Seller, Totals, VatBreakdown,
 } from '../canonical.js';
-import { CREDIT_TYPE_CODES, Ctx, ParseError, SELF_BILLED_TYPE_CODES, finish, parseXml, sourceMeta } from './context.js';
+import { CREDIT_TYPE_CODES, Ctx, ParseError, type Scope, SELF_BILLED_TYPE_CODES, finish, parseXml, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 
 const NS = {
@@ -23,7 +23,8 @@ const NS = {
 
 export function parseCii(input: ParseInput): CanonicalInvoice[] {
   const root = parseXml(input.payload.xml);
-  const c = new Ctx(NS);
+  const c = new Ctx(NS, input.provenance);
+  const s = c.in('');
   const ctxEl = c.el(root, 'rsm:ExchangedDocumentContext');
   const doc = c.el(root, 'rsm:ExchangedDocument');
   const tx = c.el(root, 'rsm:SupplyChainTradeTransaction');
@@ -31,13 +32,17 @@ export function parseCii(input: ParseInput): CanonicalInvoice[] {
   const deliveryEl = c.el(tx, 'ram:ApplicableHeaderTradeDelivery');
   const settlement = c.el(tx, 'ram:ApplicableHeaderTradeSettlement');
 
-  const id = c.text(doc, 'ram:ID');
-  const issueDate = dateOf(c, c.el(doc, 'ram:IssueDateTime'), 'BT-2');
+  const id = s.text(doc, 'ram:ID', 'id');
+  const issueDate = dateOf(c, c.el(doc, 'ram:IssueDateTime'), 'BT-2', s.path('issueDate'));
   if (!id || !issueDate) throw new ParseError('Invoice number (BT-1) or issue date (BT-2) missing');
-  const typeCode = c.text(doc, 'ram:TypeCode') ?? '380';
-  const currency = c.text(settlement, 'ram:InvoiceCurrencyCode');
+  let typeCode = s.text(doc, 'ram:TypeCode', 'typeCode');
+  if (!typeCode) {
+    typeCode = '380';
+    c.derive('/typeCode', 'No TypeCode in the document; defaulted to 380');
+  }
+  const currency = s.text(settlement, 'ram:InvoiceCurrencyCode', 'currency');
   if (!currency) throw new ParseError('Invoice currency (BT-5) missing');
-  const taxCurrency = c.text(settlement, 'ram:TaxCurrencyCode');
+  const taxCurrency = s.text(settlement, 'ram:TaxCurrencyCode', 'taxCurrency');
 
   const addDocs = c.all(agreement, 'ram:AdditionalReferencedDocument');
   const docByType = (code: string) => addDocs.filter((d) => c.text(d, 'ram:TypeCode') === code);
@@ -45,18 +50,21 @@ export function parseCii(input: ParseInput): CanonicalInvoice[] {
   const tender = docByType('50')[0];
 
   const sellerEl = c.el(agreement, 'ram:SellerTradeParty');
-  const seller = party(c, sellerEl) as Seller;
-  seller.taxRegistrationId = c.all(sellerEl, 'ram:SpecifiedTaxRegistration/ram:ID').filter((e) => c.attr(e, undefined, 'schemeID') === 'FC').map((e) => c.text(e)).find(Boolean);
-  seller.additionalLegalInfo = c.text(sellerEl, 'ram:Description');
+  const seller = party(c, sellerEl, s.in('seller')) as Seller;
+  const taxRegEl = c.all(sellerEl, 'ram:SpecifiedTaxRegistration/ram:ID').filter((e) => c.attr(e, undefined, 'schemeID') === 'FC').find((e) => c.text(e));
+  seller.taxRegistrationId = s.text(taxRegEl, undefined, 'seller/taxRegistrationId');
+  seller.additionalLegalInfo = s.text(sellerEl, 'ram:Description', 'seller/additionalLegalInfo');
 
   const payeeEl = c.el(settlement, 'ram:PayeeTradeParty');
   const terms = c.all(settlement, 'ram:SpecifiedTradePaymentTerms');
-  const creditorId = c.text(settlement, 'ram:CreditorReferenceID');
-  const mandateId = terms.map((t) => c.text(t, 'ram:DirectDebitMandateID')).find(Boolean);
-  const remittance = c.text(settlement, 'ram:PaymentReference');
+  const direct: DirectDebitEls = {
+    creditor: c.el(settlement, 'ram:CreditorReferenceID'),
+    mandate: terms.map((t) => c.el(t, 'ram:DirectDebitMandateID')).find((e) => c.text(e)),
+    remittance: c.el(settlement, 'ram:PaymentReference'),
+  };
 
   const taxes = c.all(settlement, 'ram:ApplicableTradeTax');
-  const { totals, vatBreakdown } = totalsAndVat(c, settlement, taxes, currency, taxCurrency);
+  const { totals, vatBreakdown } = totalsAndVat(c, settlement, taxes, currency, taxCurrency, s);
   const firstTax = taxes[0];
 
   const format = input.format.id;
@@ -65,8 +73,14 @@ export function parseCii(input: ParseInput): CanonicalInvoice[] {
   if (format === 'facturx') extensions.de = { zugferdProfile: input.details.profile };
   if (format === 'fr-ctc-cii') extensions.fr = { profile: input.details.profile };
 
-  const lines = c.all(tx, 'ram:IncludedSupplyChainTradeLineItem').map((l) => line(c, l));
+  const lines = c.all(tx, 'ram:IncludedSupplyChainTradeLineItem').map((l, i) => line(c, l, s.in('lines').in(i)));
   if (lines.length === 0) c.warn('NO_LINES', 'The document has no invoice lines (normal for Factur-X MINIMUM and BASIC WL, which are not complete EN 16931 invoices)');
+
+  let dueDate: IsoDate | undefined;
+  for (const t of terms) {
+    dueDate = dateOf(c, c.el(t, 'ram:DueDateDateTime'), 'BT-9', s.path('dueDate'));
+    if (dueDate) break;
+  }
 
   const inv = {
     kind: CREDIT_TYPE_CODES.has(typeCode) ? 'creditNote' : 'invoice',
@@ -76,47 +90,53 @@ export function parseCii(input: ParseInput): CanonicalInvoice[] {
     selfBilled: SELF_BILLED_TYPE_CODES.has(typeCode),
     currency,
     taxCurrency,
-    taxPointDate: dateOf(c, c.el(firstTax, 'ram:TaxPointDate'), 'BT-7'),
-    vatPointDateCode: c.text(firstTax, 'ram:DueDateTypeCode'),
-    dueDate: terms.map((t) => dateOf(c, c.el(t, 'ram:DueDateDateTime'), 'BT-9')).find(Boolean),
-    buyerReference: c.text(agreement, 'ram:BuyerReference'),
-    projectRef: c.text(agreement, 'ram:SpecifiedProcuringProject/ram:ID'),
-    contractRef: c.text(agreement, 'ram:ContractReferencedDocument/ram:IssuerAssignedID'),
-    purchaseOrderRef: c.text(agreement, 'ram:BuyerOrderReferencedDocument/ram:IssuerAssignedID'),
-    salesOrderRef: c.text(agreement, 'ram:SellerOrderReferencedDocument/ram:IssuerAssignedID'),
-    receivingAdviceRef: c.text(deliveryEl, 'ram:ReceivingAdviceReferencedDocument/ram:IssuerAssignedID'),
-    despatchAdviceRef: c.text(deliveryEl, 'ram:DespatchAdviceReferencedDocument/ram:IssuerAssignedID'),
-    tenderRef: c.text(tender, 'ram:IssuerAssignedID'),
-    invoicedObjectId: invoicedObject ? withScheme(c.text(invoicedObject, 'ram:IssuerAssignedID'), c.text(invoicedObject, 'ram:ReferenceTypeCode')) : undefined,
-    accountingRef: c.text(settlement, 'ram:ReceivableSpecifiedTradeAccountingAccount/ram:ID'),
-    paymentTerms: terms.map((t) => c.text(t, 'ram:Description')).filter(Boolean).join('\n') || undefined,
-    notes: c.all(doc, 'ram:IncludedNote').map((n) => ({ subjectCode: c.text(n, 'ram:SubjectCode'), text: c.text(n, 'ram:Content') ?? '' })),
-    businessProcess: c.text(ctxEl, 'ram:BusinessProcessSpecifiedDocumentContextParameter/ram:ID'),
-    specificationId: c.text(ctxEl, 'ram:GuidelineSpecifiedDocumentContextParameter/ram:ID') ?? '',
-    precedingInvoices: c.all(settlement, 'ram:InvoiceReferencedDocument').map((r) => ({
-      id: c.text(r, 'ram:IssuerAssignedID') ?? '',
-      issueDate: dateOf(c, c.el(r, 'ram:FormattedIssueDateTime'), 'BT-26'),
-    })),
-    invoicePeriod: period(c, c.el(settlement, 'ram:BillingSpecifiedPeriod')),
+    taxPointDate: dateOf(c, c.el(firstTax, 'ram:TaxPointDate'), 'BT-7', s.path('taxPointDate')),
+    vatPointDateCode: s.text(firstTax, 'ram:DueDateTypeCode', 'vatPointDateCode'),
+    dueDate,
+    buyerReference: s.text(agreement, 'ram:BuyerReference', 'buyerReference'),
+    projectRef: s.text(agreement, 'ram:SpecifiedProcuringProject/ram:ID', 'projectRef'),
+    contractRef: s.text(agreement, 'ram:ContractReferencedDocument/ram:IssuerAssignedID', 'contractRef'),
+    purchaseOrderRef: s.text(agreement, 'ram:BuyerOrderReferencedDocument/ram:IssuerAssignedID', 'purchaseOrderRef'),
+    salesOrderRef: s.text(agreement, 'ram:SellerOrderReferencedDocument/ram:IssuerAssignedID', 'salesOrderRef'),
+    receivingAdviceRef: s.text(deliveryEl, 'ram:ReceivingAdviceReferencedDocument/ram:IssuerAssignedID', 'receivingAdviceRef'),
+    despatchAdviceRef: s.text(deliveryEl, 'ram:DespatchAdviceReferencedDocument/ram:IssuerAssignedID', 'despatchAdviceRef'),
+    tenderRef: s.text(tender, 'ram:IssuerAssignedID', 'tenderRef'),
+    invoicedObjectId: invoicedObject ? withScheme(s.text(invoicedObject, 'ram:IssuerAssignedID', 'invoicedObjectId/value'), s.text(invoicedObject, 'ram:ReferenceTypeCode', 'invoicedObjectId/schemeId')) : undefined,
+    accountingRef: s.text(settlement, 'ram:ReceivableSpecifiedTradeAccountingAccount/ram:ID', 'accountingRef'),
+    paymentTerms: joinTexts(c, terms.map((t) => c.el(t, 'ram:Description')), s.path('paymentTerms')),
+    notes: c.all(doc, 'ram:IncludedNote').map((n, i) => {
+      const p = s.in('notes').in(i);
+      return { subjectCode: p.text(n, 'ram:SubjectCode', 'subjectCode'), text: p.text(n, 'ram:Content', 'text') ?? '' };
+    }),
+    businessProcess: s.text(ctxEl, 'ram:BusinessProcessSpecifiedDocumentContextParameter/ram:ID', 'businessProcess'),
+    specificationId: s.text(ctxEl, 'ram:GuidelineSpecifiedDocumentContextParameter/ram:ID', 'specificationId') ?? '',
+    precedingInvoices: c.all(settlement, 'ram:InvoiceReferencedDocument').map((r, i) => {
+      const p = s.in('precedingInvoices').in(i);
+      return {
+        id: p.text(r, 'ram:IssuerAssignedID', 'id') ?? '',
+        issueDate: dateOf(c, c.el(r, 'ram:FormattedIssueDateTime'), 'BT-26', p.path('issueDate')),
+      };
+    }),
+    invoicePeriod: period(c, c.el(settlement, 'ram:BillingSpecifiedPeriod'), s.in('invoicePeriod')),
     seller,
-    buyer: party(c, c.el(agreement, 'ram:BuyerTradeParty')),
+    buyer: party(c, c.el(agreement, 'ram:BuyerTradeParty'), s.in('buyer')),
     payee: payeeEl ? {
-      name: c.text(payeeEl, 'ram:Name') ?? '',
-      identifier: identifiers(c, payeeEl)[0],
-      legalRegistrationId: c.id(payeeEl, 'ram:SpecifiedLegalOrganization/ram:ID'),
+      name: s.text(payeeEl, 'ram:Name', 'payee/name') ?? '',
+      identifier: identifiers(c, payeeEl, (i) => (i === 0 ? s.path('payee/identifier') : undefined))[0],
+      legalRegistrationId: s.id(payeeEl, 'ram:SpecifiedLegalOrganization/ram:ID', 'payee/legalRegistrationId'),
     } : undefined,
-    taxRepresentative: taxRepresentative(c, c.el(agreement, 'ram:SellerTaxRepresentativeTradeParty')),
+    taxRepresentative: taxRepresentative(c, c.el(agreement, 'ram:SellerTaxRepresentativeTradeParty'), s.in('taxRepresentative')),
     additionalParties: [],
-    delivery: delivery(c, deliveryEl),
-    payments: c.all(settlement, 'ram:SpecifiedTradeSettlementPaymentMeans').map((pm) => payment(c, pm, remittance, creditorId, mandateId)),
+    delivery: delivery(c, deliveryEl, s.in('delivery')),
+    payments: c.all(settlement, 'ram:SpecifiedTradeSettlementPaymentMeans').map((pm, i) => payment(c, pm, direct, s.in('payments').in(i))),
     paymentSchedule: [],
-    allowances: allowanceCharges(c, settlement, false, true),
-    charges: allowanceCharges(c, settlement, true, true),
+    allowances: allowanceCharges(c, settlement, false, true, s.in('allowances')),
+    charges: allowanceCharges(c, settlement, true, true, s.in('charges')),
     totals,
     vatBreakdown,
     otherTaxes: [],
     withholdings: [],
-    attachments: docByType('916').map((d) => attachment(c, d)),
+    attachments: docByType('916').map((d, i) => attachment(c, d, s.in('attachments').in(i))),
     lines,
     clearance: [],
     extensions,
@@ -131,186 +151,209 @@ export function parseCii(input: ParseInput): CanonicalInvoice[] {
 export const withScheme = (value: string | undefined, schemeId: string | undefined): Identifier | undefined =>
   value ? (schemeId ? { value, schemeId } : { value }) : undefined;
 
+/** Elements of the settlement that feed every payment's direct-debit and remittance fields. */
+export interface DirectDebitEls { creditor?: Element; mandate?: Element; remittance?: Element }
+
+/** Texts of the non-empty elements joined with a newline; the value is bound to all of them. */
+function joinTexts(c: Ctx, els: (Element | undefined)[], bind: string): string | undefined {
+  const used = els.filter((e): e is Element => !!e && !!c.text(e));
+  c.markAll(bind, used);
+  return used.map((e) => c.text(e)).join('\n') || undefined;
+}
+
 /** CII dates sit in a udt:DateTimeString / udt:DateString / qdt:DateTimeString child, usually format 102 (YYYYMMDD). */
-export function dateOf(c: Ctx, el: Element | undefined, field: string): IsoDate | undefined {
+export function dateOf(c: Ctx, el: Element | undefined, field: string, bind?: string): IsoDate | undefined {
   const inner = c.el(el, '*:DateTimeString') ?? c.el(el, '*:DateString');
   if (!inner) return undefined;
   const fmt = c.attr(inner, undefined, 'format');
   if (fmt && fmt !== '102') c.warn('DATE_FORMAT', `${field}: date format ${fmt} is not 102 (YYYYMMDD); read as ISO`);
-  return c.date(inner, undefined, field);
+  return c.date(inner, undefined, field, bind);
 }
 
-function identifiers(c: Ctx, p: Element | undefined): Identifier[] {
-  return [
-    ...c.all(p, 'ram:ID').map((e) => c.id(e)),
-    ...c.all(p, 'ram:GlobalID').map((e) => c.id(e)),
-  ].filter((i): i is Identifier => !!i);
+/** `path(i)` gives the canonical path of the i-th identifier, or undefined where it is not wanted. */
+function identifiers(c: Ctx, p: Element | undefined, path: (i: number) => string | undefined): Identifier[] {
+  const els = c.nonEmpty([...c.all(p, 'ram:ID'), ...c.all(p, 'ram:GlobalID')]);
+  return els.map((e, i) => c.id(e, undefined, 'schemeID', path(i))!);
 }
 
-export function party(c: Ctx, p: Element | undefined): Party {
+export function party(c: Ctx, p: Element | undefined, s: Scope): Party {
   const regs = c.all(p, 'ram:SpecifiedTaxRegistration/ram:ID');
   const contactEl = c.el(p, 'ram:DefinedTradeContact');
+  const vatEl = regs.filter((e) => c.attr(e, undefined, 'schemeID') === 'VA').find((e) => c.text(e));
   return {
-    name: c.text(p, 'ram:Name'),
-    tradingName: c.text(p, 'ram:SpecifiedLegalOrganization/ram:TradingBusinessName'),
-    identifiers: identifiers(c, p),
-    legalRegistrationId: c.id(p, 'ram:SpecifiedLegalOrganization/ram:ID'),
-    vatId: regs.filter((e) => c.attr(e, undefined, 'schemeID') === 'VA').map((e) => c.text(e)).find(Boolean),
+    name: s.text(p, 'ram:Name', 'name'),
+    tradingName: s.text(p, 'ram:SpecifiedLegalOrganization/ram:TradingBusinessName', 'tradingName'),
+    identifiers: identifiers(c, p, (i) => s.path(`identifiers/${i}`)),
+    legalRegistrationId: s.id(p, 'ram:SpecifiedLegalOrganization/ram:ID', 'legalRegistrationId'),
+    vatId: s.text(vatEl, undefined, 'vatId'),
     nationalTaxIds: [],
-    endpoint: c.id(p, 'ram:URIUniversalCommunication/ram:URIID'),
-    address: address(c, c.el(p, 'ram:PostalTradeAddress')),
-    contact: contactEl ? contact(c, contactEl) : undefined,
+    endpoint: s.id(p, 'ram:URIUniversalCommunication/ram:URIID', 'endpoint'),
+    address: address(c, c.el(p, 'ram:PostalTradeAddress'), s.in('address')),
+    contact: contactEl ? contact(contactEl, s.in('contact')) : undefined,
   };
 }
 
-function address(c: Ctx, a: Element | undefined): Address | undefined {
+function address(c: Ctx, a: Element | undefined, s: Scope): Address | undefined {
   if (!a) return undefined;
   return {
-    line1: c.text(a, 'ram:LineOne'),
-    line2: c.text(a, 'ram:LineTwo'),
-    line3: c.text(a, 'ram:LineThree'),
-    city: c.text(a, 'ram:CityName'),
-    postalCode: c.text(a, 'ram:PostcodeCode'),
-    countrySubdivision: c.text(a, 'ram:CountrySubDivisionName'),
-    countryCode: c.text(a, 'ram:CountryID'),
+    line1: s.text(a, 'ram:LineOne', 'line1'),
+    line2: s.text(a, 'ram:LineTwo', 'line2'),
+    line3: s.text(a, 'ram:LineThree', 'line3'),
+    city: s.text(a, 'ram:CityName', 'city'),
+    postalCode: s.text(a, 'ram:PostcodeCode', 'postalCode'),
+    countrySubdivision: s.text(a, 'ram:CountrySubDivisionName', 'countrySubdivision'),
+    countryCode: s.text(a, 'ram:CountryID', 'countryCode'),
   };
 }
 
-function contact(c: Ctx, e: Element): Contact {
+function contact(e: Element, s: Scope): Contact {
   return {
-    name: c.text(e, 'ram:PersonName') ?? c.text(e, 'ram:DepartmentName'),
-    phone: c.text(e, 'ram:TelephoneUniversalCommunication/ram:CompleteNumber'),
-    email: c.text(e, 'ram:EmailURIUniversalCommunication/ram:URIID'),
+    name: s.text(e, 'ram:PersonName', 'name') ?? s.text(e, 'ram:DepartmentName', 'name'),
+    phone: s.text(e, 'ram:TelephoneUniversalCommunication/ram:CompleteNumber', 'phone'),
+    email: s.text(e, 'ram:EmailURIUniversalCommunication/ram:URIID', 'email'),
   };
 }
 
-export function period(c: Ctx, p: Element | undefined): Period | undefined {
+export function period(c: Ctx, p: Element | undefined, s: Scope): Period | undefined {
   if (!p) return undefined;
-  const start = dateOf(c, c.el(p, 'ram:StartDateTime'), 'period start');
-  const end = dateOf(c, c.el(p, 'ram:EndDateTime'), 'period end');
+  const start = dateOf(c, c.el(p, 'ram:StartDateTime'), 'period start', s.path('start'));
+  const end = dateOf(c, c.el(p, 'ram:EndDateTime'), 'period end', s.path('end'));
   return start || end ? { start, end } : undefined;
 }
 
-function taxRepresentative(c: Ctx, t: Element | undefined) {
+function taxRepresentative(c: Ctx, t: Element | undefined, s: Scope) {
   if (!t) return undefined;
   return {
-    name: c.text(t, 'ram:Name') ?? '',
-    vatId: c.text(t, 'ram:SpecifiedTaxRegistration/ram:ID') ?? '',
-    address: address(c, c.el(t, 'ram:PostalTradeAddress')) ?? {},
+    name: s.text(t, 'ram:Name', 'name') ?? '',
+    vatId: s.text(t, 'ram:SpecifiedTaxRegistration/ram:ID', 'vatId') ?? '',
+    address: address(c, c.el(t, 'ram:PostalTradeAddress'), s.in('address')) ?? {},
   };
 }
 
-export function delivery(c: Ctx, d: Element | undefined) {
+export function delivery(c: Ctx, d: Element | undefined, s: Scope) {
   if (!d) return undefined;
   const shipTo = c.el(d, 'ram:ShipToTradeParty');
-  const date = dateOf(c, c.el(d, 'ram:ActualDeliverySupplyChainEvent/ram:OccurrenceDateTime'), 'BT-72');
+  const date = dateOf(c, c.el(d, 'ram:ActualDeliverySupplyChainEvent/ram:OccurrenceDateTime'), 'BT-72', s.path('actualDate'));
   if (!shipTo && !date) return undefined;
   return {
-    partyName: c.text(shipTo, 'ram:Name'),
-    locationId: c.id(shipTo, 'ram:GlobalID') ?? c.id(shipTo, 'ram:ID'),
+    partyName: s.text(shipTo, 'ram:Name', 'partyName'),
+    locationId: s.id(shipTo, 'ram:GlobalID', 'locationId') ?? s.id(shipTo, 'ram:ID', 'locationId'),
     actualDate: date,
-    address: address(c, c.el(shipTo, 'ram:PostalTradeAddress')),
+    address: address(c, c.el(shipTo, 'ram:PostalTradeAddress'), s.in('address')),
   };
 }
 
-export function payment(c: Ctx, pm: Element, remittance: string | undefined, creditorId: string | undefined, mandateId: string | undefined): PaymentInstructions {
-  const code = c.text(pm, 'ram:TypeCode') ?? '';
+export function payment(c: Ctx, pm: Element, direct: DirectDebitEls, s: Scope): PaymentInstructions {
+  const code = s.text(pm, 'ram:TypeCode', 'meansCode') ?? '';
   const card = c.el(pm, 'ram:ApplicableTradeSettlementFinancialCard');
-  const debtor = c.text(pm, 'ram:PayerPartyDebtorFinancialAccount/ram:IBANID');
+  const debtorEl = c.el(pm, 'ram:PayerPartyDebtorFinancialAccount/ram:IBANID');
   const accounts = c.all(pm, 'ram:PayeePartyCreditorFinancialAccount');
-  const bic = c.text(pm, 'ram:PayeeSpecifiedCreditorFinancialInstitution/ram:BICID');
+  const creditorId = c.text(direct.creditor);
+  const d = s.in('directDebit');
+  const k = s.in('card');
   return {
     meansCode: code,
-    meansText: c.text(pm, 'ram:Information'),
-    remittanceInformation: remittance,
-    creditTransfers: accounts.map((a) => ({
-      accountId: c.text(a, 'ram:IBANID') ?? c.text(a, 'ram:ProprietaryID') ?? '',
-      accountName: c.text(a, 'ram:AccountName'),
-      serviceProviderId: bic,
-    })),
-    card: card ? { primaryAccountNumber: c.text(card, 'ram:ID') ?? '', holderName: c.text(card, 'ram:CardholderName') } : undefined,
-    directDebit: debtor || mandateId || (creditorId && code === '59') ? { mandateId, creditorId, debitedAccountId: debtor } : undefined,
+    meansText: s.text(pm, 'ram:Information', 'meansText'),
+    remittanceInformation: s.text(direct.remittance, undefined, 'remittanceInformation'),
+    creditTransfers: accounts.map((a, i) => {
+      const t = s.in('creditTransfers').in(i);
+      return {
+        accountId: t.text(a, 'ram:IBANID', 'accountId') ?? t.text(a, 'ram:ProprietaryID', 'accountId') ?? '',
+        accountName: t.text(a, 'ram:AccountName', 'accountName'),
+        serviceProviderId: t.text(pm, 'ram:PayeeSpecifiedCreditorFinancialInstitution/ram:BICID', 'serviceProviderId'),
+      };
+    }),
+    card: card ? { primaryAccountNumber: k.text(card, 'ram:ID', 'primaryAccountNumber') ?? '', holderName: k.text(card, 'ram:CardholderName', 'holderName') } : undefined,
+    directDebit: c.text(debtorEl) || c.text(direct.mandate) || (creditorId && code === '59')
+      ? { mandateId: d.text(direct.mandate, undefined, 'mandateId'), creditorId: d.text(direct.creditor, undefined, 'creditorId'), debitedAccountId: d.text(debtorEl, undefined, 'debitedAccountId') }
+      : undefined,
   };
 }
 
-function allowanceCharges(c: Ctx, parent: Element | undefined, charge: boolean, docLevel: boolean): AllowanceCharge[] {
+function allowanceCharges(c: Ctx, parent: Element | undefined, charge: boolean, docLevel: boolean, s: Scope): AllowanceCharge[] {
   return c.all(parent, 'ram:SpecifiedTradeAllowanceCharge')
     .filter((a) => (c.text(a, 'ram:ChargeIndicator/*:Indicator') ?? '').toLowerCase() === String(charge))
-    .map((a) => ({
-      amount: c.dec(a, 'ram:ActualAmount')!,
-      baseAmount: c.dec(a, 'ram:BasisAmount'),
-      percentage: c.dec(a, 'ram:CalculationPercent'),
-      reason: c.text(a, 'ram:Reason'),
-      reasonCode: c.text(a, 'ram:ReasonCode'),
-      vat: docLevel && c.el(a, 'ram:CategoryTradeTax') ? {
-        categoryCode: c.text(a, 'ram:CategoryTradeTax/ram:CategoryCode') ?? '',
-        rate: c.dec(a, 'ram:CategoryTradeTax/ram:RateApplicablePercent'),
-      } : undefined,
-    }));
+    .map((a, i) => {
+      const t = s.in(i);
+      return {
+        amount: t.dec(a, 'ram:ActualAmount', 'amount')!,
+        baseAmount: t.dec(a, 'ram:BasisAmount', 'baseAmount'),
+        percentage: t.dec(a, 'ram:CalculationPercent', 'percentage'),
+        reason: t.text(a, 'ram:Reason', 'reason'),
+        reasonCode: t.text(a, 'ram:ReasonCode', 'reasonCode'),
+        vat: docLevel && c.el(a, 'ram:CategoryTradeTax') ? {
+          categoryCode: t.text(a, 'ram:CategoryTradeTax/ram:CategoryCode', 'vat/categoryCode') ?? '',
+          rate: t.dec(a, 'ram:CategoryTradeTax/ram:RateApplicablePercent', 'vat/rate'),
+        } : undefined,
+      };
+    });
 }
 
-function totalsAndVat(c: Ctx, settlement: Element | undefined, taxes: Element[], currency: string, taxCurrency: string | undefined): { totals: Totals; vatBreakdown: VatBreakdown[] } {
+function totalsAndVat(c: Ctx, settlement: Element | undefined, taxes: Element[], currency: string, taxCurrency: string | undefined, s: Scope): { totals: Totals; vatBreakdown: VatBreakdown[] } {
   const m = c.el(settlement, 'ram:SpecifiedTradeSettlementHeaderMonetarySummation');
   if (!m) throw new ParseError('SpecifiedTradeSettlementHeaderMonetarySummation (BG-22) missing');
   const taxTotals = c.all(m, 'ram:TaxTotalAmount');
   const inCur = (cur: string) => taxTotals.find((t) => c.attr(t, undefined, 'currencyID') === cur);
   const vatEl = inCur(currency) ?? taxTotals.find((t) => !c.attr(t, undefined, 'currencyID')) ?? taxTotals[0];
   const vatTaxCurEl = taxCurrency && taxCurrency !== currency ? inCur(taxCurrency) : undefined;
-  const req = (name: string, bt: string) => {
-    const v = c.dec(m, `ram:${name}`);
+  const ts = s.in('totals');
+  const req = (name: string, bt: string, key: string) => {
+    const v = ts.dec(m, `ram:${name}`, key);
     if (v === undefined) throw new ParseError(`${bt} (${name}) missing`);
     return v;
   };
-  const lineNetTotal = c.dec(m, 'ram:LineTotalAmount');
-  const taxExclusive = req('TaxBasisTotalAmount', 'BT-109');
+  const lineNetTotal = ts.dec(m, 'ram:LineTotalAmount', 'lineNetTotal');
+  const taxExclusive = req('TaxBasisTotalAmount', 'BT-109', 'taxExclusive');
   if (lineNetTotal === undefined) c.warn('NO_LINE_TOTAL', 'LineTotalAmount (BT-106) missing; set to TaxBasisTotalAmount (BT-109)');
   const totals: Totals = {
     lineNetTotal: lineNetTotal ?? taxExclusive,
-    allowanceTotal: c.dec(m, 'ram:AllowanceTotalAmount'),
-    chargeTotal: c.dec(m, 'ram:ChargeTotalAmount'),
+    allowanceTotal: ts.dec(m, 'ram:AllowanceTotalAmount', 'allowanceTotal'),
+    chargeTotal: ts.dec(m, 'ram:ChargeTotalAmount', 'chargeTotal'),
     taxExclusive,
-    vatTotal: c.dec(vatEl),
-    vatTotalInTaxCurrency: c.dec(vatTaxCurEl),
-    taxInclusive: req('GrandTotalAmount', 'BT-112'),
-    prepaid: c.dec(m, 'ram:TotalPrepaidAmount'),
-    rounding: c.dec(m, 'ram:RoundingAmount'),
-    payable: req('DuePayableAmount', 'BT-115'),
+    vatTotal: ts.dec(vatEl, undefined, 'vatTotal'),
+    vatTotalInTaxCurrency: ts.dec(vatTaxCurEl, undefined, 'vatTotalInTaxCurrency'),
+    taxInclusive: req('GrandTotalAmount', 'BT-112', 'taxInclusive'),
+    prepaid: ts.dec(m, 'ram:TotalPrepaidAmount', 'prepaid'),
+    rounding: ts.dec(m, 'ram:RoundingAmount', 'rounding'),
+    payable: req('DuePayableAmount', 'BT-115', 'payable'),
   };
   if (lineNetTotal === undefined) c.derive('/totals/lineNetTotal', 'BT-106 absent; copied from BT-109');
-  const vatBreakdown = taxes.map((t): VatBreakdown => {
-    const taxableAmount = c.dec(t, 'ram:BasisAmount');
-    const taxAmount = c.dec(t, 'ram:CalculatedAmount');
+  const vatBreakdown = taxes.map((t, i): VatBreakdown => {
+    const v = s.in('vatBreakdown').in(i);
+    const taxableAmount = v.dec(t, 'ram:BasisAmount', 'taxableAmount');
+    const taxAmount = v.dec(t, 'ram:CalculatedAmount', 'taxAmount');
     if (taxableAmount === undefined || taxAmount === undefined) throw new ParseError('ApplicableTradeTax without BasisAmount or CalculatedAmount');
     return {
       taxableAmount,
       taxAmount,
-      categoryCode: c.text(t, 'ram:CategoryCode') ?? '',
-      rate: c.dec(t, 'ram:RateApplicablePercent'),
-      exemptionReason: c.text(t, 'ram:ExemptionReason'),
-      exemptionReasonCode: c.text(t, 'ram:ExemptionReasonCode'),
+      categoryCode: v.text(t, 'ram:CategoryCode', 'categoryCode') ?? '',
+      rate: v.dec(t, 'ram:RateApplicablePercent', 'rate'),
+      exemptionReason: v.text(t, 'ram:ExemptionReason', 'exemptionReason'),
+      exemptionReasonCode: v.text(t, 'ram:ExemptionReasonCode', 'exemptionReasonCode'),
     };
   });
   return { totals, vatBreakdown };
 }
 
-function attachment(c: Ctx, d: Element): Attachment {
-  const id = c.text(d, 'ram:IssuerAssignedID') ?? '';
-  const description = c.text(d, 'ram:Name');
+function attachment(c: Ctx, d: Element, s: Scope): Attachment {
+  const id = s.text(d, 'ram:IssuerAssignedID', 'id') ?? '';
+  const description = s.text(d, 'ram:Name', 'description');
   const bin = c.el(d, 'ram:AttachmentBinaryObject');
   if (bin) {
+    c.mark(s.path('base64'), bin);
     return {
       kind: 'embedded', id, description,
-      mimeCode: c.attr(bin, undefined, 'mimeCode') ?? '',
-      filename: c.attr(bin, undefined, 'filename') ?? '',
+      mimeCode: s.attr(bin, undefined, 'mimeCode', 'mimeCode') ?? '',
+      filename: s.attr(bin, undefined, 'filename', 'filename') ?? '',
       base64: (bin.textContent ?? '').replace(/\s+/g, ''),
     };
   }
-  const uri = c.text(d, 'ram:URIID');
+  const uri = s.text(d, 'ram:URIID', 'uri');
   if (uri) return { kind: 'external', id, description, uri };
-  return { kind: 'reference', id, description, typeCode: '916' };
+  return { kind: 'reference', id, description, typeCode: s.text(d, 'ram:TypeCode', 'typeCode') ?? '916' };
 }
 
-function line(c: Ctx, l: Element): Line {
+function line(c: Ctx, l: Element, s: Scope): Line {
   const docLine = c.el(l, 'ram:AssociatedDocumentLineDocument');
   const product = c.el(l, 'ram:SpecifiedTradeProduct');
   const agreement = c.el(l, 'ram:SpecifiedLineTradeAgreement');
@@ -319,44 +362,52 @@ function line(c: Ctx, l: Element): Line {
   const gross = c.el(agreement, 'ram:GrossPriceProductTradePrice');
   const net = c.el(agreement, 'ram:NetPriceProductTradePrice');
   const tax = c.el(lineSettlement, 'ram:ApplicableTradeTax');
-  const lineId = c.text(docLine, 'ram:LineID') ?? '';
-  const netAmount = c.dec(lineSettlement, 'ram:SpecifiedTradeSettlementLineMonetarySummation/ram:LineTotalAmount');
+  const lineId = s.text(docLine, 'ram:LineID', 'id') ?? '';
+  const netAmount = s.dec(lineSettlement, 'ram:SpecifiedTradeSettlementLineMonetarySummation/ram:LineTotalAmount', 'netAmount');
   if (netAmount === undefined) throw new ParseError(`Line ${lineId || '?'}: LineTotalAmount (BT-131) missing`);
   const objectRef = c.all(lineSettlement, 'ram:AdditionalReferencedDocument').find((d) => c.text(d, 'ram:TypeCode') === '130');
   const baseQty = c.el(net, 'ram:BasisQuantity') ?? c.el(gross, 'ram:BasisQuantity');
+  const p = s.in('price');
+  const it = s.in('item');
   return {
     id: lineId,
-    note: c.all(docLine, 'ram:IncludedNote').map((n) => c.text(n, 'ram:Content')).filter(Boolean).join('\n') || undefined,
-    objectId: objectRef ? withScheme(c.text(objectRef, 'ram:IssuerAssignedID'), c.text(objectRef, 'ram:ReferenceTypeCode')) : undefined,
-    quantity: c.dec(qtyEl),
-    unitCode: c.attr(qtyEl, undefined, 'unitCode'),
+    note: joinTexts(c, c.all(docLine, 'ram:IncludedNote').map((n) => c.el(n, 'ram:Content')), s.path('note')),
+    objectId: objectRef ? withScheme(s.text(objectRef, 'ram:IssuerAssignedID', 'objectId/value'), s.text(objectRef, 'ram:ReferenceTypeCode', 'objectId/schemeId')) : undefined,
+    quantity: s.dec(qtyEl, undefined, 'quantity'),
+    unitCode: s.attr(qtyEl, undefined, 'unitCode', 'unitCode'),
     netAmount,
-    orderLineRef: c.text(agreement, 'ram:BuyerOrderReferencedDocument/ram:LineID'),
-    accountingRef: c.text(lineSettlement, 'ram:ReceivableSpecifiedTradeAccountingAccount/ram:ID'),
-    period: period(c, c.el(lineSettlement, 'ram:BillingSpecifiedPeriod')),
-    allowances: allowanceCharges(c, lineSettlement, false, false),
-    charges: allowanceCharges(c, lineSettlement, true, false),
+    orderLineRef: s.text(agreement, 'ram:BuyerOrderReferencedDocument/ram:LineID', 'orderLineRef'),
+    accountingRef: s.text(lineSettlement, 'ram:ReceivableSpecifiedTradeAccountingAccount/ram:ID', 'accountingRef'),
+    period: period(c, c.el(lineSettlement, 'ram:BillingSpecifiedPeriod'), s.in('period')),
+    allowances: allowanceCharges(c, lineSettlement, false, false, s.in('allowances')),
+    charges: allowanceCharges(c, lineSettlement, true, false, s.in('charges')),
     price: net ? {
-      net: c.dec(net, 'ram:ChargeAmount')!,
-      discount: c.dec(gross, 'ram:AppliedTradeAllowanceCharge/ram:ActualAmount'),
-      gross: c.dec(gross, 'ram:ChargeAmount'),
-      baseQuantity: c.dec(baseQty),
-      baseQuantityUnit: c.attr(baseQty, undefined, 'unitCode'),
+      net: p.dec(net, 'ram:ChargeAmount', 'net')!,
+      discount: p.dec(gross, 'ram:AppliedTradeAllowanceCharge/ram:ActualAmount', 'discount'),
+      gross: p.dec(gross, 'ram:ChargeAmount', 'gross'),
+      baseQuantity: p.dec(baseQty, undefined, 'baseQuantity'),
+      baseQuantityUnit: p.attr(baseQty, undefined, 'unitCode', 'baseQuantityUnit'),
     } : undefined,
-    vat: tax ? { categoryCode: c.text(tax, 'ram:CategoryCode') ?? '', rate: c.dec(tax, 'ram:RateApplicablePercent') } : undefined,
+    vat: tax ? { categoryCode: s.text(tax, 'ram:CategoryCode', 'vat/categoryCode') ?? '', rate: s.dec(tax, 'ram:RateApplicablePercent', 'vat/rate') } : undefined,
     item: {
-      name: c.text(product, 'ram:Name') ?? '',
-      description: c.text(product, 'ram:Description'),
-      sellerId: c.text(product, 'ram:SellerAssignedID'),
-      buyerId: c.text(product, 'ram:BuyerAssignedID'),
-      standardId: c.id(product, 'ram:GlobalID'),
-      classifications: c.all(product, 'ram:DesignatedProductClassification/ram:ClassCode').map((e) => ({
-        code: c.text(e) ?? '',
-        listId: c.attr(e, undefined, 'listID') ?? '',
-        listVersion: c.attr(e, undefined, 'listVersionID'),
-      })),
-      originCountry: c.text(product, 'ram:OriginTradeCountry/ram:ID'),
-      attributes: c.all(product, 'ram:ApplicableProductCharacteristic').map((p) => ({ name: c.text(p, 'ram:Description') ?? '', value: c.text(p, 'ram:Value') ?? '' })),
+      name: it.text(product, 'ram:Name', 'name') ?? '',
+      description: it.text(product, 'ram:Description', 'description'),
+      sellerId: it.text(product, 'ram:SellerAssignedID', 'sellerId'),
+      buyerId: it.text(product, 'ram:BuyerAssignedID', 'buyerId'),
+      standardId: it.id(product, 'ram:GlobalID', 'standardId'),
+      classifications: c.all(product, 'ram:DesignatedProductClassification/ram:ClassCode').map((e, i) => {
+        const k = it.in('classifications').in(i);
+        return {
+          code: k.text(e, undefined, 'code') ?? '',
+          listId: k.attr(e, undefined, 'listID', 'listId') ?? '',
+          listVersion: k.attr(e, undefined, 'listVersionID', 'listVersion'),
+        };
+      }),
+      originCountry: it.text(product, 'ram:OriginTradeCountry/ram:ID', 'originCountry'),
+      attributes: c.all(product, 'ram:ApplicableProductCharacteristic').map((e, i) => {
+        const a = it.in('attributes').in(i);
+        return { name: a.text(e, 'ram:Description', 'name') ?? '', value: a.text(e, 'ram:Value', 'value') ?? '' };
+      }),
     },
   };
 }
