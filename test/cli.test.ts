@@ -253,7 +253,14 @@ describe('einvoice export', () => {
     const missing = await run(['export', '--format', 'csv', '--accounts', join(tmp, 'nope.json'), peppol]);
     expect(missing.code).toBe(1);
     expect(missing.stderr).toMatch(/cannot read the account mapping/);
-    const invalid = await run(['export', '--format', 'csv', '--accounts', write('bad.json', '{"payable":"2440"}'), peppol]);
+    const invalid = await run([
+      'export',
+      '--format',
+      'csv',
+      '--accounts',
+      write('bad.json', '{"payable":"2440","defaultExpense":"4010"}'),
+      peppol,
+    ]);
     expect(invalid.code).toBe(1);
     expect(invalid.stderr).toMatch(/"inputVat" is required/);
   });

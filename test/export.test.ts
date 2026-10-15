@@ -224,7 +224,14 @@ describe('journal entry: other sources', () => {
 });
 
 describe('account mapping rules', () => {
-  const base: AccountMapping = { payable: '2440', inputVat: '2641', expense: [], defaultExpense: '4010' };
+  const base: AccountMapping = {
+    payable: '2440',
+    inputVat: '2641',
+    expense: [],
+    defaultExpense: '4010',
+    rounding: '3740',
+    prepaid: '1680',
+  };
 
   test('rules match on line id, VAT category and rate, seller and classification; first match wins', async () => {
     const m: AccountMapping = {
@@ -295,7 +302,7 @@ describe('account mapping rules', () => {
     assert.throws(
       () => buildJournalEntry(inv, BAS_EXAMPLE_MAPPING),
       (err: unknown) =>
-        err instanceof JournalError && err.code === 'unbalanced' && /debits 3591\.00, credits 3592\.00, difference 1\.00/.test(err.message),
+        err instanceof JournalError && err.code === 'unbalanced' && /debits 3691\.00, credits 3692\.00, difference 1\.00/.test(err.message),
     );
   });
 
@@ -354,7 +361,8 @@ describe('SIE 4 export', () => {
       const sie = toSie4([e], { generated: '2026-10-16', currency, program: PROGRAM });
       const expected = new Uint8Array(readFileSync(expectedPath(`${file.replace(/\.xml$/, '')}.se`)));
       assert.deepEqual(sie.bytes, expected);
-      assert.deepEqual(sie.warnings, []);
+      // Polish names lose their accents in CP437; the file says so instead of failing.
+      assert.equal(sie.warnings.length > 0, file.startsWith('ksef'));
     });
 
   test('structure: header, one #VER per entry with numbering, #TRANS amounts sum to zero', async () => {
