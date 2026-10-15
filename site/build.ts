@@ -22,7 +22,8 @@ const build = await Bun.build({
   target: 'browser',
   minify: true,
   sourcemap: 'linked',
-  naming: 'app.js',
+  splitting: true,
+  naming: { entry: 'app.js', chunk: 'chunks/[name]-[hash].js', asset: '[name]-[hash].[ext]' },
 });
 if (!build.success) {
   for (const log of build.logs) console.error(log);
