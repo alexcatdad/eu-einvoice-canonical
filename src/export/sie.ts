@@ -36,7 +36,7 @@ const compact = (iso: string) => iso.replaceAll('-', '');
 const quote = (s: string) =>
   `"${s
     .replace(/[\r\n]+/g, ' ')
-    .replace(/"/g, '\\"')
+    .replace(/[\\"]/g, '\\$&')
     .trim()}"`;
 
 /** 10 digits as NNNNNN-NNNN, from a Swedish organisation number (ICD 0007). */
