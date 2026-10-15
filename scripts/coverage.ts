@@ -7,7 +7,8 @@
  *
  * Floors are a ratchet, not a target: raise them when coverage goes up, and never lower
  * them to make a PR pass. Files listed in `exclude` are covered by other means (for
- * example the CLI, whose tests run it as a subprocess that Bun's coverage cannot see).
+ * example the CLI and the sweep module, whose tests run them as subprocesses that Bun's
+ * coverage cannot see).
  */
 import { appendFileSync, existsSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';

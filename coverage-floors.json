@@ -1,6 +1,6 @@
 {
-  "totalLines": 0,
-  "totalFunctions": 0,
-  "perFileLines": 0,
-  "exclude": ["src/cli.ts"]
+  "totalLines": 90,
+  "totalFunctions": 85,
+  "perFileLines": 85,
+  "exclude": ["src/cli.ts", "src/sweep.ts"]
 }
