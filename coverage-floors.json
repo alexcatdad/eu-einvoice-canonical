@@ -1,0 +1,6 @@
+{
+  "totalLines": 0,
+  "totalFunctions": 0,
+  "perFileLines": 0,
+  "exclude": ["src/cli.ts"]
+}

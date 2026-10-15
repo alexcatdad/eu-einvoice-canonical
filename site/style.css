@@ -283,6 +283,20 @@ pre.json { margin: 0; padding: 0.9rem 1rem; max-height: calc(100vh - 6rem); over
 .fmt.identifies { border: 1.5px solid var(--identifies); color: var(--muted); }
 .wrappers { max-width: 46em; margin: 1.25rem 0 0; color: var(--muted); }
 
+/* Conformance checklist page --------------------------------------------------- */
+.checklist { padding-bottom: 3rem; }
+.checklist-summary { max-width: 46em; margin: 0 0 1.25rem; padding-left: 1.1rem; }
+.table-scroll { overflow-x: auto; background: var(--paper); border: 1px solid var(--rule); border-radius: var(--r); }
+.conformance { width: 100%; border-collapse: collapse; font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.conformance th, .conformance td { padding: 0.5rem 0.65rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--rule); }
+.conformance thead th { font-size: 0.75rem; font-weight: 600; color: var(--muted); font-variation-settings: 'wdth' 80; border-bottom: 1.5px solid var(--text); white-space: nowrap; }
+.conformance tbody th { font-weight: 600; min-width: 12rem; }
+.conformance .sub { display: block; font: 0.75rem var(--mono); color: var(--muted); font-weight: 400; }
+.conformance .num { text-align: right; }
+.conformance .good { color: var(--ok); font-weight: 600; }
+.conformance .gap { color: var(--pen); }
+.conformance td:nth-child(8) { min-width: 16rem; }
+
 .colophon { padding-block: 2.5rem 3rem; color: var(--muted); font-size: 0.9rem; }
 .colophon p { margin: 0; max-width: 46em; }
 

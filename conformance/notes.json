@@ -1,0 +1,29 @@
+{
+  "$comment": "Hand-maintained facts the conformance checklist cannot derive from code. publicSamples: fixtures that are real public samples, not written for the test suite. mappingSource: the specification a parser's mapping follows; formats without one show 'not recorded'. validation: conformance layers run for the format (schema, semantic, profile).",
+  "publicSamples": [
+    "peppol-in-sbdh.xml",
+    "peppol-utf16.xml",
+    "hr-cius.xml",
+    "en16931-2026.xml",
+    "anaf-download.zip",
+    "finvoice-with-soap.xml",
+    "invoice.isdocx",
+    "ksef-fa3.xml",
+    "eslog2.xml",
+    "e-arve-two-invoices.xml",
+    "facturae-322-signed.xsig",
+    "ebinterface-61.xml",
+    "fattura-semplificata.xml",
+    "mydata.xml",
+    "sdi-metadata.xml",
+    "IT01234567890_FPR12.xml.p7m",
+    "IT01234567890_FPR12.base64.xml.p7m",
+    "facturx-en16931.pdf"
+  ],
+  "mappingSource": {
+    "ubl": "EN 16931-3-2 (UBL binding) as documented in the Peppol BIS Billing 3.0 syntax pages",
+    "cii": "EN 16931-3-3 (CII binding) as documented by FNFE-MPE / FeRD for Factur-X and KoSIT for XRechnung",
+    "svefaktura": "SFTI, Mapping of Svefaktura 1.0 onto EN 16931-1, v1.4"
+  },
+  "validation": {}
+}
