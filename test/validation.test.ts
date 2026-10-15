@@ -131,3 +131,21 @@ describe('validation', () => {
     assert.equal(invoice.source.validation?.bundles.schema, 'xsd-ubl-2.1');
   });
 });
+
+describe('validation keeps the signature layer', () => {
+  test('a signed invoice keeps its signature status and findings when validate is on', async () => {
+    const bytes = fixture('IT01234567890_FPR12.xml.p7m');
+    const plain = await convert(bytes, 'signed.xml.p7m');
+    const validated = await convert(bytes, 'signed.xml.p7m', undefined, { validate: true });
+    const a = plain.outcomes[0];
+    const b = validated.outcomes[0];
+    assert.equal(a.status, 'ok');
+    assert.equal(b.status, 'ok');
+    if (a.status !== 'ok' || b.status !== 'ok') return;
+    const before = a.invoices[0].source.validation!;
+    const after = b.invoices[0].source.validation!;
+    assert.notEqual(before.signature, 'not-run');
+    assert.equal(after.signature, before.signature);
+    assert.deepEqual(after.findings.filter((f) => f.layer === 'signature'), before.findings.filter((f) => f.layer === 'signature'));
+  });
+});

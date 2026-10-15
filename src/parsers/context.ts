@@ -24,13 +24,65 @@ export function parseXml(xml: string): Element {
 
 type Step = [ns: string | null, local: string];
 
+const xpathCache = new WeakMap<Element, string>();
+
+/**
+ * Absolute XPath of an element, written with the qualified names found in the document
+ * (`/Invoice/cac:LegalMonetaryTotal`). A positional predicate is added only where
+ * siblings share the name (`cac:InvoiceLine[2]`).
+ */
+export function xpathOf(el: Element): string {
+  const hit = xpathCache.get(el);
+  if (hit) return hit;
+  let step = el.nodeName;
+  const parent = el.parentNode as Element | null;
+  let path: string;
+  if (parent && parent.nodeType === 1) {
+    let count = 0;
+    let index = 0;
+    for (let s = parent.firstChild; s; s = s.nextSibling) {
+      if (s.nodeType === 1 && s.nodeName === el.nodeName) { count++; if (s === el) index = count; }
+    }
+    if (count > 1) step += `[${index}]`;
+    path = `${xpathOf(parent)}/${step}`;
+  } else {
+    path = `/${step}`;
+  }
+  xpathCache.set(el, path);
+  return path;
+}
+
 export class Ctx {
   readonly warnings: SourceMeta['warnings'] = [];
   readonly derived: SourceMeta['derived'] = [];
   readonly unmapped: SourceMeta['unmapped'] = {};
   private readonly cache = new Map<string, Step[]>();
+  /** Canonical JSON path -> source XPath; present only when provenance was asked for. */
+  readonly provenance?: Record<string, string>;
 
-  constructor(private readonly ns: Record<string, string>) {}
+  constructor(private readonly ns: Record<string, string>, provenance = false) {
+    if (provenance) this.provenance = {};
+  }
+
+  /** Scope for binding reads to canonical paths: `c.in('/seller').text(el, 'cbc:Name', 'name')` records '/seller/name'. */
+  in(prefix: string): Scope {
+    return new Scope(this, prefix);
+  }
+
+  /** Records that the canonical value at `canonical` came from `el` (or from its attribute `attr`). */
+  mark(canonical: string | undefined, el: Element | undefined, attr?: string) {
+    if (canonical && el && this.provenance) this.provenance[canonical] = xpathOf(el) + (attr ? `/@${attr}` : '');
+  }
+
+  /** Same for a value assembled from several elements: the XPaths are joined with `|`. */
+  markAll(canonical: string | undefined, els: Element[]) {
+    if (canonical && els.length && this.provenance) this.provenance[canonical] = els.map(xpathOf).join(' | ');
+  }
+
+  /** Elements with non-empty text, so array indexes stay aligned with what ends up in the output. */
+  nonEmpty(els: Element[]): Element[] {
+    return els.filter((e) => this.text(e));
+  }
 
   private steps(path: string): Step[] {
     let s = this.cache.get(path);
@@ -72,25 +124,31 @@ export class Ctx {
   }
 
   /** Trimmed text of the first element at `path`; undefined when absent or empty. */
-  text(node: Element | undefined, path?: string): string | undefined {
+  text(node: Element | undefined, path?: string, bind?: string): string | undefined {
     const el = path ? this.el(node, path) : node;
     const t = el?.textContent?.trim();
-    return t ? t : undefined;
+    if (!t) return undefined;
+    this.mark(bind, el);
+    return t;
   }
 
-  texts(node: Element | undefined, path: string): string[] {
-    return this.all(node, path).map((e) => e.textContent?.trim() ?? '').filter(Boolean);
+  texts(node: Element | undefined, path: string, bind?: string): string[] {
+    const els = this.nonEmpty(this.all(node, path));
+    this.markAll(bind, els);
+    return els.map((e) => e.textContent!.trim());
   }
 
-  attr(node: Element | undefined, path: string | undefined, name: string): string | undefined {
+  attr(node: Element | undefined, path: string | undefined, name: string, bind?: string): string | undefined {
     const el = path ? this.el(node, path) : node;
     const v = el?.getAttribute(name)?.trim();
-    return v ? v : undefined;
+    if (!v) return undefined;
+    this.mark(bind, el, name);
+    return v;
   }
 
   /** Decimal at `path`. Throws ParseError on a malformed number: amounts that cannot be read make the invoice unusable. */
-  dec(node: Element | undefined, path?: string): Decimal | undefined {
-    const raw = this.text(node, path);
+  dec(node: Element | undefined, path?: string, bind?: string): Decimal | undefined {
+    const raw = this.text(node, path, bind);
     if (raw === undefined) return undefined;
     try { return toDecimal(raw); } catch (e) {
       if (e instanceof ValueError) throw new ParseError(`${describe(node, path)}: ${e.message}`);
@@ -99,8 +157,8 @@ export class Ctx {
   }
 
   /** Date at `path`; date-times are truncated and the dropped time is recorded as a warning. */
-  date(node: Element | undefined, path?: string, field?: string): IsoDate | undefined {
-    const raw = this.text(node, path);
+  date(node: Element | undefined, path?: string, field?: string, bind?: string): IsoDate | undefined {
+    const raw = this.text(node, path, bind);
     if (raw === undefined) return undefined;
     try {
       const { date, droppedTime } = toIsoDate(raw);
@@ -113,11 +171,11 @@ export class Ctx {
   }
 
   /** Identifier with its scheme attribute (schemeID by default). */
-  id(node: Element | undefined, path?: string, schemeAttr = 'schemeID'): Identifier | undefined {
+  id(node: Element | undefined, path?: string, schemeAttr = 'schemeID', bind?: string): Identifier | undefined {
     const el = path ? this.el(node, path) : node;
-    const value = this.text(el);
+    const value = this.text(el, undefined, bind && `${bind}/value`);
     if (!value) return undefined;
-    const schemeId = this.attr(el, undefined, schemeAttr);
+    const schemeId = this.attr(el, undefined, schemeAttr, bind && `${bind}/schemeId`);
     return schemeId ? { value, schemeId } : { value };
   }
 
@@ -128,6 +186,28 @@ export class Ctx {
   derive(field: string, rule: string) {
     this.derived.push({ field, rule });
   }
+}
+
+/**
+ * A canonical-path prefix to read under. Parsers write `s.text(node, 'cbc:Name', 'name')`
+ * and, when provenance is on, the XPath of the node read is recorded for `<prefix>/name`.
+ * Keys may be nested (`'address/city'`); array items are scopes of their own (`c.in('/lines/0')`).
+ * With provenance off the reads behave exactly like the plain Ctx ones.
+ */
+export class Scope {
+  constructor(readonly c: Ctx, readonly prefix: string) {}
+
+  in(key: string | number): Scope { return new Scope(this.c, `${this.prefix}/${key}`); }
+  /** Canonical path of `key` under this scope, for `c.mark`. */
+  path(key: string): string { return `${this.prefix}/${key}`; }
+  private b(key: string): string | undefined { return this.c.provenance ? `${this.prefix}/${key}` : undefined; }
+
+  text(node: Element | undefined, path: string | undefined, key: string) { return this.c.text(node, path, this.b(key)); }
+  texts(node: Element | undefined, path: string, key: string) { return this.c.texts(node, path, this.b(key)); }
+  attr(node: Element | undefined, path: string | undefined, name: string, key: string) { return this.c.attr(node, path, name, this.b(key)); }
+  dec(node: Element | undefined, path: string | undefined, key: string) { return this.c.dec(node, path, this.b(key)); }
+  date(node: Element | undefined, path: string | undefined, field: string | undefined, key: string) { return this.c.date(node, path, field, this.b(key)); }
+  id(node: Element | undefined, path: string | undefined, key: string, schemeAttr = 'schemeID') { return this.c.id(node, path, schemeAttr, this.b(key)); }
 }
 
 function describe(node: Element | undefined, path?: string) {
@@ -168,6 +248,7 @@ export function sourceMeta(input: ParseInput, root: Element, ctx: Ctx, extra: Pa
     unmapped: ctx.unmapped,
     derived: ctx.derived,
     warnings: ctx.warnings,
+    ...(ctx.provenance ? { provenance: ctx.provenance } : {}),
     ...extra,
   };
 }
@@ -178,5 +259,20 @@ export const CREDIT_TYPE_CODES = new Set(['381', '396', '261', '262', '81', '83'
 export const SELF_BILLED_TYPE_CODES = new Set(['389', '261', '527']);
 
 export function finish(inv: CanonicalInvoice): CanonicalInvoice {
-  return compact(inv);
+  const out = compact(inv);
+  const prov = out.source.provenance;
+  if (prov) {
+    // Reads whose value was dropped on the way (filtered, emptied) must not leave entries behind.
+    for (const path of Object.keys(prov)) if (!existsAt(out, path)) delete prov[path];
+  }
+  return out;
+}
+
+function existsAt(root: unknown, path: string): boolean {
+  let cur = root;
+  for (const key of path.split('/').slice(1)) {
+    if (cur === null || typeof cur !== 'object' || !Object.hasOwn(cur, key)) return false;
+    cur = (cur as Record<string, unknown>)[key];
+  }
+  return cur !== undefined && cur !== null && typeof cur !== 'object';
 }
