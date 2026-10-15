@@ -35,7 +35,12 @@ describe('validation', () => {
   test('validation is opt-in', async () => {
     const result = await convert(utf8(validXml), 'x.xml');
     const outcome = result.outcomes[0];
-    assert.ok(!(outcome.status === 'ok' && outcome.invoices[0].source.validation));
+    // Without `validate`, only the signature layer (always checked) may be filled in.
+    assert.equal(outcome.status, 'ok');
+    if (outcome.status !== 'ok') return;
+    const v = outcome.invoices[0].source.validation;
+    for (const layer of ['schema', 'semantic', 'profile'] as const) assert.equal(v?.[layer] ?? 'not-run', 'not-run', layer);
+    assert.deepEqual(v?.bundles ?? {}, {});
   });
 
   slow('a wrong total fails the EN 16931 layer with BR-CO-15 and a location', async () => {
