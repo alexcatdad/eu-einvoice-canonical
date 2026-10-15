@@ -33,6 +33,20 @@ const matches = (xml: string, name: string) => [...xml.matchAll(tag(name))].map(
 const count = (xml: string, name: string) => [...xml.matchAll(new RegExp(`<(?:\\w+:)?${name}[\\s>]`, 'g'))].length;
 const only = (xs: string[]) => (xs.length === 1 && xs[0] !== '' ? xs[0] : undefined);
 
+/** Drops every <!-- ... --> span (an unterminated one to the end), scanning rather than substituting. */
+function withoutComments(text: string): string {
+  let out = '';
+  let from = 0;
+  for (;;) {
+    const start = text.indexOf('<!--', from);
+    if (start < 0) return out + text.slice(from);
+    out += text.slice(from, start);
+    const end = text.indexOf('-->', start + 4);
+    if (end < 0) return out;
+    from = end + 3;
+  }
+}
+
 /** Expected values for a UBL Invoice / CreditNote or a CII CrossIndustryInvoice, or undefined when not reliably readable. */
 function read(raw: string): Known | undefined {
   // Comments and UBL extensions (signatures, vendor blocks) can hold look-alike elements.
