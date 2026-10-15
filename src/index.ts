@@ -6,6 +6,7 @@ import { signatureFindings, signatureStatus } from './signature/index.js';
 import { NotImplementedError, PARSERS, ParseError } from './parsers/index.js';
 import { unavailableSummary } from './validation/plan.js';
 import type { ValidateOptions } from './validation/index.js';
+import { applyRelations } from './relations/rules.js';
 
 export * from './canonical.js';
 export * from './codes.js';
@@ -16,6 +17,8 @@ export { signatureStatus, type TrustAnchor } from './signature/index.js';
 export { checkTotals, type Finding } from './checks.js';
 export { IMPLEMENTED_FAMILIES, NotImplementedError, ParseError } from './parsers/index.js';
 export * as values from './values.js';
+export { analyseLines, applyRelations, isDescriptor, percentagesIn, type LineAnalysis } from './relations/rules.js';
+export { applyModelLabels, buildModelInput, buildPrompt, LABEL_SCHEMA, parseModelOutput, type ModelInput, type ModelLabeller, type ModelOutput } from './relations/model.js';
 export type { ValidateOptions } from './validation/index.js';
 
 export interface InspectedDocument {
@@ -58,6 +61,12 @@ export interface ConvertOptions extends UnwrapOptions {
    * fill `source.validation`. Off by default: it loads the validators (SaxonJS, xmllint-wasm).
    */
   validate?: boolean;
+  /**
+   * Fill `lineRoles` and `relations`: which lines are headings or descriptions, which are items and which
+   * adjust other lines (a 10 % markup, a discount). Rules and exact arithmetic only; ambiguous cases go to
+   * `source.warnings`. The lines and totals never change. Off by default.
+   */
+  relations?: boolean;
   /** Where the validator bundles are read from. */
   validation?: ValidateOptions;
 }
@@ -92,6 +101,7 @@ export async function convert(bytes: Uint8Array, filename?: string, limits?: Par
       invoices.forEach((inv, i) => {
         if (invoices.length > 1) inv.source.indexInFile = i;
         inv.source.warnings.push(...checkTotals(inv));
+        if (options.relations) applyRelations(inv);
         const sigs = inv.source.signatures;
         const v = inv.source.validation ??= { parse: 'passed', schema: 'not-run', semantic: 'not-run', profile: 'not-run', signature: 'not-run', clearance: 'not-run', bundles: {}, findings: [] };
         v.signature = signatureStatus(sigs);

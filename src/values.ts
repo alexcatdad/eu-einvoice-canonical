@@ -109,6 +109,13 @@ export function sum(values: readonly string[]): Decimal {
   return values.reduce<Decimal>((acc, v) => add(acc, v), '0' as Decimal);
 }
 
+/** Exact `a * rate / 100`, without rounding. */
+export function percentOf(a: string, rate: string): Decimal {
+  const x = parse(a);
+  const r = parse(rate);
+  return format(x.n * r.n, x.scale + r.scale + 2);
+}
+
 /** -1, 0 or 1. */
 export function cmp(a: string, b: string): -1 | 0 | 1 {
   const [x, y] = align(parse(a), parse(b));

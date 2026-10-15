@@ -1,7 +1,8 @@
 /** Browser front end: everything runs locally through the same `convert()` the library exports. */
+import { ENGINES, loadEngine } from './model.js';
 import {
   convert, FORMATS, IMPLEMENTED_FAMILIES, EU_COUNTRIES,
-  type CanonicalInvoice, type ConvertOutcome, type ConvertResult, type FormatDef, type Party,
+  applyModelLabels, type CanonicalInvoice, type ConvertOutcome, type ConvertResult, type FormatDef, type Line, type LineRelation, type LineRole, type Party,
 } from '../src/index.js';
 
 const SAMPLES: { file: string; label: string }[] = [
@@ -16,6 +17,7 @@ const SAMPLES: { file: string; label: string }[] = [
   { file: 'hr-cius.xml', label: 'HR-CIUS (Croatia)' },
   { file: 'IT01234567890_FPR12.xml.p7m', label: 'FatturaPA, signed .p7m (Italy)' },
   { file: 'ksef-fa3.xml', label: 'KSeF FA(3) (Poland)' },
+  { file: 'svefaktura-1.0-descriptors.xml', label: 'Svefaktura 1.0 with headings and a 10 % markup (Sweden)' },
 ];
 const EXAMPLE = SAMPLES[0];
 
@@ -87,11 +89,12 @@ async function loadSample(name: string, isExample: boolean) {
 
 interface Item { tab: string; outcome: ConvertOutcome; invoice?: CanonicalInvoice }
 let current: { result: ConvertResult; filename: string; items: Item[]; isExample: boolean } | undefined;
+let shownIndex = 0;
 
 async function run(bytes: Uint8Array, filename: string, isExample = false) {
   if (!isExample) resultEl.innerHTML = `<p class="file-meta">Reading ${esc(filename)}…</p>`;
   try {
-    const result = await convert(bytes, filename);
+    const result = await convert(bytes, filename, undefined, { relations: true });
     const items = result.outcomes.flatMap((o, i): Item[] =>
       o.status === 'ok'
         ? o.invoices.map((inv) => ({ tab: `${inv.kind === 'creditNote' ? 'Credit note' : 'Invoice'} ${inv.id}`, outcome: o, invoice: inv }))
@@ -110,6 +113,7 @@ function showNotice(title: string, detail: string) {
 
 function render(index: number) {
   if (!current) return;
+  shownIndex = index;
   const { result, filename, items, isExample } = current;
   const head = `<div class="result-head"><h2>${esc(filename)}${isExample ? ' <span class="example">(example: drop your own file above)</span>' : ''}</h2>
     <span class="file-meta">SHA-256 ${result.fileSha256.slice(0, 12)}…, ${items.length} document${items.length === 1 ? '' : 's'}</span></div>`;
@@ -125,7 +129,81 @@ function render(index: number) {
   resultEl.innerHTML = `${head}${tabs}<div class="doc">${sheet(items[index], result)}${jsonPanel(items[index])}</div>`;
   resultEl.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach((b) => b.addEventListener('click', () => render(Number(b.dataset.tab))));
   wireJson(items[index], result);
+  wireModel();
   if (!isExample) resultEl.querySelector('.stamp')?.classList.add('fresh');
+}
+
+// ---------------------------------------------------------------------------
+// Line roles and relations
+// ---------------------------------------------------------------------------
+
+const ROLE_LABEL: Partial<Record<LineRole, string>> = {
+  surcharge: 'markup', discount: 'discount', freight: 'freight', labour: 'labour', other: 'other',
+};
+const REVIEW = '<span class="review" title="Not proven by the invoice: check it by hand">review</span>';
+
+/** Table rows for the lines: descriptors indented under their heading, adjustments shown beside the lines they apply to. */
+function lineRows(inv: CanonicalInvoice, lines: Line[]): string {
+  const roles = inv.lineRoles ?? {};
+  const rels = inv.relations ?? [];
+  const under = new Set(rels.filter((r) => r.type === 'heading').flatMap((r) => r.to));
+  // Structural rules (no confidence) are certain; everything else short of 'proven' is a hint.
+  const needsReview = (r: LineRelation) => r.method === 'model' || (r.confidence !== undefined && r.confidence !== 'proven');
+  const rate = (r: LineRelation) => (r.rate !== undefined ? `${esc(r.rate)} % ` : '');
+  return lines.map((l) => {
+    const role = roles[l.id];
+    const descriptor = role === 'heading' || role === 'description';
+    const notes: string[] = [];
+    for (const r of rels) {
+      if (r.type === 'heading') continue;
+      const flag = needsReview(r) ? ` ${REVIEW}` : '';
+      if (r.from === l.id) {
+        const what = r.type === 'markup' ? `${rate(r)}markup` : r.type === 'discount' ? `${rate(r)}discount` : r.type.replace(/-/g, ' ');
+        notes.push(`${esc(what)} on line ${r.to.map(esc).join(', ')}${flag}`);
+      } else if (r.to.includes(l.id) && (r.type === 'markup' || r.type === 'discount')) {
+        notes.push(`+ ${rate(r)}${r.type} in line ${esc(r.from)}${flag}`);
+      }
+    }
+    const tag = role && ROLE_LABEL[role] && !notes.length ? `<span class="sub">${ROLE_LABEL[role]}${inv.source.derived.some((d) => d.field === `/lineRoles/${l.id}`) ? ` ${REVIEW}` : ''}</span>` : '';
+    const cls = [descriptor ? 'descriptor' : '', role === 'description' || under.has(l.id) ? 'under' : '', role === 'surcharge' || role === 'discount' ? 'adjusts' : ''].filter(Boolean).join(' ');
+    const vat = l.vat ? `<span class="sub">VAT ${esc(l.vat.categoryCode)}${l.vat.rate !== undefined ? ` ${esc(l.vat.rate)} %` : ''}</span>` : '';
+    return `<tr class="${cls}">
+        <td class="hide-narrow">${esc(l.id)}</td>
+        <td class="item">${esc(l.item.name || l.item.description || '(no name)')}${descriptor ? '' : vat}${notes.map((n) => `<span class="sub relation">${n}</span>`).join('')}${tag}</td>
+        <td class="num">${descriptor ? '' : l.quantity !== undefined ? `${esc(l.quantity)} ${esc(l.unitText ?? l.unitCode ?? '')}` : '<span class="sub">not stated</span>'}</td>
+        <td class="num hide-narrow">${!descriptor && l.price ? `${esc(l.price.net)}${l.price.baseQuantity && l.price.baseQuantity !== '1' ? `<span class="sub">per ${esc(l.price.baseQuantity)}</span>` : ''}` : ''}</td>
+        <td class="num">${descriptor ? '' : esc(l.netAmount)}</td></tr>`;
+  }).join('');
+}
+
+function labelControl(): string {
+  return `<details class="model"><summary>Label lines with a language model (experimental)</summary>
+    <p>Optional. A small model that runs in this tab names the kind of each line (freight, labour, discount) and may link headings to items. Its answers are always marked <em>review</em>. The model is downloaded on first use (about 1 GB for Qwen3 1.7B) and nothing is sent anywhere.</p>
+    <label class="field"><span>Model</span><select id="model-engine">${ENGINES.map((e) => `<option value="${e.id}">${esc(e.label)}</option>`).join('')}</select></label>
+    <button type="button" class="btn" id="model-run">Label lines</button> <span class="model-status" id="model-status" role="status"></span>
+  </details>`;
+}
+
+function wireModel() {
+  const run = document.querySelector<HTMLButtonElement>('#model-run');
+  if (!run || !current) return;
+  run.addEventListener('click', async () => {
+    const status = $('#model-status');
+    const spec = ENGINES.find((e) => e.id === $<HTMLSelectElement>('#model-engine').value)!;
+    const inv = current?.items[shownIndex]?.invoice;
+    if (!inv) return;
+    run.disabled = true;
+    try {
+      const engine = await loadEngine(spec, (text) => { status.textContent = text; });
+      status.textContent = 'Labelling…';
+      await applyModelLabels(inv, engine.labeller);
+      await engine.dispose();
+      render(shownIndex);
+    } catch (e) {
+      status.textContent = (e as Error).message;
+      run.disabled = false;
+    }
+  });
 }
 
 function stampFor(item: Item): { cls: string; title: string; note: string } {
@@ -186,14 +264,10 @@ function sheet(item: Item, result: ConvertResult): string {
     <div class="parties">${party('From', inv.seller)}${party('To', inv.buyer)}</div>
     ${shown.length ? `<table class="lines">
       <thead><tr><th scope="col" class="hide-narrow">#</th><th scope="col">Item</th><th scope="col" class="num">Qty</th><th scope="col" class="num hide-narrow">Price</th><th scope="col" class="num">Net</th></tr></thead>
-      <tbody>${shown.map((l) => `<tr>
-        <td class="hide-narrow">${esc(l.id)}</td>
-        <td class="item">${esc(l.item.name || l.item.description || '(no name)')}${l.vat ? `<span class="sub">VAT ${esc(l.vat.categoryCode)}${l.vat.rate !== undefined ? ` ${esc(l.vat.rate)} %` : ''}</span>` : ''}</td>
-        <td class="num">${l.quantity !== undefined ? `${esc(l.quantity)} ${esc(l.unitText ?? l.unitCode ?? '')}` : '<span class="sub">not stated</span>'}</td>
-        <td class="num hide-narrow">${l.price ? `${esc(l.price.net)}${l.price.baseQuantity && l.price.baseQuantity !== '1' ? `<span class="sub">per ${esc(l.price.baseQuantity)}</span>` : ''}` : ''}</td>
-        <td class="num">${esc(l.netAmount)}</td></tr>`).join('')}</tbody>
+      <tbody>${lineRows(inv, shown)}</tbody>
     </table>${inv.lines.length > MAX_LINES ? `<p class="more-lines">${inv.lines.length - MAX_LINES} more lines are in the JSON.</p>` : ''}`
     : '<p class="more-lines">This document has no lines.</p>'}
+    ${inv.lines.length ? labelControl() : ''}
     <div class="sums">
       <div class="payment">${pay ? `<span class="label">Payment</span>
         <p>${esc(MEANS[pay.meansCode] ?? `Code ${pay.meansCode}`)}${pay.meansText ? ` (${esc(pay.meansText)})` : ''}</p>

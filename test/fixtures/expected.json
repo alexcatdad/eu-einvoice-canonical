@@ -8,6 +8,7 @@
   "facturx-minimum.xml": ["facturx"],
   "svefaktura-1.0.xml": ["svefaktura-1"],
   "svefaktura-1.0-credit.xml": ["svefaktura-1"],
+  "svefaktura-1.0-descriptors.xml": ["svefaktura-1"],
   "peppol-in-sbdh.xml": ["peppol-pint"],
   "peppol-utf16.xml": ["peppol-pint"],
   "hr-cius.xml": ["hr-cius"],
