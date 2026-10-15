@@ -56,6 +56,33 @@ for (const o of outcomes) {
 console.log(skipped);                                      // DOCTYPE, size limits, detached signatures...
 ```
 
+## Command line
+
+`src/cli.ts` is exposed as the `einvoice` bin (`bun src/cli.ts ...` in a checkout; tagged releases attach standalone binaries for linux-x64, darwin-arm64 and windows-x64). A file argument of `-` reads stdin.
+
+```
+einvoice detect  <file...>                 format id, version and profile per document (tab separated)
+einvoice inspect <file...>                 the unwrap and detect result as JSON
+einvoice convert <file...> [--out <dir>]   canonical JSON array on stdout, or one <invoice-id>.json per invoice in <dir>
+einvoice sweep   <dir...> [--expect answers.json]   detection coverage / known-answer check
+```
+
+Flags: `--pretty` indents JSON; `--quiet` silences notes and warnings (errors are still printed); `--limits '{"maxEntries":10}'` overrides `UnwrapLimits`; `--validate` is accepted by `convert` and is a no-op with a message until the validation module lands.
+JSON goes to stdout only; every error is one line on stderr.
+
+| Exit | Meaning |
+| ---- | ------- |
+| 0 | all converted |
+| 1 | usage error (and, for `sweep`, any mismatch or unanswered file) |
+| 2 | unsafe or malformed input (DOCTYPE, limits, not XML) |
+| 3 | unsupported format or profile (including well-formed non-invoice XML) |
+| 4 | validation failed |
+| 5 | partially converted (some documents failed) |
+| 6 | validator unavailable |
+| 7 | internal error (including unreadable files) |
+
+With several failures and no success the code of the first failure is used; with at least one success it is 5.
+
 ## The canonical model
 
 The core is still EN 16931-1, field for field, so every EN-based format maps 1:1. National formats carry concepts EN has no term for. Those go, in order of preference:
@@ -159,8 +186,12 @@ Skipped files and the reason are returned by both `inspect()` and `convert()`, s
 ## Known gaps
 
 - **Unverified detection rules:** `fr-ctc-*` (exact EXTENDED-CTC-FR identifier), `pl-pef`, `eslog-1` root name and `gr-mydata`. They are marked `unverified` in the registry. The Croatian spec spells its own identifier inconsistently, so `hr-cius` only checks for `urn:mfin.gov.`.
-- **EN 16931-1:2026** was published in March 2026. Detection accepts the `urn:cen.eu:en16931:2026` identifier, but the model only contains the 2017 business terms. Add the new terms once Peppol BIS adopts the revision.
+- **EN 16931-1:2026** (published March 2026; 164 to 216 business terms and 32 to 39 groups, per trade press) is not modelled beyond the identifier. Checked on 2026-10-16: the ConnectingEurope validation artefacts (v1.3.17, UBL 2.1 / CII D16B) and the KoSIT XRechnung Schematron (v2.6.0, XRechnung 3.0) contain no 2026 terms, and the EN 16931-1:2026 text and the updated CEN/TS 16931-3-x bindings are paywalled, so neither the exact BT/BG ids and names nor their UBL/CII paths are confirmed. Secondary sources mention multiple payment terms (BG-33), early-payment discounts (BG-35) and line-level delivery (BG-37) but disagree on detail, so nothing was added to `src/canonical.ts` or the parsers. Missing: the CEN/TS 16931-3-1 and 3-3 binding tables, or the 2026 Schematron/XSD once ConnectingEurope or Peppol BIS publish them. 2026-identified documents still parse, with the 2017 terms only.
 - **Signatures** are detected and recorded, not verified.
 - **No schema or Schematron validation yet.** `source.validation` exists in the model but nothing fills it. The BR-CO arithmetic checks are the only rules run. Use phive or the KoSIT validator for conformance.
 - **National parsers** are still stubs (see the build order). So is the Peppol PINT-specific mapping beyond what plain UBL gives.
 - **Non-XML formats** (EDIFACT INVOIC, PDFs without embedded XML) are out of scope.
+
+## License
+
+[ISC](LICENSE), copyright 2026 alexcatdad.
