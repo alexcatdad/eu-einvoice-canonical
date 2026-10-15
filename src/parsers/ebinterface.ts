@@ -15,11 +15,22 @@
  */
 import type { Element } from '@xmldom/xmldom';
 import type {
-  Address, AllowanceCharge, CanonicalInvoice, Contact, Line, OtherTax, Party, PaymentInstallment,
-  PaymentInstructions, Seller, Totals, VatBreakdown, VatInfo,
+  Address,
+  AllowanceCharge,
+  CanonicalInvoice,
+  Contact,
+  Line,
+  OtherTax,
+  Party,
+  PaymentInstallment,
+  PaymentInstructions,
+  Seller,
+  Totals,
+  VatBreakdown,
+  VatInfo,
 } from '../canonical.js';
 import { add, cmp, isZero, sub, sum, toDecimal } from '../values.js';
-import { Ctx, ParseError, finish, parseXml, sourceMeta } from './context.js';
+import { Ctx, finish, ParseError, parseXml, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 
 /** DocumentType -> UNCL 1001 code and direction. */
@@ -36,8 +47,24 @@ const DOCUMENT_TYPES: Record<string, { typeCode: string; credit?: boolean; selfB
 
 /** Units are UN/ECE Rec 20 in practice; these free-text spellings are still common. */
 const UNITS: Record<string, string> = {
-  stk: 'H87', 'stk.': 'H87', st: 'H87', stück: 'H87', pcs: 'H87', stunde: 'HUR', std: 'HUR', 'std.': 'HUR', h: 'HUR',
-  tag: 'DAY', tage: 'DAY', monat: 'MON', jahr: 'ANN', kg: 'KGM', l: 'LTR', m: 'MTR', km: 'KMT', pauschal: 'LS',
+  stk: 'H87',
+  'stk.': 'H87',
+  st: 'H87',
+  stück: 'H87',
+  pcs: 'H87',
+  stunde: 'HUR',
+  std: 'HUR',
+  'std.': 'HUR',
+  h: 'HUR',
+  tag: 'DAY',
+  tage: 'DAY',
+  monat: 'MON',
+  jahr: 'ANN',
+  kg: 'KGM',
+  l: 'LTR',
+  m: 'MTR',
+  km: 'KMT',
+  pauschal: 'LS',
 };
 
 /** Attribute by local name, whatever its prefix. */
@@ -100,7 +127,8 @@ export function parseEbinterface(input: ParseInput): CanonicalInvoice[] {
   }
   const precedingInvoices: CanonicalInvoice['precedingInvoices'] = [];
   const cancelled = c.el(root, 'CancelledOriginalDocument');
-  if (cancelled) precedingInvoices.push({ id: c.text(cancelled, 'InvoiceNumber') ?? '', issueDate: c.date(cancelled, 'InvoiceDate', 'BG-3') });
+  if (cancelled)
+    precedingInvoices.push({ id: c.text(cancelled, 'InvoiceNumber') ?? '', issueDate: c.date(cancelled, 'InvoiceDate', 'BG-3') });
   for (const r of c.all(root, 'RelatedDocument')) {
     const rid = c.text(r, 'InvoiceNumber');
     if (rid) precedingInvoices.push({ id: rid, issueDate: c.date(r, 'InvoiceDate', 'BG-3') });
@@ -111,16 +139,20 @@ export function parseEbinterface(input: ParseInput): CanonicalInvoice[] {
   const deliveryEl = c.el(root, 'Delivery');
   const deliveryDate = c.date(deliveryEl, 'Date', 'BT-72');
   const periodEl = c.el(deliveryEl, 'Period');
-  const period = periodEl ? { start: c.date(periodEl, 'FromDate', 'delivery period start'), end: c.date(periodEl, 'ToDate', 'delivery period end') } : undefined;
+  const period = periodEl
+    ? { start: c.date(periodEl, 'FromDate', 'delivery period start'), end: c.date(periodEl, 'ToDate', 'delivery period end') }
+    : undefined;
   if (period) c.derive('/invoicePeriod', 'ebInterface Delivery/Period (the delivery period) used for BG-14');
   const deliveryAddress = c.el(deliveryEl, 'Address');
   const deliveryId = c.text(deliveryEl, 'DeliveryID');
-  const delivery = deliveryEl ? {
-    partyName: c.text(deliveryAddress, 'Name'),
-    locationId: deliveryId ? { value: deliveryId } : undefined,
-    actualDate: deliveryDate,
-    address: address(c, deliveryAddress),
-  } : undefined;
+  const delivery = deliveryEl
+    ? {
+        partyName: c.text(deliveryAddress, 'Name'),
+        locationId: deliveryId ? { value: deliveryId } : undefined,
+        actualDate: deliveryDate,
+        address: address(c, deliveryAddress),
+      }
+    : undefined;
 
   // Lines, document reductions and surcharges, VAT, totals
   const lines = lineEls.map((l, i) => line(c, l, i + 1));
@@ -154,7 +186,8 @@ export function parseEbinterface(input: ParseInput): CanonicalInvoice[] {
     const v = c.text(a);
     if (v) notes.push({ text: attrOf(a, 'Key') ? `${attrOf(a, 'Key')}: ${v}` : v });
   }
-  for (const t of [c.text(root, 'Details/HeaderDescription'), c.text(root, 'Details/FooterDescription'), c.text(root, 'Comment')]) if (t) notes.push({ text: t });
+  for (const t of [c.text(root, 'Details/HeaderDescription'), c.text(root, 'Details/FooterDescription'), c.text(root, 'Comment')])
+    if (t) notes.push({ text: t });
 
   const version = input.details.version;
   c.derive('/specificationId', 'ebInterface has no specification identifier; set from the format and the namespace version');
@@ -274,7 +307,13 @@ function reductionsAndSurcharges(c: Ctx, parent: Element | undefined, tag: 'Redu
       c.warn('EB-NO-AMOUNT', `${tag} without Amount (only a base and a percentage); skipped, not recomputed`);
       continue;
     }
-    out.push({ amount, baseAmount: c.dec(e, 'BaseAmount'), percentage: c.dec(e, 'Percentage'), reason: c.text(e, 'Comment'), vat: vatOf(c, e) });
+    out.push({
+      amount,
+      baseAmount: c.dec(e, 'BaseAmount'),
+      percentage: c.dec(e, 'Percentage'),
+      reason: c.text(e, 'Comment'),
+      vat: vatOf(c, e),
+    });
   }
   return out;
 }
@@ -291,7 +330,13 @@ function otherTaxList(c: Ctx, root: Element, rs: Element | undefined): OtherTax[
   for (const t of c.all(rs, 'OtherVATableTax')) {
     const amount = c.dec(t, 'TaxItem/TaxAmount') ?? c.dec(t, 'TaxAmount');
     if (amount === undefined) continue;
-    out.push({ scheme: `AT:${c.text(t, 'TaxID') ?? 'OTHER-VATABLE'}`, taxableAmount: c.dec(t, 'TaxItem/TaxableAmount'), rate: c.dec(t, 'TaxItem/TaxPercent'), amount, includedInTotal: true });
+    out.push({
+      scheme: `AT:${c.text(t, 'TaxID') ?? 'OTHER-VATABLE'}`,
+      taxableAmount: c.dec(t, 'TaxItem/TaxableAmount'),
+      rate: c.dec(t, 'TaxItem/TaxPercent'),
+      amount,
+      includedInTotal: true,
+    });
   }
   return out;
 }
@@ -312,7 +357,11 @@ function vat(c: Ctx, root: Element): { vatBreakdown: VatBreakdown[] } {
     }
     const acc = c.el(t, 'AccountingCurrencyAmount');
     return {
-      taxableAmount: taxable, taxAmount, categoryCode: info.categoryCode, rate: info.rate, exemptionReason: info.exemptionReason,
+      taxableAmount: taxable,
+      taxAmount,
+      categoryCode: info.categoryCode,
+      rate: info.rate,
+      exemptionReason: info.exemptionReason,
       taxAmountInTaxCurrency: c.dec(acc),
       nationalCode: info.nationalCode,
     };
@@ -320,7 +369,14 @@ function vat(c: Ctx, root: Element): { vatBreakdown: VatBreakdown[] } {
   return { vatBreakdown };
 }
 
-function totalsOf(c: Ctx, root: Element, lines: Line[], allowances: AllowanceCharge[], charges: AllowanceCharge[], breakdown: VatBreakdown[]): Totals {
+function totalsOf(
+  c: Ctx,
+  root: Element,
+  lines: Line[],
+  allowances: AllowanceCharge[],
+  charges: AllowanceCharge[],
+  breakdown: VatBreakdown[],
+): Totals {
   const gross = c.dec(root, 'TotalGrossAmount');
   const payable = c.dec(root, 'PayableAmount');
   if (gross === undefined || payable === undefined) throw new ParseError('TotalGrossAmount or PayableAmount missing');
@@ -336,7 +392,11 @@ function totalsOf(c: Ctx, root: Element, lines: Line[], allowances: AllowanceCha
   if (vatTotal !== undefined) c.derive('/totals/vatTotal', 'Sum of the tax item amounts');
   const inTaxCurrency = breakdown.map((b) => b.taxAmountInTaxCurrency).filter((x): x is NonNullable<typeof x> => !!x);
   return {
-    lineNetTotal, allowanceTotal, chargeTotal, taxExclusive, vatTotal,
+    lineNetTotal,
+    allowanceTotal,
+    chargeTotal,
+    taxExclusive,
+    vatTotal,
     vatTotalInTaxCurrency: inTaxCurrency.length ? sum(inTaxCurrency) : undefined,
     taxInclusive: gross,
     prepaid: c.dec(root, 'PrepaidAmount'),
@@ -379,7 +439,8 @@ function line(c: Ctx, l: Element, n: number): Line {
   const rs = c.el(l, 'ReductionAndSurchargeListLineItemDetails');
   const lineAllowances = lineRs(c, rs, 'ReductionListLineItem');
   const lineCharges = lineRs(c, rs, 'SurchargeListLineItem');
-  if (c.el(rs, 'OtherVATableTaxListLineItem')) c.unmapped[`/Invoice/Details/ItemList/ListLineItem[${n}]/OtherVATableTaxListLineItem`] = 'present';
+  if (c.el(rs, 'OtherVATableTaxListLineItem'))
+    c.unmapped[`/Invoice/Details/ItemList/ListLineItem[${n}]/OtherVATableTaxListLineItem`] = 'present';
 
   const vatInfo = vatOf(c, l);
   const nonVatDisc = c.el(l, 'DiscountFlag');
@@ -399,8 +460,13 @@ function line(c: Ctx, l: Element, n: number): Line {
     item: {
       name: descriptions[0] ?? '',
       description: descriptions.length > 1 ? descriptions.slice(1).join('\n') : undefined,
-      sellerId, buyerId, standardId,
-      classifications: c.all(l, 'Classification').map((k) => ({ code: c.text(k) ?? '', listId: attrOf(k, 'ClassificationSchema') ?? '' })).filter((k) => k.code),
+      sellerId,
+      buyerId,
+      standardId,
+      classifications: c
+        .all(l, 'Classification')
+        .map((k) => ({ code: c.text(k) ?? '', listId: attrOf(k, 'ClassificationSchema') ?? '' }))
+        .filter((k) => k.code),
       attributes,
     },
   };
@@ -409,7 +475,11 @@ function line(c: Ctx, l: Element, n: number): Line {
 function numAttr(e: Element, name: string) {
   const v = attrOf(e, name);
   if (v === undefined) return undefined;
-  try { return toDecimal(v); } catch { throw new ParseError(`${name}: not a decimal: "${v}"`); }
+  try {
+    return toDecimal(v);
+  } catch {
+    throw new ParseError(`${name}: not a decimal: "${v}"`);
+  }
 }
 
 function lineRs(c: Ctx, parent: Element | undefined, tag: string): AllowanceCharge[] {
@@ -434,41 +504,68 @@ function paymentMethod(c: Ctx, root: Element): { payments: PaymentInstructions[]
   const ubt = c.el(pm, 'UniversalBankTransaction');
   if (ubt) {
     const accounts = c.all(ubt, 'BeneficiaryAccount');
-    const transfers = accounts.map((a) => {
-      const iban = c.text(a, 'IBAN');
-      const nr = c.text(a, 'BankAccountNr');
-      const bank = c.text(a, 'BankCode');
-      return {
-        accountId: iban ?? nr ?? '',
-        accountName: c.text(a, 'BankAccountOwner'),
-        serviceProviderId: c.text(a, 'BIC') ?? bank,
-      };
-    }).filter((t) => t.accountId);
+    const transfers = accounts
+      .map((a) => {
+        const iban = c.text(a, 'IBAN');
+        const nr = c.text(a, 'BankAccountNr');
+        const bank = c.text(a, 'BankCode');
+        return {
+          accountId: iban ?? nr ?? '',
+          accountName: c.text(a, 'BankAccountOwner'),
+          serviceProviderId: c.text(a, 'BIC') ?? bank,
+        };
+      })
+      .filter((t) => t.accountId);
     const sepa = accounts.some((a) => c.text(a, 'IBAN'));
-    c.derive('/payments/0/meansCode', `ebInterface UniversalBankTransaction -> ${sepa ? '58 (SEPA credit transfer, IBAN given)' : '30 (credit transfer)'}`);
-    payments.push({ meansCode: sepa ? '58' : '30', meansText, remittanceInformation: c.text(ubt, 'PaymentReference'), creditTransfers: transfers });
-    if (attrOf(ubt, 'ConsolidatorPayable') === 'true') c.unmapped['/Invoice/PaymentMethod/UniversalBankTransaction/@ConsolidatorPayable'] = 'true';
+    c.derive(
+      '/payments/0/meansCode',
+      `ebInterface UniversalBankTransaction -> ${sepa ? '58 (SEPA credit transfer, IBAN given)' : '30 (credit transfer)'}`,
+    );
+    payments.push({
+      meansCode: sepa ? '58' : '30',
+      meansText,
+      remittanceInformation: c.text(ubt, 'PaymentReference'),
+      creditTransfers: transfers,
+    });
+    if (attrOf(ubt, 'ConsolidatorPayable') === 'true')
+      c.unmapped['/Invoice/PaymentMethod/UniversalBankTransaction/@ConsolidatorPayable'] = 'true';
   }
   const dd = c.el(pm, 'SEPADirectDebit');
   if (dd) {
     c.derive('/payments/0/meansCode', 'ebInterface SEPADirectDebit -> 59');
     payments.push({
-      meansCode: '59', meansText, nationalMeansCode: c.text(dd, 'Type'), creditTransfers: [],
-      directDebit: { mandateId: c.text(dd, 'MandateReference'), creditorId: c.text(dd, 'CreditorID'), debitedAccountId: c.text(dd, 'IBAN') },
+      meansCode: '59',
+      meansText,
+      nationalMeansCode: c.text(dd, 'Type'),
+      creditTransfers: [],
+      directDebit: {
+        mandateId: c.text(dd, 'MandateReference'),
+        creditorId: c.text(dd, 'CreditorID'),
+        debitedAccountId: c.text(dd, 'IBAN'),
+      },
     });
     const collect = c.text(dd, 'DebitCollectionDate');
     if (collect) c.unmapped['/Invoice/PaymentMethod/SEPADirectDebit/DebitCollectionDate'] = collect;
   }
   const card = c.el(pm, 'PaymentCard');
   if (card) {
-    payments.push({ meansCode: '48', meansText, creditTransfers: [], card: { primaryAccountNumber: c.text(card, 'PrimaryAccountNumber') ?? '', holderName: c.text(card, 'CardHolderName') } });
+    payments.push({
+      meansCode: '48',
+      meansText,
+      creditTransfers: [],
+      card: { primaryAccountNumber: c.text(card, 'PrimaryAccountNumber') ?? '', holderName: c.text(card, 'CardHolderName') },
+    });
   }
   if (c.el(pm, 'OtherPayment')) payments.push({ meansCode: 'ZZZ', meansText, creditTransfers: [] });
   if (c.el(pm, 'NoPayment')) c.unmapped['/Invoice/PaymentMethod/NoPayment'] = meansText ?? 'true';
   return { payments, meansText };
 }
 
-function paymentConditions(c: Ctx, cond: Element | undefined, dueDate: string | undefined): { terms?: string; schedule: PaymentInstallment[] } {
+function paymentConditions(
+  c: Ctx,
+  cond: Element | undefined,
+  dueDate: string | undefined,
+): { terms?: string; schedule: PaymentInstallment[] } {
   if (!cond) return { schedule: [] };
   const lines: string[] = [];
   const comment = c.text(cond, 'Comment');
@@ -479,10 +576,7 @@ function paymentConditions(c: Ctx, cond: Element | undefined, dueDate: string | 
     const pct = c.text(d, 'Percentage');
     const amount = c.dec(d, 'Amount');
     const base = c.dec(d, 'BaseAmount');
-    const text = [
-      pct ? `${pct} %` : undefined,
-      amount ? `${amount}` : undefined,
-    ].filter(Boolean).join(' / ');
+    const text = [pct ? `${pct} %` : undefined, amount ? `${amount}` : undefined].filter(Boolean).join(' / ');
     const description = `Discount ${text}${base ? ` on ${base}` : ''} if paid by ${date}${c.text(d, 'Comment') ? `: ${c.text(d, 'Comment')}` : ''}`;
     lines.push(description);
     schedule.push({ dueDate: date, description });

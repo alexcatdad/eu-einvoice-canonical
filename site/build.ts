@@ -8,9 +8,18 @@ import { join } from 'node:path';
 const root = join(import.meta.dir, '..');
 const out = join(root, 'dist');
 const SAMPLES = [
-  'peppol-bis3-invoice.xml', 'peppol-bis3-creditnote.xml', 'xrechnung-ubl.xml', 'xrechnung-cii.xml',
-  'facturx-en16931.pdf', 'facturx-basic-creditnote.xml', 'svefaktura-1.0.xml', 'anaf-download.zip',
-  'hr-cius.xml', 'IT01234567890_FPR12.xml.p7m', 'ksef-fa3.xml', 'svefaktura-1.0-descriptors.xml',
+  'peppol-bis3-invoice.xml',
+  'peppol-bis3-creditnote.xml',
+  'xrechnung-ubl.xml',
+  'xrechnung-cii.xml',
+  'facturx-en16931.pdf',
+  'facturx-basic-creditnote.xml',
+  'svefaktura-1.0.xml',
+  'anaf-download.zip',
+  'hr-cius.xml',
+  'IT01234567890_FPR12.xml.p7m',
+  'ksef-fa3.xml',
+  'svefaktura-1.0-descriptors.xml',
 ];
 
 rmSync(out, { recursive: true, force: true });

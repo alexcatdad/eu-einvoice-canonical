@@ -27,7 +27,12 @@ export function toDecimal(raw: string): Decimal {
 }
 
 export function isDecimal(raw: string): boolean {
-  try { toDecimal(raw); return true; } catch { return false; }
+  try {
+    toDecimal(raw);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -55,7 +60,8 @@ export function toIsoDate(raw: string): ParsedDate {
   if (!m) throw new ValueError(`Not a date: "${raw}"`);
   const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
   const probe = new Date(Date.UTC(y, mo - 1, d));
-  if (probe.getUTCFullYear() !== y || probe.getUTCMonth() !== mo - 1 || probe.getUTCDate() !== d) throw new ValueError(`Not a valid calendar date: "${raw}"`);
+  if (probe.getUTCFullYear() !== y || probe.getUTCMonth() !== mo - 1 || probe.getUTCDate() !== d)
+    throw new ValueError(`Not a valid calendar date: "${raw}"`);
   const date = `${m[1]}-${m[2]}-${m[3]}` as IsoDate;
   const droppedTime = time && !/^00:00(:00(\.0+)?)?$/.test(time) ? time : undefined;
   return { date, droppedTime };
@@ -65,7 +71,10 @@ export function toIsoDate(raw: string): ParsedDate {
 // Exact arithmetic
 // ---------------------------------------------------------------------------
 
-interface Scaled { n: bigint; scale: number }
+interface Scaled {
+  n: bigint;
+  scale: number;
+}
 
 function parse(d: string): Scaled {
   const s = toDecimal(d);

@@ -14,11 +14,25 @@
  */
 import type { Element } from '@xmldom/xmldom';
 import type {
-  AdditionalParty, AllowanceCharge, CanonicalInvoice, Contact, CreditTransfer, Decimal, Identifier, IsoDate, Line,
-  Party, PaymentInstructions, Seller, TaxRepresentative, Totals, VatBreakdown, VatInfo,
+  AdditionalParty,
+  AllowanceCharge,
+  CanonicalInvoice,
+  Contact,
+  CreditTransfer,
+  Decimal,
+  Identifier,
+  IsoDate,
+  Line,
+  Party,
+  PaymentInstructions,
+  Seller,
+  TaxRepresentative,
+  Totals,
+  VatBreakdown,
+  VatInfo,
 } from '../canonical.js';
-import { add, sub, sum, ValueError, toIsoDate } from '../values.js';
-import { CREDIT_TYPE_CODES, SELF_BILLED_TYPE_CODES, Ctx, ParseError, finish, parseXml, sourceMeta } from './context.js';
+import { add, sub, sum, toIsoDate, ValueError } from '../values.js';
+import { CREDIT_TYPE_CODES, Ctx, finish, ParseError, parseXml, SELF_BILLED_TYPE_CODES, sourceMeta } from './context.js';
 import { NotImplementedError, type ParseInput } from './index.js';
 
 const SPEC_ID = 'urn:eslog:2.00';
@@ -64,7 +78,10 @@ export function parseEslog(input: ParseInput): CanonicalInvoice[] {
   const cux = c.all(m, 'G_SG7/S_CUX/C_C504');
   const currency = c.text(cux.find((e) => c.text(e, 'D_6347') === '2') ?? cux[0], 'D_6345');
   if (!currency) throw new ParseError('Currency missing (G_SG7/S_CUX/C_C504/D_6345)');
-  const taxCurrency = c.text(cux.find((e) => c.text(e, 'D_6347') === '6'), 'D_6345');
+  const taxCurrency = c.text(
+    cux.find((e) => c.text(e, 'D_6347') === '6'),
+    'D_6345',
+  );
 
   // Header references.
   const refs = new Map<string, string[]>();
@@ -86,7 +103,13 @@ export function parseEslog(input: ParseInput): CanonicalInvoice[] {
 
   // Parties.
   const nads = c.all(m, 'G_SG2').map((g) => ({ g, q: c.text(g, 'S_NAD/D_3035') ?? '' }));
-  const pick = (qs: string[]) => { for (const q of qs) { const f = nads.find((n) => n.q === q); if (f) return f; } return undefined; };
+  const pick = (qs: string[]) => {
+    for (const q of qs) {
+      const f = nads.find((n) => n.q === q);
+      if (f) return f;
+    }
+    return undefined;
+  };
   const sellerNad = pick(SELLER_QUALIFIERS);
   const buyerNad = pick(BUYER_QUALIFIERS);
   if (!sellerNad) c.warn('ESLOG-NO-SELLER', 'No NAD with qualifier SE, SU or II');
@@ -99,10 +122,12 @@ export function parseEslog(input: ParseInput): CanonicalInvoice[] {
   const payeeNad = nads.find((n) => n.q === 'PE');
   const taxRepNad = nads.find((n) => n.q === 'LC');
   const deliveryParty = deliveryNad ? party(c, deliveryNad.g).party : undefined;
-  const taxRep: TaxRepresentative | undefined = taxRepNad ? (() => {
-    const r = party(c, taxRepNad.g);
-    return { name: r.party.name ?? '', vatId: r.refs.get('VA') ?? '', address: r.party.address ?? {} };
-  })() : undefined;
+  const taxRep: TaxRepresentative | undefined = taxRepNad
+    ? (() => {
+        const r = party(c, taxRepNad.g);
+        return { name: r.party.name ?? '', vatId: r.refs.get('VA') ?? '', address: r.party.address ?? {} };
+      })()
+    : undefined;
   const additionalParties = nads
     .filter((n) => n !== sellerNad && n !== buyerNad && n !== deliveryNad && n !== payeeNad && n !== taxRepNad)
     .map((n): AdditionalParty => ({ role: `NAD:${n.q}`, sourceRole: `eSLOG:NAD:${n.q}`, party: party(c, n.g).party }));
@@ -118,8 +143,15 @@ export function parseEslog(input: ParseInput): CanonicalInvoice[] {
     const subject = c.text(f, 'D_4451');
     const text = c.texts(f, 'C_C108/D_4440').join(' ');
     const code = c.text(f, 'C_C107/D_4441');
-    if (subject === 'DOC') { businessProcess ??= code; specificationId ??= text || undefined; continue; }
-    if (subject === 'AGM') { exemption ??= { text: text || undefined, code }; continue; }
+    if (subject === 'DOC') {
+      businessProcess ??= code;
+      specificationId ??= text || undefined;
+      continue;
+    }
+    if (subject === 'AGM') {
+      exemption ??= { text: text || undefined, code };
+      continue;
+    }
     if (!text) continue;
     if (subject === 'AAB') paymentTerms = paymentTerms ? `${paymentTerms}\n${text}` : text;
     else if (subject === 'REG') seller.additionalLegalInfo = seller.additionalLegalInfo ? `${seller.additionalLegalInfo}\n${text}` : text;
@@ -136,7 +168,10 @@ export function parseEslog(input: ParseInput): CanonicalInvoice[] {
     let meansCode = pai;
     if (!meansCode) {
       meansCode = sellerBank ? '30' : 'ZZZ';
-      c.derive('/payments/0/meansCode', `No PAI segment; ${meansCode === '30' ? 'credit transfer (30) assumed from the bank account' : 'ZZZ'}`);
+      c.derive(
+        '/payments/0/meansCode',
+        `No PAI segment; ${meansCode === '30' ? 'credit transfer (30) assumed from the bank account' : 'ZZZ'}`,
+      );
     }
     payments = [{ meansCode, meansText, remittanceInformation: reference, creditTransfers: sellerBank ? [sellerBank] : [] }];
   }
@@ -204,8 +239,13 @@ export function parseEslog(input: ParseInput): CanonicalInvoice[] {
       v.exemptionReason = exemption.text;
       v.exemptionReasonCode = exemption.code;
     }
-    if (targets.length === 0) c.warn('ESLOG-EXEMPTION-UNUSED', 'FTX AGM (VAT exemption reason) present but no exempt VAT category in the breakdown');
-    else if (targets.length > 1) c.derive('/vatBreakdown/*/exemptionReason', 'eSLOG states one exemption reason for the document; applied to every exempt VAT category');
+    if (targets.length === 0)
+      c.warn('ESLOG-EXEMPTION-UNUSED', 'FTX AGM (VAT exemption reason) present but no exempt VAT category in the breakdown');
+    else if (targets.length > 1)
+      c.derive(
+        '/vatBreakdown/*/exemptionReason',
+        'eSLOG states one exemption reason for the document; applied to every exempt VAT category',
+      );
   }
   let vatTotal = moa.get('176');
   if (vatTotal === undefined && vatBreakdown.length) {
@@ -225,8 +265,16 @@ export function parseEslog(input: ParseInput): CanonicalInvoice[] {
     c.derive('/totals/payable', 'MOA 9 absent; BT-112 - BT-113 + BT-114');
   }
   const totals: Totals = {
-    lineNetTotal, allowanceTotal, chargeTotal, taxExclusive, vatTotal, vatTotalInTaxCurrency: moa.get('2'),
-    taxInclusive, prepaid, rounding, payable,
+    lineNetTotal,
+    allowanceTotal,
+    chargeTotal,
+    taxExclusive,
+    vatTotal,
+    vatTotalInTaxCurrency: moa.get('2'),
+    taxInclusive,
+    prepaid,
+    rounding,
+    payable,
   };
 
   // Period: DTM 167/168.
@@ -265,12 +313,15 @@ export function parseEslog(input: ParseInput): CanonicalInvoice[] {
     payee: payeeNad ? { name: party(c, payeeNad.g).party.name ?? '' } : undefined,
     taxRepresentative: taxRep,
     additionalParties,
-    delivery: deliveryParty || date(c, m, '35', 'BT-72') ? {
-      partyName: deliveryParty?.name,
-      locationId: deliveryParty?.identifiers[0],
-      actualDate: date(c, m, '35', 'BT-72'),
-      address: deliveryParty?.address,
-    } : undefined,
+    delivery:
+      deliveryParty || date(c, m, '35', 'BT-72')
+        ? {
+            partyName: deliveryParty?.name,
+            locationId: deliveryParty?.identifiers[0],
+            actualDate: date(c, m, '35', 'BT-72'),
+            address: deliveryParty?.address,
+          }
+        : undefined,
     payments,
     paymentSchedule: [],
     allowances,
@@ -289,7 +340,10 @@ export function parseEslog(input: ParseInput): CanonicalInvoice[] {
   return [finish(inv)];
 }
 
-interface RawDtm { value: string; format?: string }
+interface RawDtm {
+  value: string;
+  format?: string;
+}
 
 function rawDtm(c: Ctx, scope: Element | undefined, code: string): RawDtm | undefined {
   for (const d of c.all(scope, 'S_DTM/C_C507')) {
@@ -305,7 +359,9 @@ function toDate(c: Ctx, raw: string, field: string): IsoDate {
   const m = /^(\d{8})(\d{4,6})$/.exec(raw);
   const value = m ? m[1] : raw;
   if (m) c.warn('TIME_DROPPED', `${field}: time ${m[2]} dropped from ${raw}`);
-  try { return toIsoDate(value).date; } catch (e) {
+  try {
+    return toIsoDate(value).date;
+  } catch (e) {
     if (e instanceof ValueError) throw new ParseError(`${field}: ${e.message}`);
     throw e;
   }
@@ -316,7 +372,10 @@ function date(c: Ctx, scope: Element | undefined, code: string, field: string): 
   return r ? toDate(c, r.value, field) : undefined;
 }
 
-interface PartyResult { party: Party; /** Party-level RFF values by qualifier. */ refs: Map<string, string> }
+interface PartyResult {
+  party: Party /** Party-level RFF values by qualifier. */;
+  refs: Map<string, string>;
+}
 
 function emptyParty(): PartyResult {
   return { party: { identifiers: [], nationalTaxIds: [] }, refs: new Map() };
@@ -347,7 +406,8 @@ function party(c: Ctx, g: Element): PartyResult {
     const coms = c.all(sg, 'S_COM').map((e) => ({ v: c.text(e, 'C_C076/D_3148'), t: c.text(e, 'C_C076/D_3155') }));
     const email = coms.find((x) => x.t === 'EM')?.v;
     const phone = coms.find((x) => x.t === 'TE')?.v;
-    if (name || phone) contact = { ...contact, name: name ?? contact?.name, phone: phone ?? contact?.phone, email: email ?? contact?.email };
+    if (name || phone)
+      contact = { ...contact, name: name ?? contact?.name, phone: phone ?? contact?.phone, email: email ?? contact?.email };
     else if (email) endpoint = { value: email, schemeId: 'EM' };
   }
   return {
@@ -425,7 +485,11 @@ function line(c: Ctx, l: Element, index: number): Line {
   const linId = c.el(lin, 'C_C212');
   const linValue = c.text(linId, 'D_7140');
   const linType = c.text(linId, 'D_7143');
-  let standardId: Identifier | undefined = linValue ? (linType === 'SRV' ? { value: linValue, schemeId: '0160' } : { value: linValue }) : undefined;
+  let standardId: Identifier | undefined = linValue
+    ? linType === 'SRV'
+      ? { value: linValue, schemeId: '0160' }
+      : { value: linValue }
+    : undefined;
   let sellerId: string | undefined;
   let buyerId: string | undefined;
   const classifications: { code: string; listId: string; listVersion?: string }[] = [];
@@ -443,10 +507,17 @@ function line(c: Ctx, l: Element, index: number): Line {
   }
 
   // IMD: F = item name (BT-153), A = long description (BT-154).
-  const imds = c.all(l, 'S_IMD').map((e) => ({ f: c.text(e, 'D_7077'), t: c.texts(e, 'C_C273/D_7008').join(' ') })).filter((x) => x.t);
+  const imds = c
+    .all(l, 'S_IMD')
+    .map((e) => ({ f: c.text(e, 'D_7077'), t: c.texts(e, 'C_C273/D_7008').join(' ') }))
+    .filter((x) => x.t);
   const name = imds.find((x) => x.f === 'F')?.t;
   if (!name) c.warn('ESLOG-NO-ITEM-NAME', `Line ${id}: no S_IMD with format F (BT-153 is mandatory in EN 16931)`);
-  const description = imds.filter((x) => x.f === 'A').map((x) => x.t).join('\n') || undefined;
+  const description =
+    imds
+      .filter((x) => x.f === 'A')
+      .map((x) => x.t)
+      .join('\n') || undefined;
 
   const qty = c.all(l, 'S_QTY/C_C186').find((q) => c.text(q, 'D_6063') === '47');
 
@@ -472,7 +543,11 @@ function line(c: Ctx, l: Element, index: number): Line {
   const lineRef = (q: string) => lineRefs.find((r) => c.text(r, 'D_1153') === q);
   const objectId = c.text(lineRef('AVE'), 'D_1154');
 
-  const noteTexts = c.all(l, 'S_FTX').filter((f) => c.text(f, 'D_4451') === 'ACB').map((f) => c.texts(f, 'C_C108/D_4440').join(' ')).filter(Boolean);
+  const noteTexts = c
+    .all(l, 'S_FTX')
+    .filter((f) => c.text(f, 'D_4451') === 'ACB')
+    .map((f) => c.texts(f, 'C_C108/D_4440').join(' '))
+    .filter(Boolean);
   const lineStart = date(c, l, '167', 'line period start');
   const lineEnd = date(c, l, '168', 'line period end');
   return {
@@ -487,12 +562,15 @@ function line(c: Ctx, l: Element, index: number): Line {
     period: lineStart || lineEnd ? { start: lineStart, end: lineEnd } : undefined,
     allowances,
     charges,
-    price: netPrice !== undefined ? {
-      net: netPrice,
-      gross: c.dec(gross1, 'D_5118'),
-      baseQuantity: c.dec(net1, 'D_5284'),
-      baseQuantityUnit: c.text(net1, 'D_6411'),
-    } : undefined,
+    price:
+      netPrice !== undefined
+        ? {
+            net: netPrice,
+            gross: c.dec(gross1, 'D_5118'),
+            baseQuantity: c.dec(net1, 'D_5284'),
+            baseQuantityUnit: c.text(net1, 'D_6411'),
+          }
+        : undefined,
     vat,
     item: { name: name ?? '', description, sellerId, buyerId, standardId, classifications, attributes: [] },
   };

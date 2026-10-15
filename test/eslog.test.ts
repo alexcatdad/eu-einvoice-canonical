@@ -1,5 +1,5 @@
-import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { convert, effectiveSign } from '../src/index.js';
 import { parseOne, utf8, warningCodes } from './helpers.js';
 
@@ -47,12 +47,14 @@ describe('eSLOG 2.0: invoice', async () => {
   });
 
   test('payment: PAI, FII account and RFF+PQ', () => {
-    assert.deepEqual(inv.payments, [{
-      meansCode: '58',
-      meansText: 'Nakazilo',
-      remittanceInformation: 'SI00 2026-001',
-      creditTransfers: [{ accountId: 'SI56011001000000013', accountName: 'Primer d.o.o.', serviceProviderId: 'BSLJSI2X' }],
-    }]);
+    assert.deepEqual(inv.payments, [
+      {
+        meansCode: '58',
+        meansText: 'Nakazilo',
+        remittanceInformation: 'SI00 2026-001',
+        creditTransfers: [{ accountId: 'SI56011001000000013', accountName: 'Primer d.o.o.', serviceProviderId: 'BSLJSI2X' }],
+      },
+    ]);
   });
 
   test('document charge (G_SG16) keeps its VAT; no allowances', () => {
@@ -62,8 +64,13 @@ describe('eSLOG 2.0: invoice', async () => {
 
   test('totals from G_SG50 MOA', () => {
     assert.deepEqual(inv.totals, {
-      lineNetTotal: '380.00', chargeTotal: '10.00', taxExclusive: '390.00', vatTotal: '63.30',
-      taxInclusive: '453.30', prepaid: '53.30', payable: '400.00',
+      lineNetTotal: '380.00',
+      chargeTotal: '10.00',
+      taxExclusive: '390.00',
+      vatTotal: '63.30',
+      taxInclusive: '453.30',
+      prepaid: '53.30',
+      payable: '400.00',
     });
     assert.ok(!inv.source.derived.some((d) => d.field === '/totals/chargeTotal'));
   });
@@ -113,7 +120,11 @@ describe('eSLOG 2.0: credit note', async () => {
 
   test('totals', () => {
     assert.deepEqual(inv.totals, {
-      lineNetTotal: '50.00', taxExclusive: '50.00', vatTotal: '11.00', taxInclusive: '61.00', payable: '61.00',
+      lineNetTotal: '50.00',
+      taxExclusive: '50.00',
+      vatTotal: '11.00',
+      taxInclusive: '61.00',
+      payable: '61.00',
     });
     assert.equal(inv.lines.length, 1);
   });
@@ -149,16 +160,29 @@ ${moa('79', '100.00')}${moa('260', '5.00')}${moa('389', '95.00')}${moa('176', '0
 
   test('totals use MOA 260, 389, 388, 366', () => {
     assert.deepEqual(inv.totals, {
-      lineNetTotal: '100.00', allowanceTotal: '5.00', taxExclusive: '95.00', vatTotal: '0.00', taxInclusive: '95.00', rounding: '0.02', payable: '95.02',
+      lineNetTotal: '100.00',
+      allowanceTotal: '5.00',
+      taxExclusive: '95.00',
+      vatTotal: '0.00',
+      taxInclusive: '95.00',
+      rounding: '0.02',
+      payable: '95.02',
     });
     assert.deepEqual(inv.source.unmapped, {});
     assert.deepEqual(warningCodes(inv), []);
   });
 
   test('exemption reason and code come from FTX AGM', () => {
-    assert.deepEqual(inv.vatBreakdown, [{
-      taxableAmount: '95.00', taxAmount: '0.00', categoryCode: 'AE', rate: '0', exemptionReason: 'Reverse charge', exemptionReasonCode: 'VATEX-EU-AE',
-    }]);
+    assert.deepEqual(inv.vatBreakdown, [
+      {
+        taxableAmount: '95.00',
+        taxAmount: '0.00',
+        categoryCode: 'AE',
+        rate: '0',
+        exemptionReason: 'Reverse charge',
+        exemptionReasonCode: 'VATEX-EU-AE',
+      },
+    ]);
   });
 
   test('process, specification, tax currency and header references', () => {
@@ -178,7 +202,11 @@ ${moa('79', '100.00')}${moa('260', '5.00')}${moa('389', '95.00')}${moa('176', '0
     assert.equal(inv.buyerReference, undefined);
     assert.equal(inv.accountingRef, 'KONTO-7');
     assert.deepEqual(inv.buyer.endpoint, { value: 'buyer@b.example', schemeId: 'EM' });
-    assert.deepEqual(inv.taxRepresentative, { name: 'Zastopnik d.o.o.', vatId: 'SI99999999', address: { line1: 'Cesta 1', city: 'Celje', countryCode: 'SI' } });
+    assert.deepEqual(inv.taxRepresentative, {
+      name: 'Zastopnik d.o.o.',
+      vatId: 'SI99999999',
+      address: { line1: 'Cesta 1', city: 'Celje', countryCode: 'SI' },
+    });
     assert.deepEqual(inv.additionalParties, []);
   });
 

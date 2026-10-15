@@ -6,10 +6,22 @@
  */
 import type { Element } from '@xmldom/xmldom';
 import type {
-  Address, AllowanceCharge, Attachment, CanonicalInvoice, Contact, CountryExtensions, Item, Line,
-  Party, PaymentInstructions, Period, Seller, Totals, VatBreakdown,
+  Address,
+  AllowanceCharge,
+  Attachment,
+  CanonicalInvoice,
+  Contact,
+  CountryExtensions,
+  Item,
+  Line,
+  Party,
+  PaymentInstructions,
+  Period,
+  Seller,
+  Totals,
+  VatBreakdown,
 } from '../canonical.js';
-import { Ctx, ParseError, type Scope, SELF_BILLED_TYPE_CODES, finish, parseXml, sourceMeta } from './context.js';
+import { Ctx, finish, ParseError, parseXml, type Scope, SELF_BILLED_TYPE_CODES, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 
 const NS = {
@@ -38,7 +50,9 @@ export function parseUbl(input: ParseInput): CanonicalInvoice[] {
   const taxCurrency = s.text(root, 'cbc:TaxCurrencyCode', 'taxCurrency');
 
   // BT-9: UBL 2.1 CreditNote has no root DueDate; Peppol puts it in PaymentMeans.
-  let dueDate = isCn ? s.date(root, 'cac:PaymentMeans/cbc:PaymentDueDate', 'BT-9', 'dueDate') : s.date(root, 'cbc:DueDate', 'BT-9', 'dueDate');
+  let dueDate = isCn
+    ? s.date(root, 'cac:PaymentMeans/cbc:PaymentDueDate', 'BT-9', 'dueDate')
+    : s.date(root, 'cbc:DueDate', 'BT-9', 'dueDate');
   if (isCn && !dueDate && c.text(root, 'cbc:DueDate')) {
     dueDate = s.date(root, 'cbc:DueDate', 'BT-9', 'dueDate');
     c.warn('CREDITNOTE_ROOT_DUEDATE', 'CreditNote carries cbc:DueDate on the root, which UBL 2.1 does not define; used it as BT-9');
@@ -47,12 +61,16 @@ export function parseUbl(input: ParseInput): CanonicalInvoice[] {
   const docRefs = c.all(root, 'cac:AdditionalDocumentReference');
   const refByType = (code: string) => docRefs.find((r) => c.text(r, 'cbc:DocumentTypeCode') === code);
   const invoicedObject = refByType('130');
-  const projectRef = s.text(root, 'cac:ProjectReference/cbc:ID', 'projectRef') ?? (isCn ? s.text(refByType('50'), 'cbc:ID', 'projectRef') : undefined);
+  const projectRef =
+    s.text(root, 'cac:ProjectReference/cbc:ID', 'projectRef') ?? (isCn ? s.text(refByType('50'), 'cbc:ID', 'projectRef') : undefined);
 
   const sellerEl = c.el(root, 'cac:AccountingSupplierParty/cac:Party');
   const seller = party(c, sellerEl, s.in('seller'), true) as Seller;
-  const taxRegEl = c.all(sellerEl, 'cac:PartyTaxScheme')
-    .filter((t) => c.text(t, 'cac:TaxScheme/cbc:ID') !== 'VAT').map((t) => c.el(t, 'cbc:CompanyID')).find((e) => c.text(e));
+  const taxRegEl = c
+    .all(sellerEl, 'cac:PartyTaxScheme')
+    .filter((t) => c.text(t, 'cac:TaxScheme/cbc:ID') !== 'VAT')
+    .map((t) => c.el(t, 'cbc:CompanyID'))
+    .find((e) => c.text(e));
   seller.taxRegistrationId = s.text(taxRegEl, undefined, 'seller/taxRegistrationId');
   seller.additionalLegalInfo = s.text(sellerEl, 'cac:PartyLegalEntity/cbc:CompanyLegalForm', 'seller/additionalLegalInfo');
 
@@ -101,11 +119,18 @@ export function parseUbl(input: ParseInput): CanonicalInvoice[] {
     invoicePeriod: period(c, c.el(root, 'cac:InvoicePeriod'), s.in('invoicePeriod')),
     seller,
     buyer: party(c, c.el(root, 'cac:AccountingCustomerParty/cac:Party'), s.in('buyer')),
-    payee: payeeEl ? {
-      name: s.text(payeeEl, 'cac:PartyName/cbc:Name', 'payee/name') ?? '',
-      identifier: c.id(payeeIds.find((e) => !isSepa(c)(e)), undefined, 'schemeID', s.path('payee/identifier')),
-      legalRegistrationId: s.id(payeeEl, 'cac:PartyLegalEntity/cbc:CompanyID', 'payee/legalRegistrationId'),
-    } : undefined,
+    payee: payeeEl
+      ? {
+          name: s.text(payeeEl, 'cac:PartyName/cbc:Name', 'payee/name') ?? '',
+          identifier: c.id(
+            payeeIds.find((e) => !isSepa(c)(e)),
+            undefined,
+            'schemeID',
+            s.path('payee/identifier'),
+          ),
+          legalRegistrationId: s.id(payeeEl, 'cac:PartyLegalEntity/cbc:CompanyID', 'payee/legalRegistrationId'),
+        }
+      : undefined,
     taxRepresentative: taxRepresentative(c, c.el(root, 'cac:TaxRepresentativeParty'), s.in('taxRepresentative')),
     additionalParties: [],
     delivery: delivery(c, c.el(root, 'cac:Delivery'), s.in('delivery')),
@@ -117,7 +142,9 @@ export function parseUbl(input: ParseInput): CanonicalInvoice[] {
     vatBreakdown,
     otherTaxes: [],
     withholdings: [],
-    attachments: docRefs.filter((r) => r !== invoicedObject && !(isCn && c.text(r, 'cbc:DocumentTypeCode') === '50')).map((r, i) => attachment(c, r, s.in('attachments').in(i))),
+    attachments: docRefs
+      .filter((r) => r !== invoicedObject && !(isCn && c.text(r, 'cbc:DocumentTypeCode') === '50'))
+      .map((r, i) => attachment(c, r, s.in('attachments').in(i))),
     lines,
     clearance: [],
     extensions,
@@ -158,7 +185,7 @@ function party(c: Ctx, p: Element | undefined, s: Scope, isSeller = false): Part
   };
 }
 
-function address(c: Ctx, a: Element | undefined, s: Scope): Address | undefined {
+function address(_c: Ctx, a: Element | undefined, s: Scope): Address | undefined {
   if (!a) return undefined;
   return {
     line1: s.text(a, 'cbc:StreetName', 'line1'),
@@ -171,12 +198,16 @@ function address(c: Ctx, a: Element | undefined, s: Scope): Address | undefined 
   };
 }
 
-function contact(c: Ctx, e: Element | undefined, s: Scope): Contact | undefined {
+function contact(_c: Ctx, e: Element | undefined, s: Scope): Contact | undefined {
   if (!e) return undefined;
-  return { name: s.text(e, 'cbc:Name', 'name'), phone: s.text(e, 'cbc:Telephone', 'phone'), email: s.text(e, 'cbc:ElectronicMail', 'email') };
+  return {
+    name: s.text(e, 'cbc:Name', 'name'),
+    phone: s.text(e, 'cbc:Telephone', 'phone'),
+    email: s.text(e, 'cbc:ElectronicMail', 'email'),
+  };
 }
 
-function period(c: Ctx, p: Element | undefined, s: Scope): Period | undefined {
+function period(_c: Ctx, p: Element | undefined, s: Scope): Period | undefined {
   if (!p) return undefined;
   const start = s.date(p, 'cbc:StartDate', 'period start', 'start');
   const end = s.date(p, 'cbc:EndDate', 'period end', 'end');
@@ -215,27 +246,37 @@ function payment(c: Ctx, pm: Element, creditorEl: Element | undefined, s: Scope)
     meansCode: s.text(code, undefined, 'meansCode') ?? '',
     meansText: s.attr(code, undefined, 'name', 'meansText'),
     remittanceInformation: s.text(pm, 'cbc:PaymentID', 'remittanceInformation'),
-    creditTransfers: account ? [{
-      accountId: t.text(account, 'cbc:ID', 'accountId') ?? '',
-      accountName: t.text(account, 'cbc:Name', 'accountName'),
-      serviceProviderId: t.text(account, 'cac:FinancialInstitutionBranch/cbc:ID', 'serviceProviderId'),
-    }] : [],
-    card: card ? {
-      primaryAccountNumber: k.text(card, 'cbc:PrimaryAccountNumberID', 'primaryAccountNumber') ?? '',
-      holderName: k.text(card, 'cbc:HolderName', 'holderName'),
-      network: k.text(card, 'cbc:NetworkID', 'network'),
-    } : undefined,
-    directDebit: mandate || (creditorId && c.text(code) === '59') ? {
-      mandateId: d.text(mandate, 'cbc:ID', 'mandateId'),
-      creditorId: d.text(creditorEl, undefined, 'creditorId'),
-      debitedAccountId: d.text(mandate, 'cac:PayerFinancialAccount/cbc:ID', 'debitedAccountId'),
-    } : undefined,
+    creditTransfers: account
+      ? [
+          {
+            accountId: t.text(account, 'cbc:ID', 'accountId') ?? '',
+            accountName: t.text(account, 'cbc:Name', 'accountName'),
+            serviceProviderId: t.text(account, 'cac:FinancialInstitutionBranch/cbc:ID', 'serviceProviderId'),
+          },
+        ]
+      : [],
+    card: card
+      ? {
+          primaryAccountNumber: k.text(card, 'cbc:PrimaryAccountNumberID', 'primaryAccountNumber') ?? '',
+          holderName: k.text(card, 'cbc:HolderName', 'holderName'),
+          network: k.text(card, 'cbc:NetworkID', 'network'),
+        }
+      : undefined,
+    directDebit:
+      mandate || (creditorId && c.text(code) === '59')
+        ? {
+            mandateId: d.text(mandate, 'cbc:ID', 'mandateId'),
+            creditorId: d.text(creditorEl, undefined, 'creditorId'),
+            debitedAccountId: d.text(mandate, 'cac:PayerFinancialAccount/cbc:ID', 'debitedAccountId'),
+          }
+        : undefined,
   };
 }
 
 /** Document level (`docLevel`) carries VAT on the allowance/charge; line level does not. */
 function allowanceCharges(c: Ctx, parent: Element, charge: boolean, docLevel: boolean, s: Scope): AllowanceCharge[] {
-  return c.all(parent, 'cac:AllowanceCharge')
+  return c
+    .all(parent, 'cac:AllowanceCharge')
     .filter((a) => (c.text(a, 'cbc:ChargeIndicator') ?? '').toLowerCase() === String(charge))
     .map((a, i) => {
       const t = s.in(i);
@@ -245,15 +286,24 @@ function allowanceCharges(c: Ctx, parent: Element, charge: boolean, docLevel: bo
         percentage: t.dec(a, 'cbc:MultiplierFactorNumeric', 'percentage'),
         reason: t.text(a, 'cbc:AllowanceChargeReason', 'reason'),
         reasonCode: t.text(a, 'cbc:AllowanceChargeReasonCode', 'reasonCode'),
-        vat: docLevel && c.el(a, 'cac:TaxCategory') ? {
-          categoryCode: t.text(a, 'cac:TaxCategory/cbc:ID', 'vat/categoryCode') ?? '',
-          rate: t.dec(a, 'cac:TaxCategory/cbc:Percent', 'vat/rate'),
-        } : undefined,
+        vat:
+          docLevel && c.el(a, 'cac:TaxCategory')
+            ? {
+                categoryCode: t.text(a, 'cac:TaxCategory/cbc:ID', 'vat/categoryCode') ?? '',
+                rate: t.dec(a, 'cac:TaxCategory/cbc:Percent', 'vat/rate'),
+              }
+            : undefined,
       };
     });
 }
 
-function totalsAndVat(c: Ctx, root: Element, currency: string, taxCurrency: string | undefined, s: Scope): { totals: Totals; vatBreakdown: VatBreakdown[] } {
+function totalsAndVat(
+  c: Ctx,
+  root: Element,
+  currency: string,
+  taxCurrency: string | undefined,
+  s: Scope,
+): { totals: Totals; vatBreakdown: VatBreakdown[] } {
   const taxTotals = c.all(root, 'cac:TaxTotal');
   const inCur = (t: Element, cur: string) => c.attr(t, 'cbc:TaxAmount', 'currencyID') === cur;
   const main = taxTotals.find((t) => inCur(t, currency)) ?? taxTotals.find((t) => c.el(t, 'cac:TaxSubtotal')) ?? taxTotals[0];
@@ -289,7 +339,8 @@ function totalsAndVat(c: Ctx, root: Element, currency: string, taxCurrency: stri
       exemptionReasonCode: v.text(sub, 'cac:TaxCategory/cbc:TaxExemptionReasonCode', 'exemptionReasonCode'),
     };
   });
-  for (const v of vatBreakdown) if (v.taxableAmount === undefined || v.taxAmount === undefined) throw new ParseError('TaxSubtotal without TaxableAmount or TaxAmount');
+  for (const v of vatBreakdown)
+    if (v.taxableAmount === undefined || v.taxAmount === undefined) throw new ParseError('TaxSubtotal without TaxableAmount or TaxAmount');
   return { totals, vatBreakdown };
 }
 
@@ -300,7 +351,9 @@ function attachment(c: Ctx, r: Element, s: Scope): Attachment {
   if (bin) {
     c.mark(s.path('base64'), bin);
     return {
-      kind: 'embedded', id, description,
+      kind: 'embedded',
+      id,
+      description,
       mimeCode: s.attr(bin, undefined, 'mimeCode', 'mimeCode') ?? '',
       filename: s.attr(bin, undefined, 'filename', 'filename') ?? '',
       base64: (bin.textContent ?? '').replace(/\s+/g, ''),
@@ -308,7 +361,13 @@ function attachment(c: Ctx, r: Element, s: Scope): Attachment {
   }
   const uri = s.text(r, 'cac:Attachment/cac:ExternalReference/cbc:URI', 'uri');
   if (uri) return { kind: 'external', id, description, uri };
-  return { kind: 'reference', id, description, typeCode: s.text(r, 'cbc:DocumentTypeCode', 'typeCode'), schemeId: s.attr(r, 'cbc:ID', 'schemeID', 'schemeId') };
+  return {
+    kind: 'reference',
+    id,
+    description,
+    typeCode: s.text(r, 'cbc:DocumentTypeCode', 'typeCode'),
+    schemeId: s.attr(r, 'cbc:ID', 'schemeID', 'schemeId'),
+  };
 }
 
 function line(c: Ctx, l: Element, isCn: boolean, s: Scope, sub = false): Line {
@@ -334,13 +393,15 @@ function line(c: Ctx, l: Element, isCn: boolean, s: Scope, sub = false): Line {
     period: period(c, c.el(l, 'cac:InvoicePeriod'), s.in('period')),
     allowances: allowanceCharges(c, l, false, false, s.in('allowances')),
     charges: allowanceCharges(c, l, true, false, s.in('charges')),
-    price: price ? {
-      net: p.dec(price, 'cbc:PriceAmount', 'net')!,
-      discount: p.dec(priceAc, 'cbc:Amount', 'discount'),
-      gross: p.dec(priceAc, 'cbc:BaseAmount', 'gross'),
-      baseQuantity: p.dec(price, 'cbc:BaseQuantity', 'baseQuantity'),
-      baseQuantityUnit: p.attr(price, 'cbc:BaseQuantity', 'unitCode', 'baseQuantityUnit'),
-    } : undefined,
+    price: price
+      ? {
+          net: p.dec(price, 'cbc:PriceAmount', 'net')!,
+          discount: p.dec(priceAc, 'cbc:Amount', 'discount'),
+          gross: p.dec(priceAc, 'cbc:BaseAmount', 'gross'),
+          baseQuantity: p.dec(price, 'cbc:BaseQuantity', 'baseQuantity'),
+          baseQuantityUnit: p.attr(price, 'cbc:BaseQuantity', 'unitCode', 'baseQuantityUnit'),
+        }
+      : undefined,
     vat: tax ? { categoryCode: s.text(tax, 'cbc:ID', 'vat/categoryCode') ?? '', rate: s.dec(tax, 'cbc:Percent', 'vat/rate') } : undefined,
     item: item(c, c.el(l, 'cac:Item'), s.in('item')),
     subLines: subLines.length ? subLines : undefined,

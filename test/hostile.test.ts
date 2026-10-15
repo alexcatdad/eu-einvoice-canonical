@@ -1,9 +1,9 @@
-import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { zipSync } from 'fflate';
 import { PDFDocument, PDFName, PDFRawStream } from 'pdf-lib';
 import { convert, inspect } from '../src/index.js';
-import { PEPPOL, fixture, ublHeader, utf8 } from './helpers.js';
+import { fixture, PEPPOL, ublHeader, utf8 } from './helpers.js';
 
 const MB = 1024 * 1024;
 
@@ -70,7 +70,10 @@ describe('ZIP', () => {
     const started = performance.now();
     const r = await inspect(zip, 'lying.zip');
     assert.equal(r.documents.length, 0);
-    assert.ok(r.skipped.some((s) => /understates its size/.test(s.reason)), JSON.stringify(r.skipped));
+    assert.ok(
+      r.skipped.some((s) => /understates its size/.test(s.reason)),
+      JSON.stringify(r.skipped),
+    );
     assert.ok(performance.now() - started < 1000, 'should not spend time inflating');
   });
 
@@ -100,7 +103,10 @@ describe('PDF', () => {
   test('an attachment over the limit is refused from its declared size', async () => {
     const r = await inspect(await pdfWithAttachment(2 * MB, false), 'big.pdf', { maxEntryBytes: MB });
     assert.equal(r.documents.length, 0);
-    assert.ok(r.skipped.some((s) => /declared size/.test(s.reason)), JSON.stringify(r.skipped));
+    assert.ok(
+      r.skipped.some((s) => /declared size/.test(s.reason)),
+      JSON.stringify(r.skipped),
+    );
   });
 
   test('an attachment without a declared size stops inflating at the limit (decompression bomb)', async () => {

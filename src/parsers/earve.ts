@@ -13,11 +13,24 @@
  */
 import type { Element } from '@xmldom/xmldom';
 import type {
-  AdditionalParty, Address, AllowanceCharge, Attachment, CanonicalInvoice, Contact, CreditTransfer, Decimal, Line, Party,
-  PaymentInstructions, Seller, Totals, VatBreakdown, VatInfo,
+  AdditionalParty,
+  Address,
+  AllowanceCharge,
+  Attachment,
+  CanonicalInvoice,
+  Contact,
+  CreditTransfer,
+  Decimal,
+  Line,
+  Party,
+  PaymentInstructions,
+  Seller,
+  Totals,
+  VatBreakdown,
+  VatInfo,
 } from '../canonical.js';
 import { add, sub, sum } from '../values.js';
-import { Ctx, ParseError, finish, parseXml, sourceMeta } from './context.js';
+import { Ctx, finish, ParseError, parseXml, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 
 export function parseEarve(input: ParseInput): CanonicalInvoice[] {
@@ -36,7 +49,8 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number):
   if (!id || !issueDate) throw new ParseError(`Invoice ${index + 1}: invoice number (BT-1) or issue date (BT-2) missing`);
 
   const eeType = c.attr(info, 'Type', 'type');
-  if (eeType !== 'DEB' && eeType !== 'CRE') c.warn('EE-TYPE', `Invoice ${index + 1}: Type/@type is ${eeType ?? 'absent'}, expected DEB or CRE; treated as an invoice`);
+  if (eeType !== 'DEB' && eeType !== 'CRE')
+    c.warn('EE-TYPE', `Invoice ${index + 1}: Type/@type is ${eeType ?? 'absent'}, expected DEB or CRE; treated as an invoice`);
   const kind = eeType === 'CRE' ? 'creditNote' : 'invoice';
   const typeCode = kind === 'creditNote' ? '381' : '380';
   c.derive('/typeCode', `Type/@type ${eeType ?? '(absent)'} -> UNCL 1001 ${typeCode}`);
@@ -54,7 +68,10 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number):
   const buyer = party(c, c.el(parties, 'BuyerParty'), c.attr(inv, undefined, 'regNumber'));
   const factor = c.el(parties, 'FactorParty');
 
-  const lines = c.all(inv, 'InvoiceItem/InvoiceItemGroup/ItemEntry').concat(c.all(inv, 'InvoiceItem/ItemEntry')).map((e, li) => line(c, e, li));
+  const lines = c
+    .all(inv, 'InvoiceItem/InvoiceItemGroup/ItemEntry')
+    .concat(c.all(inv, 'InvoiceItem/ItemEntry'))
+    .map((e, li) => line(c, e, li));
 
   const allowances: AllowanceCharge[] = [];
   const charges: AllowanceCharge[] = [];
@@ -62,12 +79,13 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number):
     const amount = c.dec(a, 'AddSum');
     if (amount === undefined) continue;
     const entry: AllowanceCharge = {
-      amount: amount.startsWith('-') ? amount.slice(1) as Decimal : amount,
+      amount: amount.startsWith('-') ? (amount.slice(1) as Decimal) : amount,
       percentage: c.dec(a, 'AddRate'),
       reason: c.text(a, 'AddContent'),
     };
     // addCode DSC = discount; everything else (CHR, ...) is a charge. Negative amounts are discounts.
-    if (c.attr(a, undefined, 'addCode') === 'DSC' || amount.startsWith('-')) allowances.push(entry); else charges.push(entry);
+    if (c.attr(a, undefined, 'addCode') === 'DSC' || amount.startsWith('-')) allowances.push(entry);
+    else charges.push(entry);
   }
   const en = c.el(sums, 'Extension/CustomContent/InvoiceSumGroupEN');
   const allowanceTotal = c.dec(en, 'AllowanceSum') ?? (allowances.length ? sum(allowances.map((x) => x.amount)) : undefined);
@@ -81,7 +99,8 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number):
     return { taxableAmount: taxable, taxAmount: tax, categoryCode: category(c, c.attr(v, undefined, 'vatId'), rate), rate };
   });
   const vatTotal = c.dec(sums, 'TotalVATSum') ?? (vatBreakdown.length ? sum(vatBreakdown.map((v) => v.taxAmount)) : undefined);
-  if (c.dec(sums, 'TotalVATSum') === undefined && vatTotal !== undefined) c.derive('/totals/vatTotal', 'TotalVATSum absent; sum of VAT group amounts');
+  if (c.dec(sums, 'TotalVATSum') === undefined && vatTotal !== undefined)
+    c.derive('/totals/vatTotal', 'TotalVATSum absent; sum of VAT group amounts');
 
   // TotalSum is the total with VAT, without Rounding; amount due = TotalSum - prepaid + Rounding (BR-CO-16 mapping).
   const rounding = c.dec(sums, 'Rounding');
@@ -113,20 +132,30 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number):
   if (toAccount) accounts.push({ accountId: toAccount.replace(/\s/g, ''), accountName: c.text(pay, 'PayToName') });
   for (const acc of c.all(parties, 'SellerParty/AccountInfo')) {
     const iban = c.text(acc, 'IBAN')?.replace(/\s/g, '');
-    if (iban && !accounts.some((a) => a.accountId === iban)) accounts.push({ accountId: iban, accountName: c.text(acc, 'AccountName'), serviceProviderId: c.text(acc, 'BIC') });
+    if (iban && !accounts.some((a) => a.accountId === iban))
+      accounts.push({ accountId: iban, accountName: c.text(acc, 'AccountName'), serviceProviderId: c.text(acc, 'BIC') });
     else if (iban) {
       const existing = accounts.find((a) => a.accountId === iban)!;
       existing.serviceProviderId ??= c.text(acc, 'BIC');
     }
   }
   const reference = c.text(pay, 'PaymentRefId') ?? c.text(info, 'PaymentReferenceNumber');
-  const payments: PaymentInstructions[] = accounts.length || reference ? [{
-    meansCode: accounts.length ? '30' : 'ZZZ',
-    meansText: c.text(pay, 'PaymentDescription'),
-    remittanceInformation: reference,
-    creditTransfers: accounts,
-  }] : [];
-  if (payments.length) c.derive('/payments/0/meansCode', `e-arve states no means code; ${accounts.length ? 'credit transfer (30) assumed from the bank account' : 'ZZZ'}`);
+  const payments: PaymentInstructions[] =
+    accounts.length || reference
+      ? [
+          {
+            meansCode: accounts.length ? '30' : 'ZZZ',
+            meansText: c.text(pay, 'PaymentDescription'),
+            remittanceInformation: reference,
+            creditTransfers: accounts,
+          },
+        ]
+      : [];
+  if (payments.length)
+    c.derive(
+      '/payments/0/meansCode',
+      `e-arve states no means code; ${accounts.length ? 'credit transfer (30) assumed from the bank account' : 'ZZZ'}`,
+    );
 
   const start = c.date(info, 'Period/StartDate', 'invoicing period start');
   const end = c.date(info, 'Period/EndDate', 'invoicing period end');
@@ -162,7 +191,9 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number):
     invoicePeriod: start || end ? { start, end } : undefined,
     seller,
     buyer,
-    additionalParties: factor ? [{ role: 'factor', sourceRole: 'EE:FactorParty', party: party(c, factor, undefined) } as AdditionalParty] : [],
+    additionalParties: factor
+      ? [{ role: 'factor', sourceRole: 'EE:FactorParty', party: party(c, factor, undefined) } as AdditionalParty]
+      : [],
     payments,
     paymentSchedule: [],
     allowances,
@@ -204,17 +235,20 @@ function category(c: Ctx, vatId: string | undefined, rate: Decimal | undefined):
 
 function party(c: Ctx, p: Element | undefined, attrRegNumber: string | undefined): Party {
   const reg = c.text(p, 'RegNumber') ?? attrRegNumber;
-  if (!c.text(p, 'RegNumber') && attrRegNumber) c.derive('/party/legalRegistrationId', 'RegNumber element absent; taken from the Invoice attribute');
+  if (!c.text(p, 'RegNumber') && attrRegNumber)
+    c.derive('/party/legalRegistrationId', 'RegNumber element absent; taken from the Invoice attribute');
   const contactData = c.el(p, 'ContactData');
   const legal = c.el(contactData, 'LegalAddress') ?? c.el(contactData, 'MailAddress');
-  const addr: Address | undefined = legal ? {
-    line1: c.text(legal, 'PostalAddress1'),
-    line2: c.text(legal, 'PostalAddress2'),
-    city: c.text(legal, 'City'),
-    postalCode: c.text(legal, 'PostalCode'),
-    countrySubdivision: c.text(legal, 'County'),
-    countryCode: c.text(legal, 'Country'),
-  } : undefined;
+  const addr: Address | undefined = legal
+    ? {
+        line1: c.text(legal, 'PostalAddress1'),
+        line2: c.text(legal, 'PostalAddress2'),
+        city: c.text(legal, 'City'),
+        postalCode: c.text(legal, 'PostalCode'),
+        countrySubdivision: c.text(legal, 'County'),
+        countryCode: c.text(legal, 'Country'),
+      }
+    : undefined;
   const contact: Contact = {
     name: c.text(contactData, 'ContactName'),
     phone: c.text(contactData, 'PhoneNumber'),
@@ -246,8 +280,13 @@ function line(c: Ctx, e: Element, index: number): Line {
   for (const a of c.all(e, 'Addition')) {
     const amount = c.dec(a, 'AddSum');
     if (amount === undefined) continue;
-    const entry: AllowanceCharge = { amount: amount.startsWith('-') ? amount.slice(1) as Decimal : amount, percentage: c.dec(a, 'AddRate'), reason: c.text(a, 'AddContent') };
-    if (c.attr(a, undefined, 'addCode') === 'DSC' || amount.startsWith('-')) allowances.push(entry); else charges.push(entry);
+    const entry: AllowanceCharge = {
+      amount: amount.startsWith('-') ? (amount.slice(1) as Decimal) : amount,
+      percentage: c.dec(a, 'AddRate'),
+      reason: c.text(a, 'AddContent'),
+    };
+    if (c.attr(a, undefined, 'addCode') === 'DSC' || amount.startsWith('-')) allowances.push(entry);
+    else charges.push(entry);
   }
   const unitText = c.text(detail, 'ItemUnit');
   return {
@@ -279,4 +318,12 @@ function attachment(c: Ctx, a: Element): Attachment[] {
   if (!mime) c.warn('EE-ATTACHMENT-MIME', `${filename}: MIME type unknown from the extension; application/octet-stream used`);
   return [{ kind: 'embedded', id: filename, mimeCode: mime ?? 'application/octet-stream', filename, base64 }];
 }
-const MIME: Record<string, string> = { pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', xml: 'text/xml', txt: 'text/plain', csv: 'text/csv' };
+const MIME: Record<string, string> = {
+  pdf: 'application/pdf',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  xml: 'text/xml',
+  txt: 'text/plain',
+  csv: 'text/csv',
+};

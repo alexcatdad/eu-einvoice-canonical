@@ -9,12 +9,10 @@
  * the CII parser; the ram namespace (version :12 in practice) is read from the document.
  */
 import type { Element } from '@xmldom/xmldom';
-import type {
-  AllowanceCharge, Attachment, CanonicalInvoice, Decimal, Line, Totals, VatBreakdown, VatInfo,
-} from '../canonical.js';
+import type { AllowanceCharge, Attachment, CanonicalInvoice, Decimal, Line, Totals, VatBreakdown, VatInfo } from '../canonical.js';
 import { cmp } from '../values.js';
 import { type DirectDebitEls, dateOf, delivery, party, payment, period, withScheme } from './cii.js';
-import { CREDIT_TYPE_CODES, Ctx, ParseError, SELF_BILLED_TYPE_CODES, finish, parseXml, sourceMeta } from './context.js';
+import { CREDIT_TYPE_CODES, Ctx, finish, ParseError, parseXml, SELF_BILLED_TYPE_CODES, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 import { recordUnmapped } from './leftover.js';
 
@@ -22,7 +20,17 @@ const RSM = 'urn:ferd:CrossIndustryDocument:invoice:1p0';
 const RAM_DEFAULT = 'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:12';
 const UDT = 'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:15';
 
-const PARTY_HANDLED = ['ID', 'GlobalID', 'Name', 'Description', 'DefinedTradeContact', 'PostalTradeAddress', 'URIUniversalCommunication', 'SpecifiedTaxRegistration', 'SpecifiedLegalOrganization'];
+const PARTY_HANDLED = [
+  'ID',
+  'GlobalID',
+  'Name',
+  'Description',
+  'DefinedTradeContact',
+  'PostalTradeAddress',
+  'URIUniversalCommunication',
+  'SpecifiedTaxRegistration',
+  'SpecifiedLegalOrganization',
+];
 
 export function parseZugferd1(input: ParseInput): CanonicalInvoice[] {
   const root = parseXml(input.payload.xml);
@@ -43,7 +51,8 @@ export function parseZugferd1(input: ParseInput): CanonicalInvoice[] {
   const typeCode = c.text(doc, 'ram:TypeCode') ?? '380';
   const currency = c.text(settlement, 'ram:InvoiceCurrencyCode');
   if (!currency) throw new ParseError('Invoice currency (BT-5) missing');
-  if ((c.text(ctxEl, 'ram:TestIndicator/*:Indicator') ?? '').toLowerCase() === 'true') c.warn('TEST_DOCUMENT', 'TestIndicator is true: the sender marked this document as a test');
+  if ((c.text(ctxEl, 'ram:TestIndicator/*:Indicator') ?? '').toLowerCase() === 'true')
+    c.warn('TEST_DOCUMENT', 'TestIndicator is true: the sender marked this document as a test');
 
   const guideline = c.text(ctxEl, 'ram:GuidelineSpecifiedDocumentContextParameter/ram:ID');
   const profile = input.details.profile;
@@ -56,7 +65,11 @@ export function parseZugferd1(input: ParseInput): CanonicalInvoice[] {
 
   const sellerEl = c.el(agreement, 'ram:SellerTradeParty');
   const seller = party(c, sellerEl, c.in('/seller')) as CanonicalInvoice['seller'];
-  seller.taxRegistrationId = c.all(sellerEl, 'ram:SpecifiedTaxRegistration/ram:ID').filter((e) => c.attr(e, undefined, 'schemeID') === 'FC').map((e) => c.text(e)).find(Boolean);
+  seller.taxRegistrationId = c
+    .all(sellerEl, 'ram:SpecifiedTaxRegistration/ram:ID')
+    .filter((e) => c.attr(e, undefined, 'schemeID') === 'FC')
+    .map((e) => c.text(e))
+    .find(Boolean);
   seller.additionalLegalInfo = c.text(sellerEl, 'ram:Description');
   const buyerEl = c.el(agreement, 'ram:BuyerTradeParty');
 
@@ -71,35 +84,75 @@ export function parseZugferd1(input: ParseInput): CanonicalInvoice[] {
   const lines = c.all(tx, 'ram:IncludedSupplyChainTradeLineItem').map((l, i) => line(c, l, i));
   if (lines.length === 0) c.warn('NO_LINES', 'The document has no invoice lines');
 
-  const logistics = c.all(settlement, 'ram:SpecifiedLogisticsServiceCharge').map((s): AllowanceCharge => ({
-    amount: c.dec(s, 'ram:AppliedAmount')!,
-    reason: c.text(s, 'ram:Description'),
-    vat: c.el(s, 'ram:AppliedTradeTax') ? vatInfo(c, c.el(s, 'ram:AppliedTradeTax')) : undefined,
-  }));
+  const logistics = c.all(settlement, 'ram:SpecifiedLogisticsServiceCharge').map(
+    (s): AllowanceCharge => ({
+      amount: c.dec(s, 'ram:AppliedAmount')!,
+      reason: c.text(s, 'ram:Description'),
+      vat: c.el(s, 'ram:AppliedTradeTax') ? vatInfo(c, c.el(s, 'ram:AppliedTradeTax')) : undefined,
+    }),
+  );
   if (logistics.length) c.warn('LOGISTICS_CHARGE', 'SpecifiedLogisticsServiceCharge mapped to a document charge');
 
   for (const pm of c.all(settlement, 'ram:SpecifiedTradeSettlementPaymentMeans')) {
     const blz = c.text(pm, 'ram:PayeeSpecifiedCreditorFinancialInstitution/ram:GermanBankleitzahlID');
-    if (blz) c.unmapped['/CrossIndustryDocument/SpecifiedSupplyChainTradeTransaction/ApplicableSupplyChainTradeSettlement/SpecifiedTradeSettlementPaymentMeans/PayeeSpecifiedCreditorFinancialInstitution/GermanBankleitzahlID'] = blz;
+    if (blz)
+      c.unmapped[
+        '/CrossIndustryDocument/SpecifiedSupplyChainTradeTransaction/ApplicableSupplyChainTradeSettlement/SpecifiedTradeSettlementPaymentMeans/PayeeSpecifiedCreditorFinancialInstitution/GermanBankleitzahlID'
+      ] = blz;
   }
   for (const t of terms) {
     const partial = c.dec(t, 'ram:PartialPaymentAmount');
-    if (partial !== undefined) c.unmapped['/CrossIndustryDocument/SpecifiedSupplyChainTradeTransaction/ApplicableSupplyChainTradeSettlement/SpecifiedTradePaymentTerms/PartialPaymentAmount'] = partial;
+    if (partial !== undefined)
+      c.unmapped[
+        '/CrossIndustryDocument/SpecifiedSupplyChainTradeTransaction/ApplicableSupplyChainTradeSettlement/SpecifiedTradePaymentTerms/PartialPaymentAmount'
+      ] = partial;
   }
 
-  recordUnmapped(c, ctxEl, ['TestIndicator', 'GuidelineSpecifiedDocumentContextParameter'], '/CrossIndustryDocument/SpecifiedExchangedDocumentContext');
+  recordUnmapped(
+    c,
+    ctxEl,
+    ['TestIndicator', 'GuidelineSpecifiedDocumentContextParameter'],
+    '/CrossIndustryDocument/SpecifiedExchangedDocumentContext',
+  );
   recordUnmapped(c, doc, ['ID', 'TypeCode', 'IssueDateTime', 'IncludedNote'], '/CrossIndustryDocument/HeaderExchangedDocument');
-  recordUnmapped(c, agreement, [
-    'BuyerReference', 'SellerTradeParty', 'BuyerTradeParty', 'ContractReferencedDocument', 'BuyerOrderReferencedDocument',
-    'AdditionalReferencedDocument',
-  ], '/CrossIndustryDocument/SpecifiedSupplyChainTradeTransaction/ApplicableSupplyChainTradeAgreement');
-  recordUnmapped(c, deliveryEl, ['ShipToTradeParty', 'ActualDeliverySupplyChainEvent', 'DeliveryNoteReferencedDocument', 'ReceivingAdviceReferencedDocument'],
-    '/CrossIndustryDocument/SpecifiedSupplyChainTradeTransaction/ApplicableSupplyChainTradeDelivery');
-  recordUnmapped(c, settlement, [
-    'PaymentReference', 'InvoiceCurrencyCode', 'InvoiceeTradeParty', 'PayeeTradeParty', 'SpecifiedTradeSettlementPaymentMeans', 'ApplicableTradeTax',
-    'BillingSpecifiedPeriod', 'SpecifiedTradeAllowanceCharge', 'SpecifiedLogisticsServiceCharge', 'SpecifiedTradePaymentTerms',
-    'SpecifiedTradeSettlementMonetarySummation', 'ReceivableSpecifiedTradeAccountingAccount',
-  ], '/CrossIndustryDocument/SpecifiedSupplyChainTradeTransaction/ApplicableSupplyChainTradeSettlement');
+  recordUnmapped(
+    c,
+    agreement,
+    [
+      'BuyerReference',
+      'SellerTradeParty',
+      'BuyerTradeParty',
+      'ContractReferencedDocument',
+      'BuyerOrderReferencedDocument',
+      'AdditionalReferencedDocument',
+    ],
+    '/CrossIndustryDocument/SpecifiedSupplyChainTradeTransaction/ApplicableSupplyChainTradeAgreement',
+  );
+  recordUnmapped(
+    c,
+    deliveryEl,
+    ['ShipToTradeParty', 'ActualDeliverySupplyChainEvent', 'DeliveryNoteReferencedDocument', 'ReceivingAdviceReferencedDocument'],
+    '/CrossIndustryDocument/SpecifiedSupplyChainTradeTransaction/ApplicableSupplyChainTradeDelivery',
+  );
+  recordUnmapped(
+    c,
+    settlement,
+    [
+      'PaymentReference',
+      'InvoiceCurrencyCode',
+      'InvoiceeTradeParty',
+      'PayeeTradeParty',
+      'SpecifiedTradeSettlementPaymentMeans',
+      'ApplicableTradeTax',
+      'BillingSpecifiedPeriod',
+      'SpecifiedTradeAllowanceCharge',
+      'SpecifiedLogisticsServiceCharge',
+      'SpecifiedTradePaymentTerms',
+      'SpecifiedTradeSettlementMonetarySummation',
+      'ReceivableSpecifiedTradeAccountingAccount',
+    ],
+    '/CrossIndustryDocument/SpecifiedSupplyChainTradeTransaction/ApplicableSupplyChainTradeSettlement',
+  );
   recordUnmapped(c, sellerEl, PARTY_HANDLED, '/CrossIndustryDocument/.../SellerTradeParty');
   recordUnmapped(c, buyerEl, PARTY_HANDLED, '/CrossIndustryDocument/.../BuyerTradeParty');
 
@@ -117,20 +170,28 @@ export function parseZugferd1(input: ParseInput): CanonicalInvoice[] {
     despatchAdviceRef: refId(c, deliveryEl, 'ram:DeliveryNoteReferencedDocument'),
     receivingAdviceRef: refId(c, deliveryEl, 'ram:ReceivingAdviceReferencedDocument'),
     tenderRef: tender ? c.text(tender, 'ram:ID') : undefined,
-    invoicedObjectId: invoicedObject ? withScheme(c.text(invoicedObject, 'ram:ID'), c.text(invoicedObject, 'ram:ReferenceTypeCode')) : undefined,
+    invoicedObjectId: invoicedObject
+      ? withScheme(c.text(invoicedObject, 'ram:ID'), c.text(invoicedObject, 'ram:ReferenceTypeCode'))
+      : undefined,
     accountingRef: c.text(settlement, 'ram:ReceivableSpecifiedTradeAccountingAccount/ram:ID'),
-    paymentTerms: terms.map((t) => c.text(t, 'ram:Description')).filter(Boolean).join('\n') || undefined,
+    paymentTerms:
+      terms
+        .map((t) => c.text(t, 'ram:Description'))
+        .filter(Boolean)
+        .join('\n') || undefined,
     notes: c.all(doc, 'ram:IncludedNote').map((n) => ({ subjectCode: c.text(n, 'ram:SubjectCode'), text: c.text(n, 'ram:Content') ?? '' })),
     specificationId: guideline ?? '',
     precedingInvoices: [],
     invoicePeriod: period(c, c.el(settlement, 'ram:BillingSpecifiedPeriod'), c.in('/invoicePeriod')),
     seller,
     buyer: party(c, buyerEl, c.in('/buyer')),
-    payee: payeeEl ? {
-      name: c.text(payeeEl, 'ram:Name') ?? '',
-      identifier: c.id(payeeEl, 'ram:ID') ?? c.id(payeeEl, 'ram:GlobalID'),
-      legalRegistrationId: c.id(payeeEl, 'ram:SpecifiedLegalOrganization/ram:ID'),
-    } : undefined,
+    payee: payeeEl
+      ? {
+          name: c.text(payeeEl, 'ram:Name') ?? '',
+          identifier: c.id(payeeEl, 'ram:ID') ?? c.id(payeeEl, 'ram:GlobalID'),
+          legalRegistrationId: c.id(payeeEl, 'ram:SpecifiedLegalOrganization/ram:ID'),
+        }
+      : undefined,
     additionalParties: inviteeEl ? [{ role: 'invoicee', party: party(c, inviteeEl, c.in('/additionalParties/0/party')) }] : [],
     delivery: delivery(c, deliveryEl, c.in('/delivery')),
     payments: c.all(settlement, 'ram:SpecifiedTradeSettlementPaymentMeans').map((pm, i) => payment(c, pm, direct, c.in(`/payments/${i}`))),
@@ -175,13 +236,17 @@ function vatInfo(c: Ctx, t: Element | undefined): VatInfo {
   if (given) return { categoryCode: given, rate };
   const categoryCode = rate !== undefined && cmp(rate, '0') > 0 ? 'S' : c.text(t, 'ram:ExemptionReason') ? 'E' : 'Z';
   if (!c.derived.some((d) => d.field === '/vat/categoryCode')) {
-    c.derive('/vat/categoryCode', 'ZUGFeRD 1 has no VAT category code; derived from the rate (S above 0, E with an exemption reason, otherwise Z)');
+    c.derive(
+      '/vat/categoryCode',
+      'ZUGFeRD 1 has no VAT category code; derived from the rate (S above 0, E with an exemption reason, otherwise Z)',
+    );
   }
   return { categoryCode, rate };
 }
 
 function allowanceCharges(c: Ctx, parent: Element | undefined, charge: boolean): AllowanceCharge[] {
-  return c.all(parent, 'ram:SpecifiedTradeAllowanceCharge')
+  return c
+    .all(parent, 'ram:SpecifiedTradeAllowanceCharge')
     .filter((a) => (c.text(a, 'ram:ChargeIndicator/*:Indicator') ?? '').toLowerCase() === String(charge))
     .map((a) => ({
       amount: c.dec(a, 'ram:ActualAmount')!,
@@ -220,11 +285,17 @@ function totalsAndVat(c: Ctx, settlement: Element | undefined, taxes: Element[])
   const vatBreakdown = taxes.map((t): VatBreakdown => {
     const taxableAmount = c.dec(t, 'ram:BasisAmount');
     const taxAmount = c.dec(t, 'ram:CalculatedAmount');
-    if (taxableAmount === undefined || taxAmount === undefined) throw new ParseError('ApplicableTradeTax without BasisAmount or CalculatedAmount');
+    if (taxableAmount === undefined || taxAmount === undefined)
+      throw new ParseError('ApplicableTradeTax without BasisAmount or CalculatedAmount');
     const taxType = c.text(t, 'ram:TypeCode');
     if (taxType && taxType !== 'VAT') c.warn('TAX_TYPE', `ApplicableTradeTax type ${taxType} is not VAT; mapped as a VAT breakdown`);
     const { categoryCode, rate } = vatInfo(c, t);
-    recordUnmapped(c, t, ['CalculatedAmount', 'BasisAmount', 'ApplicablePercent', 'ExemptionReason', 'CategoryCode', 'TypeCode'], '/CrossIndustryDocument/.../ApplicableTradeTax');
+    recordUnmapped(
+      c,
+      t,
+      ['CalculatedAmount', 'BasisAmount', 'ApplicablePercent', 'ExemptionReason', 'CategoryCode', 'TypeCode'],
+      '/CrossIndustryDocument/.../ApplicableTradeTax',
+    );
     return { taxableAmount, taxAmount, categoryCode, rate, exemptionReason: c.text(t, 'ram:ExemptionReason') };
   });
   return { totals, vatBreakdown };
@@ -236,7 +307,9 @@ function attachment(c: Ctx, d: Element): Attachment {
   const bin = c.el(d, 'ram:AttachmentBinaryObject');
   if (bin) {
     return {
-      kind: 'embedded', id, description,
+      kind: 'embedded',
+      id,
+      description,
       mimeCode: c.attr(bin, undefined, 'mimeCode') ?? '',
       filename: c.attr(bin, undefined, 'filename') ?? '',
       base64: (bin.textContent ?? '').replace(/\s+/g, ''),
@@ -263,13 +336,48 @@ function line(c: Ctx, l: Element, index: number): Line {
   const baseQty = c.el(net, 'ram:BasisQuantity') ?? c.el(gross, 'ram:BasisQuantity');
   const at = `/CrossIndustryDocument/.../IncludedSupplyChainTradeLineItem[${lineId}]`;
   recordUnmapped(c, docLine, ['LineID', 'IncludedNote'], `${at}/AssociatedDocumentLineDocument`);
-  recordUnmapped(c, agreement, ['GrossPriceProductTradePrice', 'NetPriceProductTradePrice', 'BuyerOrderReferencedDocument'], `${at}/SpecifiedSupplyChainTradeAgreement`);
+  recordUnmapped(
+    c,
+    agreement,
+    ['GrossPriceProductTradePrice', 'NetPriceProductTradePrice', 'BuyerOrderReferencedDocument'],
+    `${at}/SpecifiedSupplyChainTradeAgreement`,
+  );
   recordUnmapped(c, lineDelivery, ['BilledQuantity'], `${at}/SpecifiedSupplyChainTradeDelivery`);
-  recordUnmapped(c, lineSettlement, ['ApplicableTradeTax', 'BillingSpecifiedPeriod', 'SpecifiedTradeAllowanceCharge', 'SpecifiedTradeSettlementMonetarySummation', 'ReceivableSpecifiedTradeAccountingAccount'], `${at}/SpecifiedSupplyChainTradeSettlement`);
-  recordUnmapped(c, product, ['GlobalID', 'SellerAssignedID', 'BuyerAssignedID', 'Name', 'Description', 'ApplicableProductCharacteristic', 'DesignatedProductClassification', 'OriginTradeCountry'], `${at}/SpecifiedTradeProduct`);
+  recordUnmapped(
+    c,
+    lineSettlement,
+    [
+      'ApplicableTradeTax',
+      'BillingSpecifiedPeriod',
+      'SpecifiedTradeAllowanceCharge',
+      'SpecifiedTradeSettlementMonetarySummation',
+      'ReceivableSpecifiedTradeAccountingAccount',
+    ],
+    `${at}/SpecifiedSupplyChainTradeSettlement`,
+  );
+  recordUnmapped(
+    c,
+    product,
+    [
+      'GlobalID',
+      'SellerAssignedID',
+      'BuyerAssignedID',
+      'Name',
+      'Description',
+      'ApplicableProductCharacteristic',
+      'DesignatedProductClassification',
+      'OriginTradeCountry',
+    ],
+    `${at}/SpecifiedTradeProduct`,
+  );
   return {
     id: lineId,
-    note: c.all(docLine, 'ram:IncludedNote').map((n) => c.text(n, 'ram:Content')).filter(Boolean).join('\n') || undefined,
+    note:
+      c
+        .all(docLine, 'ram:IncludedNote')
+        .map((n) => c.text(n, 'ram:Content'))
+        .filter(Boolean)
+        .join('\n') || undefined,
     quantity: c.dec(qtyEl),
     unitCode: c.attr(qtyEl, undefined, 'unitCode'),
     netAmount,
@@ -278,13 +386,15 @@ function line(c: Ctx, l: Element, index: number): Line {
     period: period(c, c.el(lineSettlement, 'ram:BillingSpecifiedPeriod'), c.in(`/lines/${index}/period`)),
     allowances: allowanceCharges(c, lineSettlement, false),
     charges: allowanceCharges(c, lineSettlement, true),
-    price: net ? {
-      net: c.dec(net, 'ram:ChargeAmount')!,
-      discount: discount(c, gross),
-      gross: c.dec(gross, 'ram:ChargeAmount'),
-      baseQuantity: c.dec(baseQty),
-      baseQuantityUnit: c.attr(baseQty, undefined, 'unitCode'),
-    } : undefined,
+    price: net
+      ? {
+          net: c.dec(net, 'ram:ChargeAmount')!,
+          discount: discount(c, gross),
+          gross: c.dec(gross, 'ram:ChargeAmount'),
+          baseQuantity: c.dec(baseQty),
+          baseQuantityUnit: c.attr(baseQty, undefined, 'unitCode'),
+        }
+      : undefined,
     vat: tax ? vatInfo(c, tax) : undefined,
     item: {
       name: c.text(product, 'ram:Name') ?? '',
@@ -298,13 +408,17 @@ function line(c: Ctx, l: Element, index: number): Line {
         listVersion: c.attr(e, undefined, 'listVersionID'),
       })),
       originCountry: c.text(product, 'ram:OriginTradeCountry/ram:ID'),
-      attributes: c.all(product, 'ram:ApplicableProductCharacteristic').map((p) => ({ name: c.text(p, 'ram:Description') ?? '', value: c.text(p, 'ram:Value') ?? '' })),
+      attributes: c
+        .all(product, 'ram:ApplicableProductCharacteristic')
+        .map((p) => ({ name: c.text(p, 'ram:Description') ?? '', value: c.text(p, 'ram:Value') ?? '' })),
     },
   };
 }
 
 /** BT-147: the gross price's allowance (ChargeIndicator false). */
 function discount(c: Ctx, gross: Element | undefined): Decimal | undefined {
-  const a = c.all(gross, 'ram:AppliedTradeAllowanceCharge').find((x) => (c.text(x, 'ram:ChargeIndicator/*:Indicator') ?? '').toLowerCase() === 'false');
+  const a = c
+    .all(gross, 'ram:AppliedTradeAllowanceCharge')
+    .find((x) => (c.text(x, 'ram:ChargeIndicator/*:Indicator') ?? '').toLowerCase() === 'false');
   return c.dec(a, 'ram:ActualAmount');
 }

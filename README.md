@@ -5,8 +5,9 @@ One TypeScript model for every XML e-invoice you can receive from the 27 EU memb
 **Try it in the browser:** [alexcatdad.github.io/eu-einvoice-canonical](https://alexcatdad.github.io/eu-einvoice-canonical/). Drop an invoice and get the JSON. The page runs the same code as the library, entirely client-side; files are never uploaded.
 
 **Status:**
-- Done and tested: the canonical type, unwrapping, detection of 36 formats, and parsers for the `ubl`, `cii` and `svefaktura` families. Those cover Peppol BIS 3 (and self-billing, PINT), XRechnung UBL/CII, Factur-X/ZUGFeRD 2 in every profile, NLCIUS, CIUS-RO, CIUS-PT, HR-CIUS, OIOUBL, plain EN 16931 and Svefaktura 1.0.
-- Still stubs: the national parsers (FatturaPA, KSeF, Facturae, ISDOC, ebInterface, Finvoice, e-arve, eSLOG, myDATA...). `convert()` returns them as `unsupported`, with the detection result. Build order below.
+- Every parser family is implemented: UBL (Peppol BIS 3 and self-billing, PINT, XRechnung, NLCIUS, CIUS-RO, CIUS-PT, HR-CIUS, OIOUBL, plain EN 16931), CII (Factur-X/ZUGFeRD 2 in every profile, XRechnung CII), Svefaktura 1.0, FatturaPA, KSeF FA(2)/FA(3)/FA_RR, Facturae, ISDOC, ebInterface, Finvoice, e-arve, eSLOG 2.0, ZUGFeRD 1.0, TEAPPSXML and myDATA.
+- Also built: CAdES/XAdES signature verification, opt-in XSD and Schematron validation for UBL and CII, field-level provenance, the `einvoice` CLI, a coverage gate, and a per-format conformance checklist (`conformance.html` on the site).
+- How well each format is covered (fixtures, real samples, mapping source, validation) is in the generated conformance checklist, not in this README, so it cannot drift.
 
 ```
 received file ──► unwrap() ──► XML payload(s) ──► detectXml() ──► parser family ──► CanonicalInvoice[]
@@ -38,6 +39,8 @@ Development uses [Bun](https://bun.sh) 1.4+. The library itself has no Bun or No
 ```bash
 bun install
 bun run typecheck
+bun run format                                       # Biome: format and apply safe lint fixes
+bun run lint                                         # Biome lint only
 bun test
 bun run sweep:fixtures                               # known-answer check of every fixture
 bun scripts/sweep.ts /path/to/inbound/files          # what you actually receive
@@ -216,9 +219,10 @@ Skipped files and the reason are returned by both `inspect()` and `convert()`, s
 
 - **Unverified detection rules:** `ubl-unknown` and `cii-unknown` are fallbacks, not confirmed formats. The Croatian spec spells its own identifier inconsistently, so `hr-cius` only checks for `urn:mfin.gov.`.
 - **EN 16931-1:2026** (published March 2026; 164 to 216 business terms and 32 to 39 groups, per trade press) is not modelled beyond the identifier. Checked on 2026-10-16: the ConnectingEurope validation artefacts (v1.3.17, UBL 2.1 / CII D16B) and the KoSIT XRechnung Schematron (v2.6.0, XRechnung 3.0) contain no 2026 terms, and the EN 16931-1:2026 text and the updated CEN/TS 16931-3-x bindings are paywalled, so neither the exact BT/BG ids and names nor their UBL/CII paths are confirmed. Secondary sources mention multiple payment terms (BG-33), early-payment discounts (BG-35) and line-level delivery (BG-37) but disagree on detail, so nothing was added to `src/canonical.ts` or the parsers. Missing: the CEN/TS 16931-3-1 and 3-3 binding tables, or the 2026 Schematron/XSD once ConnectingEurope or Peppol BIS publish them. 2026-identified documents still parse, with the 2017 terms only.
-- **Signatures** are detected and recorded, not verified.
-- **No schema or Schematron validation yet.** `source.validation` exists in the model but nothing fills it. The BR-CO arithmetic checks are the only rules run. Use phive or the KoSIT validator for conformance.
-- **National parsers** are still stubs (see the build order). So is the Peppol PINT-specific mapping beyond what plain UBL gives.
+- **Signature trust:** signatures are verified cryptographically, but signers are only checked against a trust list when you pass `trustAnchors`; no EU trust lists ship with the library.
+- **Validation covers UBL and CII only** (XSD, EN 16931 and Peppol/XRechnung Schematron). National formats get the BR-CO arithmetic checks only; their official schemas are not run yet.
+- **Synthetic fixtures:** most national parsers were built from specifications and tested on synthetic files. Formats without a converted real sample are listed in the conformance checklist; run `sweep --expect` on your own inbound files before relying on them.
+- **Peppol PINT** gets the plain UBL mapping; PINT-specific rules are not applied.
 - **Non-XML formats** (EDIFACT INVOIC, PDFs without embedded XML) are out of scope.
 
 ## License

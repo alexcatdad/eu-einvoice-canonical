@@ -1,5 +1,5 @@
-import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { convert, effectiveSign, IMPLEMENTED_FAMILIES } from '../src/index.js';
 import { NotImplementedError, PARSERS } from '../src/parsers/index.js';
 import { fixture, parseOne, utf8, warningCodes } from './helpers.js';
@@ -56,21 +56,34 @@ describe('UBL: Peppol BIS 3 invoice', async () => {
   });
 
   test('payment: Bankgiro is code 30 with SE:BANKGIRO', () => {
-    assert.deepEqual(inv.payments, [{
-      meansCode: '30', meansText: 'Bankgiro', remittanceInformation: '4711000123',
-      creditTransfers: [{ accountId: '1234567', accountName: 'Snickeri Exempel AB', serviceProviderId: 'SE:BANKGIRO' }],
-    }]);
+    assert.deepEqual(inv.payments, [
+      {
+        meansCode: '30',
+        meansText: 'Bankgiro',
+        remittanceInformation: '4711000123',
+        creditTransfers: [{ accountId: '1234567', accountName: 'Snickeri Exempel AB', serviceProviderId: 'SE:BANKGIRO' }],
+      },
+    ]);
   });
 
   test('document allowances and charges are split and keep their VAT', () => {
-    assert.deepEqual(inv.allowances, [{ amount: '100.00', reason: 'Volymrabatt', reasonCode: '95', vat: { categoryCode: 'S', rate: '25' } }]);
+    assert.deepEqual(inv.allowances, [
+      { amount: '100.00', reason: 'Volymrabatt', reasonCode: '95', vat: { categoryCode: 'S', rate: '25' } },
+    ]);
     assert.deepEqual(inv.charges, [{ amount: '50.00', reason: 'Frakt', reasonCode: 'FC', vat: { categoryCode: 'S', rate: '25' } }]);
   });
 
   test('totals are decimal strings exactly as sent', () => {
     assert.deepEqual(inv.totals, {
-      lineNetTotal: '2960.00', allowanceTotal: '100.00', chargeTotal: '50.00', taxExclusive: '2910.00',
-      vatTotal: '680.70', taxInclusive: '3590.70', prepaid: '500.00', rounding: '0.30', payable: '3091.00',
+      lineNetTotal: '2960.00',
+      allowanceTotal: '100.00',
+      chargeTotal: '50.00',
+      taxExclusive: '2910.00',
+      vatTotal: '680.70',
+      taxInclusive: '3590.70',
+      prepaid: '500.00',
+      rounding: '0.30',
+      payable: '3091.00',
     });
   });
 
@@ -145,7 +158,8 @@ describe('UBL: credit notes and signs', () => {
   });
 
   test('a root cbc:DueDate on a CreditNote is used with a warning', async () => {
-    const xml = new TextDecoder().decode(fixture('peppol-bis3-creditnote.xml'))
+    const xml = new TextDecoder()
+      .decode(fixture('peppol-bis3-creditnote.xml'))
       .replace(/<cac:PaymentMeans>[\s\S]*?<\/cac:PaymentMeans>/, '')
       .replace('<cbc:CreditNoteTypeCode>', '<cbc:DueDate>2026-12-01</cbc:DueDate><cbc:CreditNoteTypeCode>');
     const cn = await parseOne(utf8(xml));
@@ -161,7 +175,9 @@ describe('UBL: XRechnung', () => {
     assert.equal(inv.buyerReference, '04011000-12345-34');
     assert.deepEqual(inv.buyer.endpoint, { value: '04011000-12345-34', schemeId: '0204' });
     assert.deepEqual(inv.seller.endpoint, { value: 'rechnung@beispiel.example', schemeId: 'EM' });
-    assert.deepEqual(inv.payments[0].creditTransfers, [{ accountId: 'DE02120300000000202051', accountName: 'Beispiel GmbH', serviceProviderId: 'BYLADEM1001' }]);
+    assert.deepEqual(inv.payments[0].creditTransfers, [
+      { accountId: 'DE02120300000000202051', accountName: 'Beispiel GmbH', serviceProviderId: 'BYLADEM1001' },
+    ]);
     assert.deepEqual(inv.extensions, { de: { xrechnungVersion: '3.0' } });
     assert.equal(inv.lines[0].unitCode, 'DAY');
   });
@@ -182,8 +198,16 @@ describe('CII', () => {
     assert.equal(inv.purchaseOrderRef, 'BE-4711');
     assert.equal(inv.contractRef, 'RV-2026-3');
     assert.equal(inv.payments[0].remittanceInformation, 'RE-2026-501');
-    assert.deepEqual(inv.payments[0].creditTransfers, [{ accountId: 'DE02120300000000202051', accountName: 'Beispiel GmbH', serviceProviderId: 'BYLADEM1001' }]);
-    assert.deepEqual(inv.totals, { lineNetTotal: '700.00', taxExclusive: '700.00', vatTotal: '121.00', taxInclusive: '821.00', payable: '821.00' });
+    assert.deepEqual(inv.payments[0].creditTransfers, [
+      { accountId: 'DE02120300000000202051', accountName: 'Beispiel GmbH', serviceProviderId: 'BYLADEM1001' },
+    ]);
+    assert.deepEqual(inv.totals, {
+      lineNetTotal: '700.00',
+      taxExclusive: '700.00',
+      vatTotal: '121.00',
+      taxInclusive: '821.00',
+      payable: '821.00',
+    });
     assert.equal(inv.vatBreakdown.length, 2);
     const [l1, l2] = inv.lines;
     assert.deepEqual(l1.price, { net: '200.00', discount: '20.00', gross: '220.00' });
@@ -215,7 +239,10 @@ describe('CII', () => {
     const inv = await parseOne('facturx-en16931.pdf');
     assert.equal(inv.id, '471102');
     assert.equal(inv.totals.payable, '529.87');
-    assert.deepEqual(inv.source.envelope.map((s) => s.kind), ['pdf-attachment', 'xml']);
+    assert.deepEqual(
+      inv.source.envelope.map((s) => s.kind),
+      ['pdf-attachment', 'xml'],
+    );
     assert.deepEqual(warningCodes(inv), []);
   });
 });
@@ -260,7 +287,13 @@ describe('Svefaktura 1.0', async () => {
   });
 
   test('Bankgiro: PaymentMeansTypeCode 1 -> 30 + SE:BANKGIRO, digits only, derivation recorded', () => {
-    assert.deepEqual(inv.payments, [{ meansCode: '30', remittanceInformation: '4711000123', creditTransfers: [{ accountId: '1234567', serviceProviderId: 'SE:BANKGIRO' }] }]);
+    assert.deepEqual(inv.payments, [
+      {
+        meansCode: '30',
+        remittanceInformation: '4711000123',
+        creditTransfers: [{ accountId: '1234567', serviceProviderId: 'SE:BANKGIRO' }],
+      },
+    ]);
     assert.ok(inv.source.derived.some((d) => d.field === '/payments/meansCode'));
   });
 
@@ -311,12 +344,16 @@ describe('Svefaktura 1.0', async () => {
     assert.deepEqual(cn.precedingInvoices, [{ id: 'SF-2026-17' }]);
     assert.equal(cn.currency, 'SEK');
     assert.ok(cn.source.derived.some((d) => d.field === '/currency'));
-    assert.deepEqual(cn.vatBreakdown, [{ taxableAmount: '500.00', taxAmount: '0', categoryCode: 'E', exemptionReason: 'No VAT stated in the source invoice' }]);
+    assert.deepEqual(cn.vatBreakdown, [
+      { taxableAmount: '500.00', taxAmount: '0', categoryCode: 'E', exemptionReason: 'No VAT stated in the source invoice' },
+    ]);
     assert.ok(cn.source.derived.some((d) => d.field === '/vatBreakdown/0'));
   });
 
   test('LineItemCountNumeric mismatch is reported', async () => {
-    const xml = new TextDecoder('latin1').decode(fixture('svefaktura-1.0.xml')).replace('<LineItemCountNumeric>3<', '<LineItemCountNumeric>4<');
+    const xml = new TextDecoder('latin1')
+      .decode(fixture('svefaktura-1.0.xml'))
+      .replace('<LineItemCountNumeric>3<', '<LineItemCountNumeric>4<');
     const bytes = Uint8Array.from(xml, (ch) => ch.charCodeAt(0));
     const inv2 = await parseOne(bytes);
     assert.ok(warningCodes(inv2).includes('SF-LINECOUNT'));
@@ -328,7 +365,10 @@ describe('real samples (phive-rules / Mustang / ANAF)', () => {
     test(`${f} parses with consistent totals`, async () => {
       const inv = await parseOne(f);
       assert.ok(inv.lines.length > 0);
-      assert.deepEqual(warningCodes(inv).filter((c) => c.startsWith('BR-CO')), []);
+      assert.deepEqual(
+        warningCodes(inv).filter((c) => c.startsWith('BR-CO')),
+        [],
+      );
     });
   }
 });
@@ -344,7 +384,9 @@ describe('convert outcomes', () => {
   test('formats without a parser are "unsupported", with the detection kept', async () => {
     // Every family has a parser now, so stand in a stub for one of them for the duration of the test.
     const original = PARSERS.mydata;
-    PARSERS.mydata = () => { throw new NotImplementedError('mydata'); };
+    PARSERS.mydata = () => {
+      throw new NotImplementedError('mydata');
+    };
     try {
       const r = await convert(fixture('mydata.xml'), 'mydata.xml');
       assert.equal(r.outcomes[0].status, 'unsupported');
@@ -360,7 +402,9 @@ describe('convert outcomes', () => {
   });
 
   test('a malformed amount is an error naming the element, not a silent value', async () => {
-    const xml = new TextDecoder().decode(fixture('xrechnung-ubl.xml')).replace('<cbc:PayableAmount currencyID="EUR">1190.00', '<cbc:PayableAmount currencyID="EUR">1.190,00');
+    const xml = new TextDecoder()
+      .decode(fixture('xrechnung-ubl.xml'))
+      .replace('<cbc:PayableAmount currencyID="EUR">1190.00', '<cbc:PayableAmount currencyID="EUR">1.190,00');
     const r = await convert(utf8(xml));
     const o = r.outcomes[0];
     assert.equal(o.status, 'error');
@@ -374,7 +418,8 @@ describe('convert outcomes', () => {
   });
 
   test('tampered totals are reported as BR-CO warnings, values untouched', async () => {
-    const xml = new TextDecoder().decode(fixture('peppol-bis3-invoice.xml'))
+    const xml = new TextDecoder()
+      .decode(fixture('peppol-bis3-invoice.xml'))
       .replace('<cbc:PayableAmount currencyID="SEK">3091.00', '<cbc:PayableAmount currencyID="SEK">3100.00')
       .replace('<cbc:TaxAmount currencyID="SEK">680.70</cbc:TaxAmount>', '<cbc:TaxAmount currencyID="SEK">680.00</cbc:TaxAmount>');
     const inv = await parseOne(utf8(xml));

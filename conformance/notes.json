@@ -1,5 +1,5 @@
 {
-  "$comment": "Hand-maintained facts the conformance checklist cannot derive from code. publicSamples: fixtures that are real public samples, not written for the test suite. mappingSource: the specification a parser's mapping follows; formats without one show 'not recorded'. validation: conformance layers run for the format (schema, semantic, profile).",
+  "$comment": "Hand-maintained facts the conformance checklist cannot derive from code. publicSamples: fixtures that are real public samples, not written for the test suite. mappingSource: the specification a parser's mapping follows, taken from the parser's header comment; formats without one show 'not recorded'. Validation layers are not listed here: scripts/conformance.ts derives them from planFor() in src/validation/plan.ts.",
   "publicSamples": [
     "peppol-in-sbdh.xml",
     "peppol-utf16.xml",
@@ -23,7 +23,18 @@
   "mappingSource": {
     "ubl": "EN 16931-3-2 (UBL binding) as documented in the Peppol BIS Billing 3.0 syntax pages",
     "cii": "EN 16931-3-3 (CII binding) as documented by FNFE-MPE / FeRD for Factur-X and KoSIT for XRechnung",
-    "svefaktura": "SFTI, Mapping of Svefaktura 1.0 onto EN 16931-1, v1.4"
-  },
-  "validation": {}
+    "svefaktura": "SFTI, Mapping of Svefaktura 1.0 onto EN 16931-1, v1.4",
+    "zugferd1": "ZUGFeRD 1.0 (FeRD) CrossIndustryDocument syntax, urn:ferd:CrossIndustryDocument:invoice:1p0; no mapping document cited in the parser",
+    "fatturapa": "FatturaPA 1.2.x (FPR12/FPA12) and FSM10 semplificata schemas (Agenzia delle Entrate); no mapping document cited in the parser",
+    "ksef": "Ministry of Finance KSeF schemas FA(2), FA(3), FA_RR(1) (crd.gov.pl/wzor/...) and the KSeF documentation (CIRFMF/ksef-docs)",
+    "facturae": "Facturae 3.2 / 3.2.1 / 3.2.2 schemas (Spain); no mapping document cited in the parser",
+    "isdoc": "ISDOC 5.2 to 6.x schema (isdoc.cz); no mapping document cited in the parser",
+    "ebinterface": "ebInterface 4.3 to 6.1 schemas (ebinterface.at); no mapping document cited in the parser",
+    "finvoice": "Finvoice 3.0 mapping onto EN 16931 (Finnish Federation of Financial Services)",
+    "teappsxml": "TEAPPSXML v.3.0 Implementation Guide and 'Empty INVOICES-structure with explanations' (Tieto)",
+    "e-arve": "Estonian e-invoice (e-arve) 1.2 / 1.2.EN; no mapping document cited in the parser",
+    "eslog": "e-SLOG 2.0 Electronic Invoice, Part 2: Document Composition (April 2018)",
+    "eslog-1": "Not mapped: the eslog parser reads eSLOG 2.0 only",
+    "mydata": "AADE myDATA InvoicesDoc XSD, invoice namespace v1.0 and income/expenses classification v1.0"
+  }
 }

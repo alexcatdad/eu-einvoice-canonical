@@ -1,6 +1,6 @@
 /** Scores line roles and relations against hand labels: used by the browser evaluation page and the tests. */
 import type { CanonicalInvoice, LineRelation, LineRole } from '../canonical.js';
-import { LABELLED_CASES, toLines, type LabelledCase } from './labelled.js';
+import { LABELLED_CASES, type LabelledCase, toLines } from './labelled.js';
 import { applyModelLabels, type ModelLabeller } from './model.js';
 import { analyseLines } from './rules.js';
 
@@ -64,9 +64,18 @@ export async function evaluate(labeller?: ModelLabeller, cases: LabelledCase[] =
   const ratio = (a: number, b: number) => (b === 0 ? 1 : a / b);
   return {
     cases: scores,
-    roleAccuracy: ratio(sum((s) => s.rolesCorrect), sum((s) => s.rolesTotal)),
-    relationPrecision: ratio(sum((s) => s.relationsTrue), sum((s) => s.relationsFound)),
-    relationRecall: ratio(sum((s) => s.relationsTrue), sum((s) => s.relationsExpected)),
+    roleAccuracy: ratio(
+      sum((s) => s.rolesCorrect),
+      sum((s) => s.rolesTotal),
+    ),
+    relationPrecision: ratio(
+      sum((s) => s.relationsTrue),
+      sum((s) => s.relationsFound),
+    ),
+    relationRecall: ratio(
+      sum((s) => s.relationsTrue),
+      sum((s) => s.relationsExpected),
+    ),
     provenWrong: sum((s) => s.provenWrong),
     ms: performance.now() - t0,
   };

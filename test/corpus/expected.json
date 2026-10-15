@@ -1,244 +1,84 @@
 {
-  "repos/peppol-bis-invoice-3/rules/examples/Allowance-example.xml": [
-    "peppol-bis3"
-  ],
-  "repos/peppol-bis-invoice-3/rules/examples/Vat-category-S.xml": [
-    "peppol-bis3"
-  ],
-  "repos/peppol-bis-invoice-3/rules/examples/base-creditnote-correction.xml": [
-    "peppol-bis3"
-  ],
-  "repos/peppol-bis-invoice-3/rules/examples/base-example.xml": [
-    "peppol-bis3"
-  ],
-  "repos/peppol-bis-invoice-3/rules/examples/base-negative-inv-correction.xml": [
-    "peppol-bis3"
-  ],
-  "repos/peppol-bis-invoice-3/rules/examples/vat-category-E.xml": [
-    "peppol-bis3"
-  ],
-  "repos/peppol-bis-invoice-3/rules/examples/vat-category-O.xml": [
-    "peppol-bis3"
-  ],
-  "repos/peppol-bis-invoice-3/rules/examples/vat-category-Z.xml": [
-    "peppol-bis3"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/extension/04.01a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/extension/04.02a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/extension/04.03a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/extension/04.04a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/extension/05.01a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.01a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.02a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.03a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.04a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.05a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.06a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.07a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.08a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.09a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.10a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.11a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.12a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.13a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.14a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.15a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.17a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.18a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.19a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.20a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.21a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.01a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.02a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.03a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.04a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.05a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.06a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.01a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.02a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.03a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.04a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.05a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.06a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.07a-INVOICE_ubl.xml": [
-    "xrechnung-ubl"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/extension/04.05a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.01a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.02a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.03a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.04a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.05a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.06a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.07a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.08a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.09a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.10a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.11a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.12a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.13a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.14a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.15a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.17a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.18a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.19a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.20a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.21a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.01a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.02a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.03a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.04a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.05a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.06a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.01a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.02a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.03a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.04a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.05a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.06a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
-  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.07a-INVOICE_uncefact.xml": [
-    "xrechnung-cii"
-  ],
+  "repos/peppol-bis-invoice-3/rules/examples/Allowance-example.xml": ["peppol-bis3"],
+  "repos/peppol-bis-invoice-3/rules/examples/Vat-category-S.xml": ["peppol-bis3"],
+  "repos/peppol-bis-invoice-3/rules/examples/base-creditnote-correction.xml": ["peppol-bis3"],
+  "repos/peppol-bis-invoice-3/rules/examples/base-example.xml": ["peppol-bis3"],
+  "repos/peppol-bis-invoice-3/rules/examples/base-negative-inv-correction.xml": ["peppol-bis3"],
+  "repos/peppol-bis-invoice-3/rules/examples/vat-category-E.xml": ["peppol-bis3"],
+  "repos/peppol-bis-invoice-3/rules/examples/vat-category-O.xml": ["peppol-bis3"],
+  "repos/peppol-bis-invoice-3/rules/examples/vat-category-Z.xml": ["peppol-bis3"],
+  "repos/xrechnung-testsuite/src/test/business-cases/extension/04.01a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/extension/04.02a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/extension/04.03a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/extension/04.04a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/extension/05.01a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.01a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.02a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.03a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.04a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.05a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.06a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.07a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.08a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.09a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.10a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.11a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.12a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.13a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.14a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.15a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.17a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.18a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.19a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.20a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.21a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.01a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.02a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.03a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.04a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.05a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.06a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.01a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.02a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.03a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.04a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.05a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.06a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.07a-INVOICE_ubl.xml": ["xrechnung-ubl"],
+  "repos/xrechnung-testsuite/src/test/business-cases/extension/04.05a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.01a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.02a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.03a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.04a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.05a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.06a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.07a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.08a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.09a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.10a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.11a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.12a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.13a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.14a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.15a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.17a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.18a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.19a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.20a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/01.21a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.01a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.02a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.03a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.04a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.05a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/02.06a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.01a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.02a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.03a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.04a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.05a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.06a-INVOICE_uncefact.xml": ["xrechnung-cii"],
+  "repos/xrechnung-testsuite/src/test/business-cases/standard/03.07a-INVOICE_uncefact.xml": ["xrechnung-cii"],
   "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EXTENDED-CTC-FR/UC10_F202600004_MULTI-VENDEUR_EXTENDED-CTC-FR_UBL_Commentee.xml": [
     "fr-ctc-ubl"
   ],
@@ -251,9 +91,7 @@
   "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EXTENDED-CTC-FR/UC13_AUTOF202600035_BIDIRECTIONNELLE_EXTENDED-CTC-FR_UBL_Commentee.xml": [
     "fr-ctc-ubl"
   ],
-  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EXTENDED-CTC-FR/UC13_F202600037_EXTENDED-CTC-FR_UBL_Commentee.xml": [
-    "fr-ctc-ubl"
-  ],
+  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EXTENDED-CTC-FR/UC13_F202600037_EXTENDED-CTC-FR_UBL_Commentee.xml": ["fr-ctc-ubl"],
   "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/CII/EXTENDED-CTC-FR/UC10_F202600004_MULTI-VENDEUR_EXTENDED-CTC-FR_CII_Commentee.xml": [
     "fr-ctc-cii"
   ],
@@ -266,39 +104,19 @@
   "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/CII/EXTENDED-CTC-FR/UC13_AUTOF202600035_BIDIRECTIONNELLE_EXTENDED-CTC-FR_CII_Commentee.xml": [
     "fr-ctc-cii"
   ],
-  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/CII/EXTENDED-CTC-FR/UC13_F202600037_EXTENDED-CTC-FR_CII_Commentee.xml": [
-    "fr-ctc-cii"
-  ],
-  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EN16931/UC13_AUTOF202600028_EN16931_UBL_Commentee.xml": [
-    "en16931-ubl"
-  ],
-  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EN16931/UC13_F202600037_EN16931_UBL_Commentee.xml": [
-    "en16931-ubl"
-  ],
-  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EN16931/UC1_F202500003_00-INV_20250701_EN16931_UBL_Commentee.xml": [
-    "en16931-ubl"
-  ],
-  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EN16931/UC2_F202500004_00-INV_20250701_EN16931_UBL_Commentee.xml": [
-    "en16931-ubl"
-  ],
-  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EN16931/UC3_F202500005_00-INV_20250701_EN16931_UBL_Commentee.xml": [
-    "en16931-ubl"
-  ],
-  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EN16931/UC4_F202500006_00-INV_20250701_EN16931_UBL_Commentee.xml": [
-    "en16931-ubl"
-  ],
+  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/CII/EXTENDED-CTC-FR/UC13_F202600037_EXTENDED-CTC-FR_CII_Commentee.xml": ["fr-ctc-cii"],
+  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EN16931/UC13_AUTOF202600028_EN16931_UBL_Commentee.xml": ["en16931-ubl"],
+  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EN16931/UC13_F202600037_EN16931_UBL_Commentee.xml": ["en16931-ubl"],
+  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EN16931/UC1_F202500003_00-INV_20250701_EN16931_UBL_Commentee.xml": ["en16931-ubl"],
+  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EN16931/UC2_F202500004_00-INV_20250701_EN16931_UBL_Commentee.xml": ["en16931-ubl"],
+  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EN16931/UC3_F202500005_00-INV_20250701_EN16931_UBL_Commentee.xml": ["en16931-ubl"],
+  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EN16931/UC4_F202500006_00-INV_20250701_EN16931_UBL_Commentee.xml": ["en16931-ubl"],
   "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EN16931/UC4b_F202500010_00-INVCORR_20250702_EN16931_UBL_Commentee.xml": [
     "en16931-ubl"
   ],
-  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EN16931/UC5_F202500007_00-INV_20250702_EN16931_UBL_Commentee.xml": [
-    "en16931-ubl"
-  ],
-  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/CII/EN16931/UC13_AUTOF202600028_EN16931_FX_CII_Commentee.xml": [
-    "en16931-cii"
-  ],
-  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/CII/EN16931/UC13_F202600037_EN16931_FX_CII_Commentee.xml": [
-    "en16931-cii"
-  ],
+  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EN16931/UC5_F202500007_00-INV_20250702_EN16931_UBL_Commentee.xml": ["en16931-ubl"],
+  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/CII/EN16931/UC13_AUTOF202600028_EN16931_FX_CII_Commentee.xml": ["en16931-cii"],
+  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/CII/EN16931/UC13_F202600037_EN16931_FX_CII_Commentee.xml": ["en16931-cii"],
   "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/CII/EN16931/UC1_F202500003_00-INV_20250701_EN16931_FX_CII_Commentee.xml": [
     "en16931-cii"
   ],
@@ -323,207 +141,75 @@
   "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/FX/BASICWL/Facture_F20260024-LE_FOURNISSEUR-POUR-LE_CLIENT_BASICWL_FX_CII_Commentee.xml": [
     "facturx"
   ],
-  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/FX/EXTENDED/UC10_F202600004_MULTI-VENDEUR_EXTENDED_FX_CII_Commentee.xml": [
-    "facturx"
-  ],
-  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/FX/EXTENDED/UC11_F202600022_MULTI-VENDEUR_EXTENDED_FX_CII_Commentee.xml": [
-    "facturx"
-  ],
-  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/FX/EXTENDED/UC12_F202600025_SOUS-LIGNE_EXTENDED_FX_CII_Commentee.xml": [
-    "facturx"
-  ],
+  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/FX/EXTENDED/UC10_F202600004_MULTI-VENDEUR_EXTENDED_FX_CII_Commentee.xml": ["facturx"],
+  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/FX/EXTENDED/UC11_F202600022_MULTI-VENDEUR_EXTENDED_FX_CII_Commentee.xml": ["facturx"],
+  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/FX/EXTENDED/UC12_F202600025_SOUS-LIGNE_EXTENDED_FX_CII_Commentee.xml": ["facturx"],
   "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/FX/EXTENDED/UC13_AUTOF202600035_BIDIRECTIONNELLE_EXTENDED_FX_CII_Commentee.xml": [
     "facturx"
   ],
-  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/FX/EXTENDED/UC13_F202600037_EXTENDED_FX_CII_Commentee.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.3/ubl_b2g_example0.xml": [
-    "cius-ro"
-  ],
-  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.3/ubl_b2g_example10.xml": [
-    "cius-ro"
-  ],
-  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.3/ubl_b2g_example3.xml": [
-    "cius-ro"
-  ],
-  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.3/ubl_b2g_example5.xml": [
-    "cius-ro"
-  ],
-  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.3/ubl_b2g_example7.xml": [
-    "cius-ro"
-  ],
-  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.4/ubl_b2g_example0.xml": [
-    "cius-ro"
-  ],
-  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.4/ubl_b2g_example10.xml": [
-    "cius-ro"
-  ],
-  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.4/ubl_b2g_example3.xml": [
-    "cius-ro"
-  ],
-  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.4/ubl_b2g_example5.xml": [
-    "cius-ro"
-  ],
-  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.4/ubl_b2g_example7.xml": [
-    "cius-ro"
-  ],
-  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.4/ubl_b2g_example9.xml": [
-    "cius-ro"
-  ],
-  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.8/ubl_b2g_example10.xml": [
-    "cius-ro"
-  ],
-  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.8/ubl_b2g_example3.xml": [
-    "cius-ro"
-  ],
-  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.8/ubl_b2g_example5.xml": [
-    "cius-ro"
-  ],
-  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.8/ubl_b2g_example7.xml": [
-    "cius-ro"
-  ],
-  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.8/ubl_b2g_example9.xml": [
-    "cius-ro"
-  ],
-  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.9/ubl_b2g_example10.xml": [
-    "cius-ro"
-  ],
-  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.9/ubl_b2g_example3.xml": [
-    "cius-ro"
-  ],
-  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.9/ubl_b2g_example5.xml": [
-    "cius-ro"
-  ],
-  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.9/ubl_b2g_example7.xml": [
-    "cius-ro"
-  ],
-  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.0.0/CN_CIUS-PT_syntax-model - NC.xml": [
-    "cius-pt"
-  ],
-  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.0.0/I_CIUS-PT_syntax-model - F.xml": [
-    "cius-pt"
-  ],
-  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.0.0/I_CIUS-PT_syntax-model - F_b.xml": [
-    "cius-pt"
-  ],
-  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.0.0/I_CIUS-PT_syntax-model - F_c.xml": [
-    "cius-pt"
-  ],
-  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.0.0/I_CIUS-PT_syntax-model - F_d.xml": [
-    "cius-pt"
-  ],
-  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.0.0/I_CIUS-PT_syntax-model - F_e.xml": [
-    "cius-pt"
-  ],
-  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.0.0/I_CIUS-PT_syntax-model - F_f.xml": [
-    "cius-pt"
-  ],
-  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.0.0/I_CIUS-PT_syntax-model - F_g.xml": [
-    "cius-pt"
-  ],
-  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.0.0/I_CIUS-PT_syntax-model - F_h.xml": [
-    "cius-pt"
-  ],
-  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.0.0/I_CIUS-PT_syntax-model - ND.xml": [
-    "cius-pt"
-  ],
-  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.1.1/CN_CIUS-PT_syntax-model - NC.xml": [
-    "cius-pt"
-  ],
-  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.1.1/I_CIUS-PT_syntax-model - F.xml": [
-    "cius-pt"
-  ],
-  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.1.1/I_CIUS-PT_syntax-model - F_b.xml": [
-    "cius-pt"
-  ],
-  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.1.1/I_CIUS-PT_syntax-model - F_c.xml": [
-    "cius-pt"
-  ],
-  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.1.1/I_CIUS-PT_syntax-model - F_d.xml": [
-    "cius-pt"
-  ],
-  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.1.1/I_CIUS-PT_syntax-model - F_e.xml": [
-    "cius-pt"
-  ],
-  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.1.1/I_CIUS-PT_syntax-model - F_f.xml": [
-    "cius-pt"
-  ],
-  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.1.1/I_CIUS-PT_syntax-model - F_g.xml": [
-    "cius-pt"
-  ],
-  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.1.1/I_CIUS-PT_syntax-model - F_h.xml": [
-    "cius-pt"
-  ],
-  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.1.1/I_CIUS-PT_syntax-model - ND.xml": [
-    "cius-pt"
-  ],
-  "repos/phive-rules/phive-rules-isdoc/src/test/resources/external/test-files/6.0.1/doklad.isdoc": [
-    "isdoc"
-  ],
-  "repos/phive-rules/phive-rules-isdoc/src/test/resources/external/test-files/6.0.1/priklad2-egov.isdoc": [
-    "isdoc"
-  ],
-  "repos/phive-rules/phive-rules-isdoc/src/test/resources/external/test-files/6.0.2/doklad.isdoc": [
-    "isdoc"
-  ],
-  "repos/phive-rules/phive-rules-isdoc/src/test/resources/external/test-files/6.0.2/priklad2-egov.isdoc": [
-    "isdoc"
-  ],
-  "repos/phive-rules/phive-rules-svefaktura/src/test/resources/external/test-files/1.0/svefaktura bas.xml": [
-    "svefaktura-1"
-  ],
-  "repos/phive-rules/phive-rules-svefaktura/src/test/resources/external/test-files/1.0/svefaktura m ext ref.xml": [
-    "svefaktura-1"
-  ],
-  "repos/phive-rules/phive-rules-svefaktura/src/test/resources/external/test-files/1.0/svefaktura m koder.xml": [
-    "svefaktura-1"
-  ],
-  "repos/phive-rules/phive-rules-svefaktura/src/test/resources/external/test-files/1.0/svefaktura moms.xml": [
-    "svefaktura-1"
-  ],
-  "repos/phive-rules/phive-rules-svefaktura/src/test/resources/external/test-files/1.0/svefaktura.xml": [
-    "svefaktura-1"
-  ],
-  "repos/phive-rules/phive-rules-oioubl/src/test/resources/external/test-files/1.17.2/OIOUBL_CreditNoteCertificate.xml": [
-    "oioubl-2"
-  ],
-  "repos/phive-rules/phive-rules-oioubl/src/test/resources/external/test-files/1.17.2/OIOUBL_CreditNote_v2p2.xml": [
-    "oioubl-2"
-  ],
-  "repos/phive-rules/phive-rules-oioubl/src/test/resources/external/test-files/1.17.2/OIOUBL_InvoiceCerticate.xml": [
-    "oioubl-2"
-  ],
-  "repos/phive-rules/phive-rules-oioubl/src/test/resources/external/test-files/1.17.2/OIOUBL_Invoice_UBLExtensions_v2p2.xml": [
-    "oioubl-2"
-  ],
-  "repos/phive-rules/phive-rules-oioubl/src/test/resources/external/test-files/1.17.2/OIOUBL_Invoice_v2p2.xml": [
-    "oioubl-2"
-  ],
-  "repos/phive-rules/phive-rules-ublbe/src/test/resources/external/test-files/en16931/v1/UBLBE_BE0000000196_V01-15000001.xml": [
-    "ubl-be"
-  ],
-  "repos/phive-rules/phive-rules-ublbe/src/test/resources/external/test-files/en16931/v1/UBLBE_BE0000000196_V01-15000013.xml": [
-    "ubl-be"
-  ],
-  "repos/phive-rules/phive-rules-ublbe/src/test/resources/external/test-files/en16931/v1/UBLBE_BE0000000196_V01-15000026.xml": [
-    "ubl-be"
-  ],
-  "repos/phive-rules/phive-rules-ublbe/src/test/resources/external/test-files/en16931/v1.1/UBLBE_BE0000000196_V01-15000007.xml": [
-    "ubl-be"
-  ],
-  "repos/phive-rules/phive-rules-ublbe/src/test/resources/external/test-files/en16931/v1.1/UBLBE_BE0000000196_V01-15000021.xml": [
-    "ubl-be"
-  ],
-  "repos/phive-rules/phive-rules-ublbe/src/test/resources/external/test-files/en16931/v1.2/UBLBE_BE0000000196_V01-15000001.xml": [
-    "ubl-be"
-  ],
-  "repos/phive-rules/phive-rules-ublbe/src/test/resources/external/test-files/en16931/v1.2/UBLBE_BE0000000196_V01-15000013.xml": [
-    "ubl-be"
-  ],
-  "repos/phive-rules/phive-rules-ublbe/src/test/resources/external/test-files/en16931/v1.2/UBLBE_BE0000000196_V01-15000026.xml": [
-    "ubl-be"
-  ],
+  "repos/France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/FX/EXTENDED/UC13_F202600037_EXTENDED_FX_CII_Commentee.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.3/ubl_b2g_example0.xml": ["cius-ro"],
+  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.3/ubl_b2g_example10.xml": ["cius-ro"],
+  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.3/ubl_b2g_example3.xml": ["cius-ro"],
+  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.3/ubl_b2g_example5.xml": ["cius-ro"],
+  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.3/ubl_b2g_example7.xml": ["cius-ro"],
+  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.4/ubl_b2g_example0.xml": ["cius-ro"],
+  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.4/ubl_b2g_example10.xml": ["cius-ro"],
+  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.4/ubl_b2g_example3.xml": ["cius-ro"],
+  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.4/ubl_b2g_example5.xml": ["cius-ro"],
+  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.4/ubl_b2g_example7.xml": ["cius-ro"],
+  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.4/ubl_b2g_example9.xml": ["cius-ro"],
+  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.8/ubl_b2g_example10.xml": ["cius-ro"],
+  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.8/ubl_b2g_example3.xml": ["cius-ro"],
+  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.8/ubl_b2g_example5.xml": ["cius-ro"],
+  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.8/ubl_b2g_example7.xml": ["cius-ro"],
+  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.8/ubl_b2g_example9.xml": ["cius-ro"],
+  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.9/ubl_b2g_example10.xml": ["cius-ro"],
+  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.9/ubl_b2g_example3.xml": ["cius-ro"],
+  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.9/ubl_b2g_example5.xml": ["cius-ro"],
+  "repos/phive-rules/phive-rules-cius-ro/src/test/resources/external/test-files/1.0.9/ubl_b2g_example7.xml": ["cius-ro"],
+  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.0.0/CN_CIUS-PT_syntax-model - NC.xml": ["cius-pt"],
+  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.0.0/I_CIUS-PT_syntax-model - F.xml": ["cius-pt"],
+  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.0.0/I_CIUS-PT_syntax-model - F_b.xml": ["cius-pt"],
+  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.0.0/I_CIUS-PT_syntax-model - F_c.xml": ["cius-pt"],
+  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.0.0/I_CIUS-PT_syntax-model - F_d.xml": ["cius-pt"],
+  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.0.0/I_CIUS-PT_syntax-model - F_e.xml": ["cius-pt"],
+  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.0.0/I_CIUS-PT_syntax-model - F_f.xml": ["cius-pt"],
+  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.0.0/I_CIUS-PT_syntax-model - F_g.xml": ["cius-pt"],
+  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.0.0/I_CIUS-PT_syntax-model - F_h.xml": ["cius-pt"],
+  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.0.0/I_CIUS-PT_syntax-model - ND.xml": ["cius-pt"],
+  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.1.1/CN_CIUS-PT_syntax-model - NC.xml": ["cius-pt"],
+  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.1.1/I_CIUS-PT_syntax-model - F.xml": ["cius-pt"],
+  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.1.1/I_CIUS-PT_syntax-model - F_b.xml": ["cius-pt"],
+  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.1.1/I_CIUS-PT_syntax-model - F_c.xml": ["cius-pt"],
+  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.1.1/I_CIUS-PT_syntax-model - F_d.xml": ["cius-pt"],
+  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.1.1/I_CIUS-PT_syntax-model - F_e.xml": ["cius-pt"],
+  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.1.1/I_CIUS-PT_syntax-model - F_f.xml": ["cius-pt"],
+  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.1.1/I_CIUS-PT_syntax-model - F_g.xml": ["cius-pt"],
+  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.1.1/I_CIUS-PT_syntax-model - F_h.xml": ["cius-pt"],
+  "repos/phive-rules/phive-rules-cius-pt/src/test/resources/external/test-files/2.1.1/I_CIUS-PT_syntax-model - ND.xml": ["cius-pt"],
+  "repos/phive-rules/phive-rules-isdoc/src/test/resources/external/test-files/6.0.1/doklad.isdoc": ["isdoc"],
+  "repos/phive-rules/phive-rules-isdoc/src/test/resources/external/test-files/6.0.1/priklad2-egov.isdoc": ["isdoc"],
+  "repos/phive-rules/phive-rules-isdoc/src/test/resources/external/test-files/6.0.2/doklad.isdoc": ["isdoc"],
+  "repos/phive-rules/phive-rules-isdoc/src/test/resources/external/test-files/6.0.2/priklad2-egov.isdoc": ["isdoc"],
+  "repos/phive-rules/phive-rules-svefaktura/src/test/resources/external/test-files/1.0/svefaktura bas.xml": ["svefaktura-1"],
+  "repos/phive-rules/phive-rules-svefaktura/src/test/resources/external/test-files/1.0/svefaktura m ext ref.xml": ["svefaktura-1"],
+  "repos/phive-rules/phive-rules-svefaktura/src/test/resources/external/test-files/1.0/svefaktura m koder.xml": ["svefaktura-1"],
+  "repos/phive-rules/phive-rules-svefaktura/src/test/resources/external/test-files/1.0/svefaktura moms.xml": ["svefaktura-1"],
+  "repos/phive-rules/phive-rules-svefaktura/src/test/resources/external/test-files/1.0/svefaktura.xml": ["svefaktura-1"],
+  "repos/phive-rules/phive-rules-oioubl/src/test/resources/external/test-files/1.17.2/OIOUBL_CreditNoteCertificate.xml": ["oioubl-2"],
+  "repos/phive-rules/phive-rules-oioubl/src/test/resources/external/test-files/1.17.2/OIOUBL_CreditNote_v2p2.xml": ["oioubl-2"],
+  "repos/phive-rules/phive-rules-oioubl/src/test/resources/external/test-files/1.17.2/OIOUBL_InvoiceCerticate.xml": ["oioubl-2"],
+  "repos/phive-rules/phive-rules-oioubl/src/test/resources/external/test-files/1.17.2/OIOUBL_Invoice_UBLExtensions_v2p2.xml": ["oioubl-2"],
+  "repos/phive-rules/phive-rules-oioubl/src/test/resources/external/test-files/1.17.2/OIOUBL_Invoice_v2p2.xml": ["oioubl-2"],
+  "repos/phive-rules/phive-rules-ublbe/src/test/resources/external/test-files/en16931/v1/UBLBE_BE0000000196_V01-15000001.xml": ["ubl-be"],
+  "repos/phive-rules/phive-rules-ublbe/src/test/resources/external/test-files/en16931/v1/UBLBE_BE0000000196_V01-15000013.xml": ["ubl-be"],
+  "repos/phive-rules/phive-rules-ublbe/src/test/resources/external/test-files/en16931/v1/UBLBE_BE0000000196_V01-15000026.xml": ["ubl-be"],
+  "repos/phive-rules/phive-rules-ublbe/src/test/resources/external/test-files/en16931/v1.1/UBLBE_BE0000000196_V01-15000007.xml": ["ubl-be"],
+  "repos/phive-rules/phive-rules-ublbe/src/test/resources/external/test-files/en16931/v1.1/UBLBE_BE0000000196_V01-15000021.xml": ["ubl-be"],
+  "repos/phive-rules/phive-rules-ublbe/src/test/resources/external/test-files/en16931/v1.2/UBLBE_BE0000000196_V01-15000001.xml": ["ubl-be"],
+  "repos/phive-rules/phive-rules-ublbe/src/test/resources/external/test-files/en16931/v1.2/UBLBE_BE0000000196_V01-15000013.xml": ["ubl-be"],
+  "repos/phive-rules/phive-rules-ublbe/src/test/resources/external/test-files/en16931/v1.2/UBLBE_BE0000000196_V01-15000026.xml": ["ubl-be"],
   "repos/phive-rules/phive-rules-ublbe/src/test/resources/external/test-files/en16931/v1.2.3/UBLBE_BE0000000196_V01-15000006.xml": [
     "ubl-be"
   ],
@@ -617,12 +303,8 @@
   "repos/phive-rules/phive-rules-peppol-pint/src/test/resources/external/test-files/pint-aunz/1.1.3/billing/PINT_AUNZ_negative_invoice.xml": [
     "peppol-pint"
   ],
-  "repos/phive-rules/phive-rules-peppol-pint/src/test/resources/external/test-files/pint-eu/1.0.0/sales-order-example.xml": [
-    "peppol-pint"
-  ],
-  "repos/phive-rules/phive-rules-peppol-pint/src/test/resources/external/test-files/pint-eu/1.0.1/vat-category-O.xml": [
-    "peppol-pint"
-  ],
+  "repos/phive-rules/phive-rules-peppol-pint/src/test/resources/external/test-files/pint-eu/1.0.0/sales-order-example.xml": ["peppol-pint"],
+  "repos/phive-rules/phive-rules-peppol-pint/src/test/resources/external/test-files/pint-eu/1.0.1/vat-category-O.xml": ["peppol-pint"],
   "repos/phive-rules/phive-rules-peppol-pint/src/test/resources/external/test-files/pint-jp/1.0.2/Japan PINT Invoice UBL Example1-minimum.xml": [
     "peppol-pint"
   ],
@@ -716,9 +398,7 @@
   "repos/phive-rules/phive-rules-ehf/src/test/resources/external/test-files/2020-03/forward-billing-3.0/forward-billing-nettleie-consumer.xml": [
     "peppol-bis3"
   ],
-  "repos/phive-rules/phive-rules-ehf/src/test/resources/external/test-files/2020-03/reminder-3.0/Reminder-Example.xml": [
-    "peppol-bis3"
-  ],
+  "repos/phive-rules/phive-rules-ehf/src/test/resources/external/test-files/2020-03/reminder-3.0/Reminder-Example.xml": ["peppol-bis3"],
   "repos/phive-rules/phive-rules-ehf/src/test/resources/external/test-files/2023-02/forward-billing-3.0/forward-billing-nettleie-business.xml": [
     "peppol-bis3"
   ],
@@ -728,9 +408,7 @@
   "repos/phive-rules/phive-rules-ehf/src/test/resources/external/test-files/2023-02/reminder-3.0/Reminder-Example-with-REM.xml": [
     "peppol-bis3"
   ],
-  "repos/phive-rules/phive-rules-ehf/src/test/resources/external/test-files/2023-02/reminder-3.0/Reminder-Example.xml": [
-    "peppol-bis3"
-  ],
+  "repos/phive-rules/phive-rules-ehf/src/test/resources/external/test-files/2023-02/reminder-3.0/Reminder-Example.xml": ["peppol-bis3"],
   "repos/phive-rules/phive-rules-ehf/src/test/resources/external/test-files/2026-09/forward-billing-3.0/forward-billing-nettleie-business.xml": [
     "peppol-bis3"
   ],
@@ -740,9 +418,7 @@
   "repos/phive-rules/phive-rules-ehf/src/test/resources/external/test-files/2026-09/reminder-3.0/Reminder-Example-with-REM.xml": [
     "peppol-bis3"
   ],
-  "repos/phive-rules/phive-rules-ehf/src/test/resources/external/test-files/2026-09/reminder-3.0/Reminder-Example.xml": [
-    "peppol-bis3"
-  ],
+  "repos/phive-rules/phive-rules-ehf/src/test/resources/external/test-files/2026-09/reminder-3.0/Reminder-Example.xml": ["peppol-bis3"],
   "repos/phive-rules/phive-rules-simplerinvoicing/src/test/resources/external/test-files/simplerinvoicing/NLCIUS-CII-1.0.3/NLCIUS-CII_error_BR-NL-10.xml": [
     "nlcius-cii"
   ],
@@ -809,160 +485,56 @@
   "repos/phive-rules/phive-rules-simplerinvoicing/src/test/resources/external/test-files/simplerinvoicing/SI-UBL-2.0.3.2/SI-UBL-2.0_ok_full_negative_zero.xml": [
     "nlcius-ubl"
   ],
-  "repos/mustangproject/library/src/test/resources/Extended_fremdwaehrung.xml": [
-    "facturx"
-  ],
-  "repos/mustangproject/library/src/test/resources/factur-x-extended.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.0.1/basic/zugferd-invoice-1.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.0.1/extended/zugferd-invoice-2.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.1/basic/factur-x-1.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.1/extended/factur-x-1.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.1/minimum/factur-x-1.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.2/basicwl/factur-x-1.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.2/extended/factur-x-5.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.3.2/basic/factur-x-3.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.3.2/extended/factur-x-3.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.3.2/minimum/factur-x-2.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.3.3/basicwl/factur-x-2.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.3.3/extended/factur-x-5.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.4/basic/factur-x-2.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.4/extended/factur-x-10.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.4/extended/factur-x-15.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.4/extended/factur-x-2.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.4/extended/factur-x-7.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5/basic/factur-x-1.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5/extended/factur-x-1.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5/extended/factur-x-14.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5/extended/factur-x-19.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5/extended/factur-x-23.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5/extended/factur-x-5.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5/extended/factur-x-9.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5.2/basic/factur-x-3.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5.2/extended/factur-x-11.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5.2/extended/factur-x-16.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5.2/extended/factur-x-20.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5.2/extended/factur-x-25.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5.2/extended/factur-x-7.xml": [
-    "facturx"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.0.1/en16931/zugferd-invoice-1.xml": [
-    "en16931-cii"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.0.1/en16931/zugferd-invoice-18.xml": [
-    "en16931-cii"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.0.1/en16931/zugferd-invoice-8.xml": [
-    "en16931-cii"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.1/en16931/factur-x-17.xml": [
-    "en16931-cii"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.1/en16931/factur-x-26.xml": [
-    "en16931-cii"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.2/en16931/factur-x-11.xml": [
-    "en16931-cii"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.2/en16931/factur-x-2.xml": [
-    "en16931-cii"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.2/en16931/factur-x-8.xml": [
-    "en16931-cii"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.3.2/en16931/factur-x-16.xml": [
-    "en16931-cii"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.3.2/en16931/factur-x-4.xml": [
-    "en16931-cii"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.3.3/en16931/factur-x-12.xml": [
-    "en16931-cii"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.3.3/en16931/factur-x-21.xml": [
-    "en16931-cii"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.4/en16931/factur-x-1.xml": [
-    "en16931-cii"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.4/en16931/factur-x-18.xml": [
-    "en16931-cii"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.4/en16931/factur-x-3.xml": [
-    "en16931-cii"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5/en16931/factur-x-11.xml": [
-    "en16931-cii"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5/en16931/factur-x-2.xml": [
-    "en16931-cii"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5/en16931/factur-x-7.xml": [
-    "en16931-cii"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5.2/en16931/factur-x-15.xml": [
-    "en16931-cii"
-  ],
-  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5.2/en16931/factur-x-23.xml": [
-    "en16931-cii"
-  ]
+  "repos/mustangproject/library/src/test/resources/Extended_fremdwaehrung.xml": ["facturx"],
+  "repos/mustangproject/library/src/test/resources/factur-x-extended.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.0.1/basic/zugferd-invoice-1.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.0.1/extended/zugferd-invoice-2.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.1/basic/factur-x-1.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.1/extended/factur-x-1.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.1/minimum/factur-x-1.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.2/basicwl/factur-x-1.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.2/extended/factur-x-5.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.3.2/basic/factur-x-3.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.3.2/extended/factur-x-3.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.3.2/minimum/factur-x-2.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.3.3/basicwl/factur-x-2.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.3.3/extended/factur-x-5.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.4/basic/factur-x-2.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.4/extended/factur-x-10.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.4/extended/factur-x-15.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.4/extended/factur-x-2.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.4/extended/factur-x-7.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5/basic/factur-x-1.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5/extended/factur-x-1.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5/extended/factur-x-14.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5/extended/factur-x-19.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5/extended/factur-x-23.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5/extended/factur-x-5.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5/extended/factur-x-9.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5.2/basic/factur-x-3.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5.2/extended/factur-x-11.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5.2/extended/factur-x-16.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5.2/extended/factur-x-20.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5.2/extended/factur-x-25.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5.2/extended/factur-x-7.xml": ["facturx"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.0.1/en16931/zugferd-invoice-1.xml": ["en16931-cii"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.0.1/en16931/zugferd-invoice-18.xml": ["en16931-cii"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.0.1/en16931/zugferd-invoice-8.xml": ["en16931-cii"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.1/en16931/factur-x-17.xml": ["en16931-cii"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.1/en16931/factur-x-26.xml": ["en16931-cii"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.2/en16931/factur-x-11.xml": ["en16931-cii"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.2/en16931/factur-x-2.xml": ["en16931-cii"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.2/en16931/factur-x-8.xml": ["en16931-cii"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.3.2/en16931/factur-x-16.xml": ["en16931-cii"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.3.2/en16931/factur-x-4.xml": ["en16931-cii"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.3.3/en16931/factur-x-12.xml": ["en16931-cii"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.3.3/en16931/factur-x-21.xml": ["en16931-cii"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.4/en16931/factur-x-1.xml": ["en16931-cii"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.4/en16931/factur-x-18.xml": ["en16931-cii"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.4/en16931/factur-x-3.xml": ["en16931-cii"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5/en16931/factur-x-11.xml": ["en16931-cii"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5/en16931/factur-x-2.xml": ["en16931-cii"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5/en16931/factur-x-7.xml": ["en16931-cii"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5.2/en16931/factur-x-15.xml": ["en16931-cii"],
+  "repos/phive-rules/phive-rules-zugferd/src/test/resources/external/test-files/2.5.2/en16931/factur-x-23.xml": ["en16931-cii"]
 }

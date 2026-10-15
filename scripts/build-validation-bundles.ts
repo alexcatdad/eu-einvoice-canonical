@@ -52,17 +52,27 @@ interface SchematronSpec extends Common {
   entry: string;
 }
 
-const VC = 'https://github.com/itplr-kosit/validator-configuration-xrechnung/releases/download/v2026-08-31/xrechnung-3.0.2-validator-configuration-2026-08-31.zip';
+const VC =
+  'https://github.com/itplr-kosit/validator-configuration-xrechnung/releases/download/v2026-08-31/xrechnung-3.0.2-validator-configuration-2026-08-31.zip';
 const VC_PREFIX = 'resources/';
-const EN = (syntax: string) => `https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/download/validation-1.3.17/en16931-${syntax}-1.3.17.zip`;
+const EN = (syntax: string) =>
+  `https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/download/validation-1.3.17/en16931-${syntax}-1.3.17.zip`;
 const XR = 'https://github.com/itplr-kosit/xrechnung-schematron/releases/download/v2.6.0/xrechnung-3.0.2-schematron-2.6.0.zip';
 const PEPPOL = (f: string) => `https://raw.githubusercontent.com/OpenPEPPOL/peppol-bis-invoice-3/v3.0.20/rules/sch/${f}`;
 
 const SPECS: (XsdSpec | SchematronSpec)[] = [
   {
-    kind: 'xsd', id: 'xsd-ubl-2.1', title: 'OASIS UBL 2.1 XSD (Invoice, CreditNote)', layer: 'schema', syntax: 'ubl',
-    version: '2.1', releaseDate: '2013-11-04', effectiveFrom: '2013-11-04', effectiveUntil: null,
-    license: 'OASIS IPR policy (copyright notice kept in each file)', upstream: 'https://docs.oasis-open.org/ubl/os-UBL-2.1/',
+    kind: 'xsd',
+    id: 'xsd-ubl-2.1',
+    title: 'OASIS UBL 2.1 XSD (Invoice, CreditNote)',
+    layer: 'schema',
+    syntax: 'ubl',
+    version: '2.1',
+    releaseDate: '2013-11-04',
+    effectiveFrom: '2013-11-04',
+    effectiveUntil: null,
+    license: 'OASIS IPR policy (copyright notice kept in each file)',
+    upstream: 'https://docs.oasis-open.org/ubl/os-UBL-2.1/',
     note: 'Invoice and CreditNote maindocs plus the common modules, as repackaged in the KoSIT XRechnung validator configuration (Apache-2.0).',
     archive: VC,
     copy: [
@@ -72,45 +82,99 @@ const SPECS: (XsdSpec | SchematronSpec)[] = [
     entries: { Invoice: 'maindoc/UBL-Invoice-2.1.xsd', CreditNote: 'maindoc/UBL-CreditNote-2.1.xsd' },
   },
   {
-    kind: 'xsd', id: 'xsd-cii-d16b', title: 'UN/CEFACT CrossIndustryInvoice D16B XSD', layer: 'schema', syntax: 'cii',
-    version: '100.D16B', releaseDate: '2016-10-10', effectiveFrom: '2016-10-10', effectiveUntil: null,
-    license: 'UN/CEFACT copyright notice (copying and derivative works permitted, notice kept in each file)', upstream: 'https://unece.org/trade/uncefact/xml-schemas',
+    kind: 'xsd',
+    id: 'xsd-cii-d16b',
+    title: 'UN/CEFACT CrossIndustryInvoice D16B XSD',
+    layer: 'schema',
+    syntax: 'cii',
+    version: '100.D16B',
+    releaseDate: '2016-10-10',
+    effectiveFrom: '2016-10-10',
+    effectiveUntil: null,
+    license: 'UN/CEFACT copyright notice (copying and derivative works permitted, notice kept in each file)',
+    upstream: 'https://unece.org/trade/uncefact/xml-schemas',
     note: 'As repackaged in the KoSIT XRechnung validator configuration (Apache-2.0).',
-    archive: VC, copy: [{ from: `${VC_PREFIX}cii/16b/xsd/`, to: '', files: 'all' }],
+    archive: VC,
+    copy: [{ from: `${VC_PREFIX}cii/16b/xsd/`, to: '', files: 'all' }],
     entries: { CrossIndustryInvoice: 'CrossIndustryInvoice_100pD16B.xsd' },
   },
   {
-    kind: 'sef', id: 'en16931-ubl-1.3.17', title: 'EN 16931 Schematron, UBL', layer: 'semantic', syntax: 'ubl',
-    version: '1.3.17', releaseDate: '2026-10-12', effectiveFrom: '2026-10-12', effectiveUntil: null,
-    license: 'EUPL-1.2', upstream: 'https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/tag/validation-1.3.17',
-    xslt: { archive: EN('ubl'), path: 'xslt/EN16931-UBL-validation.xslt' }, entry: 'EN16931-UBL-validation.sef.json.gz',
+    kind: 'sef',
+    id: 'en16931-ubl-1.3.17',
+    title: 'EN 16931 Schematron, UBL',
+    layer: 'semantic',
+    syntax: 'ubl',
+    version: '1.3.17',
+    releaseDate: '2026-10-12',
+    effectiveFrom: '2026-10-12',
+    effectiveUntil: null,
+    license: 'EUPL-1.2',
+    upstream: 'https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/tag/validation-1.3.17',
+    xslt: { archive: EN('ubl'), path: 'xslt/EN16931-UBL-validation.xslt' },
+    entry: 'EN16931-UBL-validation.sef.json.gz',
   },
   {
-    kind: 'sef', id: 'en16931-cii-1.3.17', title: 'EN 16931 Schematron, CII', layer: 'semantic', syntax: 'cii',
-    version: '1.3.17', releaseDate: '2026-10-12', effectiveFrom: '2026-10-12', effectiveUntil: null,
-    license: 'EUPL-1.2', upstream: 'https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/tag/validation-1.3.17',
-    xslt: { archive: EN('cii'), path: 'xslt/EN16931-CII-validation.xslt' }, entry: 'EN16931-CII-validation.sef.json.gz',
+    kind: 'sef',
+    id: 'en16931-cii-1.3.17',
+    title: 'EN 16931 Schematron, CII',
+    layer: 'semantic',
+    syntax: 'cii',
+    version: '1.3.17',
+    releaseDate: '2026-10-12',
+    effectiveFrom: '2026-10-12',
+    effectiveUntil: null,
+    license: 'EUPL-1.2',
+    upstream: 'https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/tag/validation-1.3.17',
+    xslt: { archive: EN('cii'), path: 'xslt/EN16931-CII-validation.xslt' },
+    entry: 'EN16931-CII-validation.sef.json.gz',
   },
   {
-    kind: 'sef', id: 'peppol-bis3-3.0.20-ubl', title: 'Peppol BIS Billing 3.0 Schematron, UBL', layer: 'profile', syntax: 'ubl',
-    version: '3.0.20', releaseDate: '2026-03-16', effectiveFrom: '2026-03-16', effectiveUntil: null,
-    license: 'EUPL-1.2', upstream: 'https://github.com/OpenPEPPOL/peppol-bis-invoice-3/releases/tag/v3.0.20',
+    kind: 'sef',
+    id: 'peppol-bis3-3.0.20-ubl',
+    title: 'Peppol BIS Billing 3.0 Schematron, UBL',
+    layer: 'profile',
+    syntax: 'ubl',
+    version: '3.0.20',
+    releaseDate: '2026-03-16',
+    effectiveFrom: '2026-03-16',
+    effectiveUntil: null,
+    license: 'EUPL-1.2',
+    upstream: 'https://github.com/OpenPEPPOL/peppol-bis-invoice-3/releases/tag/v3.0.20',
     note: 'Peppol-specific rules only (PEPPOL-EN16931-*); the EN 16931 rules come from the semantic bundle.',
-    sch: { url: PEPPOL('PEPPOL-EN16931-UBL.sch') }, entry: 'PEPPOL-EN16931-UBL.sef.json.gz',
+    sch: { url: PEPPOL('PEPPOL-EN16931-UBL.sch') },
+    entry: 'PEPPOL-EN16931-UBL.sef.json.gz',
   },
   {
-    kind: 'sef', id: 'xrechnung-3.0.2-ubl', title: 'XRechnung 3.0.2 Schematron 2.6.0, UBL', layer: 'profile', syntax: 'ubl',
-    version: '2.6.0', releaseDate: '2026-09-02', effectiveFrom: '2026-09-02', effectiveUntil: null,
-    license: 'Apache-2.0', upstream: 'https://github.com/itplr-kosit/xrechnung-schematron/releases/tag/v2.6.0',
+    kind: 'sef',
+    id: 'xrechnung-3.0.2-ubl',
+    title: 'XRechnung 3.0.2 Schematron 2.6.0, UBL',
+    layer: 'profile',
+    syntax: 'ubl',
+    version: '2.6.0',
+    releaseDate: '2026-09-02',
+    effectiveFrom: '2026-09-02',
+    effectiveUntil: null,
+    license: 'Apache-2.0',
+    upstream: 'https://github.com/itplr-kosit/xrechnung-schematron/releases/tag/v2.6.0',
     note: 'BR-DE rules only; the EN 16931 rules come from the semantic bundle.',
-    xslt: { archive: XR, path: 'schematron/ubl/XRechnung-UBL-validation.xsl' }, entry: 'XRechnung-UBL-validation.sef.json.gz',
+    xslt: { archive: XR, path: 'schematron/ubl/XRechnung-UBL-validation.xsl' },
+    entry: 'XRechnung-UBL-validation.sef.json.gz',
   },
   {
-    kind: 'sef', id: 'xrechnung-3.0.2-cii', title: 'XRechnung 3.0.2 Schematron 2.6.0, CII', layer: 'profile', syntax: 'cii',
-    version: '2.6.0', releaseDate: '2026-09-02', effectiveFrom: '2026-09-02', effectiveUntil: null,
-    license: 'Apache-2.0', upstream: 'https://github.com/itplr-kosit/xrechnung-schematron/releases/tag/v2.6.0',
+    kind: 'sef',
+    id: 'xrechnung-3.0.2-cii',
+    title: 'XRechnung 3.0.2 Schematron 2.6.0, CII',
+    layer: 'profile',
+    syntax: 'cii',
+    version: '2.6.0',
+    releaseDate: '2026-09-02',
+    effectiveFrom: '2026-09-02',
+    effectiveUntil: null,
+    license: 'Apache-2.0',
+    upstream: 'https://github.com/itplr-kosit/xrechnung-schematron/releases/tag/v2.6.0',
     note: 'BR-DE rules only; the EN 16931 rules come from the semantic bundle.',
-    xslt: { archive: XR, path: 'schematron/cii/XRechnung-CII-validation.xsl' }, entry: 'XRechnung-CII-validation.sef.json.gz',
+    xslt: { archive: XR, path: 'schematron/cii/XRechnung-CII-validation.xsl' },
+    entry: 'XRechnung-CII-validation.sef.json.gz',
   },
 ];
 
@@ -149,7 +213,10 @@ async function compileSef(xsltPath: string, out: string) {
   return gzipSync(readFileSync(out), { level: 9, mtime: 0 });
 }
 
-async function buildSchematron(spec: SchematronSpec, tmp: string): Promise<{ files: Record<string, Uint8Array>; source: { url: string; sha256: string }[] }> {
+async function buildSchematron(
+  spec: SchematronSpec,
+  tmp: string,
+): Promise<{ files: Record<string, Uint8Array>; source: { url: string; sha256: string }[] }> {
   const source: { url: string; sha256: string }[] = [];
   let xsltPath: string;
   if (spec.xslt) {
@@ -164,7 +231,12 @@ async function buildSchematron(spec: SchematronSpec, tmp: string): Promise<{ fil
     source.push({ url: spec.sch!.url, sha256: sch.sha256 });
     const skel = join(tmp, 'skel');
     mkdirSync(skel);
-    for (const f of ['iso_dsdl_include.xsl', 'iso_abstract_expand.xsl', 'iso_schematron_skeleton_for_saxon.xsl', 'iso_svrl_for_xslt2.xsl']) {
+    for (const f of [
+      'iso_dsdl_include.xsl',
+      'iso_abstract_expand.xsl',
+      'iso_schematron_skeleton_for_saxon.xsl',
+      'iso_svrl_for_xslt2.xsl',
+    ]) {
       const dl = await download(SKELETON(f));
       writeFileSync(join(skel, f), dl.bytes);
       source.push({ url: SKELETON(f), sha256: dl.sha256 });
@@ -215,7 +287,7 @@ for (const spec of SPECS) {
       source,
       files: listed,
     };
-    writeFileSync(join(dir, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
+    writeFileSync(join(dir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
     console.log(`  ${listed.length} files, ${listed.reduce((n, f) => n + f.bytes, 0)} bytes`);
   } finally {
     rmSync(tmp, { recursive: true, force: true });

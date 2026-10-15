@@ -1,5 +1,5 @@
-import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { convert, effectiveSign } from '../src/index.js';
 import { fixture, parseOne, utf8, warningCodes } from './helpers.js';
 
@@ -36,7 +36,10 @@ describe('KSeF FA(3): standard VAT invoice with several rates', async () => {
     assert.deepEqual(s.address, { line1: 'ul. Stolarska 12', line2: '31-001 Kraków', countryCode: 'PL' });
     assert.deepEqual(s.contact, { email: 'faktury@pracownia.example', phone: '+48 12 000 00 00' });
     assert.deepEqual(s.legalRegistrationId, { value: '0000123456', schemeId: 'PL:KRS' });
-    assert.deepEqual(s.identifiers, [{ value: '5900000000009', schemeId: '0088' }, { value: '123456785', schemeId: 'PL:REGON' }]);
+    assert.deepEqual(s.identifiers, [
+      { value: '5900000000009', schemeId: '0088' },
+      { value: '123456785', schemeId: 'PL:REGON' },
+    ]);
   });
 
   test('buyer: NIP only, no VAT id guessed', () => {
@@ -47,10 +50,13 @@ describe('KSeF FA(3): standard VAT invoice with several rates', async () => {
   });
 
   test('Podmiot3 with Rola', () => {
-    assert.deepEqual(inv.additionalParties.map((p) => [p.role, p.sourceRole, p.party.name]), [
-      ['recipient-unit', 'PL:Rola:2', 'Oddział Wzorcowy Gdańsk'],
-      ['factor', 'PL:Rola:1', 'Faktoring Przykład S.A.'],
-    ]);
+    assert.deepEqual(
+      inv.additionalParties.map((p) => [p.role, p.sourceRole, p.party.name]),
+      [
+        ['recipient-unit', 'PL:Rola:2', 'Oddział Wzorcowy Gdańsk'],
+        ['factor', 'PL:Rola:1', 'Faktoring Przykład S.A.'],
+      ],
+    );
   });
 
   test('VAT breakdown per P_13_x with category, rate and national code', () => {
@@ -59,13 +65,23 @@ describe('KSeF FA(3): standard VAT invoice with several rates', async () => {
       { taxableAmount: '200.00', taxAmount: '16.00', categoryCode: 'S', rate: '8', nationalCode: 'PL:P_13_2' },
       { taxableAmount: '200.00', taxAmount: '10.00', categoryCode: 'S', rate: '5', nationalCode: 'PL:P_13_3' },
       { taxableAmount: '50.00', taxAmount: '0.00', categoryCode: 'Z', rate: '0', nationalCode: 'PL:P_12:0 KR' },
-      { taxableAmount: '150.00', taxAmount: '0.00', categoryCode: 'E', exemptionReason: 'art. 43 ust. 1 pkt 37 ustawy', nationalCode: 'PL:P_12:zw' },
+      {
+        taxableAmount: '150.00',
+        taxAmount: '0.00',
+        categoryCode: 'E',
+        exemptionReason: 'art. 43 ust. 1 pkt 37 ustawy',
+        nationalCode: 'PL:P_12:zw',
+      },
     ]);
   });
 
   test('totals', () => {
     assert.deepEqual(inv.totals, {
-      lineNetTotal: '1600.00', taxExclusive: '1600.00', vatTotal: '256.00', taxInclusive: '1856.00', payable: '1856.00',
+      lineNetTotal: '1600.00',
+      taxExclusive: '1600.00',
+      vatTotal: '256.00',
+      taxInclusive: '1856.00',
+      payable: '1856.00',
     });
     assert.ok(inv.source.derived.some((d) => d.field === '/totals/taxExclusive'));
   });
@@ -94,7 +110,12 @@ describe('KSeF FA(3): standard VAT invoice with several rates', async () => {
 
   test('payment: bank transfer, two instalments, factor account', () => {
     assert.deepEqual(inv.payments, [
-      { meansCode: '30', meansText: 'Przelew', nationalMeansCode: '6', creditTransfers: [{ accountId: '61109010140000071219812874', accountName: 'Rachunek główny', serviceProviderId: 'WBKPPLPP' }] },
+      {
+        meansCode: '30',
+        meansText: 'Przelew',
+        nationalMeansCode: '6',
+        creditTransfers: [{ accountId: '61109010140000071219812874', accountName: 'Rachunek główny', serviceProviderId: 'WBKPPLPP' }],
+      },
       { meansCode: '30', meansText: 'Rachunek faktora', creditTransfers: [{ accountId: '27114020040000300201355387' }] },
     ]);
     assert.deepEqual(inv.paymentSchedule, [{ dueDate: '2026-10-20' }, { dueDate: '2026-11-04' }]);
@@ -124,19 +145,38 @@ describe('KSeF FA(3): KOR with before/after rows', async () => {
   });
 
   test('totals are positive magnitudes of the difference', () => {
-    assert.deepEqual(inv.totals, { lineNetTotal: '300.00', taxExclusive: '300.00', vatTotal: '54.00', taxInclusive: '354.00', payable: '354.00' });
-    assert.deepEqual(inv.vatBreakdown.map((v) => [v.rate, v.taxableAmount, v.taxAmount]), [['23', '200.00', '46.00'], ['8', '100.00', '8.00']]);
+    assert.deepEqual(inv.totals, {
+      lineNetTotal: '300.00',
+      taxExclusive: '300.00',
+      vatTotal: '54.00',
+      taxInclusive: '354.00',
+      payable: '354.00',
+    });
+    assert.deepEqual(
+      inv.vatBreakdown.map((v) => [v.rate, v.taxableAmount, v.taxAmount]),
+      [
+        ['23', '200.00', '46.00'],
+        ['8', '100.00', '8.00'],
+      ],
+    );
   });
 
   test('StanPrzed rows are "before", the rest "after"; lines are kept as written', () => {
-    assert.deepEqual(inv.lines.map((l) => [l.id, l.correctionState, l.quantity, l.netAmount]), [
-      ['1', 'before', '10', '1000.00'], ['1', 'after', '8', '800.00'],
-      ['2', 'before', '10', '200.00'], ['2', 'after', '5', '100.00'],
-    ]);
+    assert.deepEqual(
+      inv.lines.map((l) => [l.id, l.correctionState, l.quantity, l.netAmount]),
+      [
+        ['1', 'before', '10', '1000.00'],
+        ['1', 'after', '8', '800.00'],
+        ['2', 'before', '10', '200.00'],
+        ['2', 'after', '5', '100.00'],
+      ],
+    );
   });
 
   test('corrected invoice and reason', () => {
-    assert.deepEqual(inv.precedingInvoices, [{ id: 'FV/2026/10/0042', issueDate: '2026-10-05', clearanceId: '1234563218-20261005-0100ABCDEF12-3C' }]);
+    assert.deepEqual(inv.precedingInvoices, [
+      { id: 'FV/2026/10/0042', issueDate: '2026-10-05', clearanceId: '1234563218-20261005-0100ABCDEF12-3C' },
+    ]);
     assert.deepEqual(inv.correction, { reason: 'Zwrot części towaru', method: '2' });
     assert.deepEqual(inv.clearance, []);
     assert.deepEqual(warningCodes(inv), []);
@@ -193,7 +233,13 @@ describe('KSeF FA(3): ZAL advance invoice', async () => {
   });
 
   test('totals are the advance, paid flag in extensions', () => {
-    assert.deepEqual(inv.totals, { lineNetTotal: '500.00', taxExclusive: '500.00', vatTotal: '115.00', taxInclusive: '615.00', payable: '615.00' });
+    assert.deepEqual(inv.totals, {
+      lineNetTotal: '500.00',
+      taxExclusive: '500.00',
+      vatTotal: '115.00',
+      taxInclusive: '615.00',
+      payable: '615.00',
+    });
     assert.deepEqual(inv.extensions.pl, { invoiceKind: 'ZAL', schemaVariant: 'FA (3)', paid: true, paidDate: '2026-10-10' });
   });
 
@@ -220,8 +266,16 @@ describe('KSeF FA_RR', async () => {
   });
 
   test('flat-rate refund as VAT, flagged', () => {
-    assert.deepEqual(inv.totals, { lineNetTotal: '11000.00', taxExclusive: '11000.00', vatTotal: '770.00', taxInclusive: '11770.00', payable: '11770.00' });
-    assert.deepEqual(inv.vatBreakdown, [{ taxableAmount: '11000.00', taxAmount: '770.00', categoryCode: 'S', rate: '7', nationalCode: 'PL:RR:7' }]);
+    assert.deepEqual(inv.totals, {
+      lineNetTotal: '11000.00',
+      taxExclusive: '11000.00',
+      vatTotal: '770.00',
+      taxInclusive: '11770.00',
+      payable: '11770.00',
+    });
+    assert.deepEqual(inv.vatBreakdown, [
+      { taxableAmount: '11000.00', taxAmount: '770.00', categoryCode: 'S', rate: '7', nationalCode: 'PL:RR:7' },
+    ]);
     assert.deepEqual(warningCodes(inv), ['PL-RR-REFUND']);
   });
 
@@ -248,7 +302,10 @@ describe('KSeF: variants', () => {
   });
 
   test('P_16, P_18, P_18A flags', async () => {
-    const xml = text('ksef-fa3-vat-multirate.xml').replace('<P_16>2</P_16>', '<P_16>1</P_16>').replace('<P_18>2</P_18>', '<P_18>1</P_18>').replace('<P_18A>2</P_18A>', '<P_18A>1</P_18A>');
+    const xml = text('ksef-fa3-vat-multirate.xml')
+      .replace('<P_16>2</P_16>', '<P_16>1</P_16>')
+      .replace('<P_18>2</P_18>', '<P_18>1</P_18>')
+      .replace('<P_18A>2</P_18A>', '<P_18A>1</P_18A>');
     const inv = await parseOne(utf8(xml), 'flags.xml');
     assert.equal(inv.extensions.pl?.cashAccounting, true);
     assert.equal(inv.extensions.pl?.reverseCharge, true);
@@ -263,7 +320,10 @@ describe('KSeF: variants', () => {
   });
 
   test('Podmiot1 with a PrefiksPodatnika keeps that prefix', async () => {
-    const xml = text('ksef-fa3-vat-multirate.xml').replace('<Podmiot1><DaneIdentyfikacyjne>', '<Podmiot1><PrefiksPodatnika>PL</PrefiksPodatnika><DaneIdentyfikacyjne>');
+    const xml = text('ksef-fa3-vat-multirate.xml').replace(
+      '<Podmiot1><DaneIdentyfikacyjne>',
+      '<Podmiot1><PrefiksPodatnika>PL</PrefiksPodatnika><DaneIdentyfikacyjne>',
+    );
     const inv = await parseOne(utf8(xml), 'prefix.xml');
     assert.equal(inv.seller.vatId, 'PL1234563218');
     assert.ok(!inv.source.derived.some((d) => d.field === '/seller/vatId'));
@@ -271,8 +331,20 @@ describe('KSeF: variants', () => {
 
   test('every P_12 code maps to a VAT category and keeps its national code', async () => {
     const codes: Record<string, [string, string | undefined]> = {
-      '23': ['S', '23'], '22': ['S', '22'], '8': ['S', '8'], '7': ['S', '7'], '5': ['S', '5'], '4': ['S', '4'], '3': ['S', '3'],
-      '0 KR': ['Z', '0'], '0 WDT': ['K', '0'], '0 EX': ['G', '0'], zw: ['E', undefined], oo: ['AE', undefined], 'np I': ['O', undefined], 'np II': ['O', undefined],
+      '23': ['S', '23'],
+      '22': ['S', '22'],
+      '8': ['S', '8'],
+      '7': ['S', '7'],
+      '5': ['S', '5'],
+      '4': ['S', '4'],
+      '3': ['S', '3'],
+      '0 KR': ['Z', '0'],
+      '0 WDT': ['K', '0'],
+      '0 EX': ['G', '0'],
+      zw: ['E', undefined],
+      oo: ['AE', undefined],
+      'np I': ['O', undefined],
+      'np II': ['O', undefined],
     };
     for (const [code, [category, rate]] of Object.entries(codes)) {
       const xml = text('ksef-fa3.xml').replace('<P_12>23</P_12>', `<P_12>${code}</P_12>`);

@@ -16,20 +16,38 @@
  */
 import type { Element } from '@xmldom/xmldom';
 import type {
-  Address, Attachment, CanonicalInvoice, ClearanceInfo, Decimal, GrExtension, Line, OtherTax, Party, PaymentInstructions,
-  Seller, Totals, VatBreakdown, VatInfo, Withholding,
+  Address,
+  Attachment,
+  CanonicalInvoice,
+  ClearanceInfo,
+  Decimal,
+  GrExtension,
+  Line,
+  OtherTax,
+  Party,
+  PaymentInstructions,
+  Seller,
+  Totals,
+  VatBreakdown,
+  VatInfo,
+  Withholding,
 } from '../canonical.js';
 import { add, cmp, isZero, sub, sum } from '../values.js';
-import { Ctx, ParseError, finish, parseXml, sourceMeta } from './context.js';
+import { Ctx, finish, ParseError, parseXml, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 import { recordUnmapped } from './leftover.js';
 
 /** invoiceType values that are credits. */
 const CREDIT_TYPES = new Set(['5.1', '5.2', '11.4']);
 const TYPE_LABELS: Record<string, string> = {
-  '1.1': 'Sales invoice', '1.2': 'Sales invoice / intra-community supplies', '1.3': 'Sales invoice / third country supplies',
-  '2.1': 'Service rendered invoice', '5.1': 'Credit invoice / associated', '5.2': 'Credit invoice / non-associated',
-  '11.1': 'Retail sales receipt', '11.4': 'Retail sales credit note',
+  '1.1': 'Sales invoice',
+  '1.2': 'Sales invoice / intra-community supplies',
+  '1.3': 'Sales invoice / third country supplies',
+  '2.1': 'Service rendered invoice',
+  '5.1': 'Credit invoice / associated',
+  '5.2': 'Credit invoice / non-associated',
+  '11.1': 'Retail sales receipt',
+  '11.4': 'Retail sales credit note',
 };
 /** vatCategory -> rate (percent). 8 = records without VAT. Other codes are not in this table. */
 const VAT_RATES: Record<string, string> = { '1': '24', '2': '13', '3': '6', '4': '17', '5': '9', '6': '4', '7': '0' };
@@ -61,7 +79,10 @@ function parseInvoice(input: ParseInput, root: Element, inv: Element, c: Ctx, in
   const credit = CREDIT_TYPES.has(invoiceType);
   const selfBilled = (c.text(header, 'm:selfPricing') ?? '').toLowerCase() === 'true';
   const typeCode = credit ? (selfBilled ? '261' : '381') : selfBilled ? '389' : '380';
-  c.derive('/typeCode', `myDATA invoiceType ${invoiceType} mapped to UNTDID 1001 ${typeCode} (credit types 5.1, 5.2, 11.4; selfPricing = self-billed)`);
+  c.derive(
+    '/typeCode',
+    `myDATA invoiceType ${invoiceType} mapped to UNTDID 1001 ${typeCode} (credit types 5.1, 5.2, 11.4; selfPricing = self-billed)`,
+  );
 
   let currency = c.text(header, 'm:currency');
   if (!currency) {
@@ -74,7 +95,8 @@ function parseInvoice(input: ParseInput, root: Element, inv: Element, c: Ctx, in
   const lines = details.map((d) => line(c, d));
   if (lines.length === 0) c.warn('NO_LINES', 'The invoice has no invoiceDetails lines');
   const missingNames = lines.filter((l) => !l.item.name).length;
-  if (missingNames) c.warn('NO_ITEM_NAME', `${missingNames} line(s) have no lineComments; myDATA has no item name, so the item name is empty`);
+  if (missingNames)
+    c.warn('NO_ITEM_NAME', `${missingNames} line(s) have no lineComments; myDATA has no item name, so the item name is empty`);
 
   const { vatBreakdown } = vatFrom(c, details);
   const { totals, withholdings, otherTaxes } = totalsFrom(c, details, summary);
@@ -85,20 +107,52 @@ function parseInvoice(input: ParseInput, root: Element, inv: Element, c: Ctx, in
   if (!counterpart) c.warn('NO_COUNTERPART', 'counterpart missing (normal for retail receipts)');
 
   const correlated = c.texts(header, 'm:correlatedInvoices');
-  if (correlated.length) c.warn('PRECEDING_BY_MARK', 'correlatedInvoices lists MARKs, not invoice numbers; each MARK is used as the reference id');
+  if (correlated.length)
+    c.warn('PRECEDING_BY_MARK', 'correlatedInvoices lists MARKs, not invoice numbers; each MARK is used as the reference id');
   const dispatchDate = c.date(header, 'm:dispatchDate', 'dispatch date');
   const rate = c.dec(header, 'm:exchangeRate');
   const classifications = classificationsOf(c, details, summary);
 
-  const unmappedAt = '/InvoicesDoc/invoice' + (index > 0 ? `[${index + 1}]` : '');
-  recordUnmapped(c, inv, [
-    'uid', 'mark', 'cancelledByMark', 'qrCodeUrl', 'issuer', 'counterpart', 'invoiceHeader', 'paymentMethods', 'invoiceDetails', 'invoiceSummary',
-  ], unmappedAt);
-  recordUnmapped(c, header, ['series', 'aa', 'issueDate', 'invoiceType', 'currency', 'exchangeRate', 'correlatedInvoices', 'selfPricing', 'dispatchDate'], `${unmappedAt}/invoiceHeader`);
-  recordUnmapped(c, summary, [
-    'totalNetValue', 'totalVatAmount', 'totalWithheldAmount', 'totalFeesAmount', 'totalStampDutyAmount', 'totalOtherTaxesAmount', 'totalGrossValue',
-    'incomeClassification', 'expensesClassification',
-  ], `${unmappedAt}/invoiceSummary`);
+  const unmappedAt = `/InvoicesDoc/invoice${index > 0 ? `[${index + 1}]` : ''}`;
+  recordUnmapped(
+    c,
+    inv,
+    [
+      'uid',
+      'mark',
+      'cancelledByMark',
+      'qrCodeUrl',
+      'issuer',
+      'counterpart',
+      'invoiceHeader',
+      'paymentMethods',
+      'invoiceDetails',
+      'invoiceSummary',
+    ],
+    unmappedAt,
+  );
+  recordUnmapped(
+    c,
+    header,
+    ['series', 'aa', 'issueDate', 'invoiceType', 'currency', 'exchangeRate', 'correlatedInvoices', 'selfPricing', 'dispatchDate'],
+    `${unmappedAt}/invoiceHeader`,
+  );
+  recordUnmapped(
+    c,
+    summary,
+    [
+      'totalNetValue',
+      'totalVatAmount',
+      'totalWithheldAmount',
+      'totalFeesAmount',
+      'totalStampDutyAmount',
+      'totalOtherTaxesAmount',
+      'totalGrossValue',
+      'incomeClassification',
+      'expensesClassification',
+    ],
+    `${unmappedAt}/invoiceSummary`,
+  );
 
   const extension: GrExtension = { invoiceType, classifications: classifications.length ? classifications : undefined };
   const result = {
@@ -145,17 +199,20 @@ function party(c: Ctx, p: Element | undefined, at: string, role: string): Party 
   recordUnmapped(c, a, ['street', 'number', 'postalCode', 'city'], `${at}/${role}/address`);
   const street = c.text(a, 'm:street');
   const number = c.text(a, 'm:number');
-  const address: Address | undefined = p ? {
-    line1: street ? (number ? `${street} ${number}` : street) : undefined,
-    postalCode: c.text(a, 'm:postalCode'),
-    city: c.text(a, 'm:city'),
-    countryCode: country,
-  } : undefined;
+  const address: Address | undefined = p
+    ? {
+        line1: street ? (number ? `${street} ${number}` : street) : undefined,
+        postalCode: c.text(a, 'm:postalCode'),
+        city: c.text(a, 'm:city'),
+        countryCode: country,
+      }
+    : undefined;
   let vatId: string | undefined;
   if (vat) {
     const prefix = country === 'GR' ? 'EL' : country;
     vatId = /^[A-Z]{2}/.test(vat) || !prefix ? vat : `${prefix}${vat}`;
-    if (vatId !== vat) c.derive(`/${role === 'issuer' ? 'seller' : 'buyer'}/vatId`, `vatNumber prefixed with the VAT country code ${prefix}`);
+    if (vatId !== vat)
+      c.derive(`/${role === 'issuer' ? 'seller' : 'buyer'}/vatId`, `vatNumber prefixed with the VAT country code ${prefix}`);
   }
   return {
     name: c.text(p, 'm:name'),
@@ -171,13 +228,15 @@ function clearance(c: Ctx, inv: Element): ClearanceInfo[] {
   const uid = c.text(inv, 'm:uid');
   if (!mark && !uid) return [];
   const cancelledBy = c.text(inv, 'm:cancelledByMark');
-  return [{
-    authority: 'GR:MYDATA',
-    documentId: mark,
-    secondaryId: uid,
-    status: cancelledBy ? `cancelled-by:${cancelledBy}` : undefined,
-    qrPayload: c.text(inv, 'm:qrCodeUrl'),
-  }];
+  return [
+    {
+      authority: 'GR:MYDATA',
+      documentId: mark,
+      secondaryId: uid,
+      status: cancelledBy ? `cancelled-by:${cancelledBy}` : undefined,
+      qrPayload: c.text(inv, 'm:qrCodeUrl'),
+    },
+  ];
 }
 
 function payments(c: Ctx, inv: Element, at: string): PaymentInstructions[] {
@@ -219,16 +278,42 @@ function line(c: Ctx, d: Element): Line {
   const withheld = c.dec(d, 'm:withheldAmount');
   const national: Record<string, string> = {};
   for (const name of [
-    'recType', 'fuelCode', 'invoiceDetailType', 'withheldAmount', 'withheldPercentCategory', 'stampDutyAmount', 'stampDutyPercentCategory',
-    'feesAmount', 'feesPercentCategory', 'otherTaxesPercentCategory', 'otherTaxesAmount', 'deductionsAmount', 'dienergia', 'discountOption',
+    'recType',
+    'fuelCode',
+    'invoiceDetailType',
+    'withheldAmount',
+    'withheldPercentCategory',
+    'stampDutyAmount',
+    'stampDutyPercentCategory',
+    'feesAmount',
+    'feesPercentCategory',
+    'otherTaxesPercentCategory',
+    'otherTaxesAmount',
+    'deductionsAmount',
+    'dienergia',
+    'discountOption',
   ]) {
     const v = c.text(d, `m:${name}`);
     if (v !== undefined) national[name] = v;
   }
-  recordUnmapped(c, d, [
-    'lineNumber', 'quantity', 'measurementUnit', 'netValue', 'vatCategory', 'vatAmount', 'vatExemptionCategory', 'lineComments',
-    'incomeClassification', 'expensesClassification', ...Object.keys(national),
-  ], `/InvoicesDoc/invoice/invoiceDetails[${lineNumber}]`);
+  recordUnmapped(
+    c,
+    d,
+    [
+      'lineNumber',
+      'quantity',
+      'measurementUnit',
+      'netValue',
+      'vatCategory',
+      'vatAmount',
+      'vatExemptionCategory',
+      'lineComments',
+      'incomeClassification',
+      'expensesClassification',
+      ...Object.keys(national),
+    ],
+    `/InvoicesDoc/invoice/invoiceDetails[${lineNumber}]`,
+  );
   return {
     id: lineNumber,
     quantity: c.dec(d, 'm:quantity'),
@@ -254,30 +339,48 @@ function vatFrom(c: Ctx, details: Element[]): { vatBreakdown: VatBreakdown[] } {
     const vatAmount = c.dec(d, 'm:vatAmount');
     const key = `${category}|${exemption ?? ''}`;
     let g = groups.get(key);
-    if (!g) groups.set(key, g = { net: [], vat: [], info: vatInfo(c, category, exemption, vatAmount)! });
+    if (!g) {
+      g = { net: [], vat: [], info: vatInfo(c, category, exemption, vatAmount)! };
+      groups.set(key, g);
+    }
     g.net.push(c.dec(d, 'm:netValue') ?? ('0' as Decimal));
     g.vat.push(vatAmount ?? ('0' as Decimal));
   }
-  if (groups.size) c.derive('/vatBreakdown', 'myDATA has no VAT breakdown; grouped from invoiceDetails by vatCategory (and vatExemptionCategory)');
+  if (groups.size)
+    c.derive('/vatBreakdown', 'myDATA has no VAT breakdown; grouped from invoiceDetails by vatCategory (and vatExemptionCategory)');
   else c.warn('NO_VAT_BREAKDOWN', 'No invoiceDetails with a vatCategory; no VAT breakdown');
   return {
-    vatBreakdown: [...groups.values()].map((g): VatBreakdown => ({
-      taxableAmount: sum(g.net), taxAmount: sum(g.vat), categoryCode: g.info.categoryCode, rate: g.info.rate,
-      exemptionReason: g.info.exemptionReason, nationalCode: g.info.nationalCode,
-    })),
+    vatBreakdown: [...groups.values()].map(
+      (g): VatBreakdown => ({
+        taxableAmount: sum(g.net),
+        taxAmount: sum(g.vat),
+        categoryCode: g.info.categoryCode,
+        rate: g.info.rate,
+        exemptionReason: g.info.exemptionReason,
+        nationalCode: g.info.nationalCode,
+      }),
+    ),
   };
 }
 
-function totalsFrom(c: Ctx, details: Element[], s: Element | undefined): { totals: Totals; withholdings: Withholding[]; otherTaxes: OtherTax[] } {
+function totalsFrom(
+  c: Ctx,
+  details: Element[],
+  s: Element | undefined,
+): { totals: Totals; withholdings: Withholding[]; otherTaxes: OtherTax[] } {
   const lineSum = (name: string) => sum(details.map((d) => c.dec(d, `m:${name}`) ?? ('0' as Decimal)));
-  const net = c.dec(s, 'm:totalNetValue') ?? (() => {
-    c.derive('/totals/taxExclusive', 'totalNetValue absent; summed from invoiceDetails/netValue');
-    return lineSum('netValue');
-  })();
-  const vat = c.dec(s, 'm:totalVatAmount') ?? (() => {
-    c.derive('/totals/vatTotal', 'totalVatAmount absent; summed from invoiceDetails/vatAmount');
-    return lineSum('vatAmount');
-  })();
+  const net =
+    c.dec(s, 'm:totalNetValue') ??
+    (() => {
+      c.derive('/totals/taxExclusive', 'totalNetValue absent; summed from invoiceDetails/netValue');
+      return lineSum('netValue');
+    })();
+  const vat =
+    c.dec(s, 'm:totalVatAmount') ??
+    (() => {
+      c.derive('/totals/vatTotal', 'totalVatAmount absent; summed from invoiceDetails/vatAmount');
+      return lineSum('vatAmount');
+    })();
   const taxInclusive = add(net, vat);
   c.derive('/totals/taxInclusive', 'myDATA states only totalGrossValue (the amount payable); BT-112 computed as net + VAT');
   c.derive('/totals/lineNetTotal', 'myDATA has no separate line total; totalNetValue (netValue is after line discounts)');
@@ -305,11 +408,17 @@ function totalsFrom(c: Ctx, details: Element[], s: Element | undefined): { total
   }
   const withholdings: Withholding[] = byCategory.size
     ? [...byCategory].map(([cat, amounts]) => ({ scheme: 'GR:withheld', amount: sum(amounts), reasonCode: cat || undefined }))
-    : !isZero(withheldTotal) ? [{ scheme: 'GR:withheld', amount: withheldTotal }] : [];
+    : !isZero(withheldTotal)
+      ? [{ scheme: 'GR:withheld', amount: withheldTotal }]
+      : [];
 
   const otherTaxes: OtherTax[] = [
-    ['GR:fees', feesTotal], ['GR:stampDuty', stampTotal], ['GR:otherTaxes', otherTotal],
-  ].filter(([, v]) => !isZero(v as string)).map(([scheme, amount]) => ({ scheme: scheme as string, amount: amount as Decimal, includedInTotal: false }));
+    ['GR:fees', feesTotal],
+    ['GR:stampDuty', stampTotal],
+    ['GR:otherTaxes', otherTotal],
+  ]
+    .filter(([, v]) => !isZero(v as string))
+    .map(([scheme, amount]) => ({ scheme: scheme as string, amount: amount as Decimal, includedInTotal: false }));
 
   return {
     totals: {
@@ -327,11 +436,12 @@ function totalsFrom(c: Ctx, details: Element[], s: Element | undefined): { total
 
 /** Income / expense classifications. Line-level ones win; the summary's repeat them or stand alone (retail). */
 function classificationsOf(c: Ctx, details: Element[], s: Element | undefined): NonNullable<GrExtension['classifications']> {
-  const read = (parent: Element | undefined) => [...c.all(parent, 'm:incomeClassification'), ...c.all(parent, 'm:expensesClassification')].map((e) => ({
-    type: c.text(e, '*:classificationType') ?? '',
-    category: c.text(e, '*:classificationCategory') ?? '',
-    amount: c.dec(e, '*:amount') ?? ('0' as Decimal),
-  }));
+  const read = (parent: Element | undefined) =>
+    [...c.all(parent, 'm:incomeClassification'), ...c.all(parent, 'm:expensesClassification')].map((e) => ({
+      type: c.text(e, '*:classificationType') ?? '',
+      category: c.text(e, '*:classificationCategory') ?? '',
+      amount: c.dec(e, '*:amount') ?? ('0' as Decimal),
+    }));
   const fromLines = details.flatMap((d) => read(d));
   return fromLines.length ? fromLines : read(s);
 }

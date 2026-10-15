@@ -29,7 +29,10 @@ async function labels(path: string, limits?: Partial<UnwrapLimits>): Promise<{ i
   const display: string[] = [];
   for (const d of r.documents) {
     const det = d.detection;
-    const env = d.payload.envelope.map((s) => s.kind).filter((k) => k !== 'xml').join('>');
+    const env = d.payload.envelope
+      .map((s) => s.kind)
+      .filter((k) => k !== 'xml')
+      .join('>');
     const via = env ? `  (via ${env})` : '';
     if (det.kind === 'invoice') {
       ids.push(det.format.id);
@@ -61,36 +64,58 @@ export async function runSweep(roots: string[], opts: SweepOptions, print: (line
     for (const [rel, expected] of Object.entries(answers)) {
       const path = join(base, rel);
       let got: string[];
-      try { got = (await labels(path, opts.limits)).ids; } catch (e) { print(`MISSING  ${rel}: ${(e as Error).message}`); bad++; continue; }
+      try {
+        got = (await labels(path, opts.limits)).ids;
+      } catch (e) {
+        print(`MISSING  ${rel}: ${(e as Error).message}`);
+        bad++;
+        continue;
+      }
       const ok = got.length === expected.length && got.every((g, i) => g === expected[i]);
-      if (!ok) { bad++; print(`MISMATCH ${rel}: expected [${expected.join(', ')}], got [${got.join(', ')}]`); }
+      if (!ok) {
+        bad++;
+        print(`MISMATCH ${rel}: expected [${expected.join(', ')}], got [${got.join(', ')}]`);
+      }
     }
     // Files under the roots that the answers do not cover are listed, so the manifest stays complete.
     const covered = new Set(Object.keys(answers).map((r) => resolve(base, r)));
     const uncovered = roots.flatMap((root) => [...sweepFiles(root)]).filter((f) => !covered.has(resolve(f)));
     for (const f of uncovered) print(`NO ANSWER ${relative(base, f)}`);
     const total = Object.keys(answers).length;
-    print(`\n${total - bad}/${total} files match their expected formats${uncovered.length ? `; ${uncovered.length} file(s) without an answer` : ''}`);
+    print(
+      `\n${total - bad}/${total} files match their expected formats${uncovered.length ? `; ${uncovered.length} file(s) without an answer` : ''}`,
+    );
     return bad || uncovered.length ? 1 : 0;
   }
 
   const counts = new Map<string, number>();
   const examples = new Map<string, string>();
-  const bump = (k: string, f: string) => { counts.set(k, (counts.get(k) ?? 0) + 1); if (!examples.has(k)) examples.set(k, f); };
+  const bump = (k: string, f: string) => {
+    counts.set(k, (counts.get(k) ?? 0) + 1);
+    if (!examples.has(k)) examples.set(k, f);
+  };
   let total = 0;
   for (const root of roots) {
     for (const f of sweepFiles(root)) {
       total++;
       const group = (/phive-rules-([\w-]+)/.exec(f)?.[1] ?? relative(root, f).split('/')[0]).padEnd(18);
-      let r;
-      try { r = await labels(f, opts.limits); } catch (e) { bump(`${group} ERROR ${(e as Error).message.slice(0, 60)}`, f); continue; }
+      let r: Awaited<ReturnType<typeof labels>>;
+      try {
+        r = await labels(f, opts.limits);
+      } catch (e) {
+        bump(`${group} ERROR ${(e as Error).message.slice(0, 60)}`, f);
+        continue;
+      }
       for (const label of r.display) bump(`${group} ${label}`, f);
     }
   }
   for (const [k, n] of [...counts].sort()) print(`${String(n).padStart(5)} ${k}`);
   print(`\n${total} files`);
   const unknown = [...counts.keys()].filter((k) => /UNKNOWN|ERROR/.test(k));
-  if (unknown.length) { print('\nExamples of unknown/error:'); for (const k of unknown) print(`  ${examples.get(k)}`); }
+  if (unknown.length) {
+    print('\nExamples of unknown/error:');
+    for (const k of unknown) print(`  ${examples.get(k)}`);
+  }
   print('\nThis counts what was detected, not whether it is right. Use --expect for a known-answer check.');
   return 0;
 }

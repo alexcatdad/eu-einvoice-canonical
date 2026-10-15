@@ -13,7 +13,11 @@
 import type { CanonicalInvoice } from './canonical.js';
 import { add, cmp, round, sub, sum } from './values.js';
 
-export interface Finding { code: string; message: string; path?: string }
+export interface Finding {
+  code: string;
+  message: string;
+  path?: string;
+}
 
 export function checkTotals(inv: CanonicalInvoice): Finding[] {
   const out: Finding[] = [];
@@ -27,13 +31,30 @@ export function checkTotals(inv: CanonicalInvoice): Finding[] {
   if (inv.lines.length > 0 && lineRows.length === inv.lines.length) {
     check('BR-CO-10', '/totals/lineNetTotal', t.lineNetTotal, sum(inv.lines.map((l) => l.netAmount)), 'Sum of line net amounts (BT-106)');
   }
-  check('BR-CO-13', '/totals/taxExclusive', t.taxExclusive,
-    add(sub(t.lineNetTotal, t.allowanceTotal ?? '0'), t.chargeTotal ?? '0'), 'Total without VAT (BT-109)');
+  check(
+    'BR-CO-13',
+    '/totals/taxExclusive',
+    t.taxExclusive,
+    add(sub(t.lineNetTotal, t.allowanceTotal ?? '0'), t.chargeTotal ?? '0'),
+    'Total without VAT (BT-109)',
+  );
   if (t.vatTotal !== undefined && inv.vatBreakdown.length > 0) {
     check('BR-CO-14', '/totals/vatTotal', t.vatTotal, sum(inv.vatBreakdown.map((v) => v.taxAmount)), 'Total VAT (BT-110)');
   }
-  check('BR-CO-15', '/totals/taxInclusive', t.taxInclusive, add(add(t.taxExclusive, t.vatTotal ?? '0'), sum(inv.otherTaxes.filter((o) => o.includedInTotal && !o.inTaxExclusive).map((o) => o.amount))), 'Total with VAT (BT-112)');
-  const payable = sub(sub(add(sub(t.taxInclusive, t.prepaid ?? '0'), t.rounding ?? '0'), t.withholdingTotal ?? '0'), t.splitPaymentVat ?? '0');
+  check(
+    'BR-CO-15',
+    '/totals/taxInclusive',
+    t.taxInclusive,
+    add(
+      add(t.taxExclusive, t.vatTotal ?? '0'),
+      sum(inv.otherTaxes.filter((o) => o.includedInTotal && !o.inTaxExclusive).map((o) => o.amount)),
+    ),
+    'Total with VAT (BT-112)',
+  );
+  const payable = sub(
+    sub(add(sub(t.taxInclusive, t.prepaid ?? '0'), t.rounding ?? '0'), t.withholdingTotal ?? '0'),
+    t.splitPaymentVat ?? '0',
+  );
   check('BR-CO-16', '/totals/payable', t.payable, payable, 'Amount due (BT-115)');
   return out;
 }

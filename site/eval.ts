@@ -1,6 +1,6 @@
 /** Browser page that scores the rules and the optional language models on the labelled set. */
-import { evaluate, type EvalScore } from '../src/relations/eval.js';
-import { ENGINES, geminiNanoAvailability, loadEngine, type EngineSpec } from './model.js';
+import { type EvalScore, evaluate } from '../src/relations/eval.js';
+import { ENGINES, type EngineSpec, geminiNanoAvailability, loadEngine } from './model.js';
 
 interface Row {
   engine: string;
@@ -23,7 +23,9 @@ for (const e of ENGINES) {
   label.innerHTML = `<input type="checkbox" value="${e.id}"${e.id === 'qwen3-1.7b' ? ' checked' : ''}> ${e.label} <span class="note" data-note="${e.id}"></span>`;
   enginesEl.append(label);
 }
-void geminiNanoAvailability().then((a) => { $('[data-note="gemini-nano"]').textContent = `(Prompt API: ${a})`; });
+void geminiNanoAvailability().then((a) => {
+  $('[data-note="gemini-nano"]').textContent = `(Prompt API: ${a})`;
+});
 
 const pct = (x: number) => `${(x * 100).toFixed(0)} %`;
 const mb = (b?: number) => (b === undefined ? 'n/a' : `${(b / 1048576).toFixed(0)} MB`);
@@ -31,7 +33,11 @@ const sec = (ms?: number) => (ms === undefined ? 'n/a' : `${(ms / 1000).toFixed(
 const esc = (s: string) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]!);
 
 async function usage(): Promise<number | undefined> {
-  try { return (await navigator.storage.estimate()).usage; } catch { return undefined; }
+  try {
+    return (await navigator.storage.estimate()).usage;
+  } catch {
+    return undefined;
+  }
 }
 const heap = () => (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize;
 
@@ -40,7 +46,9 @@ async function runEngine(spec: EngineSpec): Promise<Row> {
   try {
     const before = await usage();
     const t0 = performance.now();
-    const engine = await loadEngine(spec, (text) => { statusEl.textContent = `${spec.label}: ${text}`; });
+    const engine = await loadEngine(spec, (text) => {
+      statusEl.textContent = `${spec.label}: ${text}`;
+    });
     row.loadMs = performance.now() - t0;
     const after = await usage();
     row.downloadBytes = before !== undefined && after !== undefined ? Math.max(0, after - before) : undefined;
@@ -60,9 +68,13 @@ async function runEngine(spec: EngineSpec): Promise<Row> {
 function show() {
   $('#summary').hidden = false;
   $('#detail').hidden = false;
-  $('#summary tbody').innerHTML = rows.map((r) => r.score
-    ? `<tr><td>${esc(r.engine)}</td><td class="num">${pct(r.score.roleAccuracy)}</td><td class="num">${pct(r.score.relationPrecision)}</td><td class="num">${pct(r.score.relationRecall)}</td><td class="num">${r.score.provenWrong}</td><td class="num">${sec(r.loadMs)}</td><td class="num">${sec(r.runMs)}</td><td class="num">${mb(r.downloadBytes)}</td><td class="num">${mb(r.heapBytes)}</td></tr>`
-    : `<tr><td>${esc(r.engine)}</td><td colspan="8">${esc(r.error ?? 'no result')}</td></tr>`).join('');
+  $('#summary tbody').innerHTML = rows
+    .map((r) =>
+      r.score
+        ? `<tr><td>${esc(r.engine)}</td><td class="num">${pct(r.score.roleAccuracy)}</td><td class="num">${pct(r.score.relationPrecision)}</td><td class="num">${pct(r.score.relationRecall)}</td><td class="num">${r.score.provenWrong}</td><td class="num">${sec(r.loadMs)}</td><td class="num">${sec(r.runMs)}</td><td class="num">${mb(r.downloadBytes)}</td><td class="num">${mb(r.heapBytes)}</td></tr>`
+        : `<tr><td>${esc(r.engine)}</td><td colspan="8">${esc(r.error ?? 'no result')}</td></tr>`,
+    )
+    .join('');
   $('#detail-body').textContent = JSON.stringify(rows, null, 2);
   $<HTMLButtonElement>('#copy').disabled = false;
 }
@@ -85,5 +97,11 @@ $<HTMLButtonElement>('#run').addEventListener('click', async () => {
 });
 
 $<HTMLButtonElement>('#copy').addEventListener('click', () => {
-  void navigator.clipboard.writeText(JSON.stringify({ userAgent: navigator.userAgent, deviceMemoryGb: (navigator as unknown as { deviceMemory?: number }).deviceMemory, rows }, null, 2));
+  void navigator.clipboard.writeText(
+    JSON.stringify(
+      { userAgent: navigator.userAgent, deviceMemoryGb: (navigator as unknown as { deviceMemory?: number }).deviceMemory, rows },
+      null,
+      2,
+    ),
+  );
 });

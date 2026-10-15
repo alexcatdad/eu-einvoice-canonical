@@ -1,5 +1,5 @@
-import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { effectiveSign } from '../src/index.js';
 import { fixture, parseOne, utf8, warningCodes } from './helpers.js';
 
@@ -41,29 +41,44 @@ describe('ebInterface 6.1 invoice', async () => {
     assert.equal(inv.buyer.vatId, 'ATU87654321');
     assert.deepEqual(inv.buyer.identifiers, [{ value: 'KD-4711' }]);
     assert.deepEqual(inv.delivery, {
-      partyName: 'Stadt Beispielhausen, Bauhof', actualDate: '2026-10-10',
+      partyName: 'Stadt Beispielhausen, Bauhof',
+      actualDate: '2026-10-10',
       address: { line1: 'Werkstraße 2', city: 'Beispielhausen', postalCode: '4020', countryCode: 'AT' },
     });
   });
 
   test('lines with line-level reductions', () => {
     assert.deepEqual(inv.lines[0], {
-      id: '1', quantity: '10.0000', unitCode: 'HUR', netAmount: '900.00', orderLineRef: '10',
-      allowances: [{ amount: '100.00', baseAmount: '1000.00', percentage: '10.00', reason: 'Mengenrabatt' }], charges: [],
-      price: { net: '100.0000' }, vat: { categoryCode: 'S', rate: '20.00' },
+      id: '1',
+      quantity: '10.0000',
+      unitCode: 'HUR',
+      netAmount: '900.00',
+      orderLineRef: '10',
+      allowances: [{ amount: '100.00', baseAmount: '1000.00', percentage: '10.00', reason: 'Mengenrabatt' }],
+      charges: [],
+      price: { net: '100.0000' },
+      vat: { categoryCode: 'S', rate: '20.00' },
       item: { name: 'Beratung', classifications: [], attributes: [] },
     });
     assert.deepEqual(inv.lines[1].item, {
-      name: 'Fachbuch', description: 'Vertragsrecht, 2. Auflage', sellerId: 'BUCH-12',
-      standardId: { value: '9780000000002', schemeId: '0160' }, classifications: [], attributes: [],
+      name: 'Fachbuch',
+      description: 'Vertragsrecht, 2. Auflage',
+      sellerId: 'BUCH-12',
+      standardId: { value: '9780000000002', schemeId: '0160' },
+      classifications: [],
+      attributes: [],
     });
     assert.deepEqual(inv.lines[1].price, { net: '50.0000', baseQuantity: '1' });
     assert.equal(inv.lines[1].unitCode, 'C62');
   });
 
   test('document reductions and surcharges keep their VAT', () => {
-    assert.deepEqual(inv.allowances, [{ amount: '40.00', baseAmount: '1000.00', reason: 'Treuerabatt', vat: { categoryCode: 'S', rate: '20.00' } }]);
-    assert.deepEqual(inv.charges, [{ amount: '50.00', baseAmount: '1000.00', reason: 'Versandkosten', vat: { categoryCode: 'S', rate: '20.00' } }]);
+    assert.deepEqual(inv.allowances, [
+      { amount: '40.00', baseAmount: '1000.00', reason: 'Treuerabatt', vat: { categoryCode: 'S', rate: '20.00' } },
+    ]);
+    assert.deepEqual(inv.charges, [
+      { amount: '50.00', baseAmount: '1000.00', reason: 'Versandkosten', vat: { categoryCode: 'S', rate: '20.00' } },
+    ]);
   });
 
   test('VAT and totals; the net total is derived and says so', () => {
@@ -72,8 +87,14 @@ describe('ebInterface 6.1 invoice', async () => {
       { taxableAmount: '100.00', taxAmount: '10.00', categoryCode: 'S', rate: '10.00' },
     ]);
     assert.deepEqual(inv.totals, {
-      lineNetTotal: '1000.00', allowanceTotal: '40.00', chargeTotal: '50.00', taxExclusive: '1010.00',
-      vatTotal: '192.00', taxInclusive: '1202.00', prepaid: '200.00', payable: '1002.00',
+      lineNetTotal: '1000.00',
+      allowanceTotal: '40.00',
+      chargeTotal: '50.00',
+      taxExclusive: '1010.00',
+      vatTotal: '192.00',
+      taxInclusive: '1202.00',
+      prepaid: '200.00',
+      payable: '1002.00',
     });
     const fields = inv.source.derived.map((d) => d.field);
     assert.ok(fields.includes('/totals/lineNetTotal'));
@@ -81,10 +102,14 @@ describe('ebInterface 6.1 invoice', async () => {
   });
 
   test('bank transfer with IBAN is SEPA credit transfer (58)', () => {
-    assert.deepEqual(inv.payments, [{
-      meansCode: '58', meansText: 'Überweisung', remittanceInformation: 'RE-2026-1001',
-      creditTransfers: [{ accountId: 'AT611904300234573201', accountName: 'Muster Beratung GmbH', serviceProviderId: 'BKAUATWW' }],
-    }]);
+    assert.deepEqual(inv.payments, [
+      {
+        meansCode: '58',
+        meansText: 'Überweisung',
+        remittanceInformation: 'RE-2026-1001',
+        creditTransfers: [{ accountId: 'AT611904300234573201', accountName: 'Muster Beratung GmbH', serviceProviderId: 'BKAUATWW' }],
+      },
+    ]);
   });
 
   test('payment conditions: discount in the terms and in the schedule', () => {
@@ -123,16 +148,23 @@ describe('ebInterface 4.3 credit memo', async () => {
 
   test('totals', () => {
     assert.deepEqual(inv.totals, {
-      lineNetTotal: '-230.00', taxExclusive: '-230.00', vatTotal: '-40.00', taxInclusive: '-270.00', payable: '-270.00',
+      lineNetTotal: '-230.00',
+      taxExclusive: '-230.00',
+      vatTotal: '-40.00',
+      taxInclusive: '-270.00',
+      payable: '-270.00',
     });
     assert.deepEqual(warningCodes(inv), []);
   });
 
   test('bank account without IBAN is a plain credit transfer (30)', () => {
-    assert.deepEqual(inv.payments, [{
-      meansCode: '30', remittanceInformation: 'GS-2026-0003',
-      creditTransfers: [{ accountId: '00234573201', accountName: 'Muster Beratung GmbH', serviceProviderId: '19043' }],
-    }]);
+    assert.deepEqual(inv.payments, [
+      {
+        meansCode: '30',
+        remittanceInformation: 'GS-2026-0003',
+        creditTransfers: [{ accountId: '00234573201', accountName: 'Muster Beratung GmbH', serviceProviderId: '19043' }],
+      },
+    ]);
   });
 });
 
@@ -152,9 +184,12 @@ describe('ebInterface variants', () => {
 
   test('document types', async () => {
     for (const [t, code, kind, self] of [
-      ['InvoiceForAdvancePayment', '386', 'invoice', false], ['InvoiceForPartialDelivery', '326', 'invoice', false],
-      ['FinalSettlement', '380', 'invoice', false], ['SelfBilling', '389', 'invoice', true],
-      ['SubsequentDebit', '383', 'invoice', false], ['SubsequentCredit', '381', 'creditNote', false],
+      ['InvoiceForAdvancePayment', '386', 'invoice', false],
+      ['InvoiceForPartialDelivery', '326', 'invoice', false],
+      ['FinalSettlement', '380', 'invoice', false],
+      ['SelfBilling', '389', 'invoice', true],
+      ['SubsequentDebit', '383', 'invoice', false],
+      ['SubsequentCredit', '381', 'creditNote', false],
     ] as const) {
       const r = await variant(inv, 'DocumentType="Invoice"', `DocumentType="${t}"`);
       assert.equal(r.typeCode, code, t);
@@ -177,12 +212,20 @@ describe('ebInterface variants', () => {
   });
 
   test('SEPA direct debit', async () => {
-    const r = await variant(inv, /<UniversalBankTransaction>[\s\S]*<\/UniversalBankTransaction>/.exec(text(inv))![0],
-      '<SEPADirectDebit><Type>B2B</Type><IBAN>AT611904300234573201</IBAN><CreditorID>AT00ZZZ00000000001</CreditorID><MandateReference>M-1</MandateReference></SEPADirectDebit>');
-    assert.deepEqual(r.payments, [{
-      meansCode: '59', meansText: 'Überweisung', nationalMeansCode: 'B2B', creditTransfers: [],
-      directDebit: { mandateId: 'M-1', creditorId: 'AT00ZZZ00000000001', debitedAccountId: 'AT611904300234573201' },
-    }]);
+    const r = await variant(
+      inv,
+      /<UniversalBankTransaction>[\s\S]*<\/UniversalBankTransaction>/.exec(text(inv))![0],
+      '<SEPADirectDebit><Type>B2B</Type><IBAN>AT611904300234573201</IBAN><CreditorID>AT00ZZZ00000000001</CreditorID><MandateReference>M-1</MandateReference></SEPADirectDebit>',
+    );
+    assert.deepEqual(r.payments, [
+      {
+        meansCode: '59',
+        meansText: 'Überweisung',
+        nationalMeansCode: 'B2B',
+        creditTransfers: [],
+        directDebit: { mandateId: 'M-1', creditorId: 'AT00ZZZ00000000001', debitedAccountId: 'AT611904300234573201' },
+      },
+    ]);
   });
 
   test('a missing InvoiceCurrency is an error', async () => {

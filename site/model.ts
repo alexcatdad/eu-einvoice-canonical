@@ -33,7 +33,10 @@ export interface LoadedEngine {
 
 export type Progress = (text: string, fraction?: number) => void;
 
-interface PromptSession { prompt(text: string, options?: unknown): Promise<string>; destroy?(): void }
+interface PromptSession {
+  prompt(text: string, options?: unknown): Promise<string>;
+  destroy?(): void;
+}
 interface PromptApi {
   availability(): Promise<string>;
   create(options?: unknown): Promise<PromptSession>;
@@ -42,7 +45,11 @@ const promptApi = (): PromptApi | undefined => (globalThis as unknown as { Langu
 
 /** 'available', 'downloadable', 'downloading' or 'unavailable'. */
 export async function geminiNanoAvailability(): Promise<string> {
-  try { return (await promptApi()?.availability()) ?? 'unavailable'; } catch { return 'unavailable'; }
+  try {
+    return (await promptApi()?.availability()) ?? 'unavailable';
+  } catch {
+    return 'unavailable';
+  }
 }
 
 export async function loadEngine(spec: EngineSpec, progress: Progress): Promise<LoadedEngine> {
@@ -51,7 +58,10 @@ export async function loadEngine(spec: EngineSpec, progress: Progress): Promise<
     if (!api) throw new Error('This browser has no Prompt API (LanguageModel). Chrome 138+ on desktop, with Gemini Nano enabled.');
     const session = await api.create({
       monitor(m: EventTarget) {
-        m.addEventListener('downloadprogress', (e) => { const f = (e as unknown as { loaded: number }).loaded; progress(`Downloading Gemini Nano ${Math.round(f * 100)} %`, f); });
+        m.addEventListener('downloadprogress', (e) => {
+          const f = (e as unknown as { loaded: number }).loaded;
+          progress(`Downloading Gemini Nano ${Math.round(f * 100)} %`, f);
+        });
       },
     });
     return {
@@ -65,7 +75,9 @@ export async function loadEngine(spec: EngineSpec, progress: Progress): Promise<
     runtimeStatsText(): Promise<string>;
     unload(): Promise<void>;
   };
-  const webllm = await import(/* @vite-ignore */ WEBLLM_SPECIFIER) as { CreateMLCEngine(model: string, config: unknown): Promise<Engine> };
+  const webllm = (await import(/* @vite-ignore */ WEBLLM_SPECIFIER)) as {
+    CreateMLCEngine(model: string, config: unknown): Promise<Engine>;
+  };
   const engine = await webllm.CreateMLCEngine(spec.model!, {
     initProgressCallback: (r: { text: string; progress: number }) => progress(r.text, r.progress),
   });

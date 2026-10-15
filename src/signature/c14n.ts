@@ -17,7 +17,14 @@ export interface C14nOptions {
 const XML_NS = 'http://www.w3.org/XML/1998/namespace';
 
 const escText = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\r/g, '&#xD;');
-const escAttr = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;').replace(/\t/g, '&#x9;').replace(/\n/g, '&#xA;').replace(/\r/g, '&#xD;');
+const escAttr = (s: string) =>
+  s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/"/g, '&quot;')
+    .replace(/\t/g, '&#x9;')
+    .replace(/\n/g, '&#xA;')
+    .replace(/\r/g, '&#xD;');
 
 /** Canonical bytes of the whole document (comments only when asked) or of one element subtree. */
 export function canonicalize(node: XNode, opts: C14nOptions): string {
@@ -26,17 +33,20 @@ export function canonicalize(node: XNode, opts: C14nOptions): string {
     const parts: string[] = [];
     let seenRoot = false;
     for (let c: XNode | null = doc.firstChild; c; c = c.nextSibling) {
-      if (c.nodeType === 1) { parts.push(renderElement(c as XElement, opts, new Map(), true)); seenRoot = true; }
-      else if (c.nodeType === 7 && (c as any).target === 'xml') continue; // the XML declaration is not a PI
+      if (c.nodeType === 1) {
+        parts.push(renderElement(c as XElement, opts, new Map(), true));
+        seenRoot = true;
+      } else if (c.nodeType === 7 && (c as any).target === 'xml')
+        continue; // the XML declaration is not a PI
       else if (c.nodeType === 7) parts.push((seenRoot ? '\n' : '') + pi(c) + (seenRoot ? '' : '\n'));
-      else if (c.nodeType === 8 && opts.withComments) parts.push((seenRoot ? '\n' : '') + `<!--${c.nodeValue}-->` + (seenRoot ? '' : '\n'));
+      else if (c.nodeType === 8 && opts.withComments) parts.push(`${seenRoot ? '\n' : ''}<!--${c.nodeValue}-->${seenRoot ? '' : '\n'}`);
     }
     return parts.join('');
   }
   return renderElement(node as XElement, opts, new Map(), true);
 }
 
-const pi = (n: XNode) => `<?${(n as any).target}${(n as any).data ? ' ' + (n as any).data : ''}?>`;
+const pi = (n: XNode) => `<?${(n as any).target}${(n as any).data ? ` ${(n as any).data}` : ''}?>`;
 
 /** In-scope namespace declarations (prefix '' = default) as seen on the element, ancestors included. */
 function inScope(el: XElement): Map<string, string> {
@@ -107,11 +117,20 @@ function renderElement(el: XElement, opts: C14nOptions, rendered: Map<string, st
   for (let c: XNode | null = el.firstChild; c; c = c.nextSibling) {
     if (c === opts.omit) continue;
     switch (c.nodeType) {
-      case 1: out += renderElement(c as XElement, opts, next, false); break;
-      case 3: case 4: out += escText(c.nodeValue ?? ''); break;
-      case 7: out += pi(c); break;
-      case 8: if (opts.withComments) out += `<!--${c.nodeValue}-->`; break;
+      case 1:
+        out += renderElement(c as XElement, opts, next, false);
+        break;
+      case 3:
+      case 4:
+        out += escText(c.nodeValue ?? '');
+        break;
+      case 7:
+        out += pi(c);
+        break;
+      case 8:
+        if (opts.withComments) out += `<!--${c.nodeValue}-->`;
+        break;
     }
   }
-  return out + `</${el.tagName}>`;
+  return `${out}</${el.tagName}>`;
 }

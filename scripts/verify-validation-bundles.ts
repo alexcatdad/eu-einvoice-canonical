@@ -18,7 +18,9 @@ function walk(d: string): string[] {
   });
 }
 
-const ids = readdirSync(dir).filter((n) => statSync(join(dir, n)).isDirectory()).sort();
+const ids = readdirSync(dir)
+  .filter((n) => statSync(join(dir, n)).isDirectory())
+  .sort();
 if (!ids.length) problems.push('no bundles found');
 for (const id of ids) {
   const bdir = join(dir, id);
@@ -34,7 +36,8 @@ for (const id of ids) {
     if (typeof m[k] !== 'string' || !m[k]) problems.push(`${id}: manifest.${k} missing`);
   if (!['schema', 'semantic', 'profile'].includes(m.layer)) problems.push(`${id}: bad layer ${m.layer}`);
   for (const k of ['releaseDate', 'effectiveFrom']) if (!DATE.test(m[k] ?? '')) problems.push(`${id}: ${k} is not YYYY-MM-DD`);
-  if (!('effectiveUntil' in m) || (m.effectiveUntil !== null && !DATE.test(m.effectiveUntil))) problems.push(`${id}: effectiveUntil must be a date or null`);
+  if (!('effectiveUntil' in m) || (m.effectiveUntil !== null && !DATE.test(m.effectiveUntil)))
+    problems.push(`${id}: effectiveUntil must be a date or null`);
   else if (m.effectiveUntil !== null && m.effectiveUntil < m.effectiveFrom) problems.push(`${id}: effectiveUntil before effectiveFrom`);
   if (!Array.isArray(m.files) || !m.files.length) {
     problems.push(`${id}: no files listed`);

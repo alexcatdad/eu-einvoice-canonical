@@ -2,23 +2,36 @@ import { describe, expect, test } from 'bun:test';
 import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { EXIT, main, uniqueName, ValidatorUnavailable, type IO } from '../src/cli.js';
+import { EXIT, type IO, main, uniqueName, ValidatorUnavailable } from '../src/cli.js';
 import { fixturePath } from './helpers.js';
 
 const CLI = fileURLToPathOf('../src/cli.ts');
-function fileURLToPathOf(rel: string) { return new URL(rel, import.meta.url).pathname; }
+function fileURLToPathOf(rel: string) {
+  return new URL(rel, import.meta.url).pathname;
+}
 
 async function run(args: string[], stdin?: Uint8Array | string) {
-  const proc = Bun.spawn(['bun', CLI, ...args], { stdin: stdin === undefined ? 'ignore' : new Blob([stdin as BlobPart]), stdout: 'pipe', stderr: 'pipe' });
+  const proc = Bun.spawn(['bun', CLI, ...args], {
+    stdin: stdin === undefined ? 'ignore' : new Blob([stdin as BlobPart]),
+    stdout: 'pipe',
+    stderr: 'pipe',
+  });
   const [stdout, stderr, code] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited]);
   return { stdout, stderr, code };
 }
 
 const tmp = mkdtempSync(join(tmpdir(), 'einvoice-cli-'));
-const write = (name: string, content: string) => { const p = join(tmp, name); writeFileSync(p, content); return p; };
+const write = (name: string, content: string) => {
+  const p = join(tmp, name);
+  writeFileSync(p, content);
+  return p;
+};
 const peppol = fixturePath('peppol-bis3-invoice.xml');
 const xrechnung = fixturePath('xrechnung-ubl.xml');
-const doctype = write('doctype.xml', '<?xml version="1.0"?><!DOCTYPE x [<!ENTITY a "a">]><Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"/>');
+const doctype = write(
+  'doctype.xml',
+  '<?xml version="1.0"?><!DOCTYPE x [<!ENTITY a "a">]><Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"/>',
+);
 const notXml = write('plain.txt', 'this is not an invoice');
 const unknownXml = write('unknown.xml', '<?xml version="1.0"?><Thing xmlns="urn:example:thing"/>');
 
@@ -135,7 +148,8 @@ describe('exit codes', () => {
 
 describe('validator seam (in process)', () => {
   const io = () => {
-    const out: string[] = []; const errs: string[] = [];
+    const out: string[] = [];
+    const errs: string[] = [];
     const i: IO = { stdout: (t) => out.push(t), stderr: (l) => errs.push(l), readStdin: async () => new Uint8Array() };
     return { i, out, errs };
   };
@@ -151,7 +165,13 @@ describe('validator seam (in process)', () => {
   });
   test('6: validator unavailable', async () => {
     const { i, errs } = io();
-    const code = await main(['convert', '--validate', peppol], i, { validator: { validate: async () => { throw new ValidatorUnavailable('rules not installed'); } } });
+    const code = await main(['convert', '--validate', peppol], i, {
+      validator: {
+        validate: async () => {
+          throw new ValidatorUnavailable('rules not installed');
+        },
+      },
+    });
     expect(code).toBe(EXIT.validatorUnavailable);
     expect(errs[0]).toMatch(/validator unavailable/);
   });

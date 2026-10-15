@@ -14,11 +14,26 @@
  */
 import type { Element } from '@xmldom/xmldom';
 import type {
-  AdditionalParty, Address, AllowanceCharge, CanonicalInvoice, Contact, CreditTransfer, Decimal, Identifier, Line,
-  IsoDate, Party, PaymentInstructions, Period, Seller, Totals, VatBreakdown, VatInfo,
+  AdditionalParty,
+  Address,
+  AllowanceCharge,
+  CanonicalInvoice,
+  Contact,
+  CreditTransfer,
+  Decimal,
+  Identifier,
+  IsoDate,
+  Line,
+  Party,
+  PaymentInstructions,
+  Period,
+  Seller,
+  Totals,
+  VatBreakdown,
+  VatInfo,
 } from '../canonical.js';
-import { ValueError, sub, sum, toDecimal } from '../values.js';
-import { CREDIT_TYPE_CODES, SELF_BILLED_TYPE_CODES, Ctx, ParseError, finish, parseXml, sourceMeta } from './context.js';
+import { sub, sum, toDecimal, ValueError } from '../values.js';
+import { CREDIT_TYPE_CODES, Ctx, finish, ParseError, parseXml, SELF_BILLED_TYPE_CODES, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 
 /** Finvoice InvoiceTypeCode -> UNCL 1001 when InvoiceTypeCodeUN is absent. */
@@ -44,17 +59,26 @@ export function parseFinvoice(input: ParseInput): CanonicalInvoice[] {
 
   const incl = dec(c, d, 'InvoiceTotalVatIncludedAmount');
   const excl = dec(c, d, 'InvoiceTotalVatExcludedAmount');
-  if (incl === undefined || excl === undefined) throw new ParseError('InvoiceTotalVatExcludedAmount or InvoiceTotalVatIncludedAmount missing');
+  if (incl === undefined || excl === undefined)
+    throw new ParseError('InvoiceTotalVatExcludedAmount or InvoiceTotalVatIncludedAmount missing');
   if (kind === 'creditNote' && incl.startsWith('-')) {
-    c.warn('FI-CREDIT-NEGATIVE', 'Finvoice credit notes (INV02) carry negative amounts; source signs are kept, so effectiveSign() must not be applied on top');
+    c.warn(
+      'FI-CREDIT-NEGATIVE',
+      'Finvoice credit notes (INV02) carry negative amounts; source signs are kept, so effectiveSign() must not be applied on top',
+    );
   }
-  const currency = c.attr(d, 'InvoiceTotalVatIncludedAmount', 'AmountCurrencyIdentifier')
-    ?? c.attr(d, 'InvoiceTotalVatExcludedAmount', 'AmountCurrencyIdentifier')
-    ?? c.attr(root, 'EpiDetails/EpiPaymentInstructionDetails/EpiInstructedAmount', 'AmountCurrencyIdentifier');
+  const currency =
+    c.attr(d, 'InvoiceTotalVatIncludedAmount', 'AmountCurrencyIdentifier') ??
+    c.attr(d, 'InvoiceTotalVatExcludedAmount', 'AmountCurrencyIdentifier') ??
+    c.attr(root, 'EpiDetails/EpiPaymentInstructionDetails/EpiInstructedAmount', 'AmountCurrencyIdentifier');
   if (!currency) throw new ParseError('No currency: AmountCurrencyIdentifier missing on the invoice totals');
 
   const { lines, informationalRows } = lineRows(c, root);
-  if (informationalRows > 0) c.warn('FI-INFO-ROWS', `${informationalRows} InvoiceRow(s) without ArticleName are print rows, not invoice lines; kept in source.unmapped`);
+  if (informationalRows > 0)
+    c.warn(
+      'FI-INFO-ROWS',
+      `${informationalRows} InvoiceRow(s) without ArticleName are print rows, not invoice lines; kept in source.unmapped`,
+    );
 
   const seller = party(c, [c.el(root, 'SellerPartyDetails'), root], 'Seller', 'SellerPartyIdentifier') as Seller;
   const sellerUnit = c.text(root, 'SellerOrganisationUnitNumber');
@@ -71,7 +95,7 @@ export function parseFinvoice(input: ParseInput): CanonicalInvoice[] {
   let lineNetTotal = rowsTotal;
   if (lineNetTotal === undefined) {
     lineNetTotal = lines.length ? sum(lines.map((l) => l.netAmount)) : excl;
-    c.derive('/totals/lineNetTotal', 'RowsTotalVatExcludedAmount absent; sum of line amounts' + (lines.length ? '' : ' (no lines: BT-109)'));
+    c.derive('/totals/lineNetTotal', `RowsTotalVatExcludedAmount absent; sum of line amounts${lines.length ? '' : ' (no lines: BT-109)'}`);
   }
 
   const vatBreakdown = c.all(d, 'VatSpecificationDetails').map((v): VatBreakdown => {
@@ -100,7 +124,11 @@ export function parseFinvoice(input: ParseInput): CanonicalInvoice[] {
     prepaid,
     payable: instructed ?? (prepaid !== undefined ? sub(incl, prepaid) : incl),
   };
-  if (instructed === undefined) c.derive('/totals/payable', `EpiInstructedAmount absent; taken from InvoiceTotalVatIncludedAmount${prepaid !== undefined ? ' minus InvoicePaidAmount' : ''}`);
+  if (instructed === undefined)
+    c.derive(
+      '/totals/payable',
+      `EpiInstructedAmount absent; taken from InvoiceTotalVatIncludedAmount${prepaid !== undefined ? ' minus InvoicePaidAmount' : ''}`,
+    );
 
   const terms = c.texts(d, 'PaymentTermsDetails/PaymentTermsFreeText');
   const fine = c.text(d, 'PaymentTermsDetails/PaymentOverDueFineDetails/PaymentOverDueFinePercent');
@@ -109,14 +137,23 @@ export function parseFinvoice(input: ParseInput): CanonicalInvoice[] {
     c.derive('/paymentTerms', 'PaymentOverDueFinePercent appended as text; EN 16931 has no structured field');
   }
 
-  for (const p of ['SellerReferenceIdentifier', 'SellersBuyerIdentifier', 'AgreementTypeText', 'OriginCode', 'InvoiceTypeText', 'CashDiscountDate']) {
+  for (const p of [
+    'SellerReferenceIdentifier',
+    'SellersBuyerIdentifier',
+    'AgreementTypeText',
+    'OriginCode',
+    'InvoiceTypeText',
+    'CashDiscountDate',
+  ]) {
     const v = c.text(d, p) ?? c.text(d, `PaymentTermsDetails/${p}`);
     if (v) c.unmapped[`/Finvoice/InvoiceDetails/${p}`] = v;
   }
   c.all(d, 'DefinitionDetails').forEach((def, i) => {
     const key = c.text(def, 'DefinitionHeaderText');
     const val = c.text(def, 'DefinitionValue');
-    if (key && val) c.unmapped[`/Finvoice/InvoiceDetails/DefinitionDetails[${i + 1}]/${c.attr(def, 'DefinitionHeaderText', 'DefinitionCode') ?? key}`] = val;
+    if (key && val)
+      c.unmapped[`/Finvoice/InvoiceDetails/DefinitionDetails[${i + 1}]/${c.attr(def, 'DefinitionHeaderText', 'DefinitionCode') ?? key}`] =
+        val;
   });
   const barcode = c.text(root, 'VirtualBankBarcode');
   if (barcode) c.unmapped['/Finvoice/VirtualBankBarcode'] = barcode;
@@ -158,12 +195,15 @@ export function parseFinvoice(input: ParseInput): CanonicalInvoice[] {
         party: party(c, [a], 'Any', 'AnyPartyIdentifier'),
       };
     }),
-    delivery: deliveryParty || deliveryDate || siteCode ? {
-      partyName: deliveryParty?.name,
-      locationId: siteCode ? { value: siteCode } : undefined,
-      actualDate: deliveryDate,
-      address: deliveryParty?.address,
-    } : undefined,
+    delivery:
+      deliveryParty || deliveryDate || siteCode
+        ? {
+            partyName: deliveryParty?.name,
+            locationId: siteCode ? { value: siteCode } : undefined,
+            actualDate: deliveryDate,
+            address: deliveryParty?.address,
+          }
+        : undefined,
     payments,
     paymentSchedule: [],
     allowances: [],
@@ -188,7 +228,9 @@ export function parseFinvoice(input: ParseInput): CanonicalInvoice[] {
 function dec(c: Ctx, node: Element | undefined, path?: string): Decimal | undefined {
   const raw = c.text(node, path);
   if (raw === undefined) return undefined;
-  try { return toDecimal(raw.replace(',', '.')); } catch (e) {
+  try {
+    return toDecimal(raw.replace(',', '.'));
+  } catch (e) {
     if (e instanceof ValueError) throw new ParseError(`${path ?? node?.localName}: ${e.message}`);
     throw e;
   }
@@ -237,7 +279,10 @@ function period(c: Ctx, node: Element | undefined, startName: string, endName: s
  */
 function party(c: Ctx, scopes: (Element | undefined)[], p: string, idName: string): Party {
   const t = (path: string) => {
-    for (const s of scopes) { const v = c.text(s, path); if (v !== undefined) return v; }
+    for (const s of scopes) {
+      const v = c.text(s, path);
+      if (v !== undefined) return v;
+    }
     return undefined;
   };
   const names = scopes.flatMap((s) => c.texts(s, `${p}OrganisationName`));
@@ -269,7 +314,11 @@ function address(c: Ctx, a: Element, p: string): Address {
 
 function contact(c: Ctx, scopes: (Element | undefined)[], p: string): Contact | undefined {
   const t = (...paths: string[]) => {
-    for (const s of scopes) for (const path of paths) { const v = c.text(s, path); if (v !== undefined) return v; }
+    for (const s of scopes)
+      for (const path of paths) {
+        const v = c.text(s, path);
+        if (v !== undefined) return v;
+      }
     return undefined;
   };
   const out: Contact = {
@@ -296,7 +345,8 @@ function paymentInstructions(c: Ctx, root: Element) {
   } else {
     for (const acc of c.all(root, 'SellerInformationDetails/SellerAccountDetails')) {
       const aid = c.text(acc, 'SellerAccountID')?.replace(/\s/g, '');
-      if (aid) transfers.push({ accountId: aid, accountName: c.text(acc, 'SellerAccountName'), serviceProviderId: c.text(acc, 'SellerBic') });
+      if (aid)
+        transfers.push({ accountId: aid, accountName: c.text(acc, 'SellerAccountName'), serviceProviderId: c.text(acc, 'SellerBic') });
     }
     if (transfers.length) c.derive('/payments/0/creditTransfers', 'EpiAccountID absent; accounts taken from SellerAccountDetails');
   }
@@ -305,18 +355,23 @@ function paymentInstructions(c: Ctx, root: Element) {
   let meansCode = c.text(instr, 'EpiPaymentMeansCode');
   if (!meansCode) {
     meansCode = transfers.length ? '30' : 'ZZZ';
-    c.derive('/payments/0/meansCode', `EpiPaymentMeansCode absent; ${meansCode === '30' ? 'credit transfer (30) assumed from the bank account' : 'ZZZ (mutually defined)'}`);
+    c.derive(
+      '/payments/0/meansCode',
+      `EpiPaymentMeansCode absent; ${meansCode === '30' ? 'credit transfer (30) assumed from the bank account' : 'ZZZ (mutually defined)'}`,
+    );
   }
   const benefId = c.text(benef, 'EpiBei');
   if (benefId) c.unmapped['/Finvoice/EpiDetails/EpiPartyDetails/EpiBeneficiaryPartyDetails/EpiBei'] = benefId;
   const epiRef = c.text(epi, 'EpiIdentificationDetails/EpiReference');
   if (epiRef) c.unmapped['/Finvoice/EpiDetails/EpiIdentificationDetails/EpiReference'] = epiRef;
-  const payments: PaymentInstructions[] = [{
-    meansCode,
-    meansText: c.text(instr, 'EpiPaymentMeansText'),
-    remittanceInformation: remittance,
-    creditTransfers: transfers,
-  }];
+  const payments: PaymentInstructions[] = [
+    {
+      meansCode,
+      meansText: c.text(instr, 'EpiPaymentMeansText'),
+      remittanceInformation: remittance,
+      creditTransfers: transfers,
+    },
+  ];
   return { payments, remittance, instructed, epiDue };
 }
 
@@ -366,9 +421,8 @@ function lineRows(c: Ctx, root: Element): { lines: Line[]; informationalRows: nu
     }
 
     const discountAmount = dec(c, r, 'RowDiscountAmount');
-    const allowances: AllowanceCharge[] = discountAmount !== undefined
-      ? [{ amount: discountAmount, percentage: dec(c, r, 'RowDiscountPercent') }]
-      : [];
+    const allowances: AllowanceCharge[] =
+      discountAmount !== undefined ? [{ amount: discountAmount, percentage: dec(c, r, 'RowDiscountPercent') }] : [];
 
     const subLines: Line[] = c.all(r, 'SubInvoiceRow').map((s, si) => {
       const subNet = dec(c, s, 'SubRowVatExcludedAmount') ?? dec(c, s, 'SubRowAmount');

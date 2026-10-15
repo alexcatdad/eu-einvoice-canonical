@@ -86,7 +86,11 @@ export function parseModelOutput(raw: unknown, input: ModelInput): ModelOutput {
   if (typeof raw === 'string') {
     const text = raw.replace(/<think>[\s\S]*?<\/think>/g, '');
     const m = /\{[\s\S]*\}/.exec(text);
-    try { value = m ? JSON.parse(m[0]) : undefined; } catch { value = undefined; }
+    try {
+      value = m ? JSON.parse(m[0]) : undefined;
+    } catch {
+      value = undefined;
+    }
   }
   const ids = new Set(input.lines.map((l) => l.id));
   const out: ModelOutput = { labels: [], links: [] };
@@ -95,13 +99,15 @@ export function parseModelOutput(raw: unknown, input: ModelInput): ModelOutput {
   if (Array.isArray(labels)) {
     for (const x of labels) {
       const { id, kind } = (x ?? {}) as Record<string, unknown>;
-      if (typeof id === 'string' && ids.has(id) && (MODEL_KINDS as readonly unknown[]).includes(kind)) out.labels.push({ id, kind: kind as ModelKind });
+      if (typeof id === 'string' && ids.has(id) && (MODEL_KINDS as readonly unknown[]).includes(kind))
+        out.labels.push({ id, kind: kind as ModelKind });
     }
   }
   if (Array.isArray(links)) {
     for (const x of links) {
       const { from, to, type } = (x ?? {}) as Record<string, unknown>;
-      if (typeof from !== 'string' || !ids.has(from) || !Array.isArray(to) || !(MODEL_LINK_TYPES as readonly unknown[]).includes(type)) continue;
+      if (typeof from !== 'string' || !ids.has(from) || !Array.isArray(to) || !(MODEL_LINK_TYPES as readonly unknown[]).includes(type))
+        continue;
       const targets = [...new Set(to.filter((t): t is string => typeof t === 'string' && ids.has(t) && t !== from))];
       if (targets.length > 0) out.links.push({ from, to: targets, type: type as ModelLinkType });
     }
@@ -123,7 +129,10 @@ export async function applyModelLabels(inv: CanonicalInvoice, labeller: ModelLab
   try {
     raw = await labeller(input, buildPrompt(input), LABEL_SCHEMA);
   } catch (e) {
-    inv.source.warnings.push({ code: 'LINE-MODEL-FAILED', message: `The language model failed: ${e instanceof Error ? e.message : String(e)}` });
+    inv.source.warnings.push({
+      code: 'LINE-MODEL-FAILED',
+      message: `The language model failed: ${e instanceof Error ? e.message : String(e)}`,
+    });
     return { labels: [], links: [] };
   }
   const out = parseModelOutput(raw, input);

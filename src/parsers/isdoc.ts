@@ -15,11 +15,22 @@
  */
 import type { Element } from '@xmldom/xmldom';
 import type {
-  Address, Attachment, CanonicalInvoice, Contact, Identifier, Line, Party, PaymentInstallment,
-  PaymentInstructions, Seller, Totals, VatBreakdown, VatInfo,
+  Address,
+  Attachment,
+  CanonicalInvoice,
+  Contact,
+  Identifier,
+  Line,
+  Party,
+  PaymentInstallment,
+  PaymentInstructions,
+  Seller,
+  Totals,
+  VatBreakdown,
+  VatInfo,
 } from '../canonical.js';
 import { cmp, neg, sign, sum } from '../values.js';
-import { Ctx, ParseError, finish, parseXml, sourceMeta } from './context.js';
+import { Ctx, finish, ParseError, parseXml, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 
 /** ISDOC DocumentType -> label, UNCL 1001 code (before the sign rule below). */
@@ -37,11 +48,34 @@ const CORRECTIVE = new Set(['2', '3', '6']);
 
 /** Free-text Czech units -> UN/ECE Rec 20. The source text is always kept in `unitText` when it was not already a code. */
 const UNITS: Record<string, string> = {
-  ks: 'H87', 'ks.': 'H87', kus: 'H87', kusy: 'H87', pcs: 'H87',
-  hod: 'HUR', 'hod.': 'HUR', h: 'HUR', hodina: 'HUR', hodiny: 'HUR',
-  den: 'DAY', dny: 'DAY', 'měs': 'MON', 'měsíc': 'MON', rok: 'ANN',
-  kg: 'KGM', t: 'TNE', l: 'LTR', m: 'MTR', km: 'KMT', m2: 'MTK', 'm²': 'MTK', m3: 'MTQ', 'm³': 'MTQ',
-  kwh: 'KWH', sada: 'SET', soubor: 'SET', kpl: 'SET',
+  ks: 'H87',
+  'ks.': 'H87',
+  kus: 'H87',
+  kusy: 'H87',
+  pcs: 'H87',
+  hod: 'HUR',
+  'hod.': 'HUR',
+  h: 'HUR',
+  hodina: 'HUR',
+  hodiny: 'HUR',
+  den: 'DAY',
+  dny: 'DAY',
+  měs: 'MON',
+  měsíc: 'MON',
+  rok: 'ANN',
+  kg: 'KGM',
+  t: 'TNE',
+  l: 'LTR',
+  m: 'MTR',
+  km: 'KMT',
+  m2: 'MTK',
+  'm²': 'MTK',
+  m3: 'MTQ',
+  'm³': 'MTQ',
+  kwh: 'KWH',
+  sada: 'SET',
+  soubor: 'SET',
+  kpl: 'SET',
 };
 
 export function parseIsdoc(input: ParseInput): CanonicalInvoice[] {
@@ -98,20 +132,26 @@ export function parseIsdoc(input: ParseInput): CanonicalInvoice[] {
     buyer = party(c, c.el(root, 'AccountingCustomerParty/Party'), false);
   }
   const additionalParties: CanonicalInvoice['additionalParties'] = [];
-  for (const [path, role] of [['SellerSupplierParty/Party', 'seller-supplier'], ['BuyerCustomerParty/Party', 'buyer-customer']] as const) {
+  for (const [path, role] of [
+    ['SellerSupplierParty/Party', 'seller-supplier'],
+    ['BuyerCustomerParty/Party', 'buyer-customer'],
+  ] as const) {
     const el = c.el(root, path);
     if (!el) continue;
     const p = party(c, el, false);
     const base = role === 'seller-supplier' ? seller : buyer;
     // The format repeats the accounting party here when the roles coincide; only a different party is news.
-    if (JSON.stringify(strip(p)) !== JSON.stringify(strip(base))) additionalParties.push({ role, sourceRole: path.split('/')[0], party: p });
+    if (JSON.stringify(strip(p)) !== JSON.stringify(strip(base)))
+      additionalParties.push({ role, sourceRole: path.split('/')[0], party: p });
   }
 
   const deliveryParty = c.el(root, 'Delivery/Party');
-  const delivery = deliveryParty ? {
-    partyName: c.text(deliveryParty, 'PartyName/Name'),
-    address: address(c, c.el(deliveryParty, 'PostalAddress')),
-  } : undefined;
+  const delivery = deliveryParty
+    ? {
+        partyName: c.text(deliveryParty, 'PartyName/Name'),
+        address: address(c, c.el(deliveryParty, 'PostalAddress')),
+      }
+    : undefined;
 
   // References
   const orders = c.all(root, 'OrderReferences/OrderReference');
@@ -159,7 +199,10 @@ export function parseIsdoc(input: ParseInput): CanonicalInvoice[] {
       c.derive('/kind', `DocumentType ${docType} with a zero total; kind taken from the document type`);
     } else {
       kind = s < 0 ? 'creditNote' : 'invoice';
-      c.derive('/kind', `DocumentType ${docType} is corrective; ${kind} because the corrective total is ${s < 0 ? 'negative' : 'positive'}`);
+      c.derive(
+        '/kind',
+        `DocumentType ${docType} is corrective; ${kind} because the corrective total is ${s < 0 ? 'negative' : 'positive'}`,
+      );
     }
     typeCode = kind === 'creditNote' ? '381' : '383';
   } else {
@@ -238,7 +281,8 @@ function party(c: Ctx, p: Element | undefined, isSeller: boolean): Party {
     const reg = c.el(p, 'RegisterIdentification');
     if (reg) {
       const date = c.text(reg, 'RegisterDate');
-      out.additionalLegalInfo = [c.text(reg, 'RegisterKeptAt'), c.text(reg, 'RegisterFileRef'), date].filter(Boolean).join(', ') || undefined;
+      out.additionalLegalInfo =
+        [c.text(reg, 'RegisterKeptAt'), c.text(reg, 'RegisterFileRef'), date].filter(Boolean).join(', ') || undefined;
     }
   }
   return out;
@@ -270,21 +314,34 @@ function vatInfo(c: Ctx, cat: Element | undefined, vatApplicable: boolean): VatI
   return out;
 }
 
-function totalsAndVat(c: Ctx, root: Element, legal: Element, foreign: boolean, vatApplicable: boolean): { totals: Totals; vatBreakdown: VatBreakdown[] } {
+function totalsAndVat(
+  c: Ctx,
+  root: Element,
+  legal: Element,
+  foreign: boolean,
+  vatApplicable: boolean,
+): { totals: Totals; vatBreakdown: VatBreakdown[] } {
   const doc = (e: Element | undefined, name: string) => c.dec(e, foreign ? `${name}Curr` : name);
   const taxExclusive = doc(legal, 'TaxExclusiveAmount');
   const taxInclusive = doc(legal, 'TaxInclusiveAmount');
-  if (taxExclusive === undefined || taxInclusive === undefined) throw new ParseError('LegalMonetaryTotal: TaxExclusiveAmount or TaxInclusiveAmount missing');
+  if (taxExclusive === undefined || taxInclusive === undefined)
+    throw new ParseError('LegalMonetaryTotal: TaxExclusiveAmount or TaxInclusiveAmount missing');
   const payable = doc(legal, 'PayableAmount');
   if (payable === undefined) throw new ParseError('LegalMonetaryTotal/PayableAmount missing');
 
   const claimed = doc(legal, 'AlreadyClaimedTaxInclusiveAmount');
   const paidDeposits = doc(legal, 'PaidDepositsAmount');
   // Both reduce the amount due; the sample documents write PaidDepositsAmount negative.
-  const parts = [claimed, paidDeposits === undefined ? undefined : sign(paidDeposits) < 0 ? neg(paidDeposits) : paidDeposits].filter((x): x is NonNullable<typeof x> => x !== undefined);
+  const parts = [claimed, paidDeposits === undefined ? undefined : sign(paidDeposits) < 0 ? neg(paidDeposits) : paidDeposits].filter(
+    (x): x is NonNullable<typeof x> => x !== undefined,
+  );
   const prepaidSum = parts.length ? sum(parts) : undefined;
   const prepaid = prepaidSum !== undefined && sign(prepaidSum) !== 0 ? prepaidSum : undefined;
-  if (prepaid !== undefined) c.derive('/totals/prepaid', 'AlreadyClaimedTaxInclusiveAmount plus the absolute PaidDepositsAmount (taxed and untaxed deposits already settled)');
+  if (prepaid !== undefined)
+    c.derive(
+      '/totals/prepaid',
+      'AlreadyClaimedTaxInclusiveAmount plus the absolute PaidDepositsAmount (taxed and untaxed deposits already settled)',
+    );
 
   for (const name of ['AlreadyClaimedTaxExclusiveAmount', 'DifferenceTaxExclusiveAmount', 'DifferenceTaxInclusiveAmount']) {
     const v = doc(legal, name);
@@ -305,7 +362,11 @@ function totalsAndVat(c: Ctx, root: Element, legal: Element, foreign: boolean, v
       taxAmountInTaxCurrency: foreign ? c.dec(s, 'TaxAmount') : undefined,
     };
   });
-  if (vatBreakdown.length) c.derive('/vatBreakdown/*/categoryCode', 'ISDOC states the rate only; category S (rate > 0), Z (rate 0), AE (LocalReverseChargeFlag) or O (VATApplicable false)');
+  if (vatBreakdown.length)
+    c.derive(
+      '/vatBreakdown/*/categoryCode',
+      'ISDOC states the rate only; category S (rate > 0), Z (rate 0), AE (LocalReverseChargeFlag) or O (VATApplicable false)',
+    );
 
   const totals: Totals = {
     lineNetTotal: taxExclusive,
@@ -365,7 +426,7 @@ function line(c: Ctx, l: Element, n: number, foreign: boolean, vatApplicable: bo
       sellerId: c.text(item, 'SellersItemIdentification/ID'),
       buyerId: c.text(item, 'BuyersItemIdentification/ID'),
       // The catalogue number is an EAN/GTIN when it has that shape.
-      standardId: ean ? (/^\d{8}$|^\d{12,14}$/.test(ean) ? { value: ean, schemeId: '0160' } as Identifier : { value: ean }) : undefined,
+      standardId: ean ? (/^\d{8}$|^\d{12,14}$/.test(ean) ? ({ value: ean, schemeId: '0160' } as Identifier) : { value: ean }) : undefined,
       classifications: [],
       attributes,
     },
@@ -389,10 +450,15 @@ function paymentInfo(c: Ctx, root: Element, foreign: boolean) {
     const vs = c.text(d, 'VariableSymbol');
     const cs = c.text(d, 'ConstantSymbol');
     const ss = c.text(d, 'SpecificSymbol');
-    for (const [k, v] of [['variableSymbol', vs], ['constantSymbol', cs], ['specificSymbol', ss]] as const) {
+    for (const [k, v] of [
+      ['variableSymbol', vs],
+      ['constantSymbol', cs],
+      ['specificSymbol', ss],
+    ] as const) {
       if (v === undefined) continue;
       if (symbols[k] === undefined) symbols[k] = v;
-      else if (symbols[k] !== v) c.warn('ISDOC-SYMBOL-CONFLICT', `Payments carry different ${k} values (${symbols[k]}, ${v}); the first is used`);
+      else if (symbols[k] !== v)
+        c.warn('ISDOC-SYMBOL-CONFLICT', `Payments carry different ${k} values (${symbols[k]}, ${v}); the first is used`);
     }
     const accountId = iban ?? bban;
     const bankName = c.text(d, 'Name');
@@ -429,7 +495,8 @@ function paymentInfo(c: Ctx, root: Element, foreign: boolean) {
   }
 
   const distinct = [...new Set(dueDates)];
-  if (distinct.length > 1) c.warn('ISDOC-DUEDATES', `Payments give ${distinct.length} due dates; dueDate (BT-9) is the first and the rest are in paymentSchedule`);
+  if (distinct.length > 1)
+    c.warn('ISDOC-DUEDATES', `Payments give ${distinct.length} due dates; dueDate (BT-9) is the first and the rest are in paymentSchedule`);
   // A single due date needs no schedule: BT-9 says it all.
   return { payments, schedule: distinct.length > 1 ? schedule : [], symbols, dueDate: dueDates[0] as CanonicalInvoice['dueDate'] };
 }
@@ -445,7 +512,12 @@ function attachments(c: Ctx, root: Element, siblings: string[]): Attachment[] {
     seen.add(norm(filename));
     const algorithm = c.attr(s, 'DigestMethod', 'Algorithm')?.split('#').pop();
     const digest = c.text(s, 'DigestValue');
-    const description = [c.attr(s, undefined, 'preview') === 'true' ? 'Preview of the invoice' : undefined, digest ? `${algorithm ?? 'digest'}: ${digest}` : undefined].filter(Boolean).join('; ');
+    const description = [
+      c.attr(s, undefined, 'preview') === 'true' ? 'Preview of the invoice' : undefined,
+      digest ? `${algorithm ?? 'digest'}: ${digest}` : undefined,
+    ]
+      .filter(Boolean)
+      .join('; ');
     out.push({ kind: 'reference', id: filename, ...(description ? { description } : {}) });
   }
   for (const name of siblings) {

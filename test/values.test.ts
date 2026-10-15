@@ -1,10 +1,10 @@
-import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { add, cmp, isDecimal, neg, round, sign, sub, sum, toDecimal, toIsoDate } from '../src/values.js';
 
 describe('toDecimal', () => {
   const OK: [string, string][] = [
-    ['100.00', '100.00'],      // trailing zeros kept
+    ['100.00', '100.00'], // trailing zeros kept
     ['  42 ', '42'],
     ['+5.00', '5.00'],
     ['-0.5', '-0.5'],
@@ -12,7 +12,7 @@ describe('toDecimal', () => {
     ['5.', '5'],
     ['0.0000001', '0.0000001'], // no exponent
     ['123456789012345678901234.56', '123456789012345678901234.56'],
-    ['007', '007'],             // digits as sent
+    ['007', '007'], // digits as sent
   ];
   for (const [raw, out] of OK) test(`"${raw}" -> "${out}"`, () => assert.equal(toDecimal(raw), out));
 
@@ -28,7 +28,8 @@ describe('toIsoDate', () => {
   test('YYYY-MM-DD', () => assert.deepEqual(toIsoDate('2026-10-15'), { date: '2026-10-15', droppedTime: undefined }));
   test('CII format 102', () => assert.equal(toIsoDate('20261015').date, '2026-10-15'));
   test('date-time at midnight drops nothing', () => assert.equal(toIsoDate('2026-10-15T00:00:00').droppedTime, undefined));
-  test('date-time reports the dropped time', () => assert.deepEqual(toIsoDate('2026-10-15T14:30:00'), { date: '2026-10-15', droppedTime: '14:30:00' }));
+  test('date-time reports the dropped time', () =>
+    assert.deepEqual(toIsoDate('2026-10-15T14:30:00'), { date: '2026-10-15', droppedTime: '14:30:00' }));
   test('time-zone suffix is accepted', () => assert.equal(toIsoDate('2026-10-15+02:00').date, '2026-10-15'));
   for (const bad of ['2026-02-30', '2026-13-01', '15.10.2026', '2026/10/15', '', '20261332']) {
     test(`"${bad}" is rejected`, () => assert.throws(() => toIsoDate(bad)));

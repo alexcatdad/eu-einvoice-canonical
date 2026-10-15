@@ -8,7 +8,7 @@
  */
 import { DOMParser, type Element } from '@xmldom/xmldom';
 import type { CanonicalInvoice, Decimal, Identifier, IsoDate, SourceMeta } from '../canonical.js';
-import { ValueError, toDecimal, toIsoDate } from '../values.js';
+import { toDecimal, toIsoDate, ValueError } from '../values.js';
 import type { ParseInput } from './index.js';
 
 export class ParseError extends Error {}
@@ -16,7 +16,9 @@ export class ParseError extends Error {}
 export function parseXml(xml: string): Element {
   const errors: string[] = [];
   const doc = new DOMParser({
-    onError: (level, msg) => { if (level !== 'warning') errors.push(msg); },
+    onError: (level, msg) => {
+      if (level !== 'warning') errors.push(msg);
+    },
   }).parseFromString(xml, 'text/xml');
   if (errors.length || !doc.documentElement) throw new ParseError(`XML not well-formed: ${errors[0] ?? 'no root element'}`);
   return doc.documentElement;
@@ -41,7 +43,10 @@ export function xpathOf(el: Element): string {
     let count = 0;
     let index = 0;
     for (let s = parent.firstChild; s; s = s.nextSibling) {
-      if (s.nodeType === 1 && s.nodeName === el.nodeName) { count++; if (s === el) index = count; }
+      if (s.nodeType === 1 && s.nodeName === el.nodeName) {
+        count++;
+        if (s === el) index = count;
+      }
     }
     if (count > 1) step += `[${index}]`;
     path = `${xpathOf(parent)}/${step}`;
@@ -60,7 +65,10 @@ export class Ctx {
   /** Canonical JSON path -> source XPath; present only when provenance was asked for. */
   readonly provenance?: Record<string, string>;
 
-  constructor(private readonly ns: Record<string, string>, provenance = false) {
+  constructor(
+    private readonly ns: Record<string, string>,
+    provenance = false,
+  ) {
     if (provenance) this.provenance = {};
   }
 
@@ -87,15 +95,18 @@ export class Ctx {
   private steps(path: string): Step[] {
     let s = this.cache.get(path);
     if (!s) {
-      s = path.split('/').filter(Boolean).map((step): Step => {
-        const i = step.indexOf(':');
-        if (i === -1) return [null, step];
-        const prefix = step.slice(0, i);
-        if (prefix === '*') return [null, step.slice(i + 1)];
-        const uri = this.ns[prefix];
-        if (uri === undefined) throw new Error(`Unknown prefix in path: ${path}`);
-        return [uri, step.slice(i + 1)];
-      });
+      s = path
+        .split('/')
+        .filter(Boolean)
+        .map((step): Step => {
+          const i = step.indexOf(':');
+          if (i === -1) return [null, step];
+          const prefix = step.slice(0, i);
+          if (prefix === '*') return [null, step.slice(i + 1)];
+          const uri = this.ns[prefix];
+          if (uri === undefined) throw new Error(`Unknown prefix in path: ${path}`);
+          return [uri, step.slice(i + 1)];
+        });
       this.cache.set(path, s);
     }
     return s;
@@ -150,7 +161,9 @@ export class Ctx {
   dec(node: Element | undefined, path?: string, bind?: string): Decimal | undefined {
     const raw = this.text(node, path, bind);
     if (raw === undefined) return undefined;
-    try { return toDecimal(raw); } catch (e) {
+    try {
+      return toDecimal(raw);
+    } catch (e) {
       if (e instanceof ValueError) throw new ParseError(`${describe(node, path)}: ${e.message}`);
       throw e;
     }
@@ -195,19 +208,40 @@ export class Ctx {
  * With provenance off the reads behave exactly like the plain Ctx ones.
  */
 export class Scope {
-  constructor(readonly c: Ctx, readonly prefix: string) {}
+  constructor(
+    readonly c: Ctx,
+    readonly prefix: string,
+  ) {}
 
-  in(key: string | number): Scope { return new Scope(this.c, `${this.prefix}/${key}`); }
+  in(key: string | number): Scope {
+    return new Scope(this.c, `${this.prefix}/${key}`);
+  }
   /** Canonical path of `key` under this scope, for `c.mark`. */
-  path(key: string): string { return `${this.prefix}/${key}`; }
-  private b(key: string): string | undefined { return this.c.provenance ? `${this.prefix}/${key}` : undefined; }
+  path(key: string): string {
+    return `${this.prefix}/${key}`;
+  }
+  private b(key: string): string | undefined {
+    return this.c.provenance ? `${this.prefix}/${key}` : undefined;
+  }
 
-  text(node: Element | undefined, path: string | undefined, key: string) { return this.c.text(node, path, this.b(key)); }
-  texts(node: Element | undefined, path: string, key: string) { return this.c.texts(node, path, this.b(key)); }
-  attr(node: Element | undefined, path: string | undefined, name: string, key: string) { return this.c.attr(node, path, name, this.b(key)); }
-  dec(node: Element | undefined, path: string | undefined, key: string) { return this.c.dec(node, path, this.b(key)); }
-  date(node: Element | undefined, path: string | undefined, field: string | undefined, key: string) { return this.c.date(node, path, field, this.b(key)); }
-  id(node: Element | undefined, path: string | undefined, key: string, schemeAttr = 'schemeID') { return this.c.id(node, path, schemeAttr, this.b(key)); }
+  text(node: Element | undefined, path: string | undefined, key: string) {
+    return this.c.text(node, path, this.b(key));
+  }
+  texts(node: Element | undefined, path: string, key: string) {
+    return this.c.texts(node, path, this.b(key));
+  }
+  attr(node: Element | undefined, path: string | undefined, name: string, key: string) {
+    return this.c.attr(node, path, name, this.b(key));
+  }
+  dec(node: Element | undefined, path: string | undefined, key: string) {
+    return this.c.dec(node, path, this.b(key));
+  }
+  date(node: Element | undefined, path: string | undefined, field: string | undefined, key: string) {
+    return this.c.date(node, path, field, this.b(key));
+  }
+  id(node: Element | undefined, path: string | undefined, key: string, schemeAttr = 'schemeID') {
+    return this.c.id(node, path, schemeAttr, this.b(key));
+  }
 }
 
 function describe(node: Element | undefined, path?: string) {

@@ -1,5 +1,5 @@
-import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { effectiveSign } from '../src/index.js';
 import { parseOne, utf8, warningCodes } from './helpers.js';
 
@@ -9,7 +9,10 @@ describe('Finvoice 3.0: invoice behind a SOAP envelope, ISO-8859-15', async () =
   test('envelope and format', () => {
     assert.equal(inv.source.format, 'finvoice');
     assert.equal(inv.source.formatVersion, '3.0');
-    assert.deepEqual(inv.source.envelope.map((s) => s.kind), ['soap', 'xml']);
+    assert.deepEqual(
+      inv.source.envelope.map((s) => s.kind),
+      ['soap', 'xml'],
+    );
     assert.equal(inv.source.encoding, 'iso-8859-15');
     assert.equal(inv.source.specificationId, 'EN16931');
     assert.equal(inv.specificationId, 'urn:finvoice:3.0');
@@ -59,7 +62,11 @@ describe('Finvoice 3.0: invoice behind a SOAP envelope, ISO-8859-15', async () =
 
   test('totals use decimal points; payable is EpiInstructedAmount', () => {
     assert.deepEqual(inv.totals, {
-      lineNetTotal: '965.00', taxExclusive: '965.00', vatTotal: '226.00', taxInclusive: '1191.00', payable: '1191.00',
+      lineNetTotal: '965.00',
+      taxExclusive: '965.00',
+      vatTotal: '226.00',
+      taxInclusive: '1191.00',
+      payable: '1191.00',
     });
     assert.ok(!inv.source.derived.some((d) => d.field === '/totals/payable'));
   });
@@ -72,12 +79,14 @@ describe('Finvoice 3.0: invoice behind a SOAP envelope, ISO-8859-15', async () =
   });
 
   test('EPI: account and BIC to creditTransfers, reference to BT-83', () => {
-    assert.deepEqual(inv.payments, [{
-      meansCode: '58',
-      meansText: 'SEPA credit transfer',
-      remittanceInformation: 'RF18539007547034',
-      creditTransfers: [{ accountId: 'FI2112345600000785', accountName: 'Testitalo Oy', serviceProviderId: 'NDEAFIHH' }],
-    }]);
+    assert.deepEqual(inv.payments, [
+      {
+        meansCode: '58',
+        meansText: 'SEPA credit transfer',
+        remittanceInformation: 'RF18539007547034',
+        creditTransfers: [{ accountId: 'FI2112345600000785', accountName: 'Testitalo Oy', serviceProviderId: 'NDEAFIHH' }],
+      },
+    ]);
   });
 
   test('lines: the print row is not a line', () => {
@@ -138,7 +147,9 @@ describe('Finvoice 3.0: credit note (negative amounts) without EpiDetails', asyn
 
   test('payable and payment account are derived, and say so', () => {
     assert.equal(inv.totals.payable, '-22.00');
-    assert.deepEqual(inv.payments, [{ meansCode: '30', creditTransfers: [{ accountId: 'FI2112345600000785', serviceProviderId: 'NDEAFIHH' }] }]);
+    assert.deepEqual(inv.payments, [
+      { meansCode: '30', creditTransfers: [{ accountId: 'FI2112345600000785', serviceProviderId: 'NDEAFIHH' }] },
+    ]);
     const fields = inv.source.derived.map((d) => d.field);
     assert.ok(fields.includes('/totals/payable'));
     assert.ok(fields.includes('/totals/lineNetTotal'));
@@ -172,8 +183,14 @@ describe('Finvoice 3.0: invoice-level adjustments, prepaid amount and self-billi
 
   test('discounts, charges and prepaid amount map to BT-107, BT-108, BT-113; payable is derived from them', () => {
     assert.deepEqual(inv.totals, {
-      lineNetTotal: '433.00', allowanceTotal: '15.00', chargeTotal: '35.00', taxExclusive: '453.00', vatTotal: '108.72',
-      taxInclusive: '561.72', prepaid: '100.00', payable: '461.72',
+      lineNetTotal: '433.00',
+      allowanceTotal: '15.00',
+      chargeTotal: '35.00',
+      taxExclusive: '453.00',
+      vatTotal: '108.72',
+      taxInclusive: '561.72',
+      prepaid: '100.00',
+      payable: '461.72',
     });
     assert.deepEqual(warningCodes(inv), []);
   });

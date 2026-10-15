@@ -8,7 +8,11 @@
 import type { CanonicalInvoice, Line, LineRelation, LineRole } from '../canonical.js';
 import { add, cmp, isZero, neg, percentOf, round, sub, sum } from '../values.js';
 
-export interface RelationWarning { code: string; message: string; path?: string }
+export interface RelationWarning {
+  code: string;
+  message: string;
+  path?: string;
+}
 
 export interface LineAnalysis {
   lineRoles: Record<string, LineRole>;
@@ -28,7 +32,7 @@ export function isDescriptor(l: Line): boolean {
   return l.allowances.length === 0 && l.charges.length === 0 && !l.subLines?.length;
 }
 
-const lineText = (l: Line) => (l.item.name.trim() || l.item.description?.trim() || '');
+const lineText = (l: Line) => l.item.name.trim() || l.item.description?.trim() || '';
 
 /** Reads "10%", "10 %", "10,5%" from the line text. Distinct rates in order of appearance. */
 export function percentagesIn(text: string): string[] {
@@ -46,7 +50,11 @@ function orderRef(l: Line): string | undefined {
   return typeof v === 'string' && v ? v : undefined;
 }
 
-interface Group { descriptors: Line[]; priced: Line[]; order?: string }
+interface Group {
+  descriptors: Line[];
+  priced: Line[];
+  order?: string;
+}
 
 /** A run of descriptors heads the priced lines after it, until the next run or another order reference. */
 function groupLines(lines: Line[]): Group[] {
@@ -68,7 +76,11 @@ function groupLines(lines: Line[]): Group[] {
   return groups;
 }
 
-interface Match { rate: string; ids: string[]; role: 'surcharge' | 'discount' }
+interface Match {
+  rate: string;
+  ids: string[];
+  role: 'surcharge' | 'discount';
+}
 
 const isRateLine = (l: Line) =>
   (l.quantity === undefined || cmp(l.quantity, '1') === 0) && (l.price === undefined || cmp(l.price.net, l.netAmount) === 0);
@@ -104,19 +116,26 @@ function findPercentMatches(target: Line, rates: string[], earlier: Line[]): Mat
   return found;
 }
 
-const NOTE_LINE = /\b(?:line|row|rad|rader|position|pos\.?|zeile|ligne|riga|rivi|rida|linia|pozycja|řádek|riadok)\s*(?:no\.?|nr\.?|n°|#)?\s*(\d+)\b/gi;
+const NOTE_LINE =
+  /\b(?:line|row|rad|rader|position|pos\.?|zeile|ligne|riga|rivi|rida|linia|pozycja|řádek|riadok)\s*(?:no\.?|nr\.?|n°|#)?\s*(\d+)\b/gi;
 
 export function analyseLines(inv: Pick<CanonicalInvoice, 'lines'>): LineAnalysis {
   const lineRoles: Record<string, LineRole> = {};
   const relations: LineRelation[] = [];
   const warnings: RelationWarning[] = [];
   const index = new Map<string, number>();
-  inv.lines.forEach((l, i) => { if (!index.has(l.id)) index.set(l.id, i); });
+  inv.lines.forEach((l, i) => {
+    if (!index.has(l.id)) index.set(l.id, i);
+  });
   const pathOf = (l: Line) => `/lines/${index.get(l.id) ?? inv.lines.indexOf(l)}`;
 
   for (const g of groupLines(inv.lines)) {
-    g.descriptors.forEach((d, i) => { lineRoles[d.id] = i === 0 ? 'heading' : 'description'; });
-    g.priced.forEach((l) => { lineRoles[l.id] = 'item'; });
+    g.descriptors.forEach((d, i) => {
+      lineRoles[d.id] = i === 0 ? 'heading' : 'description';
+    });
+    g.priced.forEach((l) => {
+      lineRoles[l.id] = 'item';
+    });
 
     g.priced.forEach((l, k) => {
       if (k === 0 || isZero(l.netAmount) || !isRateLine(l)) return;
@@ -126,14 +145,32 @@ export function analyseLines(inv: Pick<CanonicalInvoice, 'lines'>): LineAnalysis
       if (matches.length === 1) {
         const m = matches[0];
         lineRoles[l.id] = m.role;
-        relations.push({ from: l.id, to: m.ids, type: m.role === 'surcharge' ? 'markup' : 'discount', rate: m.rate as LineRelation['rate'], method: 'arithmetic', confidence: 'proven' });
+        relations.push({
+          from: l.id,
+          to: m.ids,
+          type: m.role === 'surcharge' ? 'markup' : 'discount',
+          rate: m.rate as LineRelation['rate'],
+          method: 'arithmetic',
+          confidence: 'proven',
+        });
       } else if (matches.length > 1) {
         const roles = new Set(matches.map((m) => m.role));
         if (roles.size === 1) lineRoles[l.id] = matches[0].role;
-        const shown = matches.slice(0, 4).map((m) => `${m.rate} % of line${m.ids.length > 1 ? 's' : ''} ${m.ids.join('+')}`).join('; ');
-        warnings.push({ code: 'LINE-RELATION-AMBIGUOUS', path: pathOf(l), message: `Line ${l.id} states ${rates.join('/')} % and ${matches.length} sets of earlier lines fit its amount (${shown}${matches.length > 4 ? '; ...' : ''}); no relation recorded, review by hand` });
+        const shown = matches
+          .slice(0, 4)
+          .map((m) => `${m.rate} % of line${m.ids.length > 1 ? 's' : ''} ${m.ids.join('+')}`)
+          .join('; ');
+        warnings.push({
+          code: 'LINE-RELATION-AMBIGUOUS',
+          path: pathOf(l),
+          message: `Line ${l.id} states ${rates.join('/')} % and ${matches.length} sets of earlier lines fit its amount (${shown}${matches.length > 4 ? '; ...' : ''}); no relation recorded, review by hand`,
+        });
       } else {
-        warnings.push({ code: 'LINE-RELATION-UNMATCHED', path: pathOf(l), message: `Line ${l.id} states ${rates.join('/')} % but no earlier line or set of lines in its group gives its amount ${l.netAmount}; review by hand` });
+        warnings.push({
+          code: 'LINE-RELATION-UNMATCHED',
+          path: pathOf(l),
+          message: `Line ${l.id} states ${rates.join('/')} % but no earlier line or set of lines in its group gives its amount ${l.netAmount}; review by hand`,
+        });
       }
     });
 
@@ -149,7 +186,8 @@ export function analyseLines(inv: Pick<CanonicalInvoice, 'lines'>): LineAnalysis
       const own = add(sub(l.netAmount, sum(l.charges.map((c) => c.amount))), sum(l.allowances.map((a) => a.amount)));
       if (cmp(round(ac.baseAmount), round(own)) === 0 || cmp(round(ac.baseAmount), round(l.netAmount)) === 0) continue;
       const hits = inv.lines.filter((o) => o !== l && cmp(round(o.netAmount), round(ac.baseAmount!)) === 0);
-      if (hits.length === 1) relations.push({ from: l.id, to: [hits[0].id], type: 'allowance-base', method: 'arithmetic', confidence: 'likely' });
+      if (hits.length === 1)
+        relations.push({ from: l.id, to: [hits[0].id], type: 'allowance-base', method: 'arithmetic', confidence: 'likely' });
     }
   }
 
@@ -171,7 +209,13 @@ export function analyseLines(inv: Pick<CanonicalInvoice, 'lines'>): LineAnalysis
       if (ls.length > 1) relations.push({ from: ls[0].id, to: ls.slice(1).map((l) => l.id), type, method: 'rule', confidence: 'review' });
     }
   };
-  shared('same-item', (l) => l.item.sellerId ?? l.item.buyerId ?? (l.item.standardId ? `${l.item.standardId.schemeId ?? ''}:${l.item.standardId.value}` : undefined));
+  shared(
+    'same-item',
+    (l) =>
+      l.item.sellerId ??
+      l.item.buyerId ??
+      (l.item.standardId ? `${l.item.standardId.schemeId ?? ''}:${l.item.standardId.value}` : undefined),
+  );
   shared('same-order-line', (l) => l.orderLineRef);
 
   return { lineRoles, relations, warnings };

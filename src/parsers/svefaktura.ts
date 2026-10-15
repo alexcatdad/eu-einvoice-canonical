@@ -12,11 +12,24 @@
  */
 import type { Element } from '@xmldom/xmldom';
 import type {
-  Address, AllowanceCharge, Attachment, CanonicalInvoice, Contact, CreditTransfer, Identifier, Line, Party,
-  PaymentInstructions, Period, Seller, Totals, VatBreakdown, VatInfo,
+  Address,
+  AllowanceCharge,
+  Attachment,
+  CanonicalInvoice,
+  Contact,
+  CreditTransfer,
+  Identifier,
+  Line,
+  Party,
+  PaymentInstructions,
+  Period,
+  Seller,
+  Totals,
+  VatBreakdown,
+  VatInfo,
 } from '../canonical.js';
 import { add, isZero, sub, sum } from '../values.js';
-import { CREDIT_TYPE_CODES, Ctx, ParseError, type Scope, finish, parseXml, sourceMeta } from './context.js';
+import { CREDIT_TYPE_CODES, Ctx, finish, ParseError, parseXml, type Scope, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 
 /** BT-24 is absent in Svefaktura; the canonical model gets the root namespace, and `source.format` keeps the true origin. */
@@ -25,10 +38,31 @@ const SPEC_ID = 'urn:sfti:documents:BasicInvoice:1:0';
 const GIRO: Record<string, string> = { BGABSESS: 'SE:BANKGIRO', PGSISESS: 'SE:PLUSGIRO' };
 /** Free-text units seen in Swedish invoices -> UN/ECE Rec 20. The source text is always kept in `unitText`. */
 const UNITS: Record<string, string> = {
-  st: 'H87', 'st.': 'H87', styck: 'H87', pcs: 'H87', ea: 'H87',
-  tim: 'HUR', 'tim.': 'HUR', h: 'HUR', timme: 'HUR', timmar: 'HUR',
-  dag: 'DAY', dagar: 'DAY', 'mån': 'MON', 'månad': 'MON', kg: 'KGM', l: 'LTR', liter: 'LTR', m: 'MTR', km: 'KMT',
-  m2: 'MTK', 'm²': 'MTK', m3: 'MTQ', 'm³': 'MTQ', kwh: 'KWH', 'år': 'ANN',
+  st: 'H87',
+  'st.': 'H87',
+  styck: 'H87',
+  pcs: 'H87',
+  ea: 'H87',
+  tim: 'HUR',
+  'tim.': 'HUR',
+  h: 'HUR',
+  timme: 'HUR',
+  timmar: 'HUR',
+  dag: 'DAY',
+  dagar: 'DAY',
+  mån: 'MON',
+  månad: 'MON',
+  kg: 'KGM',
+  l: 'LTR',
+  liter: 'LTR',
+  m: 'MTR',
+  km: 'KMT',
+  m2: 'MTK',
+  'm²': 'MTK',
+  m3: 'MTQ',
+  'm³': 'MTQ',
+  kwh: 'KWH',
+  år: 'ANN',
 };
 
 export function parseSvefaktura(input: ParseInput): CanonicalInvoice[] {
@@ -67,7 +101,8 @@ export function parseSvefaktura(input: ParseInput): CanonicalInvoice[] {
 
   const lines = c.all(root, 'InvoiceLine').map((l, i) => line(c, l, s.in('lines').in(i)));
   const count = c.text(root, 'LineItemCountNumeric');
-  if (count !== undefined && Number(count) !== lines.length) c.warn('SF-LINECOUNT', `LineItemCountNumeric is ${count} but the invoice has ${lines.length} lines`);
+  if (count !== undefined && Number(count) !== lines.length)
+    c.warn('SF-LINECOUNT', `LineItemCountNumeric is ${count} but the invoice has ${lines.length} lines`);
 
   const allowances = allowanceCharges(c, root, false, s.in('allowances'));
   const charges = allowanceCharges(c, root, true, s.in('charges'));
@@ -78,12 +113,30 @@ export function parseSvefaktura(input: ParseInput): CanonicalInvoice[] {
   const orderEls = c.all(root, 'InvoiceLine/OrderLineReference/OrderReference/BuyersID');
   const orders = [...new Set(orderEls.map((e) => c.text(e)).filter(Boolean))];
   if (orders.length > 1) c.warn('SF-ORDERS', `Lines reference ${orders.length} different orders; BT-13 left empty`);
-  if (orders.length === 1) c.mark(s.path('purchaseOrderRef'), orderEls.find((e) => c.text(e) === orders[0]));
+  if (orders.length === 1)
+    c.mark(
+      s.path('purchaseOrderRef'),
+      orderEls.find((e) => c.text(e) === orders[0]),
+    );
 
   const payments = paymentInstructions(c, root, s.in('payments'));
-  const dueDates = [...new Set(c.all(root, 'PaymentMeans').map((pm) => c.date(pm, 'DuePaymentDate', 'BT-9')).filter(Boolean))];
-  if (dueDates.length > 1) c.warn('SF-DUEDATE-CONFLICT', `PaymentMeans give different due dates: ${dueDates.join(', ')}; the first is used`);
-  c.mark(s.path('dueDate'), c.all(root, 'PaymentMeans').map((pm) => c.el(pm, 'DuePaymentDate')).find((e) => c.text(e)));
+  const dueDates = [
+    ...new Set(
+      c
+        .all(root, 'PaymentMeans')
+        .map((pm) => c.date(pm, 'DuePaymentDate', 'BT-9'))
+        .filter(Boolean),
+    ),
+  ];
+  if (dueDates.length > 1)
+    c.warn('SF-DUEDATE-CONFLICT', `PaymentMeans give different due dates: ${dueDates.join(', ')}; the first is used`);
+  c.mark(
+    s.path('dueDate'),
+    c
+      .all(root, 'PaymentMeans')
+      .map((pm) => c.el(pm, 'DuePaymentDate'))
+      .find((e) => c.text(e)),
+  );
 
   const terms = c.el(root, 'PaymentTerms');
   const penalty = c.text(terms, 'PenaltySurchargePercent');
@@ -122,17 +175,21 @@ export function parseSvefaktura(input: ParseInput): CanonicalInvoice[] {
     paymentTerms,
     notes: c.nonEmpty(c.all(root, 'Note')).map((e, i) => ({ text: s.text(e, undefined, `notes/${i}/text`)! })),
     specificationId: SPEC_ID,
-    precedingInvoices: c.all(root, 'InitialInvoiceDocumentReference').map((r, i) => ({ id: s.text(r, 'ID', `precedingInvoices/${i}/id`) ?? '' })),
+    precedingInvoices: c
+      .all(root, 'InitialInvoiceDocumentReference')
+      .map((r, i) => ({ id: s.text(r, 'ID', `precedingInvoices/${i}/id`) ?? '' })),
     invoicePeriod: period(c, c.el(root, 'InvoicingPeriod'), s.in('invoicePeriod')),
     seller,
     buyer: party(c, c.el(root, 'BuyerParty/Party'), s.in('buyer'), false),
     payee: payeeName ? { name: payeeName } : undefined,
     additionalParties: [],
-    delivery: deliveryEl ? {
-      actualDate: d.date(deliveryEl, 'ActualDeliveryDateTime', 'BT-72', 'actualDate'),
-      locationId: gln(c, c.el(deliveryEl, 'DeliveryAddress/ID'), d.path('locationId')),
-      address: address(c, c.el(deliveryEl, 'DeliveryAddress'), d.in('address')),
-    } : undefined,
+    delivery: deliveryEl
+      ? {
+          actualDate: d.date(deliveryEl, 'ActualDeliveryDateTime', 'BT-72', 'actualDate'),
+          locationId: gln(c, c.el(deliveryEl, 'DeliveryAddress/ID'), d.path('locationId')),
+          address: address(c, c.el(deliveryEl, 'DeliveryAddress'), d.in('address')),
+        }
+      : undefined,
     payments,
     paymentSchedule: [],
     allowances,
@@ -228,14 +285,17 @@ function contacts(c: Ctx, els: (Element | undefined)[], s: Scope): Contact | und
     const found = present.map((e) => c.el(e, path)).filter((e): e is Element => !!e && !!c.text(e));
     if (!found.length) return undefined;
     const values = found.map((e) => c.text(e)!);
-    if (values.length === 2 && values[0] === values[1]) { c.mark(s.path(key), found[0]); return values[0]; }
+    if (values.length === 2 && values[0] === values[1]) {
+      c.mark(s.path(key), found[0]);
+      return values[0];
+    }
     c.markAll(s.path(key), found);
     return values.join(', ');
   };
   return { name: field('Name', 'name'), phone: field('Telephone', 'phone'), email: field('ElectronicMail', 'email') };
 }
 
-function period(c: Ctx, p: Element | undefined, s: Scope): Period | undefined {
+function period(_c: Ctx, p: Element | undefined, s: Scope): Period | undefined {
   if (!p) return undefined;
   const start = s.date(p, 'StartDateTime', 'invoicing period start', 'start');
   const end = s.date(p, 'EndDateTime', 'invoicing period end', 'end');
@@ -269,12 +329,14 @@ function paymentInstructions(c: Ctx, root: Element, s: Scope): PaymentInstructio
   }
   const allOcr = [...new Set([...byCode.values()].flatMap((e) => e.ocr))];
   if (allOcr.length > 1) c.warn('SF-OCR-CONFLICT', `Payment references differ between accounts: ${allOcr.join(', ')}`);
-  if (byCode.size) c.derive('/payments/meansCode', 'Svefaktura PaymentMeansTypeCode 1 -> 30 (Bankgiro/Plusgiro/domestic) or 58 (IBAN), per SFTI');
+  if (byCode.size)
+    c.derive('/payments/meansCode', 'Svefaktura PaymentMeansTypeCode 1 -> 30 (Bankgiro/Plusgiro/domestic) or 58 (IBAN), per SFTI');
   return [...byCode].map(([meansCode, e]) => ({ meansCode, remittanceInformation: e.ocr[0], creditTransfers: e.transfers }));
 }
 
 function allowanceCharges(c: Ctx, parent: Element, charge: boolean, s: Scope): AllowanceCharge[] {
-  return c.all(parent, 'AllowanceCharge')
+  return c
+    .all(parent, 'AllowanceCharge')
     .filter((a) => (c.text(a, 'ChargeIndicator') ?? '').toLowerCase() === String(charge))
     .map((a, i) => {
       const t = s.in(i);
@@ -293,11 +355,23 @@ function allowanceCharges(c: Ctx, parent: Element, charge: boolean, s: Scope): A
     });
 }
 
-function vatCategory(c: Ctx, t: Element, s: Scope): VatInfo {
-  return { categoryCode: s.text(t, 'ID', 'categoryCode') ?? '', rate: s.dec(t, 'Percent', 'rate'), exemptionReason: s.text(t, 'ExemptionReason', 'exemptionReason') };
+function vatCategory(_c: Ctx, t: Element, s: Scope): VatInfo {
+  return {
+    categoryCode: s.text(t, 'ID', 'categoryCode') ?? '',
+    rate: s.dec(t, 'Percent', 'rate'),
+    exemptionReason: s.text(t, 'ExemptionReason', 'exemptionReason'),
+  };
 }
 
-function totalsAndVat(c: Ctx, root: Element, legal: Element, lines: Line[], allowances: AllowanceCharge[], charges: AllowanceCharge[], s: Scope): { totals: Totals; vatBreakdown: VatBreakdown[] } {
+function totalsAndVat(
+  c: Ctx,
+  root: Element,
+  legal: Element,
+  lines: Line[],
+  allowances: AllowanceCharge[],
+  charges: AllowanceCharge[],
+  s: Scope,
+): { totals: Totals; vatBreakdown: VatBreakdown[] } {
   const ts = s.in('totals');
   const taxTotal = c.el(root, 'TaxTotal');
   const lineNetTotal = ts.dec(legal, 'LineExtensionTotalAmount', 'lineNetTotal');
@@ -333,18 +407,35 @@ function totalsAndVat(c: Ctx, root: Element, legal: Element, lines: Line[], allo
       taxAmountInTaxCurrency: v.dec(sub, 'TaxCurrencyTaxAmount', 'taxAmountInTaxCurrency'),
     };
   });
-  for (const v of vatBreakdown) if (v.taxableAmount === undefined || v.taxAmount === undefined) throw new ParseError('TaxSubTotal without TaxableAmount or TaxAmount');
+  for (const v of vatBreakdown)
+    if (v.taxableAmount === undefined || v.taxAmount === undefined) throw new ParseError('TaxSubTotal without TaxableAmount or TaxAmount');
   if (vatBreakdown.some((v) => v.categoryCode === 'E')) {
-    c.warn('SF-VAT-E', 'Svefaktura category E covers every kind of exemption; EN separates E, AE, K, G, O and Z. Kept as E with the reason text; review before booking');
+    c.warn(
+      'SF-VAT-E',
+      'Svefaktura category E covers every kind of exemption; EN separates E, AE, K, G, O and Z. Kept as E with the reason text; review before booking',
+    );
   }
   if (vatBreakdown.length === 0 && (vatTotal === undefined || isZero(vatTotal))) {
     // SFTI: no breakdown, or only TotalTaxAmount = 0. EN requires at least one BG-23.
-    vatBreakdown = [{ taxableAmount: taxExclusive, taxAmount: vatTotal ?? ('0' as VatBreakdown['taxAmount']), categoryCode: 'E', exemptionReason: 'No VAT stated in the source invoice' }];
+    vatBreakdown = [
+      {
+        taxableAmount: taxExclusive,
+        taxAmount: vatTotal ?? ('0' as VatBreakdown['taxAmount']),
+        categoryCode: 'E',
+        exemptionReason: 'No VAT stated in the source invoice',
+      },
+    ];
     c.derive('/vatBreakdown/0', 'No TaxSubTotal and no VAT: one category E breakdown synthesised from BT-109 (SFTI)');
   }
   const taxCurrencyAmounts = vatBreakdown.map((v) => v.taxAmountInTaxCurrency).filter((x): x is NonNullable<typeof x> => !!x);
   if (taxCurrencyAmounts.length === 1) {
-    c.mark(ts.path('vatTotalInTaxCurrency'), c.all(taxTotal, 'TaxSubTotal').map((sub) => c.el(sub, 'TaxCurrencyTaxAmount')).find((e) => c.text(e)));
+    c.mark(
+      ts.path('vatTotalInTaxCurrency'),
+      c
+        .all(taxTotal, 'TaxSubTotal')
+        .map((sub) => c.el(sub, 'TaxCurrencyTaxAmount'))
+        .find((e) => c.text(e)),
+    );
   } else if (taxCurrencyAmounts.length > 1) {
     c.derive('/totals/vatTotalInTaxCurrency', 'Sum of TaxCurrencyTaxAmount over the TaxSubTotals');
   }
@@ -373,9 +464,15 @@ function deriveLineVat(c: Ctx, lines: Line[], breakdown: VatBreakdown[]) {
   if (breakdown.length === 1) {
     const { categoryCode, rate } = breakdown[0];
     for (const l of missing) l.vat = { categoryCode, rate };
-    c.derive('/lines/*/vat', `Line VAT absent on ${missing.length} line(s); taken from the single VAT category ${categoryCode} ${rate ?? ''}`.trim());
+    c.derive(
+      '/lines/*/vat',
+      `Line VAT absent on ${missing.length} line(s); taken from the single VAT category ${categoryCode} ${rate ?? ''}`.trim(),
+    );
   } else {
-    c.warn('SF-LINE-VAT', `${missing.length} line(s) have no VAT category and the document has ${breakdown.length} categories; not derived`);
+    c.warn(
+      'SF-LINE-VAT',
+      `${missing.length} line(s) have no VAT category and the document has ${breakdown.length} categories; not derived`,
+    );
   }
 }
 
@@ -394,7 +491,7 @@ function line(c: Ctx, l: Element, s: Scope): Line {
   const qtyEl = c.el(l, 'InvoicedQuantity');
   const unitAttr = c.attr(qtyEl, undefined, 'quantityUnitCode') ? 'quantityUnitCode' : 'unitCode';
   const unitText = c.attr(qtyEl, undefined, unitAttr);
-  const unitCode = unitText ? UNITS[unitText.toLowerCase()] ?? (/^[A-Z0-9]{2,3}$/.test(unitText) ? unitText : undefined) : undefined;
+  const unitCode = unitText ? (UNITS[unitText.toLowerCase()] ?? (/^[A-Z0-9]{2,3}$/.test(unitText) ? unitText : undefined)) : undefined;
   // A mapped code (st -> H87) has no node of its own; the source text stays in unitText.
   if (unitText && unitText !== unitCode) c.mark(s.path('unitText'), qtyEl, unitAttr);
   else if (unitText) c.mark(s.path('unitCode'), qtyEl, unitAttr);
@@ -420,11 +517,14 @@ function line(c: Ctx, l: Element, s: Scope): Line {
     orderLineRef: s.text(l, 'OrderLineReference/BuyersLineID', 'orderLineRef'),
     allowances: allowanceCharges(c, l, false, s.in('allowances')).map(({ vat: _vat, ...a }) => a),
     charges: allowanceCharges(c, l, true, s.in('charges')).map(({ vat: _vat, ...a }) => a),
-    price: basePrice && c.dec(basePrice, 'PriceAmount') !== undefined ? {
-      net: p.dec(basePrice, 'PriceAmount', 'net')!,
-      baseQuantity: p.dec(basePrice, 'BaseQuantity', 'baseQuantity'),
-      baseQuantityUnit: p.attr(basePrice, 'BaseQuantity', 'quantityUnitCode', 'baseQuantityUnit'),
-    } : undefined,
+    price:
+      basePrice && c.dec(basePrice, 'PriceAmount') !== undefined
+        ? {
+            net: p.dec(basePrice, 'PriceAmount', 'net')!,
+            baseQuantity: p.dec(basePrice, 'BaseQuantity', 'baseQuantity'),
+            baseQuantityUnit: p.attr(basePrice, 'BaseQuantity', 'quantityUnitCode', 'baseQuantityUnit'),
+          }
+        : undefined,
     vat: taxCat ? vatCategory(c, taxCat, s.in('vat')) : undefined,
     item: {
       name: description ?? '',
