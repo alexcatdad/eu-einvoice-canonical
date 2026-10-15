@@ -15,7 +15,7 @@
 				<ContactData>
 					<ContactName>Mari Maasikas</ContactName>
 					<PhoneNumber>+372 5000 0001</PhoneNumber>
-					<E-mailAddress>arved@naidis.example</E-mailAddress>
+					<EmailAddress>arved@naidis.example</EmailAddress>
 					<LegalAddress>
 						<PostalAddress1>Testi tn 1</PostalAddress1>
 						<City>Tallinn</City>
@@ -83,7 +83,7 @@
 						<ItemPrice>30.00</ItemPrice>
 					</ItemDetailInfo>
 					<ItemSum>30.00</ItemSum>
-					<VAT vatId="NTAX">
+					<VAT vatId="TAXEX">
 						<SumBeforeVAT>30.00</SumBeforeVAT>
 						<VATRate>0</VATRate>
 						<VATSum>0.00</VATSum>
@@ -99,7 +99,7 @@
 				<VATRate>24</VATRate>
 				<VATSum>24.00</VATSum>
 			</VAT>
-			<VAT vatId="NTAX">
+			<VAT vatId="TAXEX">
 				<SumBeforeVAT>30.00</SumBeforeVAT>
 				<VATRate>0</VATRate>
 				<VATSum>0.00</VATSum>
@@ -108,6 +108,11 @@
 			<TotalSum>154.00</TotalSum>
 			<Currency>EUR</Currency>
 		</InvoiceSumGroup>
+		<AttachmentFile>
+			<FileName>arve-2026-001.pdf</FileName>
+			<FileBase64>JVBERi0xLjQK</FileBase64>
+			<FileSize>9</FileSize>
+		</AttachmentFile>
 		<PaymentInfo>
 			<Currency>EUR</Currency>
 			<PaymentDescription>Arve 2026-001</PaymentDescription>
@@ -115,7 +120,8 @@
 			<PayDueDate>2026-10-29</PayDueDate>
 			<PaymentTotalSum>154.00</PaymentTotalSum>
 			<PayerName>Proov AS</PayerName>
-			<PaymentId>20260013</PaymentId>
+			<PaymentRefId>20260013</PaymentRefId>
+			<PaymentId>2026-001</PaymentId>
 			<PayToAccount>EE382200221020145685</PayToAccount>
 			<PayToName>Näidis OÜ</PayToName>
 		</PaymentInfo>

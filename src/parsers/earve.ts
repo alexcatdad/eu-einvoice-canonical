@@ -13,10 +13,10 @@
  */
 import type { Element } from '@xmldom/xmldom';
 import type {
-  AdditionalParty, Address, AllowanceCharge, CanonicalInvoice, Contact, CreditTransfer, Decimal, Line, Party,
+  AdditionalParty, Address, AllowanceCharge, Attachment, CanonicalInvoice, Contact, CreditTransfer, Decimal, Line, Party,
   PaymentInstructions, Seller, Totals, VatBreakdown, VatInfo,
 } from '../canonical.js';
-import { sub, sum } from '../values.js';
+import { add, sub, sum } from '../values.js';
 import { Ctx, ParseError, finish, parseXml, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 
@@ -69,8 +69,9 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number):
     // addCode DSC = discount; everything else (CHR, ...) is a charge. Negative amounts are discounts.
     if (c.attr(a, undefined, 'addCode') === 'DSC' || amount.startsWith('-')) allowances.push(entry); else charges.push(entry);
   }
-  const allowanceTotal = allowances.length ? sum(allowances.map((x) => x.amount)) : undefined;
-  const chargeTotal = charges.length ? sum(charges.map((x) => x.amount)) : undefined;
+  const en = c.el(sums, 'Extension/CustomContent/InvoiceSumGroupEN');
+  const allowanceTotal = c.dec(en, 'AllowanceSum') ?? (allowances.length ? sum(allowances.map((x) => x.amount)) : undefined);
+  const chargeTotal = c.dec(en, 'ChargeSum') ?? (charges.length ? sum(charges.map((x) => x.amount)) : undefined);
 
   const vatBreakdown = c.all(sums, 'VAT').map((v): VatBreakdown => {
     const rate = c.dec(v, 'VATRate');
@@ -82,23 +83,30 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number):
   const vatTotal = c.dec(sums, 'TotalVATSum') ?? (vatBreakdown.length ? sum(vatBreakdown.map((v) => v.taxAmount)) : undefined);
   if (c.dec(sums, 'TotalVATSum') === undefined && vatTotal !== undefined) c.derive('/totals/vatTotal', 'TotalVATSum absent; sum of VAT group amounts');
 
+  // TotalSum is the total with VAT, without Rounding; amount due = TotalSum - prepaid + Rounding (BR-CO-16 mapping).
   const rounding = c.dec(sums, 'Rounding');
-  const taxInclusive = rounding ? sub(gross, rounding) : gross;
-  const taxExclusive = vatTotal !== undefined ? sub(taxInclusive, vatTotal) : lineNet;
-  if (vatTotal !== undefined) c.derive('/totals/taxExclusive', 'e-arve has no total without VAT after allowances; BT-112 minus TotalVATSum');
-  const payable = c.dec(pay, 'PaymentTotalSum') ?? c.dec(sums, 'TotalToPay');
+  const prepaid = c.dec(en, 'PrepaidAmount');
+  let taxExclusive = c.dec(en, 'InvoiceTotalSumWithoutVAT');
+  if (taxExclusive === undefined) {
+    taxExclusive = vatTotal !== undefined ? sub(gross, vatTotal) : lineNet;
+    if (vatTotal !== undefined) c.derive('/totals/taxExclusive', 'InvoiceTotalSumWithoutVAT absent; TotalSum minus TotalVATSum');
+  }
+  let payable = c.dec(sums, 'TotalToPay') ?? c.dec(pay, 'PaymentTotalSum');
+  if (payable === undefined) {
+    payable = add(sub(gross, prepaid ?? '0'), rounding ?? '0');
+    c.derive('/totals/payable', 'No TotalToPay/PaymentTotalSum; TotalSum - prepaid + Rounding');
+  }
   const totals: Totals = {
     lineNetTotal: lineNet,
     allowanceTotal,
     chargeTotal,
     taxExclusive,
     vatTotal,
-    taxInclusive,
+    taxInclusive: gross,
+    prepaid,
     rounding,
-    payable: payable ?? gross,
+    payable,
   };
-  if (rounding) c.derive('/totals/taxInclusive', 'TotalSum includes Rounding in e-arve; BT-112 is TotalSum minus Rounding');
-  if (payable === undefined) c.derive('/totals/payable', 'No PaymentTotalSum/TotalToPay; taken from TotalSum');
 
   const accounts: CreditTransfer[] = [];
   const toAccount = c.text(pay, 'PayToAccount');
@@ -111,7 +119,7 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number):
       existing.serviceProviderId ??= c.text(acc, 'BIC');
     }
   }
-  const reference = c.text(info, 'PaymentReferenceNumber') ?? c.text(pay, 'PaymentId');
+  const reference = c.text(pay, 'PaymentRefId') ?? c.text(info, 'PaymentReferenceNumber');
   const payments: PaymentInstructions[] = accounts.length || reference ? [{
     meansCode: accounts.length ? '30' : 'ZZZ',
     meansText: c.text(pay, 'PaymentDescription'),
@@ -163,7 +171,7 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number):
     vatBreakdown,
     otherTaxes: [],
     withholdings: [],
-    attachments: [],
+    attachments: c.all(inv, 'AttachmentFile').flatMap((a) => attachment(c, a)),
     lines,
     clearance: [],
     extensions: { ee: { invoiceType: eeType, factoring: factor ? true : undefined } },
@@ -175,16 +183,23 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number):
 
 const xp = (index: number, rest: string) => `/E_Invoice/Invoice[${index + 1}]/${rest}`;
 
-/** e-arve gives a rate only. vatId NTAX/NOTAX = outside scope or exempt. */
+/**
+ * vatId: TAX taxable, TAXEX tax exempt, NOTTAX not taxable (e-arve 1.2 spec). Without it only the rate is
+ * known, and a zero rate stays a guess.
+ */
 function category(c: Ctx, vatId: string | undefined, rate: Decimal | undefined): string {
-  if (rate !== undefined && !/^0(\.0*)?$/.test(rate)) {
+  const zero = rate === undefined || /^0(\.0*)?$/.test(rate);
+  const id = vatId?.toUpperCase();
+  if (id === 'TAXEX') return 'E';
+  if (id === 'NOTTAX') return 'O';
+  if (id === 'TAX' && !zero) return 'S';
+  if (!zero) {
     c.derive('/vat/categoryCode', `e-arve states no VAT category; 'S' assumed for rate ${rate}`);
     return 'S';
   }
-  const code = vatId && /^N/i.test(vatId) ? 'E' : 'Z';
-  c.derive('/vat/categoryCode', `e-arve states no VAT category; '${code}' assumed for rate 0${vatId ? ` (vatId ${vatId})` : ''}`);
-  c.warn('EE-VAT-CATEGORY-GUESSED', `Zero-rate VAT mapped to ${code}; EN 16931 separates Z, E, AE, K, G and O. Review before booking`);
-  return code;
+  c.derive('/vat/categoryCode', `e-arve states no VAT category for a zero rate${vatId ? ` (vatId ${vatId})` : ''}; 'Z' assumed`);
+  c.warn('EE-VAT-CATEGORY-GUESSED', 'Zero-rate VAT mapped to Z; EN 16931 separates Z, E, AE, K, G and O. Review before booking');
+  return 'Z';
 }
 
 function party(c: Ctx, p: Element | undefined, attrRegNumber: string | undefined): Party {
@@ -203,7 +218,7 @@ function party(c: Ctx, p: Element | undefined, attrRegNumber: string | undefined
   const contact: Contact = {
     name: c.text(contactData, 'ContactName'),
     phone: c.text(contactData, 'PhoneNumber'),
-    email: c.text(contactData, 'E-mailAddress'),
+    email: c.text(contactData, 'EmailAddress') ?? c.text(contactData, 'E-mailAddress'),
   };
   return {
     name: c.text(p, 'Name'),
@@ -253,3 +268,15 @@ function line(c: Ctx, e: Element, index: number): Line {
     },
   };
 }
+
+/** AttachmentFile: FileName, FileBase64 (PDF in practice), FileSize. The MIME type comes from the file name extension. */
+function attachment(c: Ctx, a: Element): Attachment[] {
+  const base64 = c.text(a, 'FileBase64')?.replace(/\s/g, '');
+  const filename = c.text(a, 'FileName') ?? 'attachment';
+  if (!base64) return [];
+  const ext = /\.([A-Za-z0-9]+)$/.exec(filename)?.[1]?.toLowerCase();
+  const mime = ext ? MIME[ext] : undefined;
+  if (!mime) c.warn('EE-ATTACHMENT-MIME', `${filename}: MIME type unknown from the extension; application/octet-stream used`);
+  return [{ kind: 'embedded', id: filename, mimeCode: mime ?? 'application/octet-stream', filename, base64 }];
+}
+const MIME: Record<string, string> = { pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', xml: 'text/xml', txt: 'text/plain', csv: 'text/csv' };

@@ -15,14 +15,14 @@
 import type { Element } from '@xmldom/xmldom';
 import type {
   AdditionalParty, Address, AllowanceCharge, CanonicalInvoice, Contact, CreditTransfer, Decimal, Identifier, Line,
-  Party, PaymentInstructions, Period, Seller, Totals, VatBreakdown, VatInfo,
+  IsoDate, Party, PaymentInstructions, Period, Seller, Totals, VatBreakdown, VatInfo,
 } from '../canonical.js';
 import { ValueError, sub, sum, toDecimal } from '../values.js';
-import { CREDIT_TYPE_CODES, Ctx, ParseError, finish, parseXml, sourceMeta } from './context.js';
+import { CREDIT_TYPE_CODES, SELF_BILLED_TYPE_CODES, Ctx, ParseError, finish, parseXml, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 
 /** Finvoice InvoiceTypeCode -> UNCL 1001 when InvoiceTypeCodeUN is absent. */
-const TYPE_TO_UN: Record<string, string> = { INV01: '380', INV02: '381' };
+const TYPE_TO_UN: Record<string, string> = { INV01: '380', INV02: '381', INV07: '389' };
 
 export function parseFinvoice(input: ParseInput): CanonicalInvoice[] {
   const root = parseXml(input.payload.xml);
@@ -46,7 +46,7 @@ export function parseFinvoice(input: ParseInput): CanonicalInvoice[] {
   const excl = dec(c, d, 'InvoiceTotalVatExcludedAmount');
   if (incl === undefined || excl === undefined) throw new ParseError('InvoiceTotalVatExcludedAmount or InvoiceTotalVatIncludedAmount missing');
   if (kind === 'creditNote' && incl.startsWith('-')) {
-    c.warn('FI-CREDIT-NEGATIVE', 'Credit note carries negative amounts; source signs are kept, so do not negate them again');
+    c.warn('FI-CREDIT-NEGATIVE', 'Finvoice credit notes (INV02) carry negative amounts; source signs are kept, so effectiveSign() must not be applied on top');
   }
   const currency = c.attr(d, 'InvoiceTotalVatIncludedAmount', 'AmountCurrencyIdentifier')
     ?? c.attr(d, 'InvoiceTotalVatExcludedAmount', 'AmountCurrencyIdentifier')
@@ -87,14 +87,20 @@ export function parseFinvoice(input: ParseInput): CanonicalInvoice[] {
   const { payments, remittance, instructed, epiDue } = paymentInstructions(c, root);
   const dueDate = c.date(d, 'PaymentTermsDetails/InvoiceDueDate', 'BT-9') ?? epiDue;
 
+  // Finvoice 3.0 guidelines, invoice-level calculation: RowsTotal (BT-106), DiscountsTotal (BT-107), ChargesTotal (BT-108),
+  // InvoiceTotalVatExcluded (BT-109), InvoiceTotalVat (BT-110), InvoiceTotalVatIncluded (BT-112), InvoicePaid (BT-113), Epi amount (BT-115).
+  const prepaid = dec(c, d, 'InvoicePaidAmount');
   const totals: Totals = {
     lineNetTotal,
+    allowanceTotal: dec(c, d, 'DiscountsTotalVatExcludedAmount'),
+    chargeTotal: dec(c, d, 'ChargesTotalVatExcludedAmount'),
     taxExclusive: excl,
     vatTotal: dec(c, d, 'InvoiceTotalVatAmount'),
     taxInclusive: incl,
-    payable: instructed ?? incl,
+    prepaid,
+    payable: instructed ?? (prepaid !== undefined ? sub(incl, prepaid) : incl),
   };
-  if (instructed === undefined) c.derive('/totals/payable', 'EpiInstructedAmount absent; taken from InvoiceTotalVatIncludedAmount');
+  if (instructed === undefined) c.derive('/totals/payable', `EpiInstructedAmount absent; taken from InvoiceTotalVatIncludedAmount${prepaid !== undefined ? ' minus InvoicePaidAmount' : ''}`);
 
   const terms = c.texts(d, 'PaymentTermsDetails/PaymentTermsFreeText');
   const fine = c.text(d, 'PaymentTermsDetails/PaymentOverDueFineDetails/PaymentOverDueFinePercent');
@@ -121,7 +127,7 @@ export function parseFinvoice(input: ParseInput): CanonicalInvoice[] {
   const deliveryParty = delivery ? party(c, [delivery, root], 'Delivery', 'DeliveryPartyIdentifier') : undefined;
 
   const orderRef = c.text(d, 'OrderIdentifier');
-  const original = c.text(d, 'OriginalInvoiceNumber');
+  const preceding = precedingInvoices(c, root, d);
   const url = c.text(d, 'InvoiceUrlText');
   const inv = {
     kind,
@@ -129,7 +135,7 @@ export function parseFinvoice(input: ParseInput): CanonicalInvoice[] {
     id,
     issueDate,
     nationalType: fiType ? { scheme: 'FI:InvoiceTypeCode', code: fiType, label: c.text(d, 'InvoiceTypeText') } : undefined,
-    selfBilled: false,
+    selfBilled: SELF_BILLED_TYPE_CODES.has(typeCode) || fiType === 'INV07',
     currency,
     dueDate,
     buyerReference: c.text(d, 'BuyerReferenceIdentifier'),
@@ -140,7 +146,7 @@ export function parseFinvoice(input: ParseInput): CanonicalInvoice[] {
     paymentTerms: terms.join('\n') || undefined,
     notes: c.texts(d, 'InvoiceFreeText').map((text) => ({ text })),
     specificationId: `urn:finvoice:${input.details.version ?? '3.0'}`,
-    precedingInvoices: original ? [{ id: original }] : [],
+    precedingInvoices: preceding,
     invoicePeriod: period(c, d, 'InvoicingPeriodStartDate', 'InvoicingPeriodEndDate'),
     seller,
     buyer,
@@ -415,4 +421,24 @@ function lineRows(c: Ctx, root: Element): { lines: Line[]; informationalRows: nu
   });
   if (idDerived) c.derive('/lines/*/id', 'RowPositionIdentifier absent on some rows; position in the file used');
   return { lines, informationalRows };
+}
+
+/**
+ * OriginalInvoiceNumber in InvoiceDetails, in OriginalInvoiceReference structures (several earlier invoices) and
+ * on rows (credit notes that touch several invoices). Each number is listed once.
+ */
+function precedingInvoices(c: Ctx, root: Element, d: Element): { id: string; issueDate?: IsoDate }[] {
+  const out = new Map<string, { id: string; issueDate?: IsoDate }>();
+  const add = (id: string | undefined, issueDate: IsoDate | undefined) => {
+    if (!id) return;
+    const prev = out.get(id);
+    if (!prev) out.set(id, issueDate ? { id, issueDate } : { id });
+    else if (issueDate && !prev.issueDate) prev.issueDate = issueDate;
+  };
+  add(c.text(d, 'OriginalInvoiceNumber'), c.date(d, 'OriginalInvoiceDate', 'BT-26'));
+  for (const r of [...c.all(d, 'OriginalInvoiceReference'), ...c.all(root, 'OriginalInvoiceReference')]) {
+    add(c.text(r, 'OriginalInvoiceNumber'), c.date(r, 'OriginalInvoiceDate', 'BT-26'));
+  }
+  for (const row of c.all(root, 'InvoiceRow')) add(c.text(row, 'OriginalInvoiceNumber'), undefined);
+  return [...out.values()];
 }

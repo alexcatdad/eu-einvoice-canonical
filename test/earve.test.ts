@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { convert, effectiveSign } from '../src/index.js';
-import { fixture } from './helpers.js';
+import { fixture, utf8 } from './helpers.js';
 
 describe('e-arve 1.2: two invoices in one file', async () => {
   const r = await convert(fixture('e-arve-1.2-two-invoices.xml'), 'e-arve-1.2-two-invoices.xml');
@@ -63,9 +63,18 @@ describe('e-arve 1.2: two invoices in one file', async () => {
     }]);
   });
 
-  test('DEB: zero-rate category is a derived guess and says so; nothing else warns', () => {
-    assert.deepEqual([...new Set(deb.source.warnings.map((w) => w.code))], ['EE-VAT-CATEGORY-GUESSED']);
-    assert.ok(deb.source.derived.some((d) => d.field === '/vat/categoryCode'));
+  test('DEB: TAXEX maps to E without guessing; nothing warns', () => {
+    assert.deepEqual(deb.source.warnings, []);
+  });
+
+  test('DEB: payment reference is PaymentRefId, not PaymentId (the invoice number)', () => {
+    assert.equal(deb.payments[0].remittanceInformation, '20260013');
+  });
+
+  test('DEB: embedded attachment', () => {
+    assert.deepEqual(deb.attachments, [{
+      kind: 'embedded', id: 'arve-2026-001.pdf', mimeCode: 'application/pdf', filename: 'arve-2026-001.pdf', base64: 'JVBERi0xLjQK',
+    }]);
   });
 
   test('DEB: lines', () => {
@@ -99,5 +108,25 @@ describe('e-arve 1.2: two invoices in one file', async () => {
   test('a file without Invoice dates is an error outcome, not a crash', async () => {
     const bad = await convert(fixture('e-arve-two-invoices.xml'));
     assert.equal(bad.outcomes[0].status, 'error');
+  });
+});
+
+describe('e-arve 1.2: VAT ids, prepaid amount and rounding', async () => {
+  const xml = `<?xml version="1.0" encoding="UTF-8"?><E_Invoice><Header><Date>2026-10-15</Date><FileId>F2</FileId><Version>1.2</Version></Header>
+<Invoice invoiceId="9"><InvoiceParties><SellerParty><Name>S OÜ</Name><RegNumber>10000001</RegNumber></SellerParty><BuyerParty><Name>B AS</Name><RegNumber>10000002</RegNumber></BuyerParty></InvoiceParties>
+<InvoiceInformation><Type type="DEB"/><InvoiceNumber>9</InvoiceNumber><InvoiceDate>2026-10-15</InvoiceDate></InvoiceInformation>
+<InvoiceSumGroup><InvoiceSum>100.00</InvoiceSum><VAT vatId="NOTTAX"><SumBeforeVAT>100.00</SumBeforeVAT><VATRate>0</VATRate><VATSum>0.00</VATSum></VAT><Rounding>0.01</Rounding><TotalVATSum>0.00</TotalVATSum><TotalSum>100.00</TotalSum><Currency>EUR</Currency>
+<Extension><CustomContent><InvoiceSumGroupEN><PrepaidAmount>40.00</PrepaidAmount></InvoiceSumGroupEN></CustomContent></Extension></InvoiceSumGroup></Invoice></E_Invoice>`;
+  const r = await convert(utf8(xml), 'x.xml');
+  const o = r.outcomes[0];
+  assert.equal(o.status, 'ok');
+  const inv = o.status === 'ok' ? o.invoices[0] : undefined;
+
+  test('NOTTAX is category O; TotalSum excludes Rounding; payable = TotalSum - prepaid + Rounding', () => {
+    assert.deepEqual(inv?.vatBreakdown, [{ taxableAmount: '100.00', taxAmount: '0.00', categoryCode: 'O', rate: '0' }]);
+    assert.deepEqual(inv?.totals, {
+      lineNetTotal: '100.00', taxExclusive: '100.00', vatTotal: '0.00', taxInclusive: '100.00', prepaid: '40.00', rounding: '0.01', payable: '60.01',
+    });
+    assert.deepEqual(inv?.source.warnings, []);
   });
 });

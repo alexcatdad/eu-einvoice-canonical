@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { effectiveSign } from '../src/index.js';
-import { parseOne, warningCodes } from './helpers.js';
+import { parseOne, utf8, warningCodes } from './helpers.js';
 
 describe('Finvoice 3.0: invoice behind a SOAP envelope, ISO-8859-15', async () => {
   const inv = await parseOne('finvoice-invoice.xml');
@@ -119,7 +119,7 @@ describe('Finvoice 3.0: invoice behind a SOAP envelope, ISO-8859-15', async () =
   });
 });
 
-describe('Finvoice 3.0: credit note without EpiDetails', async () => {
+describe('Finvoice 3.0: credit note (negative amounts) without EpiDetails', async () => {
   const inv = await parseOne('finvoice-credit.xml');
 
   test('INV02 is a credit note, signs are kept', () => {
@@ -127,14 +127,17 @@ describe('Finvoice 3.0: credit note without EpiDetails', async () => {
     assert.equal(inv.typeCode, '381');
     assert.equal(effectiveSign(inv), -1);
     assert.equal(inv.id, '2026-1100');
-    assert.equal(inv.totals.taxInclusive, '22.00');
-    assert.deepEqual(inv.precedingInvoices, [{ id: '2026-1042' }]);
+    assert.equal(inv.totals.taxInclusive, '-22.00');
     assert.equal(inv.extensions.fi?.invoiceTypeCode, 'INV02');
-    assert.deepEqual(warningCodes(inv), []);
+    assert.deepEqual(warningCodes(inv), ['FI-CREDIT-NEGATIVE']);
+  });
+
+  test('all original invoices are kept: OriginalInvoiceNumber and OriginalInvoiceReference with date', () => {
+    assert.deepEqual(inv.precedingInvoices, [{ id: '2026-1042' }, { id: '2026-1043', issueDate: '2026-10-16' }]);
   });
 
   test('payable and payment account are derived, and say so', () => {
-    assert.equal(inv.totals.payable, '22.00');
+    assert.equal(inv.totals.payable, '-22.00');
     assert.deepEqual(inv.payments, [{ meansCode: '30', creditTransfers: [{ accountId: 'FI2112345600000785', serviceProviderId: 'NDEAFIHH' }] }]);
     const fields = inv.source.derived.map((d) => d.field);
     assert.ok(fields.includes('/totals/payable'));
@@ -145,5 +148,39 @@ describe('Finvoice 3.0: credit note without EpiDetails', async () => {
   test('row without position identifier gets its position', () => {
     assert.equal(inv.lines[0].id, '1');
     assert.equal(inv.lines[0].price?.net, '20.00');
+    assert.equal(inv.lines[0].quantity, '-1.00');
+  });
+});
+
+describe('Finvoice 3.0: invoice-level adjustments, prepaid amount and self-billing', async () => {
+  const xml = `<?xml version="1.0" encoding="UTF-8"?><Finvoice Version="3.0">
+<SellerPartyDetails><SellerPartyIdentifier>2345678-9</SellerPartyIdentifier><SellerOrganisationName>S Oy</SellerOrganisationName></SellerPartyDetails>
+<BuyerPartyDetails><BuyerPartyIdentifier>3456789-0</BuyerPartyIdentifier><BuyerOrganisationName>B Oy</BuyerOrganisationName></BuyerPartyDetails>
+<InvoiceDetails><InvoiceTypeCode>INV07</InvoiceTypeCode><InvoiceNumber>S1</InvoiceNumber><InvoiceDate Format="CCYYMMDD">20261015</InvoiceDate>
+<RowsTotalVatExcludedAmount AmountCurrencyIdentifier="EUR">433,00</RowsTotalVatExcludedAmount>
+<DiscountsTotalVatExcludedAmount AmountCurrencyIdentifier="EUR">15,00</DiscountsTotalVatExcludedAmount>
+<ChargesTotalVatExcludedAmount AmountCurrencyIdentifier="EUR">35,00</ChargesTotalVatExcludedAmount>
+<InvoiceTotalVatExcludedAmount AmountCurrencyIdentifier="EUR">453,00</InvoiceTotalVatExcludedAmount>
+<InvoiceTotalVatAmount AmountCurrencyIdentifier="EUR">108,72</InvoiceTotalVatAmount>
+<InvoiceTotalVatIncludedAmount AmountCurrencyIdentifier="EUR">561,72</InvoiceTotalVatIncludedAmount>
+<InvoicePaidAmount AmountCurrencyIdentifier="EUR">100,00</InvoicePaidAmount>
+<VatSpecificationDetails><VatBaseAmount AmountCurrencyIdentifier="EUR">453,00</VatBaseAmount><VatRatePercent>24</VatRatePercent><VatCode>S</VatCode><VatRateAmount AmountCurrencyIdentifier="EUR">108,72</VatRateAmount></VatSpecificationDetails>
+</InvoiceDetails>
+<InvoiceRow><ArticleName>X</ArticleName><InvoicedQuantity QuantityUnitCode="kpl" QuantityUnitCodeUN="C62">1,00</InvoicedQuantity><RowVatRatePercent>24</RowVatRatePercent><RowVatCode>S</RowVatCode><RowVatAmount AmountCurrencyIdentifier="EUR">103,92</RowVatAmount><RowVatExcludedAmount AmountCurrencyIdentifier="EUR">433,00</RowVatExcludedAmount><RowAmount AmountCurrencyIdentifier="EUR">536,92</RowAmount></InvoiceRow>
+</Finvoice>`;
+  const inv = await parseOne(utf8(xml), 'selfbilled.xml');
+
+  test('discounts, charges and prepaid amount map to BT-107, BT-108, BT-113; payable is derived from them', () => {
+    assert.deepEqual(inv.totals, {
+      lineNetTotal: '433.00', allowanceTotal: '15.00', chargeTotal: '35.00', taxExclusive: '453.00', vatTotal: '108.72',
+      taxInclusive: '561.72', prepaid: '100.00', payable: '461.72',
+    });
+    assert.deepEqual(warningCodes(inv), []);
+  });
+
+  test('INV07 is self-billing (UNCL 1001 389)', () => {
+    assert.equal(inv.selfBilled, true);
+    assert.equal(inv.typeCode, '389');
+    assert.equal(inv.kind, 'invoice');
   });
 });
