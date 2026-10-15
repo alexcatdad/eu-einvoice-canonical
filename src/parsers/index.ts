@@ -21,6 +21,8 @@ export interface ParseInput {
   details: MatchDetails;
   /** SHA-256 of the file as received (shared by every document in it). */
   fileSha256: string;
+  /** Fill `source.provenance` (canonical path -> source XPath). Off by default to keep the output small. */
+  provenance?: boolean;
 }
 
 export type Parser = (input: ParseInput) => CanonicalInvoice[];

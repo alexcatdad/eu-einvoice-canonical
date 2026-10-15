@@ -45,8 +45,13 @@ export interface ConvertResult {
   skipped: Skipped[];
 }
 
+export interface ConvertOptions {
+  /** Fill `source.provenance` (canonical path -> source XPath) for every value read from the XML. Off by default: it roughly doubles the size of `source`. */
+  provenance?: boolean;
+}
+
 /** Unwraps, detects and parses. Never throws for bad input: every problem is an outcome or a skipped entry. */
-export async function convert(bytes: Uint8Array, filename?: string, limits?: Partial<UnwrapLimits>): Promise<ConvertResult> {
+export async function convert(bytes: Uint8Array, filename?: string, limits?: Partial<UnwrapLimits>, options: ConvertOptions = {}): Promise<ConvertResult> {
   const { fileSha256, payloads, skipped } = await unwrap(bytes, filename, limits);
   const outcomes = payloads.map(({ xml, ...meta }): ConvertOutcome => {
     const payload = { xml, ...meta };
@@ -54,7 +59,7 @@ export async function convert(bytes: Uint8Array, filename?: string, limits?: Par
     if (detection.kind === 'other-document') return { status: 'not-an-invoice', detection, payload: meta };
     if (detection.kind === 'unknown') return { status: 'unsupported', detection, payload: meta, reason: detection.reason };
     try {
-      const invoices = PARSERS[detection.format.family]({ payload, format: detection.format, details: detection.details, fileSha256 });
+      const invoices = PARSERS[detection.format.family]({ payload, format: detection.format, details: detection.details, fileSha256, provenance: options.provenance });
       invoices.forEach((inv, i) => {
         if (invoices.length > 1) inv.source.indexInFile = i;
         inv.source.warnings.push(...checkTotals(inv));
