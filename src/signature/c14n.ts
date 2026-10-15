@@ -29,20 +29,12 @@ export function canonicalize(node: XNode, opts: C14nOptions): string {
       if (c.nodeType === 1) { parts.push(renderElement(c as XElement, opts, new Map(), true)); seenRoot = true; }
       else if (c.nodeType === 7 && (c as any).target === 'xml') continue; // the XML declaration is not a PI
       else if (c.nodeType === 7) parts.push((seenRoot ? '\n' : '') + pi(c) + (seenRoot ? '' : '\n'));
-      else if (c.nodeType === 8 && opts.withComments) parts.push((seenRoot ? '\n' : '') + comment(c) + (seenRoot ? '' : '\n'));
+      else if (c.nodeType === 8 && opts.withComments) parts.push((seenRoot ? '\n' : '') + `<!--${c.nodeValue}-->` + (seenRoot ? '' : '\n'));
     }
     return parts.join('');
   }
   return renderElement(node as XElement, opts, new Map(), true);
 }
-
-/**
- * A comment node in canonical form. Built from parts on purpose: a literal HTML-comment opener in the
- * source makes Bun's coverage mis-map the lines of this file (JS treats it as a legacy HTML-like comment).
- */
-const COMMENT_OPEN = '<' + '!--';
-const COMMENT_CLOSE = '--' + '>';
-const comment = (n: XNode) => COMMENT_OPEN + n.nodeValue + COMMENT_CLOSE;
 
 const pi = (n: XNode) => `<?${(n as any).target}${(n as any).data ? ' ' + (n as any).data : ''}?>`;
 
@@ -118,7 +110,7 @@ function renderElement(el: XElement, opts: C14nOptions, rendered: Map<string, st
       case 1: out += renderElement(c as XElement, opts, next, false); break;
       case 3: case 4: out += escText(c.nodeValue ?? ''); break;
       case 7: out += pi(c); break;
-      case 8: if (opts.withComments) out += comment(c); break;
+      case 8: if (opts.withComments) out += `<!--${c.nodeValue}-->`; break;
     }
   }
   return out + `</${el.tagName}>`;

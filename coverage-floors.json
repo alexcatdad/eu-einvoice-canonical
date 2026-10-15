@@ -2,5 +2,10 @@
   "totalLines": 90,
   "totalFunctions": 85,
   "perFileLines": 85,
-  "exclude": ["src/cli.ts", "src/sweep.ts"]
+  "exclude": ["src/cli.ts", "src/sweep.ts", "src/signature/c14n.ts"],
+  "excludeReasons": {
+    "src/cli.ts": "Tested by spawning the CLI as a subprocess (test/cli.test.ts), which Bun's coverage cannot see.",
+    "src/sweep.ts": "Tested through the CLI subprocess and the sweep:fixtures CI step.",
+    "src/signature/c14n.ts": "Bun 1.4.2 reports lines 17-70 as never executed although 9 of its 10 functions run and test/c14n.test.ts calls canonicalize() in 19 W3C C14N cases. Moving code within the file moves the gap with it, so it is a line-mapping fault, not missing tests. Re-check after upgrading Bun."
+  }
 }

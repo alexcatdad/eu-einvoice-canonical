@@ -26,6 +26,8 @@ interface Floors {
   perFileLines: number;
   /** Paths relative to the repo root that are reported but not gated. */
   exclude: string[];
+  /** Why each excluded path is excluded; shown in the report so an exclusion is never silent. */
+  excludeReasons?: Record<string, string>;
 }
 
 interface FileCov { file: string; lf: number; lh: number; fnf: number; fnh: number; lines: [number, number][] }
@@ -72,7 +74,7 @@ for (const f of gated) {
 const rows = src.map((f) => {
   const l = pct(f.lh, f.lf);
   const excluded = floors.exclude.includes(f.file);
-  const flag = excluded ? 'not gated' : l < floors.perFileLines ? 'below floor' : '';
+  const flag = excluded ? `not gated: ${floors.excludeReasons?.[f.file] ?? 'no reason recorded'}` : l < floors.perFileLines ? 'below floor' : '';
   return `| \`${f.file}\` | ${fmt(l)} (${f.lh}/${f.lf}) | ${fmt(pct(f.fnh, f.fnf))} (${f.fnh}/${f.fnf}) | ${flag} |`;
 });
 const report = [
