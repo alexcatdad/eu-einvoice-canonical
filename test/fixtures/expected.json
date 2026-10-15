@@ -265,5 +265,20 @@
   ],
   "eslog-1.xml": [
     "eslog-1"
+  ],
+  "cfdi-40-ingreso-iva-retenciones.xml": [
+    "mx-cfdi"
+  ],
+  "cfdi-40-egreso-relacionado.xml": [
+    "mx-cfdi"
+  ],
+  "cfdi-40-ieps.xml": [
+    "mx-cfdi"
+  ],
+  "cfdi-33-ingreso-usd.xml": [
+    "mx-cfdi"
+  ],
+  "cfdi-40-pago.xml": [
+    "other"
   ]
 }

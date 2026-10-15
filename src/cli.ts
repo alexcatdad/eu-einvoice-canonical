@@ -6,6 +6,8 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { type CanonicalInvoice, convert, DEFAULT_LIMITS, type Detection, inspect, type UnwrapLimits } from './index.js';
+import { isOrderXml, MatchInputError, matchInvoice, parseOrder, parsePurchaseOrdersJson, parseReceiptsJson } from './matching/index.js';
+import type { PurchaseOrder, Tolerances } from './matching/types.js';
 import { runSweep } from './sweep.js';
 
 export const EXIT = {
@@ -17,6 +19,7 @@ export const EXIT = {
   partial: 5,
   validatorUnavailable: 6,
   internal: 7,
+  needsReview: 8,
 } as const;
 
 /** Thrown by a validator that cannot run (missing rules, no network...). Maps to exit code 6. */
@@ -43,11 +46,14 @@ const USAGE = `Usage:
   einvoice inspect <file...>                 unwrap and detect result as JSON
   einvoice convert <file...> [--out <dir>]   canonical JSON (stdout, or one <invoice-id>.json per invoice in <dir>)
   einvoice sweep   <dir...> [--expect answers.json]
+  einvoice match   --po <order.json|order.xml>... [--receipts r.json] [--tolerance '<json>'] <invoice...>
+                                             match invoice lines to purchase orders (two-way; three-way with --receipts)
 
 A file argument of "-" reads stdin.
+--tolerance takes e.g. '{"unitPrice":{"percent":"2"},"quantity":{"absolute":"1"}}' (keys: quantity, unitPrice, total, vat).
 Flags: --pretty  --quiet  --limits '<json>'  --validate  --help
 Exit codes: 0 ok, 1 usage, 2 unsafe/malformed input, 3 unsupported format, 4 validation failed,
-            5 partially converted, 6 validator unavailable, 7 internal error.`;
+            5 partially converted, 6 validator unavailable, 7 internal error, 8 match needs review.`;
 
 class UsageError extends Error {}
 
@@ -60,11 +66,14 @@ interface Parsed {
   out?: string;
   expect?: string;
   limits?: Partial<UnwrapLimits>;
+  po: string[];
+  receipts?: string;
+  tolerance?: Tolerances;
 }
 
 function parseArgs(argv: string[]): Parsed {
-  const p: Parsed = { command: '', files: [], pretty: false, quiet: false, validate: false };
-  const takesValue = new Set(['--out', '--expect', '--limits']);
+  const p: Parsed = { command: '', files: [], pretty: false, quiet: false, validate: false, po: [] };
+  const takesValue = new Set(['--out', '--expect', '--limits', '--po', '--receipts', '--tolerance']);
   for (let i = 0; i < argv.length; i++) {
     let a = argv[i]!;
     if (a === '-' || !a.startsWith('-')) {
@@ -98,6 +107,15 @@ function parseArgs(argv: string[]): Parsed {
       case '--expect':
         p.expect = value;
         break;
+      case '--po':
+        p.po.push(value!);
+        break;
+      case '--receipts':
+        p.receipts = value;
+        break;
+      case '--tolerance':
+        p.tolerance = parseTolerance(value!);
+        break;
       case '--limits':
         p.limits = parseLimits(value!);
         break;
@@ -125,6 +143,32 @@ function parseLimits(text: string): Partial<UnwrapLimits> {
     if (typeof n !== 'number' || !Number.isFinite(n) || n < 0) throw new UsageError(`--limits: "${k}" must be a non-negative number`);
   }
   return v as Partial<UnwrapLimits>;
+}
+
+function parseTolerance(text: string): Tolerances {
+  let v: unknown;
+  try {
+    v = JSON.parse(text);
+  } catch {
+    throw new UsageError('--tolerance must be a JSON object, e.g. \'{"unitPrice":{"percent":"2"}}\'');
+  }
+  if (!v || typeof v !== 'object' || Array.isArray(v)) throw new UsageError('--tolerance must be a JSON object');
+  const out: Record<string, { absolute?: string; percent?: string }> = {};
+  for (const [k, t] of Object.entries(v)) {
+    if (!['quantity', 'unitPrice', 'total', 'vat'].includes(k))
+      throw new UsageError(`--tolerance: unknown key "${k}" (known: quantity, unitPrice, total, vat)`);
+    if (!t || typeof t !== 'object' || Array.isArray(t))
+      throw new UsageError(`--tolerance: "${k}" must be an object with absolute and/or percent`);
+    const tol: { absolute?: string; percent?: string } = {};
+    for (const [f, n] of Object.entries(t)) {
+      if (f !== 'absolute' && f !== 'percent') throw new UsageError(`--tolerance: "${k}.${f}" is not absolute or percent`);
+      if ((typeof n !== 'string' && typeof n !== 'number') || !/^\d+(\.\d+)?$/.test(String(n)))
+        throw new UsageError(`--tolerance: "${k}.${f}" must be a non-negative decimal`);
+      tol[f] = String(n);
+    }
+    out[k] = tol;
+  }
+  return out as Tolerances;
 }
 
 /** Skipped entries that are expected and not a failure. */
@@ -166,13 +210,17 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     io.stdout(`${USAGE}\n`);
     return EXIT.ok;
   }
-  const commands = ['detect', 'inspect', 'convert', 'sweep'];
+  const commands = ['detect', 'inspect', 'convert', 'sweep', 'match'];
   if (!commands.includes(args.command)) {
     io.stderr(`einvoice: unknown command "${args.command}" (try --help)`);
     return EXIT.usage;
   }
   if (args.files.length === 0) {
     io.stderr(`einvoice: ${args.command} needs at least one ${args.command === 'sweep' ? 'directory' : 'file'}`);
+    return EXIT.usage;
+  }
+  if (args.command === 'match' && args.po.length === 0) {
+    io.stderr('einvoice: match needs --po <order.json|order.xml>');
     return EXIT.usage;
   }
   const err = (line: string) => io.stderr(`einvoice: ${oneLine(line)}`);
@@ -186,6 +234,8 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
       if (args.validate) note('--validate has no effect on sweep');
       return await runSweep(args.files, { expect: args.expect, limits: args.limits }, (l) => io.stdout(`${l}\n`));
     }
+
+    if (args.command === 'match') return await runMatch(args, io, json, err);
 
     let validator: Validator | null = null;
     if (args.validate) {
@@ -296,6 +346,57 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     }
     err(`internal error: ${(e as Error).message}`);
     return EXIT.internal;
+  }
+}
+
+async function runMatch(args: Parsed, io: IO, json: (v: unknown) => string, err: (line: string) => void): Promise<number> {
+  const orders: PurchaseOrder[] = [];
+  try {
+    for (const f of args.po) {
+      const bytes = new Uint8Array(readFileSync(f));
+      const text = new TextDecoder().decode(bytes).replace(/^\uFEFF/, '');
+      if (isOrderXml(text)) orders.push(parseOrder(bytes));
+      else orders.push(...parsePurchaseOrdersJson(text));
+    }
+    const receipts = args.receipts ? parseReceiptsJson(readFileSync(args.receipts, 'utf8')) : undefined;
+    const results: unknown[] = [];
+    let worst = EXIT.ok as number;
+    for (const file of args.files) {
+      const label = file === '-' ? 'stdin' : file;
+      let bytes: Uint8Array;
+      try {
+        bytes = file === '-' ? await io.readStdin() : new Uint8Array(readFileSync(file));
+      } catch (e) {
+        err(`${label}: cannot read: ${(e as Error).message}`);
+        worst = worst || EXIT.internal;
+        continue;
+      }
+      const r = await convert(bytes, file === '-' ? undefined : file, args.limits, { relations: true });
+      let any = false;
+      for (const o of r.outcomes) {
+        if (o.status !== 'ok') {
+          err(`${label}: ${o.status === 'error' ? o.error : o.status === 'unsupported' ? o.reason : 'not an invoice'}`);
+          worst = worst || (o.status === 'error' ? EXIT.unsafe : EXIT.unsupported);
+          continue;
+        }
+        for (const inv of o.invoices) {
+          any = true;
+          const res = matchInvoice(inv, orders, { tolerances: args.tolerance, receipts });
+          results.push({ file: label, ...res });
+          if (res.verdict === 'needs-review') worst = worst || EXIT.needsReview;
+        }
+      }
+      for (const s of r.skipped) if (!BENIGN_SKIP.test(s.reason)) err(`${label}: ${s.reason}`);
+      if (!any && r.outcomes.length === 0) worst = worst || EXIT.unsafe;
+    }
+    io.stdout(json(results));
+    return worst;
+  } catch (e) {
+    if (e instanceof MatchInputError || (e as NodeJS.ErrnoException).code === 'ENOENT') {
+      err(`match: ${(e as Error).message}`);
+      return EXIT.usage;
+    }
+    throw e;
   }
 }
 

@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="http://www.ebinterface.at/schema/6p0/" GeneratingSystem="Synthetic test data" DocumentType="Invoice" InvoiceCurrency="EUR" Language="de">
+  <InvoiceNumber>RE-2026-1001</InvoiceNumber>
+  <InvoiceDate>2026-10-12</InvoiceDate>
+  <AdditionalInformation Key="Projekt">PRJ-9</AdditionalInformation>
+  <Delivery>
+    <Date>2026-10-10</Date>
+    <Address>
+      <Name>Stadt Beispielhausen, Bauhof</Name>
+      <Street>Werkstraße 2</Street>
+      <Town>Beispielhausen</Town>
+      <ZIP>4020</ZIP>
+      <Country CountryCode="AT">Österreich</Country>
+    </Address>
+  </Delivery>
+  <Biller>
+    <VATIdentificationNumber>ATU12345678</VATIdentificationNumber>
+    <FurtherIdentification IdentificationType="FN">123456a</FurtherIdentification>
+    <OrderReference>
+      <OrderID>VK-77</OrderID>
+    </OrderReference>
+    <Address>
+      <Name>Muster Beratung GmbH</Name>
+      <Street>Beispielgasse 5</Street>
+      <Town>Wien</Town>
+      <ZIP>1010</ZIP>
+      <Country CountryCode="AT">Österreich</Country>
+    </Address>
+    <Contact>
+      <Name>Max Muster</Name>
+      <Phone>+43 1 0000000</Phone>
+      <Email>rechnung@muster-beratung.example</Email>
+    </Contact>
+    <InvoiceRecipientsBillerID>LIEF-100</InvoiceRecipientsBillerID>
+  </Biller>
+  <InvoiceRecipient>
+    <VATIdentificationNumber>ATU87654321</VATIdentificationNumber>
+    <OrderReference>
+      <OrderID>BE-2026-5</OrderID>
+    </OrderReference>
+    <Address>
+      <Name>Stadt Beispielhausen</Name>
+      <Street>Hauptplatz 1</Street>
+      <Town>Beispielhausen</Town>
+      <ZIP>4020</ZIP>
+      <Country CountryCode="AT">Österreich</Country>
+    </Address>
+    <BillersInvoiceRecipientID>KD-4711</BillersInvoiceRecipientID>
+  </InvoiceRecipient>
+  <Details>
+    <HeaderDescription>Leistungen September 2026</HeaderDescription>
+    <ItemList>
+      <ListLineItem>
+        <PositionNumber>1</PositionNumber>
+        <Description>Beratung</Description>
+        <Quantity Unit="HUR">10.0000</Quantity>
+        <UnitPrice>100.0000</UnitPrice>
+        <ReductionAndSurchargeListLineItemDetails>
+          <ReductionListLineItem>
+            <BaseAmount>1000.00</BaseAmount>
+            <Percentage>10.00</Percentage>
+            <Amount>100.00</Amount>
+            <Comment>Mengenrabatt</Comment>
+          </ReductionListLineItem>
+        </ReductionAndSurchargeListLineItemDetails>
+        <InvoiceRecipientsOrderReference>
+          <OrderID>BE-2026-5</OrderID>
+          <OrderPositionNumber>10</OrderPositionNumber>
+        </InvoiceRecipientsOrderReference>
+        <TaxItem>
+          <TaxableAmount>900.00</TaxableAmount>
+          <TaxPercent TaxCategoryCode="S">20.00</TaxPercent>
+          <TaxAmount>180.00</TaxAmount>
+        </TaxItem>
+        <LineItemAmount>900.00</LineItemAmount>
+      </ListLineItem>
+      <ListLineItem>
+        <PositionNumber>2</PositionNumber>
+        <Description>Fachbuch</Description>
+        <Description>Vertragsrecht, 2. Auflage</Description>
+        <ArticleNumber ArticleNumberType="GTIN">9780000000002</ArticleNumber>
+        <ArticleNumber ArticleNumberType="BillersArticleNumber">BUCH-12</ArticleNumber>
+        <Quantity Unit="C62">2.0000</Quantity>
+        <UnitPrice BaseQuantity="1">50.0000</UnitPrice>
+        <TaxItem>
+          <TaxableAmount>100.00</TaxableAmount>
+          <TaxPercent TaxCategoryCode="S">10.00</TaxPercent>
+          <TaxAmount>10.00</TaxAmount>
+        </TaxItem>
+        <LineItemAmount>100.00</LineItemAmount>
+      </ListLineItem>
+    </ItemList>
+  </Details>
+  <ReductionAndSurchargeDetails>
+    <Reduction>
+      <BaseAmount>1000.00</BaseAmount>
+      <Amount>40.00</Amount>
+      <Comment>Treuerabatt</Comment>
+      <TaxItem>
+        <TaxableAmount>40.00</TaxableAmount>
+        <TaxPercent TaxCategoryCode="S">20.00</TaxPercent>
+        <TaxAmount>8.00</TaxAmount>
+      </TaxItem>
+    </Reduction>
+    <Surcharge>
+      <BaseAmount>1000.00</BaseAmount>
+      <Amount>50.00</Amount>
+      <Comment>Versandkosten</Comment>
+      <TaxItem>
+        <TaxableAmount>50.00</TaxableAmount>
+        <TaxPercent TaxCategoryCode="S">20.00</TaxPercent>
+        <TaxAmount>10.00</TaxAmount>
+      </TaxItem>
+    </Surcharge>
+  </ReductionAndSurchargeDetails>
+  <Tax>
+    <TaxItem>
+      <TaxableAmount>910.00</TaxableAmount>
+      <TaxPercent TaxCategoryCode="S">20.00</TaxPercent>
+      <TaxAmount>182.00</TaxAmount>
+    </TaxItem>
+    <TaxItem>
+      <TaxableAmount>100.00</TaxableAmount>
+      <TaxPercent TaxCategoryCode="S">10.00</TaxPercent>
+      <TaxAmount>10.00</TaxAmount>
+    </TaxItem>
+  </Tax>
+  <TotalGrossAmount>1202.00</TotalGrossAmount>
+  <PrepaidAmount>200.00</PrepaidAmount>
+  <PayableAmount>1002.00</PayableAmount>
+  <PaymentMethod>
+    <Comment>Überweisung</Comment>
+    <UniversalBankTransaction>
+      <BeneficiaryAccount>
+        <BIC>BKAUATWW</BIC>
+        <IBAN>AT611904300234573201</IBAN>
+        <BankAccountOwner>Muster Beratung GmbH</BankAccountOwner>
+      </BeneficiaryAccount>
+      <PaymentReference>RE-2026-1001</PaymentReference>
+    </UniversalBankTransaction>
+  </PaymentMethod>
+  <PaymentConditions>
+    <DueDate>2026-11-15</DueDate>
+    <Discount>
+      <PaymentDate>2026-10-25</PaymentDate>
+      <BaseAmount>1002.00</BaseAmount>
+      <Percentage>2.00</Percentage>
+      <Amount>20.04</Amount>
+    </Discount>
+    <Comment>Zahlbar innerhalb von 30 Tagen netto</Comment>
+  </PaymentConditions>
+  <Comment>Danke für Ihren Auftrag</Comment>
+</Invoice>

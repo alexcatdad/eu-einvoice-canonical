@@ -1,0 +1,42 @@
+{
+  "id": "xsd-facturae-3.2",
+  "title": "Facturae 3.2 XSD",
+  "layer": "schema",
+  "syntax": "facturae",
+  "version": "3.2",
+  "releaseDate": "2026-10-16",
+  "effectiveFrom": "2026-10-16",
+  "effectiveUntil": null,
+  "license": "No licence text in the files; published by the issuing authority for implementers to validate against (see validation/NOTICE)",
+  "upstream": "https://www.facturae.gob.es/formato/Paginas/version-3-2.aspx",
+  "note": "releaseDate is the vendoring date: the schema carries no release date. schemaLocation of imported schemas rewritten to the vendored copy so nothing is fetched at runtime.",
+  "format": "xsd",
+  "entries": {
+    "Facturae": "Facturae.xsd"
+  },
+  "modifiedFiles": [
+    "Facturae.xsd"
+  ],
+  "source": [
+    {
+      "url": "https://www.facturae.gob.es/content/dam/facturae/formato/versiones/Facturaev3_2.xml",
+      "sha256": "05f390ac7e2fd36da6567185cd0e420764e304b6ba491af51a8a100b07283396"
+    },
+    {
+      "url": "https://www.w3.org/TR/2002/REC-xmldsig-core-20020212/xmldsig-core-schema.xsd",
+      "sha256": "35cf8197da812c85e40d57891b35c94187569ed474a2dac813ce5090dafcd35c"
+    }
+  ],
+  "files": [
+    {
+      "path": "Facturae.xsd",
+      "sha256": "97817decb7411f13e73f6d251a8b2dd7052e665eb32b680b9101a60f2a58d7a4",
+      "bytes": 177335
+    },
+    {
+      "path": "xmldsig-core-schema.xsd",
+      "sha256": "35cf8197da812c85e40d57891b35c94187569ed474a2dac813ce5090dafcd35c",
+      "bytes": 10293
+    }
+  ]
+}
