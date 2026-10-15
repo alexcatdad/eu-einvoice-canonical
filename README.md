@@ -194,4 +194,6 @@ Skipped files and the reason are returned by both `inspect()` and `convert()`, s
 
 ## License
 
-[ISC](LICENSE), copyright 2026 alexcatdad.
+[0BSD](LICENSE) (BSD Zero Clause): use, copy, change and distribute it for any purpose, with or without attribution. It comes with no warranty, and the author accepts no liability for its use.
+
+Third-party sample files under `test/fixtures/` keep their own licences (Apache License 2.0 for the phive-rules and Mustang samples; see `test/fixtures/README.md`).
