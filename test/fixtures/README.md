@@ -16,6 +16,11 @@ Synthetic documents with fictitious parties. Their numbers are consistent (the E
 | `facturx-minimum.xml` | Factur-X MINIMUM: no lines |
 | `svefaktura-1.0.xml` | Svefaktura 1.0 in ISO-8859-1: Bankgiro + OCR, F-skatt, round-off, free-text units, a line without quantity, lines without VAT category, invoicing fee |
 | `svefaktura-1.0-credit.xml` | Svefaktura 381 credit without VAT breakdown or currency code |
+| `ksef-fa3-vat-multirate.xml` | KSeF FA(3) VAT invoice: 23/8/5/0 KR/zw lines, Podmiot3 recipient and factor, two due dates, factor account, GLN, KRS/REGON footer, contract and order references |
+| `ksef-fa3-kor-before-after.xml` | KSeF FA(3) KOR that reduces the amount, lines listed before (StanPrzed) and after, KSeF number of the corrected invoice |
+| `ksef-fa3-kor-delta-increase.xml` | KSeF FA(3) KOR in EUR with difference lines that increases the amount, VAT in PLN (P_14_1W), Obciazenia/Odliczenia, payment term as text, corrected invoice issued outside KSeF |
+| `ksef-fa3-zal.xml` | KSeF FA(3) ZAL advance invoice, already paid, with the Zamowienie it relates to |
+| `ksef-fa-rr.xml` | KSeF FA_RR(1) flat-rate farmer purchase invoice, two lines at 7 % refund |
 
 ## From public sample collections
 

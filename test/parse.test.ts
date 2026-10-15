@@ -334,7 +334,7 @@ describe('real samples (phive-rules / Mustang / ANAF)', () => {
 
 describe('convert outcomes', () => {
   test('formats without a parser are "unsupported", with the detection kept', async () => {
-    const r = await convert(fixture('ksef-fa3.xml'), 'ksef-fa3.xml');
+    const r = await convert(fixture('mydata.xml'), 'mydata.xml');
     assert.equal(r.outcomes[0].status, 'unsupported');
     assert.equal(r.outcomes[0].detection.kind, 'invoice');
   });
