@@ -27,6 +27,23 @@ Synthetic documents with fictitious parties. Their numbers are consistent (the E
 | `fatturapa-lot.xml` | FatturaPA file with two FatturaElettronicaBody; the second has two instalments (TP01) |
 | `fatturapa-fsm10.xml` | FatturaPA semplificata FSM10 (TD07): VAT-inclusive Importo blocks, one with Natura N4 |
 
-## From public sample collections
+## Provenance of the other fixtures
 
-The remaining fixtures were assembled by the earlier version of this project from public samples, mainly [phive-rules](https://github.com/phax/phive-rules) and [Mustang](https://github.com/ZUGFeRD/mustangproject) (both Apache License 2.0), some trimmed or re-wrapped to exercise one envelope or encoding (UTF-16, SBDH, SOAP, ZIP, CAdES). The `.p7m` files are signed with a throwaway test certificate. The origin of each individual file was not re-verified when this repository was created.
+Re-checked against the public corpora (phive-rules `58e8c83`, mustangproject `68520f6`, FNFE France_RFE `97ba0f3`; all three are Apache License 2.0). "Derived" means the file differs from the named source only in the stated way. Where a file is not a copy of anything found, it is a hand-written header-only stub with fictitious values (written for this project, so no third-party licence applies).
+
+| File | Origin | Licence |
+|---|---|---|
+| `facturx-en16931.pdf` | Byte-identical to Mustang `library/src/test/resources/EN16931_Einfach.pdf` | Apache-2.0 (mustangproject) |
+| `invoice.isdocx` | `faktura.isdoc` inside is identical (line endings aside) to phive-rules `phive-rules-isdoc/.../test-files/6.0.1/doklad.isdoc`, the sample from the ISDOC specification (isdoc.cz); `priloha.txt` is a dummy attachment | phive-rules Apache-2.0; the ISDOC sample's own licence is not stated |
+| `anaf-download.zip` | `4567890123.xml` inside is byte-identical to phive-rules `phive-rules-cius-ro/.../test-files/1.0.8/ubl_b2g_example1.xml` (CIUS-RO B2G example); `semnatura_4567890123.xml` is a placeholder signature file | phive-rules Apache-2.0; the CIUS-RO example's own licence is not stated |
+| `peppol-utf16.xml` | Derived from the Peppol AU/NZ example `AU Credit_note.xml` (phive-rules `phive-rules-peppol/.../test-files/aunz-peppol/1.0.12/`): comment line changed, re-encoded as UTF-16 | phive-rules Apache-2.0; upstream is the Peppol AU/NZ authority's example set, licence not stated |
+| `peppol-in-sbdh.xml` | The same credit note wrapped in a hand-written SBDH | as above |
+| `hr-cius.xml` | The same credit note with CustomizationID replaced by the Croatian identifier | as above |
+| `en16931-2026.xml` | The same credit note with CustomizationID `urn:cen.eu:en16931:2026` (the identifier is invented to test the 2026 revision) | as above |
+| `IT01234567890_FPR12.xml.p7m`, `IT01234567890_FPR12.base64.xml.p7m` | The invoice inside (Società Alpha Srl to Beta Gamma) is the well-known Agenzia delle Entrate specimen FatturaPA; not found in the clones, so the exact source and licence are **not verified**. The CMS wrapper is generated here with a throwaway certificate | Specimen: unclear. Wrapper: this project |
+| `finvoice-with-soap.xml` | Finvoice 3.0 sample (identifier `Inv900375418`, operators OPERAATTORI1/2) inside a hand-written SOAP/ebXML envelope. The Finvoice part resembles Finanssiala's published Finvoice 3.0 examples but was **not found** in the clones, so the source and licence are **not verified** | Unclear |
+| `ksef-fa3.xml`, `eslog2.xml`, `e-arve-two-invoices.xml`, `ebinterface-61.xml`, `fattura-semplificata.xml`, `sdi-metadata.xml`, `mydata.xml`, `facturae-322-signed.xsig` | Hand-written header-only stubs, not found in any corpus | This project |
+
+If you can name the original of a "not verified" file, say so in the table; do not delete the fixture, the tests depend on it.
+
+The known-answer manifest for the public corpora themselves (`test/corpus/expected.json`) is described in `.github/workflows/corpus.yml` and `scripts/corpus-manifest.ts`; those files are fetched at run time and are not stored in this repository.
