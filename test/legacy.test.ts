@@ -1,7 +1,7 @@
-import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { PDFDocument } from 'pdf-lib';
-import { convert, detectXml, effectiveSign, type CanonicalInvoice } from '../src/index.js';
+import { type CanonicalInvoice, convert, detectXml, effectiveSign } from '../src/index.js';
 import { fixture, parseOne, utf8, warningCodes } from './helpers.js';
 
 const text = (name: string) => new TextDecoder().decode(fixture(name));
@@ -55,18 +55,28 @@ describe('ZUGFeRD 1.0 COMFORT', async () => {
   });
 
   test('payment, allowance and charge', () => {
-    assert.deepEqual(inv.payments, [{
-      meansCode: '31', meansText: 'Ueberweisung', remittanceInformation: 'RE-2026-0815',
-      creditTransfers: [{ accountId: 'DE02120300000000202051', accountName: 'Musterbau GmbH', serviceProviderId: 'BYLADEM1001' }],
-    }]);
+    assert.deepEqual(inv.payments, [
+      {
+        meansCode: '31',
+        meansText: 'Ueberweisung',
+        remittanceInformation: 'RE-2026-0815',
+        creditTransfers: [{ accountId: 'DE02120300000000202051', accountName: 'Musterbau GmbH', serviceProviderId: 'BYLADEM1001' }],
+      },
+    ]);
     assert.deepEqual(inv.allowances, [{ amount: '48.00', reason: 'Treuerabatt', vat: { categoryCode: 'S', rate: '19.00' } }]);
     assert.deepEqual(inv.charges, [{ amount: '20.00', reason: 'Versand', vat: { categoryCode: 'S', rate: '19.00' } }]);
   });
 
   test('totals and VAT breakdown are exactly as sent, and consistent', () => {
     assert.deepEqual(inv.totals, {
-      lineNetTotal: '1048.00', allowanceTotal: '48.00', chargeTotal: '20.00', taxExclusive: '1020.00',
-      vatTotal: '182.04', taxInclusive: '1202.04', prepaid: '200.00', payable: '1002.04',
+      lineNetTotal: '1048.00',
+      allowanceTotal: '48.00',
+      chargeTotal: '20.00',
+      taxExclusive: '1020.00',
+      vatTotal: '182.04',
+      taxInclusive: '1202.04',
+      prepaid: '200.00',
+      payable: '1002.04',
     });
     assert.deepEqual(inv.vatBreakdown, [
       { taxableAmount: '922.00', taxAmount: '175.18', categoryCode: 'S', rate: '19.00' },
@@ -93,9 +103,16 @@ describe('ZUGFeRD 1.0 COMFORT', async () => {
   });
 
   test('embedded attachment', () => {
-    assert.deepEqual(inv.attachments, [{
-      kind: 'embedded', id: 'ANL-1', description: 'Leistungsnachweis', mimeCode: 'text/plain', filename: 'nachweis.txt', base64: 'aGVsbG8=',
-    }]);
+    assert.deepEqual(inv.attachments, [
+      {
+        kind: 'embedded',
+        id: 'ANL-1',
+        description: 'Leistungsnachweis',
+        mimeCode: 'text/plain',
+        filename: 'nachweis.txt',
+        base64: 'aGVsbG8=',
+      },
+    ]);
   });
 
   test('what has no canonical field is kept in unmapped, and the VAT category is recorded as derived', () => {
@@ -117,7 +134,13 @@ describe('ZUGFeRD 1.0 COMFORT', async () => {
       '<ram:BasisAmount currencyID="EUR">98.00</ram:BasisAmount>\n        <ram:ExemptionReason>Steuerfrei</ram:ExemptionReason>\n        <ram:ApplicablePercent>0.00</ram:ApplicablePercent>',
     );
     const e = await parseOne(utf8(xml), 'e.xml');
-    assert.deepEqual(e.vatBreakdown[1], { taxableAmount: '98.00', taxAmount: '6.86', categoryCode: 'E', rate: '0.00', exemptionReason: 'Steuerfrei' });
+    assert.deepEqual(e.vatBreakdown[1], {
+      taxableAmount: '98.00',
+      taxAmount: '6.86',
+      categoryCode: 'E',
+      rate: '0.00',
+      exemptionReason: 'Steuerfrei',
+    });
   });
 
   test('inside a PDF as ZUGFeRD-invoice.xml', async () => {
@@ -127,7 +150,10 @@ describe('ZUGFeRD 1.0 COMFORT', async () => {
     const fromPdf = await parseOne(await pdf.save(), 'rechnung.pdf');
     assert.equal(fromPdf.id, 'RE-2026-0815');
     assert.equal(fromPdf.source.format, 'zugferd-1');
-    assert.deepEqual(fromPdf.source.envelope.map((e) => e.kind), ['pdf-attachment', 'xml']);
+    assert.deepEqual(
+      fromPdf.source.envelope.map((e) => e.kind),
+      ['pdf-attachment', 'xml'],
+    );
     assert.equal(fromPdf.totals.payable, '1002.04');
   });
 
@@ -186,26 +212,40 @@ describe('TEAPPSXML batch', async () => {
     assert.equal(inv.buyer.name, 'Asiakas Oy');
     assert.deepEqual(inv.buyer.identifiers, [{ value: 'A-100' }]);
     assert.deepEqual(inv.buyer.endpoint, { value: '003787654321' });
-    assert.deepEqual(inv.additionalParties.map((p) => [p.role, p.party.name]), [['orderer', 'Asiakas Oy, hankinta']]);
+    assert.deepEqual(
+      inv.additionalParties.map((p) => [p.role, p.party.name]),
+      [['orderer', 'Asiakas Oy, hankinta']],
+    );
   });
 
   test('payment', () => {
-    assert.deepEqual(inv.payments, [{
-      meansCode: '30', meansText: 'Tilisiirto', remittanceInformation: '1234561',
-      creditTransfers: [{ accountId: 'FI2112345600000785', accountName: 'Esimerkkipankki', serviceProviderId: 'NDEAFIHH' }],
-    }]);
+    assert.deepEqual(inv.payments, [
+      {
+        meansCode: '30',
+        meansText: 'Tilisiirto',
+        remittanceInformation: '1234561',
+        creditTransfers: [{ accountId: 'FI2112345600000785', accountName: 'Esimerkkipankki', serviceProviderId: 'NDEAFIHH' }],
+      },
+    ]);
   });
 
   test('totals pick the EXCLUDED and INCLUDED amounts, and the advance payment', () => {
     assert.deepEqual(inv.totals, {
-      lineNetTotal: '790.00', chargeTotal: '10.00', taxExclusive: '800.00', vatTotal: '197.80',
-      taxInclusive: '997.80', prepaid: '100.00', payable: '897.80',
+      lineNetTotal: '790.00',
+      chargeTotal: '10.00',
+      taxExclusive: '800.00',
+      vatTotal: '197.80',
+      taxInclusive: '997.80',
+      prepaid: '100.00',
+      payable: '897.80',
     });
     assert.deepEqual(inv.vatBreakdown, [
       { taxableAmount: '760.00', taxAmount: '193.80', categoryCode: 'S', rate: '25.5' },
       { taxableAmount: '40.00', taxAmount: '4.00', categoryCode: 'S', rate: '10' },
     ]);
-    assert.deepEqual(inv.charges, [{ amount: '10.00', reason: 'Toimituskulu', reasonCode: 'FC', vat: { categoryCode: 'S', rate: '25.5' } }]);
+    assert.deepEqual(inv.charges, [
+      { amount: '10.00', reason: 'Toimituskulu', reasonCode: 'FC', vat: { categoryCode: 'S', rate: '25.5' } },
+    ]);
     assert.deepEqual(brWarnings(inv), []);
   });
 
@@ -240,7 +280,13 @@ describe('TEAPPSXML batch', async () => {
     assert.equal(cn.currency, 'EUR');
     assert.ok(!cn.source.derived.some((d) => d.field === '/currency'));
     assert.deepEqual(cn.precedingInvoices, [{ id: '20261001', issueDate: '2026-10-05' }]);
-    assert.deepEqual(cn.totals, { lineNetTotal: '-40.00', taxExclusive: '-40.00', vatTotal: '-4.00', taxInclusive: '-44.00', payable: '-44.00' });
+    assert.deepEqual(cn.totals, {
+      lineNetTotal: '-40.00',
+      taxExclusive: '-40.00',
+      vatTotal: '-4.00',
+      taxInclusive: '-44.00',
+      payable: '-44.00',
+    });
     assert.equal(cn.lines[0].quantity, '-2');
     assert.equal(cn.lines[0].netAmount, '-40.00');
     assert.equal(cn.lines[0].price?.net, '20.00');
@@ -258,13 +304,19 @@ describe('TEAPPSXML batch', async () => {
   });
 
   test('a date with a missing part is a parse error', async () => {
-    const xml = text('teappsxml-invoices.xml').replace('<DAY>05</DAY><MONTH>10</MONTH><CENTURY>20</CENTURY><DECADE_AND_YEAR>26</DECADE_AND_YEAR></DATE></INVOICE_DATE>', '<DAY>05</DAY><MONTH>10</MONTH></DATE></INVOICE_DATE>');
+    const xml = text('teappsxml-invoices.xml').replace(
+      '<DAY>05</DAY><MONTH>10</MONTH><CENTURY>20</CENTURY><DECADE_AND_YEAR>26</DECADE_AND_YEAR></DATE></INVOICE_DATE>',
+      '<DAY>05</DAY><MONTH>10</MONTH></DATE></INVOICE_DATE>',
+    );
     const r = await convert(utf8(xml), 'bad.xml');
     assert.equal(r.outcomes[0].status, 'error');
   });
 
   test('an unknown INVOICE_TYPE is treated as 380 with a warning', async () => {
-    const xml = text('teappsxml-invoices.xml').replace('<INVOICE_TYPE UNTDID_CODE="380">00</INVOICE_TYPE>', '<INVOICE_TYPE>90</INVOICE_TYPE>');
+    const xml = text('teappsxml-invoices.xml').replace(
+      '<INVOICE_TYPE UNTDID_CODE="380">00</INVOICE_TYPE>',
+      '<INVOICE_TYPE>90</INVOICE_TYPE>',
+    );
     const [first] = await parseAll('x.xml', utf8(xml));
     assert.equal(first.typeCode, '380');
     assert.ok(warningCodes(first).includes('TYPE_UNKNOWN'));
@@ -299,7 +351,9 @@ describe('myDATA InvoicesDoc', async () => {
   });
 
   test('MARK and UID are the GR:MYDATA clearance', () => {
-    assert.deepEqual(inv.clearance, [{ authority: 'GR:MYDATA', documentId: '400000000000101', secondaryId: '7A1B2C3D4E5F60718293A4B5C6D7E8F901234567' }]);
+    assert.deepEqual(inv.clearance, [
+      { authority: 'GR:MYDATA', documentId: '400000000000101', secondaryId: '7A1B2C3D4E5F60718293A4B5C6D7E8F901234567' },
+    ]);
     assert.deepEqual(cn.clearance, [{ authority: 'GR:MYDATA', documentId: '400000000000102' }]);
   });
 
@@ -326,16 +380,25 @@ describe('myDATA InvoicesDoc', async () => {
   });
 
   test('lines, VAT breakdown and totals', () => {
-    assert.deepEqual(inv.lines.map((l) => [l.id, l.quantity, l.unitCode, l.netAmount, l.vat?.rate]), [
-      ['1', '10', 'C62', '100.00', '24'],
-      ['2', '5', 'KGM', '50.00', '13'],
-    ]);
+    assert.deepEqual(
+      inv.lines.map((l) => [l.id, l.quantity, l.unitCode, l.netAmount, l.vat?.rate]),
+      [
+        ['1', '10', 'C62', '100.00', '24'],
+        ['2', '5', 'KGM', '50.00', '13'],
+      ],
+    );
     assert.equal(inv.lines[0].item.name, 'Υπηρεσίες συντήρησης');
     assert.deepEqual(inv.vatBreakdown, [
       { taxableAmount: '100.00', taxAmount: '24.00', categoryCode: 'S', rate: '24', nationalCode: 'GR:vatCategory:1' },
       { taxableAmount: '50.00', taxAmount: '6.50', categoryCode: 'S', rate: '13', nationalCode: 'GR:vatCategory:2' },
     ]);
-    assert.deepEqual(inv.totals, { lineNetTotal: '150.00', taxExclusive: '150.00', vatTotal: '30.50', taxInclusive: '180.50', payable: '180.50' });
+    assert.deepEqual(inv.totals, {
+      lineNetTotal: '150.00',
+      taxExclusive: '150.00',
+      vatTotal: '30.50',
+      taxInclusive: '180.50',
+      payable: '180.50',
+    });
     assert.deepEqual(brWarnings(inv), []);
     assert.ok(warningCodes(inv).includes('NO_ITEM_NAME'));
     assert.deepEqual(inv.payments, [{ meansCode: '30', meansText: 'Τραπεζική κατάθεση', nationalMeansCode: '1', creditTransfers: [] }]);
@@ -346,7 +409,12 @@ describe('myDATA InvoicesDoc', async () => {
     assert.ok(warningCodes(cn).includes('PRECEDING_BY_MARK'));
     assert.deepEqual(cn.withholdings, [{ scheme: 'GR:withheld', amount: '5.00', reasonCode: '3' }]);
     assert.deepEqual(cn.totals, {
-      lineNetTotal: '100.00', taxExclusive: '100.00', vatTotal: '24.00', taxInclusive: '124.00', withholdingTotal: '5.00', payable: '119.00',
+      lineNetTotal: '100.00',
+      taxExclusive: '100.00',
+      vatTotal: '24.00',
+      taxInclusive: '124.00',
+      withholdingTotal: '5.00',
+      payable: '119.00',
     });
     assert.equal(cn.lines[0].subjectToWithholding, true);
     assert.deepEqual(cn.lines[0].national, { withheldAmount: '5.00', withheldPercentCategory: '3' });
@@ -380,7 +448,8 @@ describe('myDATA InvoicesDoc', async () => {
 });
 
 describe('myDATA detection uses the AADE invoice namespace', () => {
-  const doc = (ns: string) => `<InvoicesDoc xmlns="${ns}"><invoice><invoiceHeader><invoiceType>1.1</invoiceType></invoiceHeader></invoice></InvoicesDoc>`;
+  const doc = (ns: string) =>
+    `<InvoicesDoc xmlns="${ns}"><invoice><invoiceHeader><invoiceType>1.1</invoiceType></invoiceHeader></invoice></InvoicesDoc>`;
 
   test('the official namespace is detected, with the invoice type as profile', () => {
     const d = detectXml(doc('http://www.aade.gr/myDATA/invoice/v1.0'));

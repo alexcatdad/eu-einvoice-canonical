@@ -1,5 +1,5 @@
-import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { convert, effectiveSign } from '../src/index.js';
 import { fixture, parseOne, utf8, warningCodes } from './helpers.js';
 
@@ -33,7 +33,13 @@ describe('Facturae: single invoice with IVA and IRPF', async () => {
     assert.equal(s.name, 'Lucía Ejemplo Ficticia');
     assert.deepEqual(s.nationalTaxIds, [{ value: '12345678Z', schemeId: 'ES:NIF' }]);
     assert.equal(s.vatId, 'ES12345678Z');
-    assert.deepEqual(s.address, { line1: 'Calle de Muestra 5, 2º B', city: 'Madrid', postalCode: '28001', countrySubdivision: 'Madrid', countryCode: 'ES' });
+    assert.deepEqual(s.address, {
+      line1: 'Calle de Muestra 5, 2º B',
+      city: 'Madrid',
+      postalCode: '28001',
+      countrySubdivision: 'Madrid',
+      countryCode: 'ES',
+    });
     assert.deepEqual(s.contact, { phone: '+34 910 000 001', email: 'facturas@lucia.example' });
     assert.equal(inv.source.unmapped['/Facturae/Parties/SellerParty/Individual/ContactDetails/WebAddress'], 'https://lucia.example');
     assert.equal(inv.buyer.name, 'Ayuntamiento de Ejemplo');
@@ -43,7 +49,10 @@ describe('Facturae: single invoice with IVA and IRPF', async () => {
 
   test('DIR3 administrative centres and Facturae data in extensions.es', () => {
     assert.deepEqual(inv.extensions.es, {
-      facturaeVersion: '3.2.2', invoiceClass: 'OO', invoiceDocumentType: 'FC', batchId: 'B00000012A-2026-0042',
+      facturaeVersion: '3.2.2',
+      invoiceClass: 'OO',
+      invoiceDocumentType: 'FC',
+      batchId: 'B00000012A-2026-0042',
       administrativeCentres: [
         { roleCode: '01', code: 'EA0000001', name: 'Oficina contable ficticia' },
         { roleCode: '02', code: 'EA0000002', name: 'Órgano gestor ficticio' },
@@ -53,12 +62,20 @@ describe('Facturae: single invoice with IVA and IRPF', async () => {
   });
 
   test('IVA breakdown, IRPF withholding and totals', () => {
-    assert.deepEqual(inv.vatBreakdown, [{ taxableAmount: '608.00', taxAmount: '127.68', categoryCode: 'S', rate: '21.00', nationalCode: 'ES:01' }]);
+    assert.deepEqual(inv.vatBreakdown, [
+      { taxableAmount: '608.00', taxAmount: '127.68', categoryCode: 'S', rate: '21.00', nationalCode: 'ES:01' },
+    ]);
     assert.deepEqual(inv.withholdings, [{ scheme: 'ES:IRPF', taxableAmount: '608.00', rate: '15.00', amount: '91.20' }]);
     assert.deepEqual(inv.otherTaxes, []);
     assert.deepEqual(inv.totals, {
-      lineNetTotal: '608.00', allowanceTotal: '0.00', chargeTotal: '0.00', taxExclusive: '608.00', vatTotal: '127.68',
-      taxInclusive: '735.68', withholdingTotal: '91.20', payable: '644.48',
+      lineNetTotal: '608.00',
+      allowanceTotal: '0.00',
+      chargeTotal: '0.00',
+      taxExclusive: '608.00',
+      vatTotal: '127.68',
+      taxInclusive: '735.68',
+      withholdingTotal: '91.20',
+      payable: '644.48',
     });
     const fields = inv.source.derived.map((d) => d.field);
     assert.ok(fields.includes('/totals/taxInclusive'));
@@ -83,9 +100,13 @@ describe('Facturae: single invoice with IVA and IRPF', async () => {
   });
 
   test('payment: transfer to IBAN, single installment becomes the due date', () => {
-    assert.deepEqual(inv.payments, [{
-      meansCode: '30', nationalMeansCode: '04', creditTransfers: [{ accountId: IBAN, serviceProviderId: 'CAIXESBBXXX' }],
-    }]);
+    assert.deepEqual(inv.payments, [
+      {
+        meansCode: '30',
+        nationalMeansCode: '04',
+        creditTransfers: [{ accountId: IBAN, serviceProviderId: 'CAIXESBBXXX' }],
+      },
+    ]);
     assert.deepEqual(inv.paymentSchedule, []);
   });
 });
@@ -94,10 +115,13 @@ describe('Facturae: recargo de equivalencia', async () => {
   const inv = await parseOne('facturae-322-recargo.xml');
 
   test('IVA per rate in the breakdown, recargo in otherTaxes', () => {
-    assert.deepEqual(inv.vatBreakdown.map((v) => [v.categoryCode, v.rate, v.taxableAmount, v.taxAmount]), [
-      ['S', '21.00', '823.46', '172.93'],
-      ['S', '10.00', '100.00', '10.00'],
-    ]);
+    assert.deepEqual(
+      inv.vatBreakdown.map((v) => [v.categoryCode, v.rate, v.taxableAmount, v.taxAmount]),
+      [
+        ['S', '21.00', '823.46', '172.93'],
+        ['S', '10.00', '100.00', '10.00'],
+      ],
+    );
     assert.deepEqual(inv.otherTaxes, [
       { scheme: 'ES:RE', taxableAmount: '823.46', rate: '5.20', amount: '42.82', includedInTotal: true },
       { scheme: 'ES:RE', taxableAmount: '100.00', rate: '1.40', amount: '1.40', includedInTotal: true },
@@ -118,7 +142,9 @@ describe('Facturae: recargo de equivalencia', async () => {
     assert.equal(l.quantity, '1000');
     assert.equal(l.price?.net, '0.12345678');
     assert.equal(l.netAmount, '123.45678000');
-    assert.deepEqual(l.otherTaxes, [{ scheme: 'ES:RE', taxableAmount: '123.45678000', rate: '5.20', amount: '6.41975256', includedInTotal: true }]);
+    assert.deepEqual(l.otherTaxes, [
+      { scheme: 'ES:RE', taxableAmount: '123.45678000', rate: '5.20', amount: '6.41975256', includedInTotal: true },
+    ]);
     assert.equal(l.item.sellerId, 'TOR-M4');
   });
 
@@ -131,9 +157,14 @@ describe('Facturae: recargo de equivalencia', async () => {
     assert.equal(inv.buyer.name, 'Pablo Tienda Imaginaria');
     assert.equal(inv.buyer.vatId, undefined);
     assert.deepEqual(inv.buyer.nationalTaxIds, [{ value: '87654321X', schemeId: 'ES:NIF' }]);
-    assert.deepEqual(inv.payments, [{
-      meansCode: '49', nationalMeansCode: '02', creditTransfers: [], directDebit: { debitedAccountId: 'ES7921000813610123456789' },
-    }]);
+    assert.deepEqual(inv.payments, [
+      {
+        meansCode: '49',
+        nationalMeansCode: '02',
+        creditTransfers: [],
+        directDebit: { debitedAccountId: 'ES7921000813610123456789' },
+      },
+    ]);
   });
 });
 
@@ -146,16 +177,27 @@ describe('Facturae: batch', async () => {
 
   test('one canonical invoice per Invoice, with position and fragment path', () => {
     assert.equal(invoices.length, 2);
-    assert.deepEqual(invoices.map((i) => i.id), ['L7-1001', 'L7-1002']);
-    assert.deepEqual(invoices.map((i) => i.source.indexInFile), [0, 1]);
-    assert.deepEqual(invoices.map((i) => i.source.fragmentPath), ['/Facturae/Invoices/Invoice[1]', '/Facturae/Invoices/Invoice[2]']);
+    assert.deepEqual(
+      invoices.map((i) => i.id),
+      ['L7-1001', 'L7-1002'],
+    );
+    assert.deepEqual(
+      invoices.map((i) => i.source.indexInFile),
+      [0, 1],
+    );
+    assert.deepEqual(
+      invoices.map((i) => i.source.fragmentPath),
+      ['/Facturae/Invoices/Invoice[1]', '/Facturae/Invoices/Invoice[2]'],
+    );
     assert.ok(invoices.every((i) => i.extensions.es?.batchId === 'B00000012-LOTE-7'));
     assert.ok(invoices.every((i) => i.source.warnings.length === 0));
   });
 
   test('IGIC maps to category L', () => {
     assert.equal(invoices[0].vatBreakdown[0].categoryCode, 'S');
-    assert.deepEqual(invoices[1].vatBreakdown, [{ taxableAmount: '91.00', taxAmount: '6.37', categoryCode: 'L', rate: '7.00', nationalCode: 'ES:03' }]);
+    assert.deepEqual(invoices[1].vatBreakdown, [
+      { taxableAmount: '91.00', taxAmount: '6.37', categoryCode: 'L', rate: '7.00', nationalCode: 'ES:03' },
+    ]);
     assert.equal(invoices[1].totals.payable, '97.37');
   });
 
@@ -184,7 +226,13 @@ describe('Facturae: rectificativa', async () => {
     assert.equal(inv.lines[0].quantity, '2');
     assert.equal(inv.lines[0].netAmount, '50.000000');
     assert.equal(inv.lines[0].price?.net, '25.000000');
-    assert.deepEqual(inv.vatBreakdown[0], { taxableAmount: '50.00', taxAmount: '10.50', categoryCode: 'S', rate: '21.00', nationalCode: 'ES:01' });
+    assert.deepEqual(inv.vatBreakdown[0], {
+      taxableAmount: '50.00',
+      taxAmount: '10.50',
+      categoryCode: 'S',
+      rate: '21.00',
+      nationalCode: 'ES:01',
+    });
     assert.ok(inv.source.derived.some((d) => d.field === '/kind'));
     assert.deepEqual(warningCodes(inv), []);
   });
@@ -192,21 +240,41 @@ describe('Facturae: rectificativa', async () => {
   test('correction data and the corrected invoice', () => {
     assert.deepEqual(inv.precedingInvoices, [{ id: 'RE290' }]);
     assert.deepEqual(inv.correction, {
-      reason: 'Número de la factura', reasonCode: '01', method: '02', period: { start: '2026-09-01', end: '2026-09-30' },
+      reason: 'Número de la factura',
+      reasonCode: '01',
+      method: '02',
+      period: { start: '2026-09-01', end: '2026-09-30' },
     });
     assert.equal(inv.nationalType?.code, 'OR');
     assert.equal(inv.typeCode, '381');
-    assert.equal(inv.source.unmapped['/Facturae/Invoices/Invoice[1]/InvoiceHeader/Corrective/AdditionalReasonDescription'], 'Devolución de dos unidades defectuosas');
+    assert.equal(
+      inv.source.unmapped['/Facturae/Invoices/Invoice[1]/InvoiceHeader/Corrective/AdditionalReasonDescription'],
+      'Devolución de dos unidades defectuosas',
+    );
   });
 });
 
 /** Minimal one-line Facturae 3.2.2 invoice, net 100.00, for edge cases. */
-function mini(o: { cls?: string; doc?: string; corrective?: string; tax?: string; rate?: string; taxAmount?: string; event?: string; sign?: '' | '-'; country?: string; issuerType?: string } = {}): Uint8Array {
+function mini(
+  o: {
+    cls?: string;
+    doc?: string;
+    corrective?: string;
+    tax?: string;
+    rate?: string;
+    taxAmount?: string;
+    event?: string;
+    sign?: '' | '-';
+    country?: string;
+    issuerType?: string;
+  } = {},
+): Uint8Array {
   const s = o.sign ?? '';
   const taxAmount = o.taxAmount ?? '21.00';
   const total = (Number(taxAmount) + 100).toFixed(2);
   const tax = `<Tax><TaxTypeCode>${o.tax ?? '01'}</TaxTypeCode><TaxRate>${o.rate ?? '21.00'}</TaxRate><TaxableBase><TotalAmount>${s}100.00</TotalAmount></TaxableBase><TaxAmount><TotalAmount>${s}${taxAmount}</TotalAmount></TaxAmount></Tax>`;
-  const party = (nif: string, name: string) => `<TaxIdentification><PersonTypeCode>J</PersonTypeCode><ResidenceTypeCode>R</ResidenceTypeCode><TaxIdentificationNumber>${nif}</TaxIdentificationNumber></TaxIdentification><LegalEntity><CorporateName>${name}</CorporateName><AddressInSpain><Address>Calle 1</Address><PostCode>28001</PostCode><Town>Madrid</Town><Province>Madrid</Province><CountryCode>${o.country ?? 'ESP'}</CountryCode></AddressInSpain></LegalEntity>`;
+  const party = (nif: string, name: string) =>
+    `<TaxIdentification><PersonTypeCode>J</PersonTypeCode><ResidenceTypeCode>R</ResidenceTypeCode><TaxIdentificationNumber>${nif}</TaxIdentificationNumber></TaxIdentification><LegalEntity><CorporateName>${name}</CorporateName><AddressInSpain><Address>Calle 1</Address><PostCode>28001</PostCode><Town>Madrid</Town><Province>Madrid</Province><CountryCode>${o.country ?? 'ESP'}</CountryCode></AddressInSpain></LegalEntity>`;
   return utf8(`<?xml version="1.0" encoding="UTF-8"?>
 <fe:Facturae xmlns:fe="http://www.facturae.gob.es/formato/Versiones/Facturaev3_2_2.xml"><FileHeader><SchemaVersion>3.2.2</SchemaVersion><Modality>I</Modality><InvoiceIssuerType>${o.issuerType ?? 'EM'}</InvoiceIssuerType></FileHeader>
 <Parties><SellerParty>${party('B00000012', 'Vendedora Ficticia SL')}</SellerParty><BuyerParty>${party('A00000024', 'Compradora Ficticia SA')}</BuyerParty></Parties>
@@ -219,7 +287,8 @@ function mini(o: { cls?: string; doc?: string; corrective?: string; tax?: string
 }
 
 describe('Facturae: edge cases', () => {
-  const corrective = (method: string) => `<Corrective><InvoiceNumber>5</InvoiceNumber><ReasonCode>01</ReasonCode><ReasonDescription>x</ReasonDescription><CorrectionMethod>${method}</CorrectionMethod></Corrective>`;
+  const corrective = (method: string) =>
+    `<Corrective><InvoiceNumber>5</InvoiceNumber><ReasonCode>01</ReasonCode><ReasonDescription>x</ReasonDescription><CorrectionMethod>${method}</CorrectionMethod></Corrective>`;
 
   test('IPSI maps to category M', async () => {
     const inv = await parseOne(mini({ tax: '02', rate: '4.00', taxAmount: '4.00' }), 'a.xml');
@@ -260,7 +329,8 @@ describe('Facturae: edge cases', () => {
   });
 
   test('zero-rated IVA with a special taxable event is exempt with its reason', async () => {
-    const event = '<SpecialTaxableEvent><SpecialTaxableEventCode>01</SpecialTaxableEventCode><SpecialTaxableEventReason>Exenta art. 20 LIVA</SpecialTaxableEventReason></SpecialTaxableEvent>';
+    const event =
+      '<SpecialTaxableEvent><SpecialTaxableEventCode>01</SpecialTaxableEventCode><SpecialTaxableEventReason>Exenta art. 20 LIVA</SpecialTaxableEventReason></SpecialTaxableEvent>';
     const inv = await parseOne(mini({ rate: '0.00', taxAmount: '0.00', event }), 'a.xml');
     assert.equal(inv.vatBreakdown[0].categoryCode, 'E');
     assert.equal(inv.vatBreakdown[0].exemptionReason, 'Exenta art. 20 LIVA');

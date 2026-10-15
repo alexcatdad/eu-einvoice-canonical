@@ -1,5 +1,5 @@
-import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { detectXml } from '../src/index.js';
 import { planFor, unavailableSummary } from '../src/validation/plan.js';
 import { PEPPOL, ublHeader } from './helpers.js';

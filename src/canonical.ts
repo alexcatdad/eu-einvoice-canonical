@@ -25,8 +25,15 @@
  */
 
 import type {
-  AllowanceChargeReasonCode, CountryCode, CreditNoteTypeCode, CurrencyCode, InvoiceTypeCode,
-  PaymentMeansCode, SchemeId, UnitCode, VatCategoryCode,
+  AllowanceChargeReasonCode,
+  CountryCode,
+  CreditNoteTypeCode,
+  CurrencyCode,
+  InvoiceTypeCode,
+  PaymentMeansCode,
+  SchemeId,
+  UnitCode,
+  VatCategoryCode,
 } from './codes.js';
 import type { FormatId } from './formats.js';
 
@@ -59,51 +66,55 @@ export interface Identifier {
 // Parties
 // ---------------------------------------------------------------------------
 
-export interface Address {                    // BG-5 / BG-8 / BG-12 / BG-15
-  line1?: string;                             // BT-35
-  line2?: string;                             // BT-36
-  line3?: string;                             // BT-162
-  city?: string;                              // BT-37
-  postalCode?: string;                        // BT-38 (string: keeps leading zeros)
-  countrySubdivision?: string;                // BT-39 (e.g. RO-B, IT province 'MI')
-  countryCode?: CountryCode;                  // BT-40 (EN-mandatory; some national formats omit it)
+export interface Address {
+  // BG-5 / BG-8 / BG-12 / BG-15
+  line1?: string; // BT-35
+  line2?: string; // BT-36
+  line3?: string; // BT-162
+  city?: string; // BT-37
+  postalCode?: string; // BT-38 (string: keeps leading zeros)
+  countrySubdivision?: string; // BT-39 (e.g. RO-B, IT province 'MI')
+  countryCode?: CountryCode; // BT-40 (EN-mandatory; some national formats omit it)
 }
 
-export interface Contact {                    // BG-6 / BG-9
+export interface Contact {
+  // BG-6 / BG-9
   name?: string;
   phone?: string;
   email?: string;
 }
 
 export interface Party {
-  name?: string;                              // BT-27 / BT-44 legal name
-  tradingName?: string;                       // BT-28 / BT-45
-  identifiers: Identifier[];                  // BT-29 / BT-46
-  legalRegistrationId?: Identifier;           // BT-30 / BT-47
-  vatId?: string;                             // BT-31 / BT-48, with country prefix (EL for Greece)
+  name?: string; // BT-27 / BT-44 legal name
+  tradingName?: string; // BT-28 / BT-45
+  identifiers: Identifier[]; // BT-29 / BT-46
+  legalRegistrationId?: Identifier; // BT-30 / BT-47
+  vatId?: string; // BT-31 / BT-48, with country prefix (EL for Greece)
   /**
    * National tax ID that is not the VAT number and not the company register ID:
    * IT codice fiscale, PL NIP (when no VAT prefix), ES NIF, HR OIB, GR AFM, CZ IČO.
    * Several national formats identify parties only by this.
    */
   nationalTaxIds: Identifier[];
-  endpoint?: Identifier;                      // BT-34 / BT-49 electronic address
+  endpoint?: Identifier; // BT-34 / BT-49 electronic address
   address?: Address;
   contact?: Contact;
 }
 
 export interface Seller extends Party {
-  taxRegistrationId?: string;                 // BT-32 (e.g. SE "Godkänd för F-skatt")
-  additionalLegalInfo?: string;               // BT-33 (share capital, register court, liquidation status...)
+  taxRegistrationId?: string; // BT-32 (e.g. SE "Godkänd för F-skatt")
+  additionalLegalInfo?: string; // BT-33 (share capital, register court, liquidation status...)
 }
 
-export interface Payee {                      // BG-10
+export interface Payee {
+  // BG-10
   name: string;
   identifier?: Identifier;
   legalRegistrationId?: Identifier;
 }
 
-export interface TaxRepresentative {          // BG-11
+export interface TaxRepresentative {
+  // BG-11
   name: string;
   vatId: string;
   address: Address;
@@ -116,20 +127,22 @@ export interface TaxRepresentative {          // BG-11
  * eSLOG NAD roles. Payee and tax representative stay in their EN fields.
  */
 export interface AdditionalParty {
-  role: string;                               // 'factor', 'issuer', 'payer', 'additional-buyer', 'recipient-unit'...
+  role: string; // 'factor', 'issuer', 'payer', 'additional-buyer', 'recipient-unit'...
   /** Role code as written in the source, e.g. 'PL:Rola:5', 'IT:SoggettoEmittente:TZ'. */
   sourceRole?: string;
   party: Party;
 }
 
-export interface Delivery {                   // BG-13
+export interface Delivery {
+  // BG-13
   partyName?: string;
   locationId?: Identifier;
-  actualDate?: IsoDate;                       // BT-72
+  actualDate?: IsoDate; // BT-72
   address?: Address;
 }
 
-export interface Period {                     // BG-14 / BG-26
+export interface Period {
+  // BG-14 / BG-26
   start?: IsoDate;
   end?: IsoDate;
 }
@@ -138,9 +151,10 @@ export interface Period {                     // BG-14 / BG-26
 // References
 // ---------------------------------------------------------------------------
 
-export interface PrecedingInvoiceRef {        // BG-3
-  id: string;                                 // BT-25
-  issueDate?: IsoDate;                        // BT-26
+export interface PrecedingInvoiceRef {
+  // BG-3
+  id: string; // BT-25
+  issueDate?: IsoDate; // BT-26
   /** Clearance ID of the referenced invoice (KSeF number, SdI ID...). */
   clearanceId?: string;
 }
@@ -148,15 +162,15 @@ export interface PrecedingInvoiceRef {        // BG-3
 /** Why and how a corrective document corrects (KSeF KOR, Facturae rectificativa, ISDOC 2/3...). */
 export interface Correction {
   reason?: string;
-  reasonCode?: string;                        // e.g. Facturae ReasonCode 01-85
-  method?: string;                            // e.g. Facturae CorrectionMethod 01-04, KSeF TypKorekty 1-3
+  reasonCode?: string; // e.g. Facturae ReasonCode 01-85
+  method?: string; // e.g. Facturae CorrectionMethod 01-04, KSeF TypKorekty 1-3
   period?: Period;
 }
 
 /** A document type in the source format's own code list, kept next to the mapped UNCL 1001 code. */
 export interface NationalTypeCode {
-  scheme: string;                             // 'IT:TipoDocumento', 'PL:RodzajFaktury', 'ES:InvoiceClass', 'CZ:DocumentType'...
-  code: string;                               // 'TD04', 'KOR', 'OR', '2'...
+  scheme: string; // 'IT:TipoDocumento', 'PL:RodzajFaktury', 'ES:InvoiceClass', 'CZ:DocumentType'...
+  code: string; // 'TD04', 'KOR', 'OR', '2'...
   label?: string;
 }
 
@@ -164,20 +178,22 @@ export interface NationalTypeCode {
 // Payment
 // ---------------------------------------------------------------------------
 
-export interface CreditTransfer {             // BG-17
-  accountId: string;                          // BT-84 IBAN, BBAN, Bankgiro, Plusgiro...
-  accountName?: string;                       // BT-85
-  serviceProviderId?: string;                 // BT-86 BIC, or 'SE:BANKGIRO' / 'SE:PLUSGIRO'
+export interface CreditTransfer {
+  // BG-17
+  accountId: string; // BT-84 IBAN, BBAN, Bankgiro, Plusgiro...
+  accountName?: string; // BT-85
+  serviceProviderId?: string; // BT-86 BIC, or 'SE:BANKGIRO' / 'SE:PLUSGIRO'
 }
 
-export interface PaymentInstructions {        // BG-16
-  meansCode: PaymentMeansCode;                // BT-81
-  meansText?: string;                         // BT-82
+export interface PaymentInstructions {
+  // BG-16
+  meansCode: PaymentMeansCode; // BT-81
+  meansText?: string; // BT-82
   /** Means code in the source code list (FatturaPA 'MP05', Facturae '04', KSeF '6'...). */
   nationalMeansCode?: string;
-  remittanceInformation?: string;             // BT-83 (OCR, structured creditor reference, variabilní symbol...)
+  remittanceInformation?: string; // BT-83 (OCR, structured creditor reference, variabilní symbol...)
   creditTransfers: CreditTransfer[];
-  card?: { primaryAccountNumber: string; holderName?: string; network?: string };     // BG-18 (last digits only)
+  card?: { primaryAccountNumber: string; holderName?: string; network?: string }; // BG-18 (last digits only)
   directDebit?: { mandateId?: string; creditorId?: string; debitedAccountId?: string }; // BG-19
 }
 
@@ -198,30 +214,33 @@ export interface PaymentInstallment {
 // Taxes, allowances and charges
 // ---------------------------------------------------------------------------
 
-export interface VatInfo {                    // BG-30 (line) / document-level allowance-charge VAT
+export interface VatInfo {
+  // BG-30 (line) / document-level allowance-charge VAT
   categoryCode: VatCategoryCode;
   rate?: Percentage;
   /** Source code that drove the category: 'IT:N6.2', 'PL:P_12:oo', 'ES:E2'... */
   nationalCode?: string;
-  exemptionReason?: string;                   // not an EN term on lines; national formats often state it per line
+  exemptionReason?: string; // not an EN term on lines; national formats often state it per line
 }
 
-export interface AllowanceCharge {            // BG-20 / BG-21 / BG-27 / BG-28
+export interface AllowanceCharge {
+  // BG-20 / BG-21 / BG-27 / BG-28
   amount: Amount;
   baseAmount?: Amount;
   percentage?: Percentage;
   reason?: string;
   reasonCode?: AllowanceChargeReasonCode;
-  vat?: VatInfo;                              // document level only
+  vat?: VatInfo; // document level only
 }
 
-export interface VatBreakdown {               // BG-23
-  taxableAmount: Amount;                      // BT-116
-  taxAmount: Amount;                          // BT-117
-  categoryCode: VatCategoryCode;              // BT-118
-  rate?: Percentage;                          // BT-119
-  exemptionReason?: string;                   // BT-120
-  exemptionReasonCode?: string;               // BT-121 (VATEX-...)
+export interface VatBreakdown {
+  // BG-23
+  taxableAmount: Amount; // BT-116
+  taxAmount: Amount; // BT-117
+  categoryCode: VatCategoryCode; // BT-118
+  rate?: Percentage; // BT-119
+  exemptionReason?: string; // BT-120
+  exemptionReasonCode?: string; // BT-121 (VATEX-...)
   /** Not EN: per-rate VAT in the tax currency (KSeF P_14_xW, Facturae TaxAmount/EquivalentInEuros). */
   taxAmountInTaxCurrency?: Amount;
   nationalCode?: string;
@@ -233,7 +252,7 @@ export interface VatBreakdown {               // BG-23
  * stated as taxes, IGIC/IPSI when a source keeps them apart from VAT.
  */
 export interface OtherTax {
-  scheme: string;                             // 'ES:RE', 'IT:BOLLO', 'ES:IGIC'...
+  scheme: string; // 'ES:RE', 'IT:BOLLO', 'ES:IGIC'...
   taxableAmount?: Amount;
   rate?: Percentage;
   amount: Amount;
@@ -252,23 +271,24 @@ export interface OtherTax {
  * ES retención IRPF, PT retenção na fonte. EN 16931 has no term for these.
  */
 export interface Withholding {
-  scheme: string;                             // 'IT:RT01', 'IT:RT02', 'ES:IRPF', 'PT:IRS'...
+  scheme: string; // 'IT:RT01', 'IT:RT02', 'ES:IRPF', 'PT:IRS'...
   taxableAmount?: Amount;
   rate?: Percentage;
   amount: Amount;
-  reasonCode?: string;                        // IT CausalePagamento, ES/PT reason
+  reasonCode?: string; // IT CausalePagamento, ES/PT reason
 }
 
-export interface Totals {                     // BG-22
-  lineNetTotal: Amount;                       // BT-106
-  allowanceTotal?: Amount;                    // BT-107
-  chargeTotal?: Amount;                       // BT-108
-  taxExclusive: Amount;                       // BT-109
-  vatTotal?: Amount;                          // BT-110
-  vatTotalInTaxCurrency?: Amount;             // BT-111
-  taxInclusive: Amount;                       // BT-112
-  prepaid?: Amount;                           // BT-113
-  rounding?: Amount;                          // BT-114
+export interface Totals {
+  // BG-22
+  lineNetTotal: Amount; // BT-106
+  allowanceTotal?: Amount; // BT-107
+  chargeTotal?: Amount; // BT-108
+  taxExclusive: Amount; // BT-109
+  vatTotal?: Amount; // BT-110
+  vatTotalInTaxCurrency?: Amount; // BT-111
+  taxInclusive: Amount; // BT-112
+  prepaid?: Amount; // BT-113
+  rounding?: Amount; // BT-114
   /** Not EN: sum of `withholdings`. */
   withholdingTotal?: Amount;
   /**
@@ -288,7 +308,8 @@ export interface Totals {                     // BG-22
 // Attachments
 // ---------------------------------------------------------------------------
 
-export type Attachment =                      // BG-24
+export type Attachment =
+  // BG-24
   | { kind: 'embedded'; id: string; description?: string; mimeCode: string; filename: string; base64: string }
   | { kind: 'external'; id: string; description?: string; uri: string }
   /** Reference without content, e.g. a Svefaktura ObjectEnvelope or a file shipped next to the invoice. */
@@ -298,42 +319,45 @@ export type Attachment =                      // BG-24
 // Lines
 // ---------------------------------------------------------------------------
 
-export interface Item {                       // BG-31
-  name: string;                               // BT-153
-  description?: string;                       // BT-154
-  sellerId?: string;                          // BT-155
-  buyerId?: string;                           // BT-156
-  standardId?: Identifier;                    // BT-157
+export interface Item {
+  // BG-31
+  name: string; // BT-153
+  description?: string; // BT-154
+  sellerId?: string; // BT-155
+  buyerId?: string; // BT-156
+  standardId?: Identifier; // BT-157
   classifications: { code: string; listId: string; listVersion?: string }[]; // BT-158 (CPV, UNSPSC, HR KPD, PL PKWiU/CN...)
-  originCountry?: CountryCode;                // BT-159
+  originCountry?: CountryCode; // BT-159
   attributes: { name: string; value: string }[]; // BG-32
 }
 
-export interface Price {                      // BG-29
-  net: UnitPrice;                             // BT-146
-  discount?: UnitPrice;                       // BT-147
-  gross?: UnitPrice;                          // BT-148
-  baseQuantity?: Quantity;                    // BT-149
-  baseQuantityUnit?: UnitCode;                // BT-150
+export interface Price {
+  // BG-29
+  net: UnitPrice; // BT-146
+  discount?: UnitPrice; // BT-147
+  gross?: UnitPrice; // BT-148
+  baseQuantity?: Quantity; // BT-149
+  baseQuantityUnit?: UnitCode; // BT-150
 }
 
-export interface Line {                       // BG-25
-  id: string;                                 // BT-126
-  note?: string;                              // BT-127
-  objectId?: Identifier;                      // BT-128
-  quantity?: Quantity;                        // BT-129
-  unitCode?: UnitCode;                        // BT-130 (mapped to Rec 20/21)
+export interface Line {
+  // BG-25
+  id: string; // BT-126
+  note?: string; // BT-127
+  objectId?: Identifier; // BT-128
+  quantity?: Quantity; // BT-129
+  unitCode?: UnitCode; // BT-130 (mapped to Rec 20/21)
   /** Unit as written in the source when it was free text ('st', 'kpl', 'szt.', 'ks'). */
   unitText?: string;
-  netAmount: Amount;                          // BT-131
-  orderLineRef?: string;                      // BT-132
-  accountingRef?: string;                     // BT-133
-  period?: Period;                            // BG-26
-  allowances: AllowanceCharge[];              // BG-27
-  charges: AllowanceCharge[];                 // BG-28
-  price?: Price;                              // BG-29
-  vat?: VatInfo;                              // BG-30
-  item: Item;                                 // BG-31
+  netAmount: Amount; // BT-131
+  orderLineRef?: string; // BT-132
+  accountingRef?: string; // BT-133
+  period?: Period; // BG-26
+  allowances: AllowanceCharge[]; // BG-27
+  charges: AllowanceCharge[]; // BG-28
+  price?: Price; // BG-29
+  vat?: VatInfo; // BG-30
+  item: Item; // BG-31
   /** Not EN: line is subject to withholding (FatturaPA Ritenuta = SI). */
   subjectToWithholding?: boolean;
   /** Non-VAT taxes stated per line (Facturae lines can carry IVA + recargo de equivalencia). */
@@ -357,15 +381,15 @@ export interface Line {                       // BG-25
 // ---------------------------------------------------------------------------
 
 export type ClearanceAuthority =
-  | 'IT:SDI'        // Sistema di Interscambio
-  | 'PL:KSEF'       // Krajowy System e-Faktur
-  | 'RO:SPV'        // ANAF RO e-Factura
-  | 'HR:FISK'       // Croatian fiscalisation 2.0
-  | 'GR:MYDATA'     // AADE myDATA
-  | 'FR:PPF'        // French public invoicing platform / PDP lifecycle
-  | 'PT:AT'         // Portuguese tax authority (ATCUD)
-  | 'ES:VERIFACTU'  // Spanish invoice-issuing software records
-  | 'HU:NAV'        // Hungarian online invoice data reporting
+  | 'IT:SDI' // Sistema di Interscambio
+  | 'PL:KSEF' // Krajowy System e-Faktur
+  | 'RO:SPV' // ANAF RO e-Factura
+  | 'HR:FISK' // Croatian fiscalisation 2.0
+  | 'GR:MYDATA' // AADE myDATA
+  | 'FR:PPF' // French public invoicing platform / PDP lifecycle
+  | 'PT:AT' // Portuguese tax authority (ATCUD)
+  | 'ES:VERIFACTU' // Spanish invoice-issuing software records
+  | 'HU:NAV' // Hungarian online invoice data reporting
   | (string & {});
 
 export interface ClearanceInfo {
@@ -374,8 +398,8 @@ export interface ClearanceInfo {
   documentId?: string;
   /** Second ID if the authority issues two (ANAF upload index vs download ID, myDATA UID vs MARK). */
   secondaryId?: string;
-  receivedAt?: string;                        // ISO 8601 date-time from the authority
-  status?: string;                            // e.g. ANAF 'ok', SdI 'RC' (ricevuta di consegna)
+  receivedAt?: string; // ISO 8601 date-time from the authority
+  status?: string; // e.g. ANAF 'ok', SdI 'RC' (ricevuta di consegna)
   /** QR code payload or URL printed on the visual (PT, GR, PL, ES). */
   qrPayload?: string;
 }
@@ -408,58 +432,65 @@ export interface SignatureInfo {
 /** Italy, FatturaPA. Fields that have no EN or generic equivalent. */
 export interface ItExtension {
   transmissionFormat?: 'FPA12' | 'FPR12' | 'FSM10' | (string & {});
-  recipientCode?: string;                     // CodiceDestinatario (7 chars B2B, 6 chars PA)
-  recipientPec?: string;                      // PECDestinatario
-  transmissionSequence?: string;              // ProgressivoInvio
-  taxRegime?: string;                         // RegimeFiscale RF01-RF19 (seller)
+  recipientCode?: string; // CodiceDestinatario (7 chars B2B, 6 chars PA)
+  recipientPec?: string; // PECDestinatario
+  transmissionSequence?: string; // ProgressivoInvio
+  taxRegime?: string; // RegimeFiscale RF01-RF19 (seller)
   vatChargeability?: 'I' | 'D' | 'S' | (string & {}); // EsigibilitaIVA: S = split payment (scissione dei pagamenti)
-  stampDuty?: { virtual: boolean; amount?: Amount };   // DatiBollo
-  pensionFunds?: {                            // DatiCassaPrevidenziale
-    type: string; rate?: Percentage; amount: Amount; taxableAmount?: Amount; vatRate?: Percentage; subjectToWithholding?: boolean; nature?: string;
+  stampDuty?: { virtual: boolean; amount?: Amount }; // DatiBollo
+  pensionFunds?: {
+    // DatiCassaPrevidenziale
+    type: string;
+    rate?: Percentage;
+    amount: Amount;
+    taxableAmount?: Amount;
+    vatRate?: Percentage;
+    subjectToWithholding?: boolean;
+    nature?: string;
   }[];
-  cup?: string;                               // public works project code
-  cig?: string;                               // tender code
-  reasons?: string[];                         // Causale
+  cup?: string; // public works project code
+  cig?: string; // tender code
+  reasons?: string[]; // Causale
   art73?: boolean;
 }
 
 /** Poland, KSeF FA(2)/FA(3). */
 export interface PlExtension {
   invoiceKind?: 'VAT' | 'KOR' | 'ZAL' | 'ROZ' | 'UPR' | 'KOR_ZAL' | 'KOR_ROZ' | (string & {});
-  schemaVariant?: string;                     // 'FA (3)' / 'FA (2)' / 'FA_RR (1)'
-  splitPayment?: boolean;                     // P_18A mechanizm podzielonej płatności
-  cashAccounting?: boolean;                   // P_16 metoda kasowa
-  selfBilling?: boolean;                      // P_17 samofakturowanie
-  reverseCharge?: boolean;                    // P_18 odwrotne obciążenie
-  exemptionBasis?: string;                    // P_19A/B/C podstawa zwolnienia
-  marginScheme?: string;                      // procedura marży
-  buyerIsLocalGovernmentUnit?: boolean;       // JST
-  buyerIsVatGroupMember?: boolean;            // GV
-  paid?: boolean;                             // Zaplacono
-  paidDate?: IsoDate;                         // DataZaplaty
+  schemaVariant?: string; // 'FA (3)' / 'FA (2)' / 'FA_RR (1)'
+  splitPayment?: boolean; // P_18A mechanizm podzielonej płatności
+  cashAccounting?: boolean; // P_16 metoda kasowa
+  selfBilling?: boolean; // P_17 samofakturowanie
+  reverseCharge?: boolean; // P_18 odwrotne obciążenie
+  exemptionBasis?: string; // P_19A/B/C podstawa zwolnienia
+  marginScheme?: string; // procedura marży
+  buyerIsLocalGovernmentUnit?: boolean; // JST
+  buyerIsVatGroupMember?: boolean; // GV
+  paid?: boolean; // Zaplacono
+  paidDate?: IsoDate; // DataZaplaty
 }
 
 /** Spain, Facturae. */
 export interface EsExtension {
-  facturaeVersion?: string;                   // '3.2.2'
+  facturaeVersion?: string; // '3.2.2'
   invoiceClass?: 'OO' | 'OR' | 'OC' | 'CO' | 'CR' | 'CC' | (string & {});
   invoiceDocumentType?: 'FC' | 'FA' | 'AF' | (string & {});
-  batchId?: string;                           // FileHeader/Batch/BatchIdentifier
+  batchId?: string; // FileHeader/Batch/BatchIdentifier
   /** DIR3 administrative centres (public sector routing): role 01 oficina contable, 02 órgano gestor, 03 unidad tramitadora. */
   administrativeCentres?: { roleCode: string; code: string; name?: string }[];
 }
 
 /** Croatia, HR-CIUS with HR extensions. */
 export interface HrExtension {
-  issueTime?: IsoTime;                        // HR-BT-2
-  copyIndicator?: boolean;                    // HR-BT-1
-  operatorName?: string;                      // HR-BT-4
-  operatorOib?: string;                       // HR-BT-5
+  issueTime?: IsoTime; // HR-BT-2
+  copyIndicator?: boolean; // HR-BT-1
+  operatorName?: string; // HR-BT-4
+  operatorOib?: string; // HR-BT-5
 }
 
 /** Greece, myDATA. */
 export interface GrExtension {
-  invoiceType?: string;                       // myDATA invoiceType, e.g. '1.1'
+  invoiceType?: string; // myDATA invoiceType, e.g. '1.1'
   classifications?: { type: string; category: string; amount: Amount }[]; // income/expense classifications
 }
 
@@ -473,7 +504,7 @@ export interface PtExtension {
 /** France, 2026 reform (XP Z12-012). */
 export interface FrExtension {
   profile?: 'EN16931' | 'EXTENDED-CTC-FR' | 'BASICWL' | 'EXTENDED' | (string & {});
-  billingFramework?: string;                  // cadre de facturation (BT-23 values such as B1, S1, M1)
+  billingFramework?: string; // cadre de facturation (BT-23 values such as B1, S1, M1)
   operationCategory?: 'goods' | 'services' | 'mixed' | (string & {});
 }
 
@@ -485,8 +516,8 @@ export interface DeExtension {
 
 /** Czechia, ISDOC. */
 export interface CzExtension {
-  documentType?: string;                      // 1-7
-  variableSymbol?: string;                    // variabilní symbol (also mapped to BT-83)
+  documentType?: string; // 1-7
+  variableSymbol?: string; // variabilní symbol (also mapped to BT-83)
   constantSymbol?: string;
   specificSymbol?: string;
 }
@@ -494,14 +525,14 @@ export interface CzExtension {
 /** Austria, ebInterface. */
 export interface AtExtension {
   ebInterfaceVersion?: string;
-  documentType?: string;                      // Invoice, CreditMemo, FinalSettlement, InvoiceForAdvancePayment...
+  documentType?: string; // Invoice, CreditMemo, FinalSettlement, InvoiceForAdvancePayment...
   orderReferenceRequiredByFederalGovernment?: string;
 }
 
 /** Finland, Finvoice / TEAPPSXML. */
 export interface FiExtension {
-  invoiceTypeCode?: string;                   // INV01, INV02 (credit)...
-  epiReference?: string;                      // EpiRemittanceInfoIdentifier (RF or national reference)
+  invoiceTypeCode?: string; // INV01, INV02 (credit)...
+  epiReference?: string; // EpiRemittanceInfoIdentifier (RF or national reference)
 }
 
 /** Estonia, e-arve. */
@@ -545,11 +576,11 @@ export type CheckStatus = 'passed' | 'failed' | 'not-run' | 'unavailable';
  */
 export interface ValidationSummary {
   parse: CheckStatus;
-  schema: CheckStatus;                        // XSD
-  semantic: CheckStatus;                      // EN 16931 Schematron or the national format's own rules
-  profile: CheckStatus;                       // CIUS / Peppol / national rules
+  schema: CheckStatus; // XSD
+  semantic: CheckStatus; // EN 16931 Schematron or the national format's own rules
+  profile: CheckStatus; // CIUS / Peppol / national rules
   signature: CheckStatus;
-  clearance: CheckStatus;                     // authority acceptance (SdI receipt, KSeF number, ANAF status...)
+  clearance: CheckStatus; // authority acceptance (SdI receipt, KSeF number, ANAF status...)
   /** Validator bundle used per layer, e.g. { profile: 'peppol-billing-3.0.21' }. */
   bundles: Partial<Record<'schema' | 'semantic' | 'profile', string>>;
   findings: { layer: string; ruleId?: string; severity: 'fatal' | 'warning' | 'info'; message: string; path?: string }[];
@@ -557,10 +588,10 @@ export interface ValidationSummary {
 
 export interface SourceMeta {
   format: FormatId;
-  formatVersion?: string;                     // '1.2', '3.2.2', 'FA (3)', '6.1'...
-  syntaxDocumentType: string;                 // root local name: 'Invoice', 'CreditNote', 'CrossIndustryInvoice', 'FatturaElettronica'...
+  formatVersion?: string; // '1.2', '3.2.2', 'FA (3)', '6.1'...
+  syntaxDocumentType: string; // root local name: 'Invoice', 'CreditNote', 'CrossIndustryInvoice', 'FatturaElettronica'...
   rootNamespace: string;
-  specificationId?: string;                   // CustomizationID / guideline ID as received
+  specificationId?: string; // CustomizationID / guideline ID as received
   profileId?: string;
   /** Path from the received file to this XML, e.g. [{kind:'zip'}, {kind:'cms-p7m'}]. */
   envelope: EnvelopeStep[];
@@ -569,11 +600,11 @@ export interface SourceMeta {
   payloadSha256: string;
   /** Position and path inside a multi-invoice file (FatturaPA lot, Facturae batch, e-arve). */
   indexInFile?: number;
-  fragmentPath?: string;                      // e.g. '/FatturaElettronica/FatturaElettronicaBody[2]'
+  fragmentPath?: string; // e.g. '/FatturaElettronica/FatturaElettronicaBody[2]'
   encoding?: string;
   filename?: string;
   signatures: SignatureInfo[];
-  unmapped: Record<string, string>;           // XPath -> value
+  unmapped: Record<string, string>; // XPath -> value
   derived: { field: string; rule: string }[]; // values the mapper inferred
   /** Optional field-level provenance: canonical path -> source XPath (e.g. '/totals/payable' -> '/Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount'). */
   provenance?: Record<string, string>;
@@ -586,51 +617,51 @@ export interface SourceMeta {
 // ---------------------------------------------------------------------------
 
 interface CanonicalBase {
-  id: string;                                 // BT-1
-  issueDate: IsoDate;                         // BT-2
-  issueTime?: IsoTime;                        // not EN (HR, IT, PL timestamps)
+  id: string; // BT-1
+  issueDate: IsoDate; // BT-2
+  issueTime?: IsoTime; // not EN (HR, IT, PL timestamps)
   nationalType?: NationalTypeCode;
-  selfBilled: boolean;                        // 389/261 or national self-billing flag
-  currency: CurrencyCode;                     // BT-5
-  taxCurrency?: CurrencyCode;                 // BT-6
+  selfBilled: boolean; // 389/261 or national self-billing flag
+  currency: CurrencyCode; // BT-5
+  taxCurrency?: CurrencyCode; // BT-6
   /** Not EN as a single term: exchange rate the source used to state VAT in the tax currency. */
   exchangeRate?: { rate: Decimal; date?: IsoDate };
-  taxPointDate?: IsoDate;                     // BT-7
-  vatPointDateCode?: string;                  // BT-8
-  dueDate?: IsoDate;                          // BT-9
-  buyerReference?: string;                    // BT-10 (DE Leitweg-ID, NL/BE PO numbers)
-  projectRef?: string;                        // BT-11
-  contractRef?: string;                       // BT-12
-  purchaseOrderRef?: string;                  // BT-13
-  salesOrderRef?: string;                     // BT-14
-  receivingAdviceRef?: string;                // BT-15
-  despatchAdviceRef?: string;                 // BT-16
-  tenderRef?: string;                         // BT-17
-  invoicedObjectId?: Identifier;              // BT-18
-  accountingRef?: string;                     // BT-19
-  paymentTerms?: string;                      // BT-20
+  taxPointDate?: IsoDate; // BT-7
+  vatPointDateCode?: string; // BT-8
+  dueDate?: IsoDate; // BT-9
+  buyerReference?: string; // BT-10 (DE Leitweg-ID, NL/BE PO numbers)
+  projectRef?: string; // BT-11
+  contractRef?: string; // BT-12
+  purchaseOrderRef?: string; // BT-13
+  salesOrderRef?: string; // BT-14
+  receivingAdviceRef?: string; // BT-15
+  despatchAdviceRef?: string; // BT-16
+  tenderRef?: string; // BT-17
+  invoicedObjectId?: Identifier; // BT-18
+  accountingRef?: string; // BT-19
+  paymentTerms?: string; // BT-20
   notes: { subjectCode?: string; text: string }[]; // BG-1 (BT-21, BT-22)
-  businessProcess?: string;                   // BT-23
-  specificationId: string;                    // BT-24 (synthesised for non-EN sources; see source.format)
-  precedingInvoices: PrecedingInvoiceRef[];   // BG-3
+  businessProcess?: string; // BT-23
+  specificationId: string; // BT-24 (synthesised for non-EN sources; see source.format)
+  precedingInvoices: PrecedingInvoiceRef[]; // BG-3
   correction?: Correction;
-  invoicePeriod?: Period;                     // BG-14
-  seller: Seller;                             // BG-4
-  buyer: Party;                               // BG-7
-  payee?: Payee;                              // BG-10
-  taxRepresentative?: TaxRepresentative;      // BG-11
+  invoicePeriod?: Period; // BG-14
+  seller: Seller; // BG-4
+  buyer: Party; // BG-7
+  payee?: Payee; // BG-10
+  taxRepresentative?: TaxRepresentative; // BG-11
   additionalParties: AdditionalParty[];
-  delivery?: Delivery;                        // BG-13
-  payments: PaymentInstructions[];            // BG-16 (EN allows one means; national formats allow several)
-  paymentSchedule: PaymentInstallment[];      // empty unless the source lists several due dates or amounts
-  allowances: AllowanceCharge[];              // BG-20
-  charges: AllowanceCharge[];                 // BG-21
-  totals: Totals;                             // BG-22
-  vatBreakdown: VatBreakdown[];               // BG-23
+  delivery?: Delivery; // BG-13
+  payments: PaymentInstructions[]; // BG-16 (EN allows one means; national formats allow several)
+  paymentSchedule: PaymentInstallment[]; // empty unless the source lists several due dates or amounts
+  allowances: AllowanceCharge[]; // BG-20
+  charges: AllowanceCharge[]; // BG-21
+  totals: Totals; // BG-22
+  vatBreakdown: VatBreakdown[]; // BG-23
   otherTaxes: OtherTax[];
   withholdings: Withholding[];
-  attachments: Attachment[];                  // BG-24
-  lines: Line[];                              // BG-25 (empty for Factur-X MINIMUM / BASIC WL)
+  attachments: Attachment[]; // BG-24
+  lines: Line[]; // BG-25 (empty for Factur-X MINIMUM / BASIC WL)
   clearance: ClearanceInfo[];
   extensions: CountryExtensions;
   source: SourceMeta;

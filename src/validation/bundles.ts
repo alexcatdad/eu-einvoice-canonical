@@ -74,7 +74,10 @@ function memo<T>(cache: Map<string, Promise<T>>, key: string, make: () => Promis
 }
 
 export class BundleReaderFor {
-  constructor(private readonly read: BundleReader, private readonly scope: string) {}
+  constructor(
+    private readonly read: BundleReader,
+    private readonly scope: string,
+  ) {}
 
   manifest(id: string): Promise<BundleManifest> {
     return memo(manifests, `${this.scope}|${id}`, async () => {

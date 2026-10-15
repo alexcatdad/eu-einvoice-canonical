@@ -8,10 +8,23 @@
  */
 import type { Element } from '@xmldom/xmldom';
 import type {
-  Address, AllowanceCharge, Attachment, CanonicalInvoice, Contact, CountryExtensions, Identifier, IsoDate,
-  Line, Party, PaymentInstructions, Period, Seller, Totals, VatBreakdown,
+  Address,
+  AllowanceCharge,
+  Attachment,
+  CanonicalInvoice,
+  Contact,
+  CountryExtensions,
+  Identifier,
+  IsoDate,
+  Line,
+  Party,
+  PaymentInstructions,
+  Period,
+  Seller,
+  Totals,
+  VatBreakdown,
 } from '../canonical.js';
-import { CREDIT_TYPE_CODES, Ctx, ParseError, type Scope, SELF_BILLED_TYPE_CODES, finish, parseXml, sourceMeta } from './context.js';
+import { CREDIT_TYPE_CODES, Ctx, finish, ParseError, parseXml, type Scope, SELF_BILLED_TYPE_CODES, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 
 const NS = {
@@ -51,7 +64,10 @@ export function parseCii(input: ParseInput): CanonicalInvoice[] {
 
   const sellerEl = c.el(agreement, 'ram:SellerTradeParty');
   const seller = party(c, sellerEl, s.in('seller')) as Seller;
-  const taxRegEl = c.all(sellerEl, 'ram:SpecifiedTaxRegistration/ram:ID').filter((e) => c.attr(e, undefined, 'schemeID') === 'FC').find((e) => c.text(e));
+  const taxRegEl = c
+    .all(sellerEl, 'ram:SpecifiedTaxRegistration/ram:ID')
+    .filter((e) => c.attr(e, undefined, 'schemeID') === 'FC')
+    .find((e) => c.text(e));
   seller.taxRegistrationId = s.text(taxRegEl, undefined, 'seller/taxRegistrationId');
   seller.additionalLegalInfo = s.text(sellerEl, 'ram:Description', 'seller/additionalLegalInfo');
 
@@ -74,7 +90,11 @@ export function parseCii(input: ParseInput): CanonicalInvoice[] {
   if (format === 'fr-ctc-cii') extensions.fr = { profile: input.details.profile };
 
   const lines = c.all(tx, 'ram:IncludedSupplyChainTradeLineItem').map((l, i) => line(c, l, s.in('lines').in(i)));
-  if (lines.length === 0) c.warn('NO_LINES', 'The document has no invoice lines (normal for Factur-X MINIMUM and BASIC WL, which are not complete EN 16931 invoices)');
+  if (lines.length === 0)
+    c.warn(
+      'NO_LINES',
+      'The document has no invoice lines (normal for Factur-X MINIMUM and BASIC WL, which are not complete EN 16931 invoices)',
+    );
 
   let dueDate: IsoDate | undefined;
   for (const t of terms) {
@@ -101,9 +121,18 @@ export function parseCii(input: ParseInput): CanonicalInvoice[] {
     receivingAdviceRef: s.text(deliveryEl, 'ram:ReceivingAdviceReferencedDocument/ram:IssuerAssignedID', 'receivingAdviceRef'),
     despatchAdviceRef: s.text(deliveryEl, 'ram:DespatchAdviceReferencedDocument/ram:IssuerAssignedID', 'despatchAdviceRef'),
     tenderRef: s.text(tender, 'ram:IssuerAssignedID', 'tenderRef'),
-    invoicedObjectId: invoicedObject ? withScheme(s.text(invoicedObject, 'ram:IssuerAssignedID', 'invoicedObjectId/value'), s.text(invoicedObject, 'ram:ReferenceTypeCode', 'invoicedObjectId/schemeId')) : undefined,
+    invoicedObjectId: invoicedObject
+      ? withScheme(
+          s.text(invoicedObject, 'ram:IssuerAssignedID', 'invoicedObjectId/value'),
+          s.text(invoicedObject, 'ram:ReferenceTypeCode', 'invoicedObjectId/schemeId'),
+        )
+      : undefined,
     accountingRef: s.text(settlement, 'ram:ReceivableSpecifiedTradeAccountingAccount/ram:ID', 'accountingRef'),
-    paymentTerms: joinTexts(c, terms.map((t) => c.el(t, 'ram:Description')), s.path('paymentTerms')),
+    paymentTerms: joinTexts(
+      c,
+      terms.map((t) => c.el(t, 'ram:Description')),
+      s.path('paymentTerms'),
+    ),
     notes: c.all(doc, 'ram:IncludedNote').map((n, i) => {
       const p = s.in('notes').in(i);
       return { subjectCode: p.text(n, 'ram:SubjectCode', 'subjectCode'), text: p.text(n, 'ram:Content', 'text') ?? '' };
@@ -120,11 +149,13 @@ export function parseCii(input: ParseInput): CanonicalInvoice[] {
     invoicePeriod: period(c, c.el(settlement, 'ram:BillingSpecifiedPeriod'), s.in('invoicePeriod')),
     seller,
     buyer: party(c, c.el(agreement, 'ram:BuyerTradeParty'), s.in('buyer')),
-    payee: payeeEl ? {
-      name: s.text(payeeEl, 'ram:Name', 'payee/name') ?? '',
-      identifier: identifiers(c, payeeEl, (i) => (i === 0 ? s.path('payee/identifier') : undefined))[0],
-      legalRegistrationId: s.id(payeeEl, 'ram:SpecifiedLegalOrganization/ram:ID', 'payee/legalRegistrationId'),
-    } : undefined,
+    payee: payeeEl
+      ? {
+          name: s.text(payeeEl, 'ram:Name', 'payee/name') ?? '',
+          identifier: identifiers(c, payeeEl, (i) => (i === 0 ? s.path('payee/identifier') : undefined))[0],
+          legalRegistrationId: s.id(payeeEl, 'ram:SpecifiedLegalOrganization/ram:ID', 'payee/legalRegistrationId'),
+        }
+      : undefined,
     taxRepresentative: taxRepresentative(c, c.el(agreement, 'ram:SellerTaxRepresentativeTradeParty'), s.in('taxRepresentative')),
     additionalParties: [],
     delivery: delivery(c, deliveryEl, s.in('delivery')),
@@ -152,7 +183,11 @@ export const withScheme = (value: string | undefined, schemeId: string | undefin
   value ? (schemeId ? { value, schemeId } : { value }) : undefined;
 
 /** Elements of the settlement that feed every payment's direct-debit and remittance fields. */
-export interface DirectDebitEls { creditor?: Element; mandate?: Element; remittance?: Element }
+export interface DirectDebitEls {
+  creditor?: Element;
+  mandate?: Element;
+  remittance?: Element;
+}
 
 /** Texts of the non-empty elements joined with a newline; the value is bound to all of them. */
 function joinTexts(c: Ctx, els: (Element | undefined)[], bind: string): string | undefined {
@@ -193,7 +228,7 @@ export function party(c: Ctx, p: Element | undefined, s: Scope): Party {
   };
 }
 
-function address(c: Ctx, a: Element | undefined, s: Scope): Address | undefined {
+function address(_c: Ctx, a: Element | undefined, s: Scope): Address | undefined {
   if (!a) return undefined;
   return {
     line1: s.text(a, 'ram:LineOne', 'line1'),
@@ -263,15 +298,26 @@ export function payment(c: Ctx, pm: Element, direct: DirectDebitEls, s: Scope): 
         serviceProviderId: t.text(pm, 'ram:PayeeSpecifiedCreditorFinancialInstitution/ram:BICID', 'serviceProviderId'),
       };
     }),
-    card: card ? { primaryAccountNumber: k.text(card, 'ram:ID', 'primaryAccountNumber') ?? '', holderName: k.text(card, 'ram:CardholderName', 'holderName') } : undefined,
-    directDebit: c.text(debtorEl) || c.text(direct.mandate) || (creditorId && code === '59')
-      ? { mandateId: d.text(direct.mandate, undefined, 'mandateId'), creditorId: d.text(direct.creditor, undefined, 'creditorId'), debitedAccountId: d.text(debtorEl, undefined, 'debitedAccountId') }
+    card: card
+      ? {
+          primaryAccountNumber: k.text(card, 'ram:ID', 'primaryAccountNumber') ?? '',
+          holderName: k.text(card, 'ram:CardholderName', 'holderName'),
+        }
       : undefined,
+    directDebit:
+      c.text(debtorEl) || c.text(direct.mandate) || (creditorId && code === '59')
+        ? {
+            mandateId: d.text(direct.mandate, undefined, 'mandateId'),
+            creditorId: d.text(direct.creditor, undefined, 'creditorId'),
+            debitedAccountId: d.text(debtorEl, undefined, 'debitedAccountId'),
+          }
+        : undefined,
   };
 }
 
 function allowanceCharges(c: Ctx, parent: Element | undefined, charge: boolean, docLevel: boolean, s: Scope): AllowanceCharge[] {
-  return c.all(parent, 'ram:SpecifiedTradeAllowanceCharge')
+  return c
+    .all(parent, 'ram:SpecifiedTradeAllowanceCharge')
     .filter((a) => (c.text(a, 'ram:ChargeIndicator/*:Indicator') ?? '').toLowerCase() === String(charge))
     .map((a, i) => {
       const t = s.in(i);
@@ -281,15 +327,25 @@ function allowanceCharges(c: Ctx, parent: Element | undefined, charge: boolean, 
         percentage: t.dec(a, 'ram:CalculationPercent', 'percentage'),
         reason: t.text(a, 'ram:Reason', 'reason'),
         reasonCode: t.text(a, 'ram:ReasonCode', 'reasonCode'),
-        vat: docLevel && c.el(a, 'ram:CategoryTradeTax') ? {
-          categoryCode: t.text(a, 'ram:CategoryTradeTax/ram:CategoryCode', 'vat/categoryCode') ?? '',
-          rate: t.dec(a, 'ram:CategoryTradeTax/ram:RateApplicablePercent', 'vat/rate'),
-        } : undefined,
+        vat:
+          docLevel && c.el(a, 'ram:CategoryTradeTax')
+            ? {
+                categoryCode: t.text(a, 'ram:CategoryTradeTax/ram:CategoryCode', 'vat/categoryCode') ?? '',
+                rate: t.dec(a, 'ram:CategoryTradeTax/ram:RateApplicablePercent', 'vat/rate'),
+              }
+            : undefined,
       };
     });
 }
 
-function totalsAndVat(c: Ctx, settlement: Element | undefined, taxes: Element[], currency: string, taxCurrency: string | undefined, s: Scope): { totals: Totals; vatBreakdown: VatBreakdown[] } {
+function totalsAndVat(
+  c: Ctx,
+  settlement: Element | undefined,
+  taxes: Element[],
+  currency: string,
+  taxCurrency: string | undefined,
+  s: Scope,
+): { totals: Totals; vatBreakdown: VatBreakdown[] } {
   const m = c.el(settlement, 'ram:SpecifiedTradeSettlementHeaderMonetarySummation');
   if (!m) throw new ParseError('SpecifiedTradeSettlementHeaderMonetarySummation (BG-22) missing');
   const taxTotals = c.all(m, 'ram:TaxTotalAmount');
@@ -322,7 +378,8 @@ function totalsAndVat(c: Ctx, settlement: Element | undefined, taxes: Element[],
     const v = s.in('vatBreakdown').in(i);
     const taxableAmount = v.dec(t, 'ram:BasisAmount', 'taxableAmount');
     const taxAmount = v.dec(t, 'ram:CalculatedAmount', 'taxAmount');
-    if (taxableAmount === undefined || taxAmount === undefined) throw new ParseError('ApplicableTradeTax without BasisAmount or CalculatedAmount');
+    if (taxableAmount === undefined || taxAmount === undefined)
+      throw new ParseError('ApplicableTradeTax without BasisAmount or CalculatedAmount');
     return {
       taxableAmount,
       taxAmount,
@@ -342,7 +399,9 @@ function attachment(c: Ctx, d: Element, s: Scope): Attachment {
   if (bin) {
     c.mark(s.path('base64'), bin);
     return {
-      kind: 'embedded', id, description,
+      kind: 'embedded',
+      id,
+      description,
       mimeCode: s.attr(bin, undefined, 'mimeCode', 'mimeCode') ?? '',
       filename: s.attr(bin, undefined, 'filename', 'filename') ?? '',
       base64: (bin.textContent ?? '').replace(/\s+/g, ''),
@@ -371,8 +430,17 @@ function line(c: Ctx, l: Element, s: Scope): Line {
   const it = s.in('item');
   return {
     id: lineId,
-    note: joinTexts(c, c.all(docLine, 'ram:IncludedNote').map((n) => c.el(n, 'ram:Content')), s.path('note')),
-    objectId: objectRef ? withScheme(s.text(objectRef, 'ram:IssuerAssignedID', 'objectId/value'), s.text(objectRef, 'ram:ReferenceTypeCode', 'objectId/schemeId')) : undefined,
+    note: joinTexts(
+      c,
+      c.all(docLine, 'ram:IncludedNote').map((n) => c.el(n, 'ram:Content')),
+      s.path('note'),
+    ),
+    objectId: objectRef
+      ? withScheme(
+          s.text(objectRef, 'ram:IssuerAssignedID', 'objectId/value'),
+          s.text(objectRef, 'ram:ReferenceTypeCode', 'objectId/schemeId'),
+        )
+      : undefined,
     quantity: s.dec(qtyEl, undefined, 'quantity'),
     unitCode: s.attr(qtyEl, undefined, 'unitCode', 'unitCode'),
     netAmount,
@@ -381,14 +449,21 @@ function line(c: Ctx, l: Element, s: Scope): Line {
     period: period(c, c.el(lineSettlement, 'ram:BillingSpecifiedPeriod'), s.in('period')),
     allowances: allowanceCharges(c, lineSettlement, false, false, s.in('allowances')),
     charges: allowanceCharges(c, lineSettlement, true, false, s.in('charges')),
-    price: net ? {
-      net: p.dec(net, 'ram:ChargeAmount', 'net')!,
-      discount: p.dec(gross, 'ram:AppliedTradeAllowanceCharge/ram:ActualAmount', 'discount'),
-      gross: p.dec(gross, 'ram:ChargeAmount', 'gross'),
-      baseQuantity: p.dec(baseQty, undefined, 'baseQuantity'),
-      baseQuantityUnit: p.attr(baseQty, undefined, 'unitCode', 'baseQuantityUnit'),
-    } : undefined,
-    vat: tax ? { categoryCode: s.text(tax, 'ram:CategoryCode', 'vat/categoryCode') ?? '', rate: s.dec(tax, 'ram:RateApplicablePercent', 'vat/rate') } : undefined,
+    price: net
+      ? {
+          net: p.dec(net, 'ram:ChargeAmount', 'net')!,
+          discount: p.dec(gross, 'ram:AppliedTradeAllowanceCharge/ram:ActualAmount', 'discount'),
+          gross: p.dec(gross, 'ram:ChargeAmount', 'gross'),
+          baseQuantity: p.dec(baseQty, undefined, 'baseQuantity'),
+          baseQuantityUnit: p.attr(baseQty, undefined, 'unitCode', 'baseQuantityUnit'),
+        }
+      : undefined,
+    vat: tax
+      ? {
+          categoryCode: s.text(tax, 'ram:CategoryCode', 'vat/categoryCode') ?? '',
+          rate: s.dec(tax, 'ram:RateApplicablePercent', 'vat/rate'),
+        }
+      : undefined,
     item: {
       name: it.text(product, 'ram:Name', 'name') ?? '',
       description: it.text(product, 'ram:Description', 'description'),

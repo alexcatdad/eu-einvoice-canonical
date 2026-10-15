@@ -41,8 +41,14 @@ export async function verifyCades(bytes: Uint8Array, trustAnchors?: TrustAnchor[
       if (signedAt) info.signedAt = signedAt.toISOString();
       const r = await sd.verify({ signer: i, data: content.slice().buffer, checkChain: false, extendedMode: true });
       const cert = r.signerCertificate ?? undefined;
-      if (cert) { info.signer = commonName(cert); info.certificate = certificateDetails(cert); }
-      if (!cert) { info.reason = 'Signer certificate is not included in the file; the signature could not be checked'; continue; }
+      if (cert) {
+        info.signer = commonName(cert);
+        info.certificate = certificateDetails(cert);
+      }
+      if (!cert) {
+        info.reason = 'Signer certificate is not included in the file; the signature could not be checked';
+        continue;
+      }
       info.verified = r.signatureVerified === true;
       if (!info.verified) info.reason = r.message || 'Signature value does not match the signed content';
       if (info.verified) {
@@ -61,12 +67,19 @@ export async function verifyCades(bytes: Uint8Array, trustAnchors?: TrustAnchor[
 function signingTime(si: pkijs.SignerInfo): Date | undefined {
   const attr = si.signedAttrs?.attributes.find((a) => a.type === OID_SIGNING_TIME);
   const v = attr?.values[0] as { toDate?: () => Date } | undefined;
-  try { return v?.toDate?.(); } catch { return undefined; }
+  try {
+    return v?.toDate?.();
+  } catch {
+    return undefined;
+  }
 }
 
 function concat(parts: Uint8Array[]) {
   const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
   let o = 0;
-  for (const p of parts) { out.set(p, o); o += p.length; }
+  for (const p of parts) {
+    out.set(p, o);
+    o += p.length;
+  }
   return out;
 }

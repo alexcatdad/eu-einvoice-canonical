@@ -1,22 +1,22 @@
 import type { CanonicalInvoice } from './canonical.js';
 import { checkTotals } from './checks.js';
-import { detectXml, type Detection } from './detect.js';
-import { unwrap, type Skipped, type UnwrapLimits, type UnwrapOptions, type XmlPayload } from './envelope.js';
-import { signatureFindings, signatureStatus } from './signature/index.js';
+import { type Detection, detectXml } from './detect.js';
+import { type Skipped, type UnwrapLimits, type UnwrapOptions, unwrap, type XmlPayload } from './envelope.js';
 import { NotImplementedError, PARSERS, ParseError } from './parsers/index.js';
-import { unavailableSummary } from './validation/plan.js';
+import { signatureFindings, signatureStatus } from './signature/index.js';
 import type { ValidateOptions } from './validation/index.js';
+import { unavailableSummary } from './validation/plan.js';
 
 export * from './canonical.js';
-export * from './codes.js';
-export { FORMATS, FORMATS_BY_ID, type FormatDef, type FormatId, type ParserFamily } from './formats.js';
-export { detectXml, type Detection } from './detect.js';
-export { unwrap, decodeXml, DEFAULT_LIMITS, type Skipped, type UnwrapLimits, type UnwrapOptions, type XmlPayload } from './envelope.js';
-export { signatureStatus, type TrustAnchor } from './signature/index.js';
 export { checkTotals, type Finding } from './checks.js';
+export * from './codes.js';
+export { type Detection, detectXml } from './detect.js';
+export { DEFAULT_LIMITS, decodeXml, type Skipped, type UnwrapLimits, type UnwrapOptions, unwrap, type XmlPayload } from './envelope.js';
+export { FORMATS, FORMATS_BY_ID, type FormatDef, type FormatId, type ParserFamily } from './formats.js';
 export { IMPLEMENTED_FAMILIES, NotImplementedError, ParseError } from './parsers/index.js';
-export * as values from './values.js';
+export { signatureStatus, type TrustAnchor } from './signature/index.js';
 export type { ValidateOptions } from './validation/index.js';
+export * as values from './values.js';
 
 export interface InspectedDocument {
   payload: Omit<XmlPayload, 'xml'>;
@@ -31,7 +31,12 @@ export interface InspectResult {
 }
 
 /** Unwraps a received file and identifies every XML document in it, without parsing. */
-export async function inspect(bytes: Uint8Array, filename?: string, limits?: Partial<UnwrapLimits>, options?: UnwrapOptions): Promise<InspectResult> {
+export async function inspect(
+  bytes: Uint8Array,
+  filename?: string,
+  limits?: Partial<UnwrapLimits>,
+  options?: UnwrapOptions,
+): Promise<InspectResult> {
   const { fileSha256, payloads, skipped } = await unwrap(bytes, filename, limits, options);
   const documents = payloads.map(({ xml, ...payload }) => ({ payload, detection: detectXml(xml, { fromPdf: payload.fromPdf }) }));
   return { fileSha256, documents, skipped };
@@ -80,7 +85,12 @@ async function loadValidation(): Promise<typeof import('./validation/index.js')>
  * to also check the signer against a trust list. With `options.validate`, the schema, semantic and
  * profile layers are filled in as well; the signature layer is kept.
  */
-export async function convert(bytes: Uint8Array, filename?: string, limits?: Partial<UnwrapLimits>, options: ConvertOptions = {}): Promise<ConvertResult> {
+export async function convert(
+  bytes: Uint8Array,
+  filename?: string,
+  limits?: Partial<UnwrapLimits>,
+  options: ConvertOptions = {},
+): Promise<ConvertResult> {
   const { fileSha256, payloads, skipped } = await unwrap(bytes, filename, limits, options);
   const outcomes = payloads.map(({ xml, ...meta }): ConvertOutcome => {
     const payload = { xml, ...meta };
@@ -88,12 +98,28 @@ export async function convert(bytes: Uint8Array, filename?: string, limits?: Par
     if (detection.kind === 'other-document') return { status: 'not-an-invoice', detection, payload: meta };
     if (detection.kind === 'unknown') return { status: 'unsupported', detection, payload: meta, reason: detection.reason };
     try {
-      const invoices = PARSERS[detection.format.family]({ payload, format: detection.format, details: detection.details, fileSha256, provenance: options.provenance });
+      const invoices = PARSERS[detection.format.family]({
+        payload,
+        format: detection.format,
+        details: detection.details,
+        fileSha256,
+        provenance: options.provenance,
+      });
       invoices.forEach((inv, i) => {
         if (invoices.length > 1) inv.source.indexInFile = i;
         inv.source.warnings.push(...checkTotals(inv));
         const sigs = inv.source.signatures;
-        const v = inv.source.validation ??= { parse: 'passed', schema: 'not-run', semantic: 'not-run', profile: 'not-run', signature: 'not-run', clearance: 'not-run', bundles: {}, findings: [] };
+        inv.source.validation ??= {
+          parse: 'passed',
+          schema: 'not-run',
+          semantic: 'not-run',
+          profile: 'not-run',
+          signature: 'not-run',
+          clearance: 'not-run',
+          bundles: {},
+          findings: [],
+        };
+        const v = inv.source.validation;
         v.signature = signatureStatus(sigs);
         v.findings.push(...signatureFindings(sigs));
       });
@@ -112,22 +138,24 @@ export async function convert(bytes: Uint8Array, filename?: string, limits?: Par
     } catch (e) {
       loadError = e instanceof Error ? e.message : String(e);
     }
-    await Promise.all(outcomes.map(async (outcome, i) => {
-      if (outcome.status !== 'ok') return;
-      const summary = validation
-        ? await validation.validate(payloads[i], outcome.detection, options.validation)
-        : unavailableSummary(outcome.detection, loadError);
-      for (const inv of outcome.invoices) {
-        // Keep the signature layer and its findings, which the conversion already filled in.
-        const before = inv.source.validation;
-        const merged = structuredClone(summary);
-        if (before) {
-          merged.signature = before.signature;
-          merged.findings.push(...before.findings.filter((f) => f.layer === 'signature'));
+    await Promise.all(
+      outcomes.map(async (outcome, i) => {
+        if (outcome.status !== 'ok') return;
+        const summary = validation
+          ? await validation.validate(payloads[i], outcome.detection, options.validation)
+          : unavailableSummary(outcome.detection, loadError);
+        for (const inv of outcome.invoices) {
+          // Keep the signature layer and its findings, which the conversion already filled in.
+          const before = inv.source.validation;
+          const merged = structuredClone(summary);
+          if (before) {
+            merged.signature = before.signature;
+            merged.findings.push(...before.findings.filter((f) => f.layer === 'signature'));
+          }
+          inv.source.validation = merged;
         }
-        inv.source.validation = merged;
-      }
-    }));
+      }),
+    );
   }
   return { fileSha256, outcomes, skipped };
 }

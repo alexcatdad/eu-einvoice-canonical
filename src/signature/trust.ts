@@ -4,7 +4,14 @@ import type { SignatureInfo } from '../canonical.js';
 
 export type TrustAnchor = Uint8Array | string;
 
-const OIDS: Record<string, string> = { '2.5.4.3': 'CN', '2.5.4.10': 'O', '2.5.4.6': 'C', '2.5.4.5': 'serialNumber', '2.5.4.4': 'SN', '2.5.4.42': 'GN' };
+const OIDS: Record<string, string> = {
+  '2.5.4.3': 'CN',
+  '2.5.4.10': 'O',
+  '2.5.4.6': 'C',
+  '2.5.4.5': 'serialNumber',
+  '2.5.4.4': 'SN',
+  '2.5.4.42': 'GN',
+};
 
 const rdn = (name: pkijs.RelativeDistinguishedNames, type: string) => {
   const v = name.typesAndValues.find((t) => t.type === type)?.value.valueBlock.value;
@@ -31,30 +38,48 @@ export function certificateDetails(cert: pkijs.Certificate): NonNullable<Signatu
 }
 
 export function parseCertificate(der: Uint8Array): pkijs.Certificate | null {
-  try { return pkijs.Certificate.fromBER(der.slice().buffer); } catch { return null; }
+  try {
+    return pkijs.Certificate.fromBER(der.slice().buffer);
+  } catch {
+    return null;
+  }
 }
 
 /** Accepts DER bytes, a base64 string or PEM text (several certificates allowed in PEM). */
 export function parseAnchors(anchors: TrustAnchor[] | undefined): pkijs.Certificate[] {
   const out: pkijs.Certificate[] = [];
   for (const a of anchors ?? []) {
-    if (typeof a !== 'string') { const c = parseCertificate(a); if (c) out.push(c); continue; }
+    if (typeof a !== 'string') {
+      const c = parseCertificate(a);
+      if (c) out.push(c);
+      continue;
+    }
     const blocks = a.match(/-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g) ?? [a];
     for (const b of blocks) {
       try {
         const bin = atob(b.replace(/-----[A-Z ]+-----/g, '').replace(/\s+/g, ''));
         const c = parseCertificate(Uint8Array.from(bin, (ch) => ch.charCodeAt(0)));
         if (c) out.push(c);
-      } catch { /* not base64: ignored */ }
+      } catch {
+        /* not base64: ignored */
+      }
     }
   }
   return out;
 }
 
-export interface TrustResult { trust: 'not-checked' | 'trusted' | 'untrusted'; reason?: string }
+export interface TrustResult {
+  trust: 'not-checked' | 'trusted' | 'untrusted';
+  reason?: string;
+}
 
 /** Without configured anchors nothing is claimed about the signer: 'not-checked'. */
-export async function evaluateTrust(signer: pkijs.Certificate, others: pkijs.Certificate[], anchors: pkijs.Certificate[], at: Date): Promise<TrustResult> {
+export async function evaluateTrust(
+  signer: pkijs.Certificate,
+  others: pkijs.Certificate[],
+  anchors: pkijs.Certificate[],
+  at: Date,
+): Promise<TrustResult> {
   if (anchors.length === 0) return { trust: 'not-checked' };
   try {
     const engine = new pkijs.CertificateChainValidationEngine({
