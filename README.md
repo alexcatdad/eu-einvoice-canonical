@@ -54,7 +54,17 @@ for (const o of outcomes) {
   else console.log(o.status, o.detection);                 // 'unsupported' | 'not-an-invoice' | 'error'
 }
 console.log(skipped);                                      // DOCTYPE, size limits, detached signatures...
+
+// Opt-in field provenance: source.provenance maps canonical paths to the XPath they were read from.
+const traced = await convert(bytes, 'invoice.xml', undefined, { provenance: true });
+// '/totals/payable' -> '/Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount', '/lines/1/netAmount' -> '/Invoice/cac:InvoiceLine[2]/cbc:LineExtensionAmount'
 ```
+
+### Field provenance in a parser
+
+XPaths use the qualified names as written in the document, with a positional predicate only where siblings share a name; attributes end in `/@name`. Values built from several nodes list them joined with ` | `. Values the mapper computed, defaulted or translated (code mappings, sums) have no entry and are listed in `source.derived` or `source.warnings` instead.
+
+Parsers get this from `Ctx` in `src/parsers/context.ts`: construct it with `new Ctx(ns, input.provenance)`, take a scope for a canonical path (`const s = c.in('')`, `s.in('seller')`, `s.in('lines').in(i)`), and read through the scope with the field key as the last argument: `s.text(node, 'cbc:ID', 'id')`, `s.dec(m, 'cbc:PayableAmount', 'payable')`, `s.id(el, 'cbc:EndpointID', 'endpoint')` (records `/value` and `/schemeId`). Use `c.mark(path, el)` / `c.markAll(path, els)` for values assembled by hand, and `c.nonEmpty(els)` before mapping to arrays so indexes match the output. Entries for values that did not survive into the output are pruned by `finish()`.
 
 ## Command line
 
@@ -145,13 +155,13 @@ What you will receive from each country, inbound. Format IDs refer to `src/forma
 |---|---|---|---|
 | 1 | `ubl` | Peppol BIS 3 + self-billing, XRechnung UBL, NLCIUS, CIUS-RO, CIUS-PT, HR-CIUS, OIOUBL 3, UBL.BE, PINT, BIS 2 (best-effort), OIOUBL 2 | One parser, profile-specific rules on top. Invoice vs CreditNote element names differ (`InvoicedQuantity`/`CreditedQuantity`). UBL 2.1 CreditNote has no root `cbc:DueDate`: read `cac:PaymentMeans/cbc:PaymentDueDate`, and accept a root `cbc:DueDate` only as a fallback with a warning (it appears in some XRechnung test files). |
 | 1 | `cii` | Factur-X/ZUGFeRD 2.x all profiles, XRechnung CII, NLCIUS CII, France CII | D16B and D22B share the root namespace. MINIMUM/BASIC WL have no lines. |
-| 2 | `fatturapa` | FatturaPA, semplificata | Child elements are unqualified (no namespace). Several `FatturaElettronicaBody` per file. Natura → VAT category, RT0x → withholdings, cassa previdenziale → charge + `extensions.it`. SdI ID from the separate metadata file. |
+| 2 | `fatturapa` | FatturaPA, semplificata | Child elements are unqualified (no namespace). Several `FatturaElettronicaBody` per file. Natura → VAT category, RT0x → withholdings, cassa previdenziale → charge + `extensions.it`. SdI ID from the separate metadata file. Done: see `src/parsers/fatturapa.ts` (FPR12/FPA12 and FSM10; TD04/TD08 are credit notes; split payment → `totals.splitPaymentVat`; bollo → `otherTaxes` + `extensions.it.stampDuty`). |
 | 2 | `ksef` | FA(2), FA(3), FA_RR | `P_12` rate codes (`23`, `zw`, `oo`, `np I`, `0 WDT`...) → VAT category. `P_14_xW` = VAT in PLN. `StanPrzed` → `correctionState`. `Podmiot3` + `Rola` → `additionalParties`. KSeF number from download metadata. |
 | 2 | `facturae` | Facturae 3.2–3.2.2 | Batches (`Modality L`). `TaxesWithheld` → withholdings, recargo → `otherTaxes`. XAdES signature inside. |
 | 2 | `isdoc`, `ebinterface`, `finvoice`, `e-arve`, `eslog` | National formats in active B2B use | ISDOC symbols → `extensions.cz`; ebInterface varies by version; Finvoice: SOAP + ISO-8859-15; e-arve: several invoices per file; eSLOG uses EDIFACT segment names (`S_BGM`, `G_SG26`...). |
 | 3 | `svefaktura`, `zugferd1`, `teappsxml`, `mydata` | Legacy and low-volume | Svefaktura follows SFTI's "Mapping of Svefaktura 1.0 onto EN 16931-1" (see `src/parsers/svefaktura.ts`). |
 
-Done: `ubl`, `cii` and `svefaktura`. Corrective documents whose direction depends on the amounts (KSeF KOR, Facturae rectificativa, ISDOC) must set `kind` from the sign of the correction total; see `effectiveSign()` in `src/canonical.ts`.
+Done: `ubl`, `cii`, `svefaktura` and `fatturapa`. Corrective documents whose direction depends on the amounts (KSeF KOR, Facturae rectificativa, ISDOC) must set `kind` from the sign of the correction total; see `effectiveSign()` in `src/canonical.ts`.
 
 Run `scripts/sweep.ts` over a few months of your real inbound files before building phase 2. It shows which formats you actually receive.
 
@@ -185,7 +195,7 @@ Skipped files and the reason are returned by both `inspect()` and `convert()`, s
 
 ## Known gaps
 
-- **Unverified detection rules:** `fr-ctc-*` (exact EXTENDED-CTC-FR identifier), `pl-pef`, `eslog-1` root name and `gr-mydata`. They are marked `unverified` in the registry. The Croatian spec spells its own identifier inconsistently, so `hr-cius` only checks for `urn:mfin.gov.`.
+- **Unverified detection rules:** `ubl-unknown` and `cii-unknown` are fallbacks, not confirmed formats. The Croatian spec spells its own identifier inconsistently, so `hr-cius` only checks for `urn:mfin.gov.`.
 - **EN 16931-1:2026** (published March 2026; 164 to 216 business terms and 32 to 39 groups, per trade press) is not modelled beyond the identifier. Checked on 2026-10-16: the ConnectingEurope validation artefacts (v1.3.17, UBL 2.1 / CII D16B) and the KoSIT XRechnung Schematron (v2.6.0, XRechnung 3.0) contain no 2026 terms, and the EN 16931-1:2026 text and the updated CEN/TS 16931-3-x bindings are paywalled, so neither the exact BT/BG ids and names nor their UBL/CII paths are confirmed. Secondary sources mention multiple payment terms (BG-33), early-payment discounts (BG-35) and line-level delivery (BG-37) but disagree on detail, so nothing was added to `src/canonical.ts` or the parsers. Missing: the CEN/TS 16931-3-1 and 3-3 binding tables, or the 2026 Schematron/XSD once ConnectingEurope or Peppol BIS publish them. 2026-identified documents still parse, with the 2017 terms only.
 - **Signatures** are detected and recorded, not verified.
 - **No schema or Schematron validation yet.** `source.validation` exists in the model but nothing fills it. The BR-CO arithmetic checks are the only rules run. Use phive or the KoSIT validator for conformance.
@@ -194,4 +204,6 @@ Skipped files and the reason are returned by both `inspect()` and `convert()`, s
 
 ## License
 
-[ISC](LICENSE), copyright 2026 alexcatdad.
+[0BSD](LICENSE) (BSD Zero Clause): use, copy, change and distribute it for any purpose, with or without attribution. It comes with no warranty, and the author accepts no liability for its use.
+
+Third-party sample files under `test/fixtures/` keep their own licences (Apache License 2.0 for the phive-rules and Mustang samples; see `test/fixtures/README.md`).
