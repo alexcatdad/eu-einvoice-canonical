@@ -9,7 +9,7 @@ on:
   schedule:
     - cron: '17 4 * * 1'
   workflow_dispatch:
-  push: # TEMPORARY: first run from the PR branch, removed in the next commit
+  push: # TEMPORARY
     branches: [claude/detection-corpus-af7b74]
 
 permissions:
