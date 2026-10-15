@@ -80,11 +80,11 @@ export function parseZugferd1(input: ParseInput): CanonicalInvoice[] {
 
   for (const pm of c.all(settlement, 'ram:SpecifiedTradeSettlementPaymentMeans')) {
     const blz = c.text(pm, 'ram:PayeeSpecifiedCreditorFinancialInstitution/ram:GermanBankleitzahlID');
-    if (blz) c.unmapped['/rsm:CrossIndustryDocument/ram:ApplicableSupplyChainTradeSettlement/ram:SpecifiedTradeSettlementPaymentMeans/ram:PayeeSpecifiedCreditorFinancialInstitution/ram:GermanBankleitzahlID'] = blz;
+    if (blz) c.unmapped['/CrossIndustryDocument/SpecifiedSupplyChainTradeTransaction/ApplicableSupplyChainTradeSettlement/SpecifiedTradeSettlementPaymentMeans/PayeeSpecifiedCreditorFinancialInstitution/GermanBankleitzahlID'] = blz;
   }
   for (const t of terms) {
     const partial = c.dec(t, 'ram:PartialPaymentAmount');
-    if (partial !== undefined) c.unmapped['/rsm:CrossIndustryDocument/ram:ApplicableSupplyChainTradeSettlement/ram:SpecifiedTradePaymentTerms/ram:PartialPaymentAmount'] = partial;
+    if (partial !== undefined) c.unmapped['/CrossIndustryDocument/SpecifiedSupplyChainTradeTransaction/ApplicableSupplyChainTradeSettlement/SpecifiedTradePaymentTerms/PartialPaymentAmount'] = partial;
   }
 
   recordUnmapped(c, ctxEl, ['TestIndicator', 'GuidelineSpecifiedDocumentContextParameter'], '/CrossIndustryDocument/SpecifiedExchangedDocumentContext');
