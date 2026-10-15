@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Hand-written header-only stub of an eSLOG 1.6 simple invoice (root IzdaniRacunEnostavni, no namespace). Fictitious values; only the root is read. -->
+<IzdaniRacunEnostavni>
+  <GlavaRacuna>
+    <StevilkaRacuna>2012-001</StevilkaRacuna>
+    <DatumRacuna>2012-03-15</DatumRacuna>
+  </GlavaRacuna>
+</IzdaniRacunEnostavni>

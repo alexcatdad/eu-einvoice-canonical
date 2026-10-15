@@ -1,56 +1,209 @@
 {
-  "peppol-bis3-invoice.xml": ["peppol-bis3"],
-  "peppol-bis3-creditnote.xml": ["peppol-bis3"],
-  "peppol-negative-invoice.xml": ["peppol-bis3"],
-  "xrechnung-ubl.xml": ["xrechnung-ubl"],
-  "xrechnung-cii.xml": ["xrechnung-cii"],
-  "facturx-basic-creditnote.xml": ["facturx"],
-  "facturx-minimum.xml": ["facturx"],
-  "svefaktura-1.0.xml": ["svefaktura-1"],
-  "svefaktura-1.0-credit.xml": ["svefaktura-1"],
-  "peppol-in-sbdh.xml": ["peppol-pint"],
-  "peppol-utf16.xml": ["peppol-pint"],
-  "hr-cius.xml": ["hr-cius"],
-  "en16931-2026.xml": ["en16931-ubl"],
-  "anaf-download.zip": ["cius-ro"],
-  "finvoice-with-soap.xml": ["finvoice"],
-  "invoice.isdocx": ["isdoc"],
-  "ksef-fa3.xml": ["ksef"],
-  "eslog2.xml": ["eslog-2"],
-  "e-arve-two-invoices.xml": ["e-arve"],
-  "facturae-322-signed.xsig": ["facturae"],
-  "facturae-322-iva-irpf.xml": ["facturae"],
-  "facturae-322-recargo.xml": ["facturae"],
-  "facturae-322-batch.xml": ["facturae"],
-  "facturae-322-rectificativa.xml": ["facturae"],
-  "ebinterface-61.xml": ["ebinterface"],
-  "ebinterface-6.1-invoice.xml": ["ebinterface"],
-  "ebinterface-4.3-creditmemo.xml": ["ebinterface"],
-  "isdoc-6.0.2-invoice.isdoc": ["isdoc"],
-  "isdoc-6.0.2-credit-eur.isdoc": ["isdoc"],
-  "fattura-semplificata.xml": ["fatturapa-semplificata"],
-  "fatturapa-b2b.xml": ["fatturapa"],
-  "fatturapa-credit-note.xml": ["fatturapa"],
-  "fatturapa-ritenuta-cassa-bollo.xml": ["fatturapa"],
-  "fatturapa-split-payment.xml": ["fatturapa"],
-  "fatturapa-lot.xml": ["fatturapa"],
-  "fatturapa-fsm10.xml": ["fatturapa-semplificata"],
-  "mydata.xml": ["gr-mydata"],
-  "mydata-two-invoices.xml": ["gr-mydata"],
-  "teappsxml-invoices.xml": ["teappsxml"],
-  "zugferd1-comfort.xml": ["zugferd-1"],
-  "sdi-metadata.xml": ["other"],
-  "IT01234567890_FPR12.xml.p7m": ["fatturapa"],
-  "IT01234567890_FPR12.base64.xml.p7m": ["fatturapa"],
-  "facturx-en16931.pdf": ["facturx"],
-  "ksef-fa3-vat-multirate.xml": ["ksef"],
-  "ksef-fa3-kor-before-after.xml": ["ksef"],
-  "ksef-fa3-kor-delta-increase.xml": ["ksef"],
-  "ksef-fa3-zal.xml": ["ksef"],
-  "ksef-fa-rr.xml": ["ksef"],
-  "finvoice-invoice.xml": ["finvoice"],
-  "finvoice-credit.xml": ["finvoice"],
-  "e-arve-1.2-two-invoices.xml": ["e-arve"],
-  "eslog-2-invoice.xml": ["eslog-2"],
-  "eslog-2-credit.xml": ["eslog-2"]
+  "peppol-bis3-invoice.xml": [
+    "peppol-bis3"
+  ],
+  "peppol-bis3-creditnote.xml": [
+    "peppol-bis3"
+  ],
+  "peppol-negative-invoice.xml": [
+    "peppol-bis3"
+  ],
+  "xrechnung-ubl.xml": [
+    "xrechnung-ubl"
+  ],
+  "xrechnung-cii.xml": [
+    "xrechnung-cii"
+  ],
+  "facturx-basic-creditnote.xml": [
+    "facturx"
+  ],
+  "facturx-minimum.xml": [
+    "facturx"
+  ],
+  "svefaktura-1.0.xml": [
+    "svefaktura-1"
+  ],
+  "svefaktura-1.0-credit.xml": [
+    "svefaktura-1"
+  ],
+  "peppol-in-sbdh.xml": [
+    "peppol-pint"
+  ],
+  "peppol-utf16.xml": [
+    "peppol-pint"
+  ],
+  "hr-cius.xml": [
+    "hr-cius"
+  ],
+  "en16931-2026.xml": [
+    "en16931-ubl"
+  ],
+  "anaf-download.zip": [
+    "cius-ro"
+  ],
+  "finvoice-with-soap.xml": [
+    "finvoice"
+  ],
+  "invoice.isdocx": [
+    "isdoc"
+  ],
+  "ksef-fa3.xml": [
+    "ksef"
+  ],
+  "eslog2.xml": [
+    "eslog-2"
+  ],
+  "e-arve-two-invoices.xml": [
+    "e-arve"
+  ],
+  "facturae-322-signed.xsig": [
+    "facturae"
+  ],
+  "facturae-322-iva-irpf.xml": [
+    "facturae"
+  ],
+  "facturae-322-recargo.xml": [
+    "facturae"
+  ],
+  "facturae-322-batch.xml": [
+    "facturae"
+  ],
+  "facturae-322-rectificativa.xml": [
+    "facturae"
+  ],
+  "ebinterface-61.xml": [
+    "ebinterface"
+  ],
+  "ebinterface-6.1-invoice.xml": [
+    "ebinterface"
+  ],
+  "ebinterface-4.3-creditmemo.xml": [
+    "ebinterface"
+  ],
+  "isdoc-6.0.2-invoice.isdoc": [
+    "isdoc"
+  ],
+  "isdoc-6.0.2-credit-eur.isdoc": [
+    "isdoc"
+  ],
+  "fattura-semplificata.xml": [
+    "fatturapa-semplificata"
+  ],
+  "fatturapa-b2b.xml": [
+    "fatturapa"
+  ],
+  "fatturapa-credit-note.xml": [
+    "fatturapa"
+  ],
+  "fatturapa-ritenuta-cassa-bollo.xml": [
+    "fatturapa"
+  ],
+  "fatturapa-split-payment.xml": [
+    "fatturapa"
+  ],
+  "fatturapa-lot.xml": [
+    "fatturapa"
+  ],
+  "fatturapa-fsm10.xml": [
+    "fatturapa-semplificata"
+  ],
+  "mydata.xml": [
+    "gr-mydata"
+  ],
+  "mydata-two-invoices.xml": [
+    "gr-mydata"
+  ],
+  "teappsxml-invoices.xml": [
+    "teappsxml"
+  ],
+  "zugferd1-comfort.xml": [
+    "zugferd-1"
+  ],
+  "sdi-metadata.xml": [
+    "other"
+  ],
+  "IT01234567890_FPR12.xml.p7m": [
+    "fatturapa"
+  ],
+  "IT01234567890_FPR12.base64.xml.p7m": [
+    "fatturapa"
+  ],
+  "facturx-en16931.pdf": [
+    "facturx"
+  ],
+  "ksef-fa3-vat-multirate.xml": [
+    "ksef"
+  ],
+  "ksef-fa3-kor-before-after.xml": [
+    "ksef"
+  ],
+  "ksef-fa3-kor-delta-increase.xml": [
+    "ksef"
+  ],
+  "ksef-fa3-zal.xml": [
+    "ksef"
+  ],
+  "ksef-fa-rr.xml": [
+    "ksef"
+  ],
+  "finvoice-invoice.xml": [
+    "finvoice"
+  ],
+  "finvoice-credit.xml": [
+    "finvoice"
+  ],
+  "e-arve-1.2-two-invoices.xml": [
+    "e-arve"
+  ],
+  "eslog-2-invoice.xml": [
+    "eslog-2"
+  ],
+  "eslog-2-credit.xml": [
+    "eslog-2"
+  ],
+  "nlcius-ubl.xml": [
+    "nlcius-ubl"
+  ],
+  "cius-pt.xml": [
+    "cius-pt"
+  ],
+  "fr-ctc-ubl.xml": [
+    "fr-ctc-ubl"
+  ],
+  "oioubl-3.xml": [
+    "oioubl-3"
+  ],
+  "pl-pef.xml": [
+    "pl-pef"
+  ],
+  "peppol-bis3-selfbilling.xml": [
+    "peppol-bis3-selfbilling"
+  ],
+  "ubl-be.xml": [
+    "ubl-be"
+  ],
+  "peppol-bis2.xml": [
+    "peppol-bis2"
+  ],
+  "oioubl-2.xml": [
+    "oioubl-2"
+  ],
+  "ubl-unknown.xml": [
+    "ubl-unknown"
+  ],
+  "nlcius-cii.xml": [
+    "nlcius-cii"
+  ],
+  "fr-ctc-cii.xml": [
+    "fr-ctc-cii"
+  ],
+  "en16931-cii.xml": [
+    "en16931-cii"
+  ],
+  "cii-unknown.xml": [
+    "cii-unknown"
+  ],
+  "eslog-1.xml": [
+    "eslog-1"
+  ]
 }
