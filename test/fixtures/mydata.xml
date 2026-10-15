@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<InvoicesDoc xmlns="http://www.aade.gr/myDATA/invoice/v1.0"><invoice><issuer><vatNumber>123456789</vatNumber></issuer><invoiceHeader><series>A</series><aa>1</aa><issueDate>2026-10-01</issueDate><invoiceType>1.1</invoiceType></invoiceHeader></invoice></InvoicesDoc>

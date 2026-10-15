@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<E_Invoice><Header><Date>2026-10-01</Date><FileId>F1</FileId><Version>1.2</Version></Header>
+<Invoice invoiceId="1" regNumber="10000000" sellerRegnumber="12345678"><InvoiceParties/><InvoiceInformation><Type type="DEB"/><InvoiceNumber>1</InvoiceNumber></InvoiceInformation></Invoice>
+<Invoice invoiceId="2" regNumber="10000000" sellerRegnumber="12345678"><InvoiceParties/><InvoiceInformation><Type type="CRE"/><InvoiceNumber>2</InvoiceNumber></InvoiceInformation></Invoice>
+<Footer><TotalNumberInvoices>2</TotalNumberInvoices><TotalAmount>0</TotalAmount></Footer></E_Invoice>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fe:Facturae xmlns:fe="http://www.facturae.gob.es/formato/Versiones/Facturaev3_2_2.xml" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+<FileHeader><SchemaVersion>3.2.2</SchemaVersion><Modality>I</Modality><InvoiceIssuerType>EM</InvoiceIssuerType></FileHeader>
+<Parties/><Invoices><Invoice><InvoiceHeader><InvoiceNumber>1</InvoiceNumber><InvoiceDocumentType>FC</InvoiceDocumentType><InvoiceClass>OO</InvoiceClass></InvoiceHeader></Invoice></Invoices>
+<ds:Signature Id="Sig1"><ds:SignedInfo/><ds:Object><xades:QualifyingProperties xmlns:xades="http://uri.etsi.org/01903/v1.3.2#"/></ds:Object></ds:Signature>
+</fe:Facturae>

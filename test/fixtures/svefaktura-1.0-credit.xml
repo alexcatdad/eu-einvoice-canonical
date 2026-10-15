@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic Svefaktura 1.0 credit (381 on the Invoice root, positive amounts, no VAT breakdown) written for this test suite. -->
+<Invoice xmlns="urn:sfti:documents:BasicInvoice:1:0" xmlns:cac="urn:sfti:CommonAggregateComponents:1:0" xmlns:cbc="urn:oasis:names:tc:ubl:CommonBasicComponents:1:0">
+  <ID>SF-2026-18</ID>
+  <cbc:IssueDate>2026-10-05</cbc:IssueDate>
+  <InvoiceTypeCode>381</InvoiceTypeCode>
+  <LineItemCountNumeric>1</LineItemCountNumeric>
+  <InitialInvoiceDocumentReference><cac:ID>SF-2026-17</cac:ID></InitialInvoiceDocumentReference>
+  <cac:BuyerParty>
+    <cac:Party>
+      <cac:PartyName><cbc:Name>Exempelkommunen</cbc:Name></cac:PartyName>
+    </cac:Party>
+  </cac:BuyerParty>
+  <cac:SellerParty>
+    <cac:Party>
+      <cac:PartyName><cbc:Name>Snickeri Exempel</cbc:Name></cac:PartyName>
+      <cac:PartyTaxScheme>
+        <cbc:RegistrationName>Snickeri Exempel AB</cbc:RegistrationName>
+        <cac:CompanyID>5560000001</cac:CompanyID>
+        <cac:TaxScheme><cac:ID>SWT</cac:ID></cac:TaxScheme>
+      </cac:PartyTaxScheme>
+    </cac:Party>
+  </cac:SellerParty>
+  <cac:TaxTotal>
+    <cbc:TotalTaxAmount amountCurrencyID="SEK">0</cbc:TotalTaxAmount>
+  </cac:TaxTotal>
+  <cac:LegalTotal>
+    <cbc:LineExtensionTotalAmount amountCurrencyID="SEK">500.00</cbc:LineExtensionTotalAmount>
+    <cbc:TaxInclusiveTotalAmount amountCurrencyID="SEK">500.00</cbc:TaxInclusiveTotalAmount>
+  </cac:LegalTotal>
+  <cac:InvoiceLine>
+    <cac:ID>1</cac:ID>
+    <cbc:LineExtensionAmount amountCurrencyID="SEK">500.00</cbc:LineExtensionAmount>
+    <cac:Item><cbc:Description>Kreditering utbildningsdag</cbc:Description></cac:Item>
+  </cac:InvoiceLine>
+</Invoice>

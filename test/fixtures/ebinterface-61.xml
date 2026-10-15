@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eb:Invoice xmlns:eb="http://www.ebinterface.at/schema/6p1/" eb:GeneratingSystem="test" eb:DocumentType="Invoice" eb:InvoiceCurrency="EUR" eb:Language="ger"><eb:InvoiceNumber>1</eb:InvoiceNumber><eb:InvoiceDate>2026-10-01</eb:InvoiceDate></eb:Invoice>

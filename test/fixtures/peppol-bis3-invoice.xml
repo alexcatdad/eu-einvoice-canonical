@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic Peppol BIS Billing 3.0 invoice written for this test suite. All parties and numbers are fictitious. -->
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+         xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+         xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+  <cbc:CustomizationID>urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0</cbc:CustomizationID>
+  <cbc:ProfileID>urn:fdc:peppol.eu:2017:poacc:billing:01:1.0</cbc:ProfileID>
+  <cbc:ID>INV-2026-1042</cbc:ID>
+  <cbc:IssueDate>2026-10-15</cbc:IssueDate>
+  <cbc:DueDate>2026-11-14</cbc:DueDate>
+  <cbc:InvoiceTypeCode>380</cbc:InvoiceTypeCode>
+  <cbc:Note>#AAI#Leverans enligt avtal K-2026-1</cbc:Note>
+  <cbc:Note>Tack för ert köp</cbc:Note>
+  <cbc:DocumentCurrencyCode>SEK</cbc:DocumentCurrencyCode>
+  <cbc:AccountingCost>6110</cbc:AccountingCost>
+  <cbc:BuyerReference>4025:ANNA</cbc:BuyerReference>
+  <cac:InvoicePeriod>
+    <cbc:StartDate>2026-09-01</cbc:StartDate>
+    <cbc:EndDate>2026-09-30</cbc:EndDate>
+  </cac:InvoicePeriod>
+  <cac:OrderReference>
+    <cbc:ID>PO-1001</cbc:ID>
+    <cbc:SalesOrderID>SO-77</cbc:SalesOrderID>
+  </cac:OrderReference>
+  <cac:BillingReference>
+    <cac:InvoiceDocumentReference>
+      <cbc:ID>INV-2026-0999</cbc:ID>
+      <cbc:IssueDate>2026-09-30</cbc:IssueDate>
+    </cac:InvoiceDocumentReference>
+  </cac:BillingReference>
+  <cac:ContractDocumentReference>
+    <cbc:ID>K-2026-1</cbc:ID>
+  </cac:ContractDocumentReference>
+  <cac:AdditionalDocumentReference>
+    <cbc:ID schemeID="AAB">OBJ-77</cbc:ID>
+    <cbc:DocumentTypeCode>130</cbc:DocumentTypeCode>
+  </cac:AdditionalDocumentReference>
+  <cac:AdditionalDocumentReference>
+    <cbc:ID>TS-9</cbc:ID>
+    <cbc:DocumentDescription>Tidrapport september</cbc:DocumentDescription>
+    <cac:Attachment>
+      <cbc:EmbeddedDocumentBinaryObject mimeCode="text/plain" filename="tidrapport.txt">SGVsbG8gZnJvbSB0aGUgdGltZXNoZWV0
+      Lg==</cbc:EmbeddedDocumentBinaryObject>
+    </cac:Attachment>
+  </cac:AdditionalDocumentReference>
+  <cac:ProjectReference>
+    <cbc:ID>PRJ-1</cbc:ID>
+  </cac:ProjectReference>
+  <cac:AccountingSupplierParty>
+    <cac:Party>
+      <cbc:EndpointID schemeID="0007">5560000001</cbc:EndpointID>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="0088">7300010000002</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyName>
+        <cbc:Name>Snickeri Exempel</cbc:Name>
+      </cac:PartyName>
+      <cac:PostalAddress>
+        <cbc:StreetName>Storgatan 1</cbc:StreetName>
+        <cbc:AdditionalStreetName>Box 12</cbc:AdditionalStreetName>
+        <cbc:CityName>Stockholm</cbc:CityName>
+        <cbc:PostalZone>11122</cbc:PostalZone>
+        <cac:Country>
+          <cbc:IdentificationCode>SE</cbc:IdentificationCode>
+        </cac:Country>
+      </cac:PostalAddress>
+      <cac:PartyTaxScheme>
+        <cbc:CompanyID>SE556000000101</cbc:CompanyID>
+        <cac:TaxScheme>
+          <cbc:ID>VAT</cbc:ID>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:PartyTaxScheme>
+        <cbc:CompanyID>Godkänd för F-skatt</cbc:CompanyID>
+        <cac:TaxScheme>
+          <cbc:ID>TAX</cbc:ID>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName>Snickeri Exempel AB</cbc:RegistrationName>
+        <cbc:CompanyID schemeID="0007">5560000001</cbc:CompanyID>
+        <cbc:CompanyLegalForm>Säte Stockholm</cbc:CompanyLegalForm>
+      </cac:PartyLegalEntity>
+      <cac:Contact>
+        <cbc:Name>Erik Exempel</cbc:Name>
+        <cbc:Telephone>+46 8 123 45</cbc:Telephone>
+        <cbc:ElectronicMail>faktura@snickeri.example</cbc:ElectronicMail>
+      </cac:Contact>
+    </cac:Party>
+  </cac:AccountingSupplierParty>
+  <cac:AccountingCustomerParty>
+    <cac:Party>
+      <cbc:EndpointID schemeID="0007">2120000001</cbc:EndpointID>
+      <cac:PartyName>
+        <cbc:Name>Kommunen</cbc:Name>
+      </cac:PartyName>
+      <cac:PostalAddress>
+        <cbc:StreetName>Rådhustorget 3</cbc:StreetName>
+        <cbc:CityName>Uppsala</cbc:CityName>
+        <cbc:PostalZone>75375</cbc:PostalZone>
+        <cac:Country>
+          <cbc:IdentificationCode>SE</cbc:IdentificationCode>
+        </cac:Country>
+      </cac:PostalAddress>
+      <cac:PartyTaxScheme>
+        <cbc:CompanyID>SE212000000101</cbc:CompanyID>
+        <cac:TaxScheme>
+          <cbc:ID>VAT</cbc:ID>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName>Uppsala kommun</cbc:RegistrationName>
+        <cbc:CompanyID schemeID="0007">2120000001</cbc:CompanyID>
+      </cac:PartyLegalEntity>
+    </cac:Party>
+  </cac:AccountingCustomerParty>
+  <cac:Delivery>
+    <cbc:ActualDeliveryDate>2026-10-10</cbc:ActualDeliveryDate>
+    <cac:DeliveryLocation>
+      <cbc:ID schemeID="0088">7300010000019</cbc:ID>
+      <cac:Address>
+        <cbc:StreetName>Lagervägen 5</cbc:StreetName>
+        <cbc:CityName>Uppsala</cbc:CityName>
+        <cbc:PostalZone>75450</cbc:PostalZone>
+        <cac:Country>
+          <cbc:IdentificationCode>SE</cbc:IdentificationCode>
+        </cac:Country>
+      </cac:Address>
+    </cac:DeliveryLocation>
+    <cac:DeliveryParty>
+      <cac:PartyName>
+        <cbc:Name>Kommunens förråd</cbc:Name>
+      </cac:PartyName>
+    </cac:DeliveryParty>
+  </cac:Delivery>
+  <cac:PaymentMeans>
+    <cbc:PaymentMeansCode name="Bankgiro">30</cbc:PaymentMeansCode>
+    <cbc:PaymentID>4711000123</cbc:PaymentID>
+    <cac:PayeeFinancialAccount>
+      <cbc:ID>1234567</cbc:ID>
+      <cbc:Name>Snickeri Exempel AB</cbc:Name>
+      <cac:FinancialInstitutionBranch>
+        <cbc:ID>SE:BANKGIRO</cbc:ID>
+      </cac:FinancialInstitutionBranch>
+    </cac:PayeeFinancialAccount>
+  </cac:PaymentMeans>
+  <cac:PaymentTerms>
+    <cbc:Note>30 dagar netto</cbc:Note>
+  </cac:PaymentTerms>
+  <cac:AllowanceCharge>
+    <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+    <cbc:AllowanceChargeReasonCode>95</cbc:AllowanceChargeReasonCode>
+    <cbc:AllowanceChargeReason>Volymrabatt</cbc:AllowanceChargeReason>
+    <cbc:Amount currencyID="SEK">100.00</cbc:Amount>
+    <cac:TaxCategory>
+      <cbc:ID>S</cbc:ID>
+      <cbc:Percent>25</cbc:Percent>
+      <cac:TaxScheme>
+        <cbc:ID>VAT</cbc:ID>
+      </cac:TaxScheme>
+    </cac:TaxCategory>
+  </cac:AllowanceCharge>
+  <cac:AllowanceCharge>
+    <cbc:ChargeIndicator>true</cbc:ChargeIndicator>
+    <cbc:AllowanceChargeReasonCode>FC</cbc:AllowanceChargeReasonCode>
+    <cbc:AllowanceChargeReason>Frakt</cbc:AllowanceChargeReason>
+    <cbc:Amount currencyID="SEK">50.00</cbc:Amount>
+    <cac:TaxCategory>
+      <cbc:ID>S</cbc:ID>
+      <cbc:Percent>25</cbc:Percent>
+      <cac:TaxScheme>
+        <cbc:ID>VAT</cbc:ID>
+      </cac:TaxScheme>
+    </cac:TaxCategory>
+  </cac:AllowanceCharge>
+  <cac:TaxTotal>
+    <cbc:TaxAmount currencyID="SEK">680.70</cbc:TaxAmount>
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="SEK">2550.00</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="SEK">637.50</cbc:TaxAmount>
+      <cac:TaxCategory>
+        <cbc:ID>S</cbc:ID>
+        <cbc:Percent>25</cbc:Percent>
+        <cac:TaxScheme>
+          <cbc:ID>VAT</cbc:ID>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="SEK">360.00</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="SEK">43.20</cbc:TaxAmount>
+      <cac:TaxCategory>
+        <cbc:ID>S</cbc:ID>
+        <cbc:Percent>12</cbc:Percent>
+        <cac:TaxScheme>
+          <cbc:ID>VAT</cbc:ID>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>
+  </cac:TaxTotal>
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="SEK">2960.00</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="SEK">2910.00</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="SEK">3590.70</cbc:TaxInclusiveAmount>
+    <cbc:AllowanceTotalAmount currencyID="SEK">100.00</cbc:AllowanceTotalAmount>
+    <cbc:ChargeTotalAmount currencyID="SEK">50.00</cbc:ChargeTotalAmount>
+    <cbc:PrepaidAmount currencyID="SEK">500.00</cbc:PrepaidAmount>
+    <cbc:PayableRoundingAmount currencyID="SEK">0.30</cbc:PayableRoundingAmount>
+    <cbc:PayableAmount currencyID="SEK">3091.00</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>
+  <cac:InvoiceLine>
+    <cbc:ID>1</cbc:ID>
+    <cbc:Note>Monterade på plats</cbc:Note>
+    <cbc:InvoicedQuantity unitCode="H87">10</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="SEK">250.00</cbc:LineExtensionAmount>
+    <cac:OrderLineReference>
+      <cbc:LineID>1</cbc:LineID>
+    </cac:OrderLineReference>
+    <cac:Item>
+      <cbc:Name>Hyllkonsol</cbc:Name>
+      <cac:SellersItemIdentification>
+        <cbc:ID>HK-10</cbc:ID>
+      </cac:SellersItemIdentification>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="0160">07300010000106</cbc:ID>
+      </cac:StandardItemIdentification>
+      <cac:CommodityClassification>
+        <cbc:ItemClassificationCode listID="STI">44111515</cbc:ItemClassificationCode>
+      </cac:CommodityClassification>
+      <cac:ClassifiedTaxCategory>
+        <cbc:ID>S</cbc:ID>
+        <cbc:Percent>25</cbc:Percent>
+        <cac:TaxScheme>
+          <cbc:ID>VAT</cbc:ID>
+        </cac:TaxScheme>
+      </cac:ClassifiedTaxCategory>
+      <cac:AdditionalItemProperty>
+        <cbc:Name>Färg</cbc:Name>
+        <cbc:Value>Ek</cbc:Value>
+      </cac:AdditionalItemProperty>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="SEK">25.00</cbc:PriceAmount>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>2</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="HUR">2</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="SEK">1900.00</cbc:LineExtensionAmount>
+    <cac:InvoicePeriod>
+      <cbc:StartDate>2026-09-15</cbc:StartDate>
+      <cbc:EndDate>2026-09-16</cbc:EndDate>
+    </cac:InvoicePeriod>
+    <cac:Item>
+      <cbc:Name>Montering</cbc:Name>
+      <cac:ClassifiedTaxCategory>
+        <cbc:ID>S</cbc:ID>
+        <cbc:Percent>25</cbc:Percent>
+        <cac:TaxScheme>
+          <cbc:ID>VAT</cbc:ID>
+        </cac:TaxScheme>
+      </cac:ClassifiedTaxCategory>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="SEK">950.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="HUR">1</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>3</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="C62">3</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="SEK">360.00</cbc:LineExtensionAmount>
+    <cac:Item>
+      <cbc:Name>Fika till montörer</cbc:Name>
+      <cac:ClassifiedTaxCategory>
+        <cbc:ID>S</cbc:ID>
+        <cbc:Percent>12</cbc:Percent>
+        <cac:TaxScheme>
+          <cbc:ID>VAT</cbc:ID>
+        </cac:TaxScheme>
+      </cac:ClassifiedTaxCategory>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="SEK">120.00</cbc:PriceAmount>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>4</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="C62">1000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="SEK">450.00</cbc:LineExtensionAmount>
+    <cac:Item>
+      <cbc:Name>Skruv 4x40</cbc:Name>
+      <cac:ClassifiedTaxCategory>
+        <cbc:ID>S</cbc:ID>
+        <cbc:Percent>25</cbc:Percent>
+        <cac:TaxScheme>
+          <cbc:ID>VAT</cbc:ID>
+        </cac:TaxScheme>
+      </cac:ClassifiedTaxCategory>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="SEK">45.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="C62">100</cbc:BaseQuantity>
+      <cac:AllowanceCharge>
+        <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+        <cbc:Amount currencyID="SEK">5.00</cbc:Amount>
+        <cbc:BaseAmount currencyID="SEK">50.00</cbc:BaseAmount>
+      </cac:AllowanceCharge>
+    </cac:Price>
+  </cac:InvoiceLine>
+</Invoice>

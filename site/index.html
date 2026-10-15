@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>E-invoice to JSON</title>
+  <meta name="description" content="Convert an EU e-invoice (Peppol BIS 3, XRechnung, Factur-X, Svefaktura and more) to canonical JSON, entirely in your browser.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='5' y='3' width='22' height='26' rx='2' fill='%23FBF1B8' stroke='%2326358C' stroke-width='2'/%3E%3Cpath d='M10 10h12M10 15h12M10 20h7' stroke='%2326358C' stroke-width='2'/%3E%3C/svg%3E">
+</head>
+<body>
+  <header class="masthead">
+    <h1>E-invoice to JSON</h1>
+    <p class="lede">Drop an e-invoice you received. It is unwrapped, identified and mapped to one canonical model built on EN&nbsp;16931, and you get the JSON.</p>
+    <p class="privacy">Everything runs in this browser tab. Your file is never uploaded.</p>
+  </header>
+
+  <main>
+    <section class="intake" aria-label="Choose a file">
+      <label class="slot" id="slot">
+        <input type="file" id="file" accept=".xml,.pdf,.p7m,.zip,.xsig,.isdoc,.isdocx,.ubl,.cii,text/xml,application/xml,application/pdf,application/zip">
+        <span class="slot-mouth" aria-hidden="true"></span>
+        <span class="slot-text"><strong>Drop an invoice here</strong> or choose a file</span>
+        <span class="slot-hint">XML, Factur-X PDF, signed .p7m, ANAF .zip, .xsig, .isdocx</span>
+      </label>
+
+      <div class="side-inputs">
+        <label class="field">
+          <span>Or try a sample</span>
+          <select id="sample">
+            <option value="">Choose a sample invoice</option>
+          </select>
+        </label>
+        <details class="paste">
+          <summary>Paste XML instead</summary>
+          <textarea id="pasted" spellcheck="false" placeholder="&lt;Invoice xmlns=&quot;urn:oasis:names:specification:ubl:schema:xsd:Invoice-2&quot;&gt;…"></textarea>
+          <button type="button" id="convert-pasted" class="btn">Convert pasted XML</button>
+        </details>
+      </div>
+    </section>
+
+    <section id="result" class="result" aria-live="polite" hidden></section>
+
+    <section class="formats" aria-labelledby="formats-title">
+      <h2 id="formats-title">What it reads</h2>
+      <p>Full conversion to canonical JSON: Peppol BIS Billing 3.0 and self-billing, Peppol PINT, XRechnung (UBL and CII), Factur-X and ZUGFeRD 2 in every profile, NLCIUS, CIUS-RO, CIUS-PT, HR-CIUS, OIOUBL, plain EN&nbsp;16931, and Svefaktura 1.0.</p>
+      <p>Detected and identified, with parsers still to come: FatturaPA, KSeF FA(2)/FA(3), Facturae, ISDOC, ebInterface, Finvoice, TEAPPSXML, e-arve, eSLOG and myDATA.</p>
+      <p>Wrappers it opens: Factur-X PDF attachments, CAdES <code>.p7m</code> (binary or base64), ZIP archives, Peppol SBDH, SOAP envelopes, and legacy encodings such as ISO-8859-1.</p>
+      <p class="source-link"><a href="https://github.com/alexcatdad/eu-einvoice-canonical">Source code and the canonical model on GitHub</a></p>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

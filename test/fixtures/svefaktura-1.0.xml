@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- Synthetic Svefaktura 1.0 invoice written for this test suite (stored as ISO-8859-1). Parties and numbers are fictitious. -->
+<Invoice xmlns="urn:sfti:documents:BasicInvoice:1:0" xmlns:cac="urn:sfti:CommonAggregateComponents:1:0" xmlns:cbc="urn:oasis:names:tc:ubl:CommonBasicComponents:1:0">
+  <ID>SF-2026-17</ID>
+  <cbc:IssueDate>2026-10-01</cbc:IssueDate>
+  <InvoiceTypeCode>380</InvoiceTypeCode>
+  <cbc:Note>Tack för beställningen! Leverans till förrådet på Ågatan.</cbc:Note>
+  <InvoiceCurrencyCode>SEK</InvoiceCurrencyCode>
+  <LineItemCountNumeric>3</LineItemCountNumeric>
+  <InvoicingPeriod>
+    <cbc:StartDateTime>2026-09-01T00:00:00</cbc:StartDateTime>
+    <cbc:EndDateTime>2026-09-30T00:00:00</cbc:EndDateTime>
+  </InvoicingPeriod>
+  <RequisitionistDocumentReference><cac:ID>Anna Andersson</cac:ID></RequisitionistDocumentReference>
+  <RequisitionistDocumentReference><cac:ID>4010</cac:ID></RequisitionistDocumentReference>
+  <AdditionalDocumentReference><cac:ID identificationSchemeID="CT">AVTAL-55</cac:ID></AdditionalDocumentReference>
+  <AdditionalDocumentReference><cac:ID identificationSchemeID="ATS">urn:sfti:documents:object:SF-2026-17-1</cac:ID></AdditionalDocumentReference>
+  <cac:BuyerParty>
+    <cac:Party>
+      <cac:PartyIdentification><cac:ID identificationSchemeAgencyID="9">7300010000019</cac:ID></cac:PartyIdentification>
+      <cac:PartyName><cbc:Name>Exempelkommunen</cbc:Name></cac:PartyName>
+      <cac:Address>
+        <cbc:StreetName>Ågatan 4</cbc:StreetName>
+        <cbc:CityName>Örebro</cbc:CityName>
+        <cbc:PostalZone>70210</cbc:PostalZone>
+      </cac:Address>
+      <cac:PartyTaxScheme>
+        <cac:CompanyID>SE212000000201</cac:CompanyID>
+        <cac:TaxScheme><cac:ID>VAT</cac:ID></cac:TaxScheme>
+      </cac:PartyTaxScheme>
+    </cac:Party>
+  </cac:BuyerParty>
+  <cac:SellerParty>
+    <cac:Party>
+      <cac:PartyIdentification><cac:ID identificationSchemeAgencyID="9">7300010000002</cac:ID></cac:PartyIdentification>
+      <cac:PartyName><cbc:Name>Snickeri Exempel</cbc:Name></cac:PartyName>
+      <cac:Address>
+        <cbc:StreetName>Storgatan 1</cbc:StreetName>
+        <cbc:Postbox>Box 12</cbc:Postbox>
+        <cbc:CityName>Stockholm</cbc:CityName>
+        <cbc:PostalZone>11122</cbc:PostalZone>
+        <cac:Country><cac:IdentificationCode>SE</cac:IdentificationCode></cac:Country>
+      </cac:Address>
+      <cac:PartyTaxScheme>
+        <cac:CompanyID>SE556000000101</cac:CompanyID>
+        <cac:TaxScheme><cac:ID>VAT</cac:ID></cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:PartyTaxScheme>
+        <cbc:RegistrationName>Snickeri Exempel AB</cbc:RegistrationName>
+        <cac:CompanyID>5560000001</cac:CompanyID>
+        <cbc:ExemptionReason>F-skattebevis finns</cbc:ExemptionReason>
+        <cac:RegistrationAddress>
+          <cbc:CityName>Stockholm</cbc:CityName>
+          <cac:Country><cac:IdentificationCode>SE</cac:IdentificationCode></cac:Country>
+        </cac:RegistrationAddress>
+        <cac:TaxScheme><cac:ID>SWT</cac:ID></cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:Contact>
+        <cbc:Name>Erik Exempel</cbc:Name>
+        <cbc:Telephone>08-123 45</cbc:Telephone>
+        <cbc:Telefax>08-123 46</cbc:Telefax>
+        <cbc:ElectronicMail>erik@snickeri.example</cbc:ElectronicMail>
+      </cac:Contact>
+    </cac:Party>
+    <cac:AccountsContact>
+      <cbc:Name>Ekonomiavdelningen</cbc:Name>
+      <cbc:ElectronicMail>faktura@snickeri.example</cbc:ElectronicMail>
+    </cac:AccountsContact>
+  </cac:SellerParty>
+  <cac:Delivery>
+    <cbc:ActualDeliveryDateTime>2026-09-28T14:30:00</cbc:ActualDeliveryDateTime>
+  </cac:Delivery>
+  <cac:PaymentMeans>
+    <cac:PaymentMeansTypeCode>1</cac:PaymentMeansTypeCode>
+    <cbc:DuePaymentDate>2026-10-31</cbc:DuePaymentDate>
+    <cac:PayeeFinancialAccount>
+      <cac:ID>123-4567</cac:ID>
+      <cac:FinancialInstitutionBranch>
+        <cac:FinancialInstitution><cac:ID>BGABSESS</cac:ID></cac:FinancialInstitution>
+      </cac:FinancialInstitutionBranch>
+      <cac:PaymentInstructionID>4711000123</cac:PaymentInstructionID>
+    </cac:PayeeFinancialAccount>
+  </cac:PaymentMeans>
+  <cac:PaymentTerms>
+    <cbc:Note>30 dagar netto</cbc:Note>
+    <cbc:PenaltySurchargePercent>8</cbc:PenaltySurchargePercent>
+  </cac:PaymentTerms>
+  <AllowanceCharge>
+    <cbc:ChargeIndicator>true</cbc:ChargeIndicator>
+    <cac:ReasonCode name="Fakturaavgift">ZZZ</cac:ReasonCode>
+    <cbc:Amount amountCurrencyID="SEK">45.00</cbc:Amount>
+    <cac:TaxCategory>
+      <cac:ID>S</cac:ID>
+      <cbc:Percent>25</cbc:Percent>
+      <cac:TaxScheme><cac:ID>VAT</cac:ID></cac:TaxScheme>
+    </cac:TaxCategory>
+  </AllowanceCharge>
+  <cac:TaxTotal>
+    <cbc:TotalTaxAmount amountCurrencyID="SEK">904.91</cbc:TotalTaxAmount>
+    <cac:TaxSubTotal>
+      <cbc:TaxableAmount amountCurrencyID="SEK">3619.65</cbc:TaxableAmount>
+      <cbc:TaxAmount amountCurrencyID="SEK">904.91</cbc:TaxAmount>
+      <cac:TaxCategory>
+        <cac:ID>S</cac:ID>
+        <cbc:Percent>25</cbc:Percent>
+        <cac:TaxScheme><cac:ID>VAT</cac:ID></cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubTotal>
+  </cac:TaxTotal>
+  <cac:LegalTotal>
+    <cbc:LineExtensionTotalAmount amountCurrencyID="SEK">3574.65</cbc:LineExtensionTotalAmount>
+    <cbc:TaxExclusiveTotalAmount amountCurrencyID="SEK">3619.65</cbc:TaxExclusiveTotalAmount>
+    <cbc:TaxInclusiveTotalAmount amountCurrencyID="SEK">4525.00</cbc:TaxInclusiveTotalAmount>
+    <cac:RoundOffAmount amountCurrencyID="SEK">0.44</cac:RoundOffAmount>
+  </cac:LegalTotal>
+  <cac:InvoiceLine>
+    <cac:ID>1</cac:ID>
+    <cbc:InvoicedQuantity quantityUnitCode="st">4</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount amountCurrencyID="SEK">1000.00</cbc:LineExtensionAmount>
+    <cac:OrderLineReference>
+      <cac:BuyersLineID>1</cac:BuyersLineID>
+      <cac:OrderReference><cac:BuyersID>PO-55</cac:BuyersID></cac:OrderReference>
+    </cac:OrderLineReference>
+    <cac:Item>
+      <cbc:Description>Ekbord</cbc:Description>
+      <cac:SellersItemIdentification><cac:ID>EK-1</cac:ID></cac:SellersItemIdentification>
+      <cac:StandardItemIdentification><cac:ID identificationSchemeAgencyID="9">07300010000106</cac:ID></cac:StandardItemIdentification>
+      <cac:BasePrice><cbc:PriceAmount amountCurrencyID="SEK">250.00</cbc:PriceAmount></cac:BasePrice>
+    </cac:Item>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cac:ID>2</cac:ID>
+    <cbc:InvoicedQuantity quantityUnitCode="tim">3.5</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount amountCurrencyID="SEK">2274.65</cbc:LineExtensionAmount>
+    <cac:OrderLineReference>
+      <cac:BuyersLineID>2</cac:BuyersLineID>
+      <cac:OrderReference><cac:BuyersID>PO-55</cac:BuyersID></cac:OrderReference>
+    </cac:OrderLineReference>
+    <cac:Item>
+      <cbc:Description>Montering</cbc:Description>
+      <cac:BasePrice><cbc:PriceAmount amountCurrencyID="SEK">649.90</cbc:PriceAmount></cac:BasePrice>
+    </cac:Item>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cac:ID>3</cac:ID>
+    <cbc:LineExtensionAmount amountCurrencyID="SEK">300.00</cbc:LineExtensionAmount>
+    <cac:OrderLineReference>
+      <cac:OrderReference><cac:BuyersID>PO-55</cac:BuyersID></cac:OrderReference>
+    </cac:OrderLineReference>
+    <cac:Item>
+      <cbc:Description>Frakt</cbc:Description>
+    </cac:Item>
+  </cac:InvoiceLine>
+</Invoice>
