@@ -25,5 +25,10 @@
   "sdi-metadata.xml": ["other"],
   "IT01234567890_FPR12.xml.p7m": ["fatturapa"],
   "IT01234567890_FPR12.base64.xml.p7m": ["fatturapa"],
-  "facturx-en16931.pdf": ["facturx"]
+  "facturx-en16931.pdf": ["facturx"],
+  "finvoice-invoice.xml": ["finvoice"],
+  "finvoice-credit.xml": ["finvoice"],
+  "e-arve-1.2-two-invoices.xml": ["e-arve"],
+  "eslog-2-invoice.xml": ["eslog-2"],
+  "eslog-2-credit.xml": ["eslog-2"]
 }

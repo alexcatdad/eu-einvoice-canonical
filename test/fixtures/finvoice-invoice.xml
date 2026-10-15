@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="ISO-8859-15"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:eb="http://www.oasis-open.org/committees/ebxml-msg/schema/msg-header-2_0.xsd">
+<SOAP-ENV:Header><eb:MessageHeader SOAP-ENV:mustUnderstand="1" eb:version="2.0"><eb:From><eb:PartyId>003723456789</eb:PartyId></eb:From></eb:MessageHeader></SOAP-ENV:Header>
+<SOAP-ENV:Body><eb:Manifest eb:id="Manifest" eb:version="2.0"/></SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
+<?xml version="1.0" encoding="ISO-8859-15"?>
+<Finvoice Version="3.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="Finvoice3.0.xsd">
+	<MessageTransmissionDetails>
+		<MessageSenderDetails>
+			<FromIdentifier SchemeID="0037">003723456789</FromIdentifier>
+			<FromIntermediator>TESTIVALITTAJA</FromIntermediator>
+		</MessageSenderDetails>
+		<MessageReceiverDetails>
+			<ToIdentifier SchemeID="0037">003734567890</ToIdentifier>
+			<ToIntermediator>TESTIVALITTAJA2</ToIntermediator>
+		</MessageReceiverDetails>
+		<MessageDetails>
+			<MessageIdentifier>MSG-2026-1015</MessageIdentifier>
+			<MessageTimeStamp>2026-10-15T09:30:00+03:00</MessageTimeStamp>
+			<ImplementationCode>ET30</ImplementationCode>
+			<SpecificationIdentifier>EN16931</SpecificationIdentifier>
+		</MessageDetails>
+	</MessageTransmissionDetails>
+	<SellerPartyDetails>
+		<SellerPartyIdentifier>2345678-9</SellerPartyIdentifier>
+		<SellerOrganisationName>Testitalo Oy</SellerOrganisationName>
+		<SellerOrganisationTaxCode>FI23456789</SellerOrganisationTaxCode>
+		<SellerPostalAddressDetails>
+			<SellerStreetName>Esimerkkikatu 1</SellerStreetName>
+			<SellerTownName>Tampere</SellerTownName>
+			<SellerPostCodeIdentifier>33100</SellerPostCodeIdentifier>
+			<CountryCode>FI</CountryCode>
+		</SellerPostalAddressDetails>
+	</SellerPartyDetails>
+	<SellerOrganisationUnitNumber>003723456789</SellerOrganisationUnitNumber>
+	<SellerContactPersonName>Liisa Laskuttaja</SellerContactPersonName>
+	<SellerCommunicationDetails>
+		<SellerPhoneNumberIdentifier>+358 40 1234567</SellerPhoneNumberIdentifier>
+		<SellerEmailaddressIdentifier>laskutus@testitalo.example</SellerEmailaddressIdentifier>
+	</SellerCommunicationDetails>
+	<SellerInformationDetails>
+		<SellerWebaddressIdentifier>www.testitalo.example</SellerWebaddressIdentifier>
+		<SellerAccountDetails>
+			<SellerAccountID IdentificationSchemeName="IBAN">FI2112345600000785</SellerAccountID>
+			<SellerBic IdentificationSchemeName="BIC">NDEAFIHH</SellerBic>
+		</SellerAccountDetails>
+	</SellerInformationDetails>
+	<BuyerPartyDetails>
+		<BuyerPartyIdentifier>3456789-0</BuyerPartyIdentifier>
+		<BuyerOrganisationName>Ostaja Ab</BuyerOrganisationName>
+		<BuyerOrganisationTaxCode>FI34567890</BuyerOrganisationTaxCode>
+		<BuyerPostalAddressDetails>
+			<BuyerStreetName>Mallikatu 5</BuyerStreetName>
+			<BuyerTownName>Helsinki</BuyerTownName>
+			<BuyerPostCodeIdentifier>00100</BuyerPostCodeIdentifier>
+			<CountryCode>FI</CountryCode>
+		</BuyerPostalAddressDetails>
+	</BuyerPartyDetails>
+	<BuyerOrganisationUnitNumber>003734567890</BuyerOrganisationUnitNumber>
+	<DeliveryPartyDetails>
+		<DeliveryOrganisationName>Ostaja Ab, varasto</DeliveryOrganisationName>
+		<DeliveryPostalAddressDetails>
+			<DeliveryStreetName>Satamatie 3</DeliveryStreetName>
+			<DeliveryTownName>Vantaa</DeliveryTownName>
+			<DeliveryPostCodeIdentifier>01510</DeliveryPostCodeIdentifier>
+			<CountryCode>FI</CountryCode>
+		</DeliveryPostalAddressDetails>
+	</DeliveryPartyDetails>
+	<DeliveryDetails>
+		<DeliveryDate Format="CCYYMMDD">20261012</DeliveryDate>
+	</DeliveryDetails>
+	<InvoiceDetails>
+		<InvoiceTypeCode>INV01</InvoiceTypeCode>
+		<InvoiceTypeText>LASKU</InvoiceTypeText>
+		<OriginCode>Original</OriginCode>
+		<InvoiceNumber>2026-1042</InvoiceNumber>
+		<InvoiceDate Format="CCYYMMDD">20261015</InvoiceDate>
+		<InvoicingPeriodStartDate Format="CCYYMMDD">20260901</InvoicingPeriodStartDate>
+		<InvoicingPeriodEndDate Format="CCYYMMDD">20260930</InvoicingPeriodEndDate>
+		<SellerReferenceIdentifier>MYYNTI-77</SellerReferenceIdentifier>
+		<BuyerReferenceIdentifier>Pekka Ostaja</BuyerReferenceIdentifier>
+		<OrderIdentifier>TIL-5512</OrderIdentifier>
+		<AgreementIdentifier>SOP-2026-3</AgreementIdentifier>
+		<InvoiceFreeText>Kiitos tilauksesta</InvoiceFreeText>
+		<RowsTotalVatExcludedAmount AmountCurrencyIdentifier="EUR">965,00</RowsTotalVatExcludedAmount>
+		<InvoiceTotalVatExcludedAmount AmountCurrencyIdentifier="EUR">965,00</InvoiceTotalVatExcludedAmount>
+		<InvoiceTotalVatAmount AmountCurrencyIdentifier="EUR">226,00</InvoiceTotalVatAmount>
+		<InvoiceTotalVatIncludedAmount AmountCurrencyIdentifier="EUR">1191,00</InvoiceTotalVatIncludedAmount>
+		<VatSpecificationDetails>
+			<VatBaseAmount AmountCurrencyIdentifier="EUR">925,00</VatBaseAmount>
+			<VatRatePercent>24</VatRatePercent>
+			<VatCode>S</VatCode>
+			<VatRateAmount AmountCurrencyIdentifier="EUR">222,00</VatRateAmount>
+		</VatSpecificationDetails>
+		<VatSpecificationDetails>
+			<VatBaseAmount AmountCurrencyIdentifier="EUR">40,00</VatBaseAmount>
+			<VatRatePercent>10</VatRatePercent>
+			<VatCode>S</VatCode>
+			<VatRateAmount AmountCurrencyIdentifier="EUR">4,00</VatRateAmount>
+		</VatSpecificationDetails>
+		<PaymentTermsDetails>
+			<PaymentTermsFreeText>14 päivää netto</PaymentTermsFreeText>
+			<InvoiceDueDate Format="CCYYMMDD">20261029</InvoiceDueDate>
+			<PaymentOverDueFineDetails>
+				<PaymentOverDueFinePercent>7,5</PaymentOverDueFinePercent>
+			</PaymentOverDueFineDetails>
+		</PaymentTermsDetails>
+	</InvoiceDetails>
+	<InvoiceRow>
+		<ArticleIdentifier>KONS-01</ArticleIdentifier>
+		<ArticleName>Konsultointi</ArticleName>
+		<ArticleDescription>Asiantuntijatyö syyskuu</ArticleDescription>
+		<InvoicedQuantity QuantityUnitCode="h" QuantityUnitCodeUN="HUR">10,00</InvoicedQuantity>
+		<StartDate Format="CCYYMMDD">20260901</StartDate>
+		<EndDate Format="CCYYMMDD">20260930</EndDate>
+		<UnitPriceAmount AmountCurrencyIdentifier="EUR" UnitPriceUnitCode="EUR/h">80,00</UnitPriceAmount>
+		<UnitPriceNetAmount AmountCurrencyIdentifier="EUR">80,00</UnitPriceNetAmount>
+		<RowPositionIdentifier>1</RowPositionIdentifier>
+		<RowVatRatePercent>24</RowVatRatePercent>
+		<RowVatCode>S</RowVatCode>
+		<RowVatAmount AmountCurrencyIdentifier="EUR">192,00</RowVatAmount>
+		<RowVatExcludedAmount AmountCurrencyIdentifier="EUR">800,00</RowVatExcludedAmount>
+		<RowAmount AmountCurrencyIdentifier="EUR">992,00</RowAmount>
+	</InvoiceRow>
+	<InvoiceRow>
+		<ArticleName>Sähkö</ArticleName>
+		<RowDefinitionDetails>
+			<RowDefinitionHeaderText>Mittarin numero</RowDefinitionHeaderText>
+			<RowDefinitionValue>M-0042</RowDefinitionValue>
+		</RowDefinitionDetails>
+		<InvoicedQuantity QuantityUnitCode="kWh" QuantityUnitCodeUN="KWH">1000,00</InvoicedQuantity>
+		<UnitPriceAmount AmountCurrencyIdentifier="EUR" UnitPriceUnitCode="snt/kWh" QuantityUnitCodeUN="ZZ">12,50</UnitPriceAmount>
+		<UnitPriceNetAmount AmountCurrencyIdentifier="EUR">12,50</UnitPriceNetAmount>
+		<RowPositionIdentifier>2</RowPositionIdentifier>
+		<RowVatRatePercent>24</RowVatRatePercent>
+		<RowVatCode>S</RowVatCode>
+		<RowVatAmount AmountCurrencyIdentifier="EUR">30,00</RowVatAmount>
+		<RowVatExcludedAmount AmountCurrencyIdentifier="EUR">125,00</RowVatExcludedAmount>
+		<RowAmount AmountCurrencyIdentifier="EUR">155,00</RowAmount>
+	</InvoiceRow>
+	<InvoiceRow>
+		<ArticleIdentifier>KIRJA-7</ArticleIdentifier>
+		<ArticleName>Käsikirja</ArticleName>
+		<EanCode>6430000000011</EanCode>
+		<InvoicedQuantity QuantityUnitCode="kpl" QuantityUnitCodeUN="C62">2,00</InvoicedQuantity>
+		<UnitPriceAmount AmountCurrencyIdentifier="EUR" UnitPriceUnitCode="EUR/kpl">20,00</UnitPriceAmount>
+		<UnitPriceNetAmount AmountCurrencyIdentifier="EUR">20,00</UnitPriceNetAmount>
+		<RowIdentifier>R3</RowIdentifier>
+		<RowVatRatePercent>10</RowVatRatePercent>
+		<RowVatCode>S</RowVatCode>
+		<RowVatAmount AmountCurrencyIdentifier="EUR">4,00</RowVatAmount>
+		<RowVatExcludedAmount AmountCurrencyIdentifier="EUR">40,00</RowVatExcludedAmount>
+		<RowAmount AmountCurrencyIdentifier="EUR">44,00</RowAmount>
+	</InvoiceRow>
+	<InvoiceRow>
+		<SubInvoiceRow>
+			<SubArticleName>YHTEENSÄ</SubArticleName>
+			<SubRowAmount AmountCurrencyIdentifier="EUR">1191,00</SubRowAmount>
+		</SubInvoiceRow>
+	</InvoiceRow>
+	<EpiDetails>
+		<EpiIdentificationDetails>
+			<EpiDate Format="CCYYMMDD">20261015</EpiDate>
+			<EpiReference>2026-1042</EpiReference>
+		</EpiIdentificationDetails>
+		<EpiPartyDetails>
+			<EpiBfiPartyDetails>
+				<EpiBfiIdentifier IdentificationSchemeName="BIC">NDEAFIHH</EpiBfiIdentifier>
+				<EpiBfiName>Testipankki</EpiBfiName>
+			</EpiBfiPartyDetails>
+			<EpiBeneficiaryPartyDetails>
+				<EpiNameAddressDetails>Testitalo Oy</EpiNameAddressDetails>
+				<EpiBei>2345678-9</EpiBei>
+				<EpiAccountID IdentificationSchemeName="IBAN">FI2112345600000785</EpiAccountID>
+			</EpiBeneficiaryPartyDetails>
+		</EpiPartyDetails>
+		<EpiPaymentInstructionDetails>
+			<EpiRemittanceInfoIdentifier IdentificationSchemeName="ISO">RF18539007547034</EpiRemittanceInfoIdentifier>
+			<EpiInstructedAmount AmountCurrencyIdentifier="EUR">1191,00</EpiInstructedAmount>
+			<EpiCharge ChargeOption="SHA"/>
+			<EpiDateOptionDate Format="CCYYMMDD">20261029</EpiDateOptionDate>
+			<EpiPaymentMeansCode>58</EpiPaymentMeansCode>
+			<EpiPaymentMeansText>SEPA credit transfer</EpiPaymentMeansText>
+		</EpiPaymentInstructionDetails>
+	</EpiDetails>
+</Finvoice>

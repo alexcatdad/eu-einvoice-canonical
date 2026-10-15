@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Finvoice Version="3.0">
+	<MessageTransmissionDetails>
+		<MessageSenderDetails><FromIdentifier SchemeID="0037">003723456789</FromIdentifier><FromIntermediator>TESTIVALITTAJA</FromIntermediator></MessageSenderDetails>
+		<MessageReceiverDetails><ToIdentifier SchemeID="0037">003734567890</ToIdentifier><ToIntermediator>TESTIVALITTAJA2</ToIntermediator></MessageReceiverDetails>
+		<MessageDetails><MessageIdentifier>MSG-2026-1101</MessageIdentifier><MessageTimeStamp>2026-11-01T10:00:00+02:00</MessageTimeStamp></MessageDetails>
+	</MessageTransmissionDetails>
+	<SellerPartyDetails>
+		<SellerPartyIdentifier>2345678-9</SellerPartyIdentifier>
+		<SellerOrganisationName>Testitalo Oy</SellerOrganisationName>
+		<SellerOrganisationTaxCode>FI23456789</SellerOrganisationTaxCode>
+		<SellerPostalAddressDetails><SellerStreetName>Esimerkkikatu 1</SellerStreetName><SellerTownName>Tampere</SellerTownName><SellerPostCodeIdentifier>33100</SellerPostCodeIdentifier><CountryCode>FI</CountryCode></SellerPostalAddressDetails>
+	</SellerPartyDetails>
+	<SellerInformationDetails>
+		<SellerAccountDetails><SellerAccountID IdentificationSchemeName="IBAN">FI2112345600000785</SellerAccountID><SellerBic IdentificationSchemeName="BIC">NDEAFIHH</SellerBic></SellerAccountDetails>
+	</SellerInformationDetails>
+	<BuyerPartyDetails>
+		<BuyerPartyIdentifier>3456789-0</BuyerPartyIdentifier>
+		<BuyerOrganisationName>Ostaja Ab</BuyerOrganisationName>
+		<BuyerOrganisationTaxCode>FI34567890</BuyerOrganisationTaxCode>
+		<BuyerPostalAddressDetails><BuyerStreetName>Mallikatu 5</BuyerStreetName><BuyerTownName>Helsinki</BuyerTownName><BuyerPostCodeIdentifier>00100</BuyerPostCodeIdentifier><CountryCode>FI</CountryCode></BuyerPostalAddressDetails>
+	</BuyerPartyDetails>
+	<InvoiceDetails>
+		<InvoiceTypeCode>INV02</InvoiceTypeCode>
+		<InvoiceTypeText>HYVITYSLASKU</InvoiceTypeText>
+		<InvoiceNumber>2026-1100</InvoiceNumber>
+		<InvoiceDate Format="CCYYMMDD">20261101</InvoiceDate>
+		<OriginalInvoiceNumber>2026-1042</OriginalInvoiceNumber>
+		<InvoiceFreeText>Hyvitys laskulle 2026-1042: palautettu käsikirja</InvoiceFreeText>
+		<InvoiceTotalVatExcludedAmount AmountCurrencyIdentifier="EUR">20,00</InvoiceTotalVatExcludedAmount>
+		<InvoiceTotalVatAmount AmountCurrencyIdentifier="EUR">2,00</InvoiceTotalVatAmount>
+		<InvoiceTotalVatIncludedAmount AmountCurrencyIdentifier="EUR">22,00</InvoiceTotalVatIncludedAmount>
+		<VatSpecificationDetails>
+			<VatBaseAmount AmountCurrencyIdentifier="EUR">20,00</VatBaseAmount>
+			<VatRatePercent>10</VatRatePercent>
+			<VatCode>S</VatCode>
+			<VatRateAmount AmountCurrencyIdentifier="EUR">2,00</VatRateAmount>
+		</VatSpecificationDetails>
+		<PaymentTermsDetails><InvoiceDueDate Format="CCYYMMDD">20261115</InvoiceDueDate></PaymentTermsDetails>
+	</InvoiceDetails>
+	<InvoiceRow>
+		<ArticleName>Käsikirja</ArticleName>
+		<InvoicedQuantity QuantityUnitCode="kpl" QuantityUnitCodeUN="C62">1,00</InvoicedQuantity>
+		<UnitPriceNetAmount AmountCurrencyIdentifier="EUR">20,00</UnitPriceNetAmount>
+		<RowVatRatePercent>10</RowVatRatePercent>
+		<RowVatCode>S</RowVatCode>
+		<RowVatAmount AmountCurrencyIdentifier="EUR">2,00</RowVatAmount>
+		<RowVatExcludedAmount AmountCurrencyIdentifier="EUR">20,00</RowVatExcludedAmount>
+		<RowAmount AmountCurrencyIdentifier="EUR">22,00</RowAmount>
+	</InvoiceRow>
+</Finvoice>
