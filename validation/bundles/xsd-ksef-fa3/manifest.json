@@ -1,0 +1,62 @@
+{
+  "id": "xsd-ksef-fa3",
+  "title": "KSeF FA(3) XSD",
+  "layer": "schema",
+  "syntax": "ksef",
+  "version": "FA (3)",
+  "releaseDate": "2025-06-25",
+  "effectiveFrom": "2025-06-25",
+  "effectiveUntil": null,
+  "license": "No licence text in the files; published by the issuing authority for implementers to validate against (see validation/NOTICE)",
+  "upstream": "https://www.gov.pl/web/finanse/krajowy-system-e-faktur",
+  "note": "Ministry of Finance schema; releaseDate is the date in the schema namespace. schemaLocation of imported schemas rewritten to the vendored copy so nothing is fetched at runtime.",
+  "format": "xsd",
+  "entries": {
+    "Faktura": "schemat.xsd"
+  },
+  "modifiedFiles": [
+    "schemat.xsd",
+    "StrukturyDanych_v10-0E.xsd",
+    "ElementarneTypyDanych_v10-0E.xsd"
+  ],
+  "source": [
+    {
+      "url": "https://crd.gov.pl/wzor/2025/06/25/13775/schemat.xsd",
+      "sha256": "b646b6b525f51adf1bb2545f111fc8ca6e7aa6dd2f98948f1667d3695c06d958"
+    },
+    {
+      "url": "http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/01/05/eD/DefinicjeTypy/StrukturyDanych_v10-0E.xsd",
+      "sha256": "1137ce6e3c11c2b9ef3f05e4e72d6dcd6b4fa94908ea558f2ba15de0259bb2aa"
+    },
+    {
+      "url": "http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/01/05/eD/DefinicjeTypy/ElementarneTypyDanych_v10-0E.xsd",
+      "sha256": "8a531cb181d3e298d11b28766655ae91fee2d7851440095932ffc82137ed2be1"
+    },
+    {
+      "url": "http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/01/05/eD/DefinicjeTypy/KodyKrajow_v10-0E.xsd",
+      "sha256": "1d41a1b3184188f2d20a51d3afde26204dda182ec5dacf018204dcc9870dc644"
+    }
+  ],
+  "files": [
+    {
+      "path": "ElementarneTypyDanych_v10-0E.xsd",
+      "sha256": "8daf4d3771de200b26b697294cc906a2add3de9acfbbd97f4b1bd4fc0e5ecb2f",
+      "bytes": 12154
+    },
+    {
+      "path": "KodyKrajow_v10-0E.xsd",
+      "sha256": "1d41a1b3184188f2d20a51d3afde26204dda182ec5dacf018204dcc9870dc644",
+      "bytes": 40729
+    },
+    {
+      "path": "StrukturyDanych_v10-0E.xsd",
+      "sha256": "cb08348374598e1e716e086c40d740390fb9e1bfa3aba1f4ec4cba0e1ef6d60f",
+      "bytes": 31473
+    },
+    {
+      "path": "schemat.xsd",
+      "sha256": "f01430dbabf3f67646d4f72e84aef984759cd15a3fcd3a4069c25494496eae6d",
+      "bytes": 183724
+    }
+  ]
+}
