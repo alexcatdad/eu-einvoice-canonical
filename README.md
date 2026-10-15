@@ -79,6 +79,7 @@ einvoice detect  <file...>                 format id, version and profile per do
 einvoice inspect <file...>                 the unwrap and detect result as JSON
 einvoice convert <file...> [--out <dir>]   canonical JSON array on stdout, or one <invoice-id>.json per invoice in <dir>
 einvoice sweep   <dir...> [--expect answers.json]   detection coverage / known-answer check
+einvoice match   --po <order.json|order.xml>... [--receipts r.json] [--tolerance '<json>'] <invoice...>   match to purchase orders
 ```
 
 Flags: `--pretty` indents JSON; `--quiet` silences notes and warnings (errors are still printed); `--limits '{"maxEntries":10}'` overrides `UnwrapLimits`; `--validate` is accepted by `convert` and is a no-op with a message until the validation module lands.
@@ -94,8 +95,21 @@ JSON goes to stdout only; every error is one line on stderr.
 | 5 | partially converted (some documents failed) |
 | 6 | validator unavailable |
 | 7 | internal error (including unreadable files) |
+| 8 | `match` verdict is `needs-review` |
 
 With several failures and no success the code of the first failure is used; with at least one success it is 5.
+
+## Matching invoices to purchase orders
+
+`src/matching/` matches the lines of a canonical invoice to purchase orders (two-way) and, with goods receipts, to what was received (three-way). Orders come from a small JSON model (`PurchaseOrder`: `id`, `currency`, `lines[]` with `id`, `description`, `sellerItemId`, `buyerItemId`, `standardItemId`, `quantity`, `unit`, `unitPrice`, `baseQuantity`, `vat`, and `invoicedQuantity` for what earlier invoices already billed) or from a UBL 2.1 Order / Peppol BIS Order 3 XML (`parseOrder`). Receipts are `[{ "poId": "PO-1", "lines": [{ "lineId": "1", "quantity": "6" }] }]`.
+
+Per invoice line, in this order: order-line reference (BT-132, within the order named by BT-13 or by the line itself, as Svefaktura's `BuyersID`), item identifiers (seller, buyer, standard/GTIN), line relations (a markup or discount follows the lines it applies to; text-only lines are ignored), and description similarity as a last resort. Each match carries its `method`, `confidence` and variances (quantity, unit price, line total, VAT) against the tolerances you set (`{ "unitPrice": { "percent": "2" }, "quantity": { "absolute": "1" } }`; a limit given as both absolute and percent must hold in both; no tolerance means zero). The result also lists unmatched invoice lines, over-invoiced order lines and, with receipts, order lines not yet received, and a verdict: `match`, `within-tolerance` or `needs-review`. Description-only and low-confidence matches always need review. Fewer units than expected is partial invoicing, not a variance error. A credit note is held against what has been invoiced, at the order price.
+
+```ts
+import { convert, matching } from 'eu-einvoice-canonical';
+const r = await convert(bytes, 'inv.xml', undefined, { relations: true });
+const result = matching.matchInvoice(invoice, [matching.parseOrder(orderXml)], { tolerances: { unitPrice: { percent: '2' } } });
+```
 
 ## The canonical model
 
