@@ -150,7 +150,7 @@ describe('Facturae: batch', async () => {
     assert.deepEqual(invoices.map((i) => i.source.indexInFile), [0, 1]);
     assert.deepEqual(invoices.map((i) => i.source.fragmentPath), ['/Facturae/Invoices/Invoice[1]', '/Facturae/Invoices/Invoice[2]']);
     assert.ok(invoices.every((i) => i.extensions.es?.batchId === 'B00000012-LOTE-7'));
-    assert.ok(invoices.every((i) => i.warnings === undefined && i.source.warnings.length === 0));
+    assert.ok(invoices.every((i) => i.source.warnings.length === 0));
   });
 
   test('IGIC maps to category L', () => {
