@@ -164,3 +164,7 @@ Skipped files and the reason are returned by both `inspect()` and `convert()`, s
 - **No schema or Schematron validation yet.** `source.validation` exists in the model but nothing fills it. The BR-CO arithmetic checks are the only rules run. Use phive or the KoSIT validator for conformance.
 - **National parsers** are still stubs (see the build order). So is the Peppol PINT-specific mapping beyond what plain UBL gives.
 - **Non-XML formats** (EDIFACT INVOIC, PDFs without embedded XML) are out of scope.
+
+## License
+
+[ISC](LICENSE), copyright 2026 alexcatdad.
