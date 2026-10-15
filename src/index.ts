@@ -1,14 +1,16 @@
 import type { CanonicalInvoice } from './canonical.js';
 import { checkTotals } from './checks.js';
 import { detectXml, type Detection } from './detect.js';
-import { unwrap, type Skipped, type UnwrapLimits, type XmlPayload } from './envelope.js';
+import { unwrap, type Skipped, type UnwrapLimits, type UnwrapOptions, type XmlPayload } from './envelope.js';
+import { signatureFindings, signatureStatus } from './signature/index.js';
 import { NotImplementedError, PARSERS, ParseError } from './parsers/index.js';
 
 export * from './canonical.js';
 export * from './codes.js';
 export { FORMATS, FORMATS_BY_ID, type FormatDef, type FormatId, type ParserFamily } from './formats.js';
 export { detectXml, type Detection } from './detect.js';
-export { unwrap, decodeXml, DEFAULT_LIMITS, type Skipped, type UnwrapLimits, type XmlPayload } from './envelope.js';
+export { unwrap, decodeXml, DEFAULT_LIMITS, type Skipped, type UnwrapLimits, type UnwrapOptions, type XmlPayload } from './envelope.js';
+export { signatureStatus, type TrustAnchor } from './signature/index.js';
 export { checkTotals, type Finding } from './checks.js';
 export { IMPLEMENTED_FAMILIES, NotImplementedError, ParseError } from './parsers/index.js';
 export * as values from './values.js';
@@ -26,8 +28,8 @@ export interface InspectResult {
 }
 
 /** Unwraps a received file and identifies every XML document in it, without parsing. */
-export async function inspect(bytes: Uint8Array, filename?: string, limits?: Partial<UnwrapLimits>): Promise<InspectResult> {
-  const { fileSha256, payloads, skipped } = await unwrap(bytes, filename, limits);
+export async function inspect(bytes: Uint8Array, filename?: string, limits?: Partial<UnwrapLimits>, options?: UnwrapOptions): Promise<InspectResult> {
+  const { fileSha256, payloads, skipped } = await unwrap(bytes, filename, limits, options);
   const documents = payloads.map(({ xml, ...payload }) => ({ payload, detection: detectXml(xml, { fromPdf: payload.fromPdf }) }));
   return { fileSha256, documents, skipped };
 }
@@ -45,14 +47,20 @@ export interface ConvertResult {
   skipped: Skipped[];
 }
 
-export interface ConvertOptions {
+export interface ConvertOptions extends UnwrapOptions {
   /** Fill `source.provenance` (canonical path -> source XPath) for every value read from the XML. Off by default: it roughly doubles the size of `source`. */
   provenance?: boolean;
 }
 
-/** Unwraps, detects and parses. Never throws for bad input: every problem is an outcome or a skipped entry. */
+/**
+ * Unwraps, detects and parses. Never throws for bad input: every problem is an outcome or a skipped entry.
+ *
+ * Signatures are verified (cryptographic validity only) and reported on `source.signatures` and
+ * `source.validation.signature`; a failed signature is a finding, never an error. Pass `options.trustAnchors`
+ * to also check the signer against a trust list.
+ */
 export async function convert(bytes: Uint8Array, filename?: string, limits?: Partial<UnwrapLimits>, options: ConvertOptions = {}): Promise<ConvertResult> {
-  const { fileSha256, payloads, skipped } = await unwrap(bytes, filename, limits);
+  const { fileSha256, payloads, skipped } = await unwrap(bytes, filename, limits, options);
   const outcomes = payloads.map(({ xml, ...meta }): ConvertOutcome => {
     const payload = { xml, ...meta };
     const detection = detectXml(xml, { fromPdf: meta.fromPdf });
@@ -63,6 +71,10 @@ export async function convert(bytes: Uint8Array, filename?: string, limits?: Par
       invoices.forEach((inv, i) => {
         if (invoices.length > 1) inv.source.indexInFile = i;
         inv.source.warnings.push(...checkTotals(inv));
+        const sigs = inv.source.signatures;
+        const v = inv.source.validation ??= { parse: 'passed', schema: 'not-run', semantic: 'not-run', profile: 'not-run', signature: 'not-run', clearance: 'not-run', bundles: {}, findings: [] };
+        v.signature = signatureStatus(sigs);
+        v.findings.push(...signatureFindings(sigs));
       });
       return { status: 'ok', invoices, detection, payload: meta };
     } catch (e) {
