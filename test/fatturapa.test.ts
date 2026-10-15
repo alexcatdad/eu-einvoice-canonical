@@ -186,7 +186,7 @@ describe('FatturaPA: ritenuta, cassa previdenziale and bollo', async () => {
   });
 
   test('bollo is an other tax and extensions.it.stampDuty', () => {
-    assert.deepEqual(inv.otherTaxes, [{ scheme: 'IT:BOLLO', amount: '2.00', includedInTotal: true }]);
+    assert.deepEqual(inv.otherTaxes, [{ scheme: 'IT:BOLLO', amount: '2.00', includedInTotal: true, inTaxExclusive: true }]);
     assert.deepEqual(inv.extensions.it?.stampDuty, { virtual: true, amount: '2.00' });
   });
 
