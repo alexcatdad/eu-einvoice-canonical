@@ -34,7 +34,8 @@ describe('normaliseInvoiceNumber', () => {
   test('records what changed', () => {
     expect(normaliseInvoiceNumber('INV-1').steps).toEqual([]);
     expect(normaliseInvoiceNumber('inv-1').steps).toEqual(['case']);
-    expect(normaliseInvoiceNumber('INV-0001').steps).toEqual(['separators', 'leading-zeros']);
+    expect(normaliseInvoiceNumber('INV-0001').steps).toEqual(['leading-zeros']);
+    expect(normaliseInvoiceNumber('INV/1').steps).toEqual(['separators']);
     expect(normaliseInvoiceNumber(' INV 1').steps).toEqual(['whitespace', 'separators']);
   });
   test('different numbers stay different', () => {
@@ -198,7 +199,7 @@ describe('incremental index', () => {
     const loaded = DuplicateIndex.fromJSON(json);
     expect(loaded.size).toBe(1);
     expect(loaded.options.windowDays).toBe(3);
-    const joined = loaded.add(await inv(variant({ id: 'inv-1042' }), 'b.xml'), 'b.xml');
+    const joined = loaded.add(await inv(variant({ id: 'inv-2026-1042' }), 'b.xml'), 'b.xml');
     expect(joined[0].level).toBe('same-invoice');
     expect(DuplicateIndex.fromJSON(JSON.stringify(loaded)).groups()).toEqual(loaded.groups());
     expect(DuplicateIndex.fromJSON(json, { windowDays: 9 }).options.windowDays).toBe(9);
@@ -222,7 +223,7 @@ describe('report', () => {
     const a = await inv(base, 'a.xml');
     const groups = findDuplicates([
       a,
-      await inv(variant({ id: 'inv-1042' }), 'same.xml'),
+      await inv(variant({ id: 'inv-2026-1042' }), 'same.xml'),
       await inv(variant({ id: 'INV-2026-2000', date: '2026-10-16' }).replace('Tack för ert köp', 'x'), 'like.xml'),
       await inv(variant({ payable: '4000.00', date: '2026-10-20' }), 'conflict.xml'),
     ]);
@@ -235,7 +236,7 @@ describe('report', () => {
     expect(simple).toContain('line similarity 1');
     expect(simple).toContain('2 day(s) apart');
     expect(simple).toContain('same payable amount 3091 SEK');
-    const same = formatReport(findDuplicates([a, await inv(variant({ id: 'inv 1042' }), 'b.xml')]));
+    const same = formatReport(findDuplicates([a, await inv(variant({ id: 'inv 2026 1042' }), 'b.xml')]));
     expect(same).toContain('same issue date 2026-10-15');
     const payload = formatReport(findDuplicates([a, a]));
     expect(payload).toContain('same payload sha256');
@@ -258,7 +259,7 @@ describe('runDuplicates', () => {
     expect(out.join('\n')).toContain('0 duplicate group(s)');
 
     const dup = put('dup', 'a.xml', base);
-    put('dup', 'b.xml', variant({ id: 'inv-1042' }));
+    put('dup', 'b.xml', variant({ id: 'inv-2026-1042' }));
     out.length = 0;
     expect(await runDuplicates([dup], {}, (l) => out.push(l))).toBe(8);
     expect(out.join('\n')).toContain('same-invoice');
@@ -301,7 +302,7 @@ describe('einvoice duplicates (CLI)', () => {
   };
   const dir = mkdtempSync(join(tmpdir(), 'einvoice-dupcli-'));
   writeFileSync(join(dir, 'a.xml'), base);
-  writeFileSync(join(dir, 'b.xml'), variant({ id: 'inv-1042' }));
+  writeFileSync(join(dir, 'b.xml'), variant({ id: 'inv-2026-1042' }));
 
   test('prints a report and exits 8', async () => {
     const r = await run(['duplicates', dir]);

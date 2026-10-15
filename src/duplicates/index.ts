@@ -118,7 +118,7 @@ export function normaliseInvoiceNumber(raw: string): NormalisedNumber {
   if (upper !== s) steps.push('case');
   s = upper;
   const tokens = s.match(/\p{N}+|\p{L}+/gu) ?? [];
-  if (/[^\p{L}\p{N}\s]|\s/u.test(s)) steps.push('separators');
+  if (s !== tokens.join('-')) steps.push('separators');
   const stripped = tokens.map((t) => (/^\p{N}+$/u.test(t) ? t.replace(/^0+(?=.)/u, '') : t));
   if (stripped.some((t, i) => t !== tokens[i])) steps.push('leading-zeros');
   return { raw, normalised: stripped.join('-'), steps };
@@ -509,7 +509,13 @@ function differencesOf(entries: IndexEntry[]): Difference[] {
 /** One-shot: index the invoices and return the groups. */
 export function findDuplicates(invoices: CanonicalInvoice[], options?: DuplicateOptions): DuplicateGroup[] {
   const idx = new DuplicateIndex(options);
-  for (const inv of invoices) idx.add(inv);
+  const used = new Set<string>();
+  for (const inv of invoices) {
+    let ref = refOf(inv);
+    for (let n = 2; used.has(ref); n++) ref = `${refOf(inv)}~${n}`;
+    used.add(ref);
+    idx.add(inv, ref);
+  }
   return idx.groups();
 }
 
