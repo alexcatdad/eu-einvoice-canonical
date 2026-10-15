@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<p:FatturaElettronica versione="FPR12" xmlns:p="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2">
+  <FatturaElettronicaHeader>
+    <DatiTrasmissione>
+      <IdTrasmittente><IdPaese>IT</IdPaese><IdCodice>01234567890</IdCodice></IdTrasmittente>
+      <ProgressivoInvio>00001</ProgressivoInvio>
+      <FormatoTrasmissione>FPR12</FormatoTrasmissione>
+      <CodiceDestinatario>ABCDEFG</CodiceDestinatario>
+    </DatiTrasmissione>
+    <CedentePrestatore>
+      <DatiAnagrafici>
+        <IdFiscaleIVA><IdPaese>IT</IdPaese><IdCodice>01234567890</IdCodice></IdFiscaleIVA>
+        <CodiceFiscale>RSSMRA70A01H501S</CodiceFiscale>
+        <Anagrafica><Denominazione>Rossi Forniture S.r.l.</Denominazione></Anagrafica>
+        <RegimeFiscale>RF01</RegimeFiscale>
+      </DatiAnagrafici>
+      <Sede><Indirizzo>Via Roma</Indirizzo><NumeroCivico>1</NumeroCivico><CAP>00100</CAP><Comune>Roma</Comune><Provincia>RM</Provincia><Nazione>IT</Nazione></Sede>
+      <IscrizioneREA><Ufficio>RM</Ufficio><NumeroREA>1234567</NumeroREA><CapitaleSociale>10000.00</CapitaleSociale><SocioUnico>SM</SocioUnico><StatoLiquidazione>LN</StatoLiquidazione></IscrizioneREA>
+      <Contatti><Telefono>+39 06 1234567</Telefono><Email>fatture@rossi.example</Email></Contatti>
+    </CedentePrestatore>
+    <CessionarioCommittente>
+      <DatiAnagrafici>
+        <IdFiscaleIVA><IdPaese>IT</IdPaese><IdCodice>09876543210</IdCodice></IdFiscaleIVA>
+        <CodiceFiscale>09876543210</CodiceFiscale>
+        <Anagrafica><Denominazione>Bianchi Impianti S.p.A.</Denominazione></Anagrafica>
+      </DatiAnagrafici>
+      <Sede><Indirizzo>Corso Italia</Indirizzo><NumeroCivico>8</NumeroCivico><CAP>20121</CAP><Comune>Milano</Comune><Provincia>MI</Provincia><Nazione>IT</Nazione></Sede>
+    </CessionarioCommittente>
+  </FatturaElettronicaHeader>
+  <FatturaElettronicaBody>
+    <DatiGenerali>
+      <DatiGeneraliDocumento>
+        <TipoDocumento>TD04</TipoDocumento>
+        <Divisa>EUR</Divisa>
+        <Data>2026-10-20</Data>
+        <Numero>2026/0150</Numero>
+        <Causale>Reso merce, nota di credito sulla fattura 2026/0142</Causale>
+        <ImportoTotaleDocumento>305.00</ImportoTotaleDocumento>
+      </DatiGeneraliDocumento>
+      <DatiFattureCollegate><IdDocumento>2026/0142</IdDocumento><Data>2026-10-15</Data></DatiFattureCollegate>
+    </DatiGenerali>
+    <DatiBeniServizi>
+      <DettaglioLinee>
+        <NumeroLinea>1</NumeroLinea>
+        <Descrizione>Cavo FG16 3x2,5 (reso)</Descrizione>
+        <Quantita>10</Quantita>
+        <UnitaMisura>m</UnitaMisura>
+        <PrezzoUnitario>25.00</PrezzoUnitario>
+        <PrezzoTotale>250.00</PrezzoTotale>
+        <AliquotaIVA>22.00</AliquotaIVA>
+      </DettaglioLinee>
+      <DatiRiepilogo>
+        <AliquotaIVA>22.00</AliquotaIVA>
+        <ImponibileImporto>250.00</ImponibileImporto>
+        <Imposta>55.00</Imposta>
+        <EsigibilitaIVA>I</EsigibilitaIVA>
+      </DatiRiepilogo>
+    </DatiBeniServizi>
+  </FatturaElettronicaBody>
+</p:FatturaElettronica>

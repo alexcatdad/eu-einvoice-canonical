@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<p:FatturaElettronicaSemplificata versione="FSM10" xmlns:p="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.0">
+  <FatturaElettronicaHeader>
+    <DatiTrasmissione>
+      <IdTrasmittente><IdPaese>IT</IdPaese><IdCodice>01234567890</IdCodice></IdTrasmittente>
+      <ProgressivoInvio>00002</ProgressivoInvio>
+      <FormatoTrasmissione>FSM10</FormatoTrasmissione>
+      <CodiceDestinatario>0000000</CodiceDestinatario>
+    </DatiTrasmissione>
+    <CedentePrestatore>
+      <IdFiscaleIVA><IdPaese>IT</IdPaese><IdCodice>01234567890</IdCodice></IdFiscaleIVA>
+      <CodiceFiscale>01234567890</CodiceFiscale>
+      <Denominazione>Rossi Forniture S.r.l.</Denominazione>
+      <RegimeFiscale>RF01</RegimeFiscale>
+      <Sede><Indirizzo>Via Roma 1</Indirizzo><CAP>00100</CAP><Comune>Roma</Comune><Provincia>RM</Provincia><Nazione>IT</Nazione></Sede>
+    </CedentePrestatore>
+    <CessionarioCommittente>
+      <IdentificativiFiscali>
+        <IdFiscaleIVA><IdPaese>IT</IdPaese><IdCodice>09876543210</IdCodice></IdFiscaleIVA>
+      </IdentificativiFiscali>
+      <AltriDatiIdentificativi>
+        <Denominazione>Bianchi Impianti S.p.A.</Denominazione>
+        <Sede><Indirizzo>Corso Italia 8</Indirizzo><CAP>20121</CAP><Comune>Milano</Comune><Provincia>MI</Provincia><Nazione>IT</Nazione></Sede>
+      </AltriDatiIdentificativi>
+    </CessionarioCommittente>
+  </FatturaElettronicaHeader>
+  <FatturaElettronicaBody>
+    <DatiGenerali>
+      <DatiGeneraliDocumento>
+        <TipoDocumento>TD07</TipoDocumento>
+        <Data>2026-10-15</Data>
+        <Numero>S/77</Numero>
+      </DatiGeneraliDocumento>
+    </DatiGenerali>
+    <DatiBeniServizi>
+      <Descrizione>Fornitura materiale di consumo</Descrizione>
+      <Importo>122.00</Importo>
+      <DatiIVA><Imposta>22.00</Imposta><Aliquota>22.00</Aliquota></DatiIVA>
+    </DatiBeniServizi>
+    <DatiBeniServizi>
+      <Descrizione>Servizio esente</Descrizione>
+      <Importo>50.00</Importo>
+      <DatiIVA><Imposta>0.00</Imposta><Aliquota>0.00</Aliquota></DatiIVA>
+      <Natura>N4</Natura>
+      <RiferimentoNormativo>Esente art. 10 DPR 633/72</RiferimentoNormativo>
+    </DatiBeniServizi>
+  </FatturaElettronicaBody>
+</p:FatturaElettronicaSemplificata>
