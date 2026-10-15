@@ -16,6 +16,10 @@ Synthetic documents with fictitious parties. Their numbers are consistent (the E
 | `facturx-minimum.xml` | Factur-X MINIMUM: no lines |
 | `svefaktura-1.0.xml` | Svefaktura 1.0 in ISO-8859-1: Bankgiro + OCR, F-skatt, round-off, free-text units, a line without quantity, lines without VAT category, invoicing fee |
 | `svefaktura-1.0-credit.xml` | Svefaktura 381 credit without VAT breakdown or currency code |
+| `facturae-322-iva-irpf.xml` | Facturae 3.2.2 by an individual: IVA 21 % + IRPF 15 % (header and line), line discount, DIR3 administrative centres, series + number, operation date |
+| `facturae-322-recargo.xml` | Facturae 3.2.2 with recargo de equivalencia at 5.2 % and 1.4 %, 8-decimal line amounts, direct debit, registry data |
+| `facturae-322-batch.xml` | Facturae 3.2.2 batch (Modality L): two invoices, one with IVA, one with IGIC and two installments |
+| `facturae-322-rectificativa.xml` | Facturae 3.2.2 rectificativa by differences with negative amounts (a reduction) |
 
 ## From public sample collections
 

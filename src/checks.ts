@@ -7,7 +7,7 @@
  *   BR-CO-10  BT-106 = Σ BT-131
  *   BR-CO-13  BT-109 = BT-106 − BT-107 + BT-108
  *   BR-CO-14  BT-110 = Σ BT-117
- *   BR-CO-15  BT-112 = BT-109 + BT-110
+ *   BR-CO-15  BT-112 = BT-109 + BT-110 (+ other taxes flagged includedInTotal, e.g. ES recargo de equivalencia)
  *   BR-CO-16  BT-115 = BT-112 − BT-113 + BT-114 (minus withholdings and split-payment VAT, which EN does not have)
  */
 import type { CanonicalInvoice } from './canonical.js';
@@ -32,7 +32,7 @@ export function checkTotals(inv: CanonicalInvoice): Finding[] {
   if (t.vatTotal !== undefined && inv.vatBreakdown.length > 0) {
     check('BR-CO-14', '/totals/vatTotal', t.vatTotal, sum(inv.vatBreakdown.map((v) => v.taxAmount)), 'Total VAT (BT-110)');
   }
-  check('BR-CO-15', '/totals/taxInclusive', t.taxInclusive, add(t.taxExclusive, t.vatTotal ?? '0'), 'Total with VAT (BT-112)');
+  check('BR-CO-15', '/totals/taxInclusive', t.taxInclusive, add(add(t.taxExclusive, t.vatTotal ?? '0'), sum(inv.otherTaxes.filter((o) => o.includedInTotal).map((o) => o.amount))), 'Total with VAT (BT-112)');
   const payable = sub(sub(add(sub(t.taxInclusive, t.prepaid ?? '0'), t.rounding ?? '0'), t.withholdingTotal ?? '0'), t.splitPaymentVat ?? '0');
   check('BR-CO-16', '/totals/payable', t.payable, payable, 'Amount due (BT-115)');
   return out;
