@@ -3,15 +3,18 @@
  * returns one or more canonical invoices (FatturaPA lots, Facturae batches and
  * e-arve files can hold several).
  *
- * Implemented: ubl, cii, svefaktura, isdoc, ebinterface. The national families are stubs; build order
- * and mapping notes are in the README.
+ * Which families are implemented is derived from the registry (IMPLEMENTED_FAMILIES below);
+ * build order and mapping notes are in the README.
  */
 import type { CanonicalInvoice } from '../canonical.js';
 import type { XmlPayload } from '../envelope.js';
 import type { FormatDef, MatchDetails, ParserFamily } from '../formats.js';
 import { parseCii } from './cii.js';
 import { parseEbinterface } from './ebinterface.js';
+import { parseFacturae } from './facturae.js';
+import { parseFatturaPa } from './fatturapa.js';
 import { parseIsdoc } from './isdoc.js';
+import { parseKsef } from './ksef.js';
 import { parseSvefaktura } from './svefaktura.js';
 import { parseUbl } from './ubl.js';
 
@@ -23,6 +26,8 @@ export interface ParseInput {
   details: MatchDetails;
   /** SHA-256 of the file as received (shared by every document in it). */
   fileSha256: string;
+  /** Fill `source.provenance` (canonical path -> source XPath). Off by default to keep the output small. */
+  provenance?: boolean;
 }
 
 export type Parser = (input: ParseInput) => CanonicalInvoice[];
@@ -45,11 +50,11 @@ export const PARSERS: Record<ParserFamily, Parser> = {
   cii: parseCii,                  // Factur-X/ZUGFeRD 2, XRechnung CII, NLCIUS CII, France CII (D16B and D22B)
   svefaktura: parseSvefaktura,
   zugferd1: stub('zugferd1'),
-  fatturapa: stub('fatturapa'),
-  ksef: stub('ksef'),
-  facturae: stub('facturae'),
-  isdoc: parseIsdoc,
-  ebinterface: parseEbinterface,
+  fatturapa: parseFatturaPa,      // FatturaPA 1.2.x (FPR12/FPA12), semplificata FSM10
+  ksef: parseKsef,  // KSeF FA(2), FA(3), FA_RR
+  facturae: parseFacturae,        // Facturae 3.2, 3.2.1, 3.2.2
+  isdoc: parseIsdoc,              // ISDOC 5.2+ and 6.x (Czechia)
+  ebinterface: parseEbinterface,  // ebInterface 4.3 to 6.1 (Austria)
   finvoice: stub('finvoice'),
   teappsxml: stub('teappsxml'),
   'e-arve': stub('e-arve'),

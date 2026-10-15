@@ -239,6 +239,12 @@ export interface OtherTax {
   amount: Amount;
   /** True if the amount is already included in `totals.taxInclusive`. */
   includedInTotal: boolean;
+  /**
+   * True if the amount is also already inside `totals.taxExclusive`, because the source
+   * charges it as a line or a charge (IT stamp duty as an N1 line). When false or absent,
+   * an `includedInTotal` amount sits on top of BT-109 + BT-110 (ES recargo de equivalencia).
+   */
+  inTaxExclusive?: boolean;
 }
 
 /**
@@ -376,9 +382,23 @@ export interface ClearanceInfo {
 
 export interface SignatureInfo {
   type: 'CAdES' | 'XAdES' | 'XMLDSig' | 'PAdES' | 'detached';
-  /** Whether cryptographic verification was performed and succeeded. Undefined = not checked. */
+  /**
+   * Cryptographic validity only: the signature value matches the signed content and the signer
+   * certificate's key. true = valid, false = invalid (see `reason`), undefined = could not be checked.
+   * This says nothing about who the signer is; see `trust`.
+   */
   verified?: boolean;
+  /** Common name of the signer certificate. */
   signer?: string;
+  /** Signer certificate details, as carried in the signature. */
+  certificate?: { subject: string; issuer: string; serial: string; notBefore: string; notAfter: string };
+  /** Signing time (ISO 8601) from signed attributes / XAdES SigningTime, when the signature protects it. */
+  signedAt?: string;
+  /** Why `verified` is false, or why it could not be determined. */
+  reason?: string;
+  /** 'not-checked' unless trust anchors were configured: a valid signature is not a trusted signer. */
+  trust?: 'not-checked' | 'trusted' | 'untrusted';
+  trustReason?: string;
 }
 
 // ---------------------------------------------------------------------------
