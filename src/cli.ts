@@ -3,9 +3,12 @@
  * einvoice: command-line front end for unwrapping, detecting and converting inbound e-invoices.
  * See the README ("Command line") for commands, flags and exit codes.
  */
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
 import { type CanonicalInvoice, convert, DEFAULT_LIMITS, type Detection, inspect, type UnwrapLimits } from './index.js';
+import { parseSnapshot, snapshotNextUpdate, type TrustSnapshot } from './signature/tsl.js';
+import { LotlError, loadTrustLists } from './signature/tsl-load.js';
 import { runSweep } from './sweep.js';
 
 export const EXIT = {
@@ -36,6 +39,10 @@ export interface IO {
 export interface Deps {
   /** The validation module, once it exists. Absent means `--validate` is a no-op with a message. */
   validator?: Validator | null;
+  /** Fetches a trusted list by URL. Default: the global fetch. Tests inject one so nothing touches the network. */
+  fetch?: (url: string) => Promise<Uint8Array>;
+  /** Clock for snapshot dates. */
+  now?: Date;
 }
 
 const USAGE = `Usage:
@@ -43,6 +50,11 @@ const USAGE = `Usage:
   einvoice inspect <file...>                 unwrap and detect result as JSON
   einvoice convert <file...> [--out <dir>]   canonical JSON (stdout, or one <invoice-id>.json per invoice in <dir>)
   einvoice sweep   <dir...> [--expect answers.json]
+  einvoice trust-lists update [--out <snapshot.json>] [--lotl-signer <cert.pem>] [--lotl-url <url>]
+                                             fetch the EU trusted lists, verify them and write a snapshot
+
+convert --eu-trust[=<snapshot.json>] checks signers against a trusted-list snapshot (default: $EINVOICE_TRUST_SNAPSHOT,
+~/.einvoice/eu-trust-snapshot.json, or trust/eu-trust-snapshot.json next to the sources).
 
 A file argument of "-" reads stdin.
 Flags: --pretty  --quiet  --limits '<json>'  --validate  --help
@@ -57,6 +69,9 @@ interface Parsed {
   pretty: boolean;
   quiet: boolean;
   validate: boolean;
+  euTrust?: string | true;
+  lotlSigner?: string;
+  lotlUrl?: string;
   out?: string;
   expect?: string;
   limits?: Partial<UnwrapLimits>;
@@ -64,7 +79,7 @@ interface Parsed {
 
 function parseArgs(argv: string[]): Parsed {
   const p: Parsed = { command: '', files: [], pretty: false, quiet: false, validate: false };
-  const takesValue = new Set(['--out', '--expect', '--limits']);
+  const takesValue = new Set(['--out', '--expect', '--limits', '--lotl-signer', '--lotl-url']);
   for (let i = 0; i < argv.length; i++) {
     let a = argv[i]!;
     if (a === '-' || !a.startsWith('-')) {
@@ -91,6 +106,15 @@ function parseArgs(argv: string[]): Parsed {
         break;
       case '--validate':
         p.validate = true;
+        break;
+      case '--eu-trust':
+        p.euTrust = value ?? true;
+        break;
+      case '--lotl-signer':
+        p.lotlSigner = value;
+        break;
+      case '--lotl-url':
+        p.lotlUrl = value;
         break;
       case '--out':
         p.out = value;
@@ -166,9 +190,13 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     io.stdout(`${USAGE}\n`);
     return EXIT.ok;
   }
-  const commands = ['detect', 'inspect', 'convert', 'sweep'];
+  const commands = ['detect', 'inspect', 'convert', 'sweep', 'trust-lists'];
   if (!commands.includes(args.command)) {
     io.stderr(`einvoice: unknown command "${args.command}" (try --help)`);
+    return EXIT.usage;
+  }
+  if (args.command === 'trust-lists' && args.files[0] !== 'update') {
+    io.stderr('einvoice: trust-lists needs a subcommand: update');
     return EXIT.usage;
   }
   if (args.files.length === 0) {
@@ -182,6 +210,7 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
   const json = (v: unknown) => `${JSON.stringify(v, null, args.pretty ? 2 : undefined)}\n`;
 
   try {
+    if (args.command === 'trust-lists') return await updateTrustLists(args, io, deps, note, err);
     if (args.command === 'sweep') {
       if (args.validate) note('--validate has no effect on sweep');
       return await runSweep(args.files, { expect: args.expect, limits: args.limits }, (l) => io.stdout(`${l}\n`));
@@ -192,6 +221,27 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
       if (args.command !== 'convert') note(`--validate only applies to convert; ignored for ${args.command}`);
       else if (deps.validator) validator = deps.validator;
       else note('--validate: the validation module is not available in this build; documents are converted without validation');
+    }
+
+    let euTrust: TrustSnapshot | undefined;
+    if (args.euTrust) {
+      if (args.command !== 'convert') note(`--eu-trust only applies to convert; ignored for ${args.command}`);
+      else {
+        const path = snapshotPath(args.euTrust === true ? undefined : args.euTrust);
+        try {
+          euTrust = parseSnapshot(readFileSync(path, 'utf8'));
+        } catch (e) {
+          err(
+            `--eu-trust: cannot use the trusted-list snapshot ${path}: ${(e as Error).message} (create one with: einvoice trust-lists update)`,
+          );
+          return EXIT.usage;
+        }
+        const next = snapshotNextUpdate(euTrust);
+        if (next && Date.parse(next) < (deps.now ?? new Date()).getTime())
+          note(
+            `the trusted-list snapshot (fetched ${euTrust.fetchedAt.slice(0, 10)}) is past its next update ${next.slice(0, 10)}; run: einvoice trust-lists update`,
+          );
+      }
     }
 
     const tally = new Tally();
@@ -246,7 +296,7 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
         continue;
       }
 
-      const r = await convert(bytes, filename, args.limits);
+      const r = await convert(bytes, filename, args.limits, euTrust ? { euTrust, now: deps.now } : {});
       for (const o of r.outcomes) {
         if (o.status === 'ok') {
           let valid = true;
@@ -296,6 +346,52 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     }
     err(`internal error: ${(e as Error).message}`);
     return EXIT.internal;
+  }
+}
+
+/** Where a snapshot lives when no file is named: $EINVOICE_TRUST_SNAPSHOT, the user's cache, then the repository copy. */
+function snapshotPath(given?: string): string {
+  if (given) return resolve(given);
+  const user = process.env.EINVOICE_TRUST_SNAPSHOT || join(homedir(), '.einvoice', 'eu-trust-snapshot.json');
+  const repo = join(import.meta.dir, '..', 'trust', 'eu-trust-snapshot.json');
+  return existsSync(user) || !existsSync(repo) ? resolve(user) : repo;
+}
+
+async function updateTrustLists(
+  args: Parsed,
+  io: IO,
+  deps: Deps,
+  note: (line: string) => void,
+  err: (line: string) => void,
+): Promise<number> {
+  const out = snapshotPath(args.out);
+  let previous: TrustSnapshot | undefined;
+  try {
+    previous = parseSnapshot(readFileSync(out, 'utf8'));
+  } catch {
+    /* no usable previous snapshot: the LOTL signer is pinned on first use */
+  }
+  try {
+    const snapshot = await loadTrustLists({
+      fetch: deps.fetch,
+      lotlUrl: args.lotlUrl,
+      lotlSigners: args.lotlSigner ? [readFileSync(args.lotlSigner, 'utf8')] : undefined,
+      previous,
+      now: deps.now,
+    });
+    mkdirSync(dirname(out), { recursive: true });
+    writeFileSync(out, JSON.stringify(snapshot));
+    const loaded = snapshot.lists.filter((l) => l.status === 'loaded');
+    const services = loaded.reduce((n, l) => n + l.services.length, 0);
+    io.stdout(`${out}\t${loaded.length}/${snapshot.lists.length} lists\t${services} CA/QC services\tfetched ${snapshot.fetchedAt}\n`);
+    for (const p of snapshot.problems) note(p);
+    return EXIT.ok;
+  } catch (e) {
+    if (e instanceof LotlError) {
+      err(e.message);
+      return EXIT.unsafe;
+    }
+    throw e;
   }
 }
 

@@ -9,14 +9,20 @@ export interface Identity {
   keys: CryptoKeyPair;
   cert: pkijs.Certificate;
   der: Uint8Array;
-  alg: 'rsa' | 'ec';
+  alg: 'rsa' | 'rsa-pss' | 'ec';
 }
 
 const b64 = (b: Uint8Array | ArrayBuffer) => Buffer.from(b instanceof Uint8Array ? b : new Uint8Array(b)).toString('base64');
 
 export { b64 };
 
-export async function makeIdentity(cn: string, alg: 'rsa' | 'ec' = 'rsa', issuer?: Identity, ca = false): Promise<Identity> {
+export async function makeIdentity(
+  cn: string,
+  alg: 'rsa' | 'ec' = 'rsa',
+  issuer?: Identity,
+  ca = false,
+  validFrom?: Date,
+): Promise<Identity> {
   const keys = (await crypto.subtle.generateKey(
     alg === 'rsa'
       ? { name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }
@@ -31,7 +37,7 @@ export async function makeIdentity(cn: string, alg: 'rsa' | 'ec' = 'rsa', issuer
   cert.subject.typesAndValues.push(name(cn));
   if (issuer) cert.issuer = issuer.cert.subject;
   else cert.issuer.typesAndValues.push(name(cn));
-  cert.notBefore.value = new Date(Date.now() - 800 * 86_400_000);
+  cert.notBefore.value = validFrom ?? new Date(Date.now() - 800 * 86_400_000);
   cert.notAfter.value = new Date(Date.now() + 3650 * 86_400_000);
   if (ca) {
     const bc = new pkijs.BasicConstraints({ cA: true });
@@ -42,6 +48,13 @@ export async function makeIdentity(cn: string, alg: 'rsa' | 'ec' = 'rsa', issuer
   await cert.subjectPublicKeyInfo.importKey(keys.publicKey);
   await cert.sign(issuer ? issuer.keys.privateKey : keys.privateKey, 'SHA-256');
   return { keys, cert, der: new Uint8Array(cert.toSchema(true).toBER()), alg };
+}
+
+/** The same certificate and RSA key, used with RSA-PSS (MGF1) signatures. */
+export async function pssVariant(id: Identity): Promise<Identity> {
+  const pkcs8 = await crypto.subtle.exportKey('pkcs8', id.keys.privateKey);
+  const privateKey = await crypto.subtle.importKey('pkcs8', pkcs8, { name: 'RSA-PSS', hash: 'SHA-256' }, false, ['sign']);
+  return { ...id, alg: 'rsa-pss', keys: { privateKey, publicKey: id.keys.publicKey } };
 }
 
 /** CMS SignedData (attached content, signed attributes) as DER. `certOf` lets a test embed a different certificate than the signing key's. */
@@ -103,7 +116,11 @@ export async function signXml(xml: string, spec: XmlSignSpec): Promise<string> {
   const mode = spec.c14n ?? 'inc';
   const alg = C14N[mode];
   const sigAlg =
-    signer.alg === 'rsa' ? 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256' : 'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha256';
+    signer.alg === 'rsa'
+      ? 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'
+      : signer.alg === 'rsa-pss'
+        ? 'http://www.w3.org/2007/05/xmldsig-more#sha256-rsa-MGF1'
+        : 'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha256';
   const sha256 = 'http://www.w3.org/2001/04/xmlenc#sha256';
   const certDigest = b64(await crypto.subtle.digest('SHA-256', certOf.der as BufferSource));
   const xades = spec.xades !== false;
@@ -133,7 +150,11 @@ export async function signXml(xml: string, spec: XmlSignSpec): Promise<string> {
   const si = doc2.getElementsByTagNameNS(DS, 'SignedInfo').item(0)!;
   const bytes = enc.encode(canonicalize(si, opts));
   const sv = await crypto.subtle.sign(
-    signer.alg === 'rsa' ? { name: 'RSASSA-PKCS1-v1_5' } : { name: 'ECDSA', hash: 'SHA-256' },
+    signer.alg === 'rsa'
+      ? { name: 'RSASSA-PKCS1-v1_5' }
+      : signer.alg === 'rsa-pss'
+        ? { name: 'RSA-PSS', saltLength: 32 }
+        : { name: 'ECDSA', hash: 'SHA-256' },
     signer.keys.privateKey,
     bytes as BufferSource,
   );

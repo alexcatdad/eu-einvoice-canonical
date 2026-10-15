@@ -2,7 +2,7 @@
  * Builds the static GitHub Pages site into dist/:
  *   bun run site/build.ts
  */
-import { cpSync, mkdirSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
 const root = join(import.meta.dir, '..');
@@ -41,5 +41,8 @@ if (!build.success) {
 cpSync(join(root, 'site/index.html'), join(out, 'index.html'));
 cpSync(join(root, 'site/eval.html'), join(out, 'eval.html'));
 cpSync(join(root, 'site/style.css'), join(out, 'style.css'));
+// Snapshot of the EU trusted lists for the opt-in signer check (refreshed by the trust-lists workflow).
+if (existsSync(join(root, 'trust/eu-trust-snapshot.json')))
+  cpSync(join(root, 'trust/eu-trust-snapshot.json'), join(out, 'eu-trust-snapshot.json'));
 for (const s of SAMPLES) cpSync(join(root, 'test/fixtures', s), join(out, 'samples', s));
 console.log(`Built ${out} (${build.outputs.map((o) => `${o.path.split('/').pop()} ${(o.size / 1024).toFixed(0)} KB`).join(', ')})`);

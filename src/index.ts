@@ -26,7 +26,18 @@ export {
   parseModelOutput,
 } from './relations/model.js';
 export { analyseLines, applyRelations, isDescriptor, type LineAnalysis, percentagesIn } from './relations/rules.js';
-export { signatureStatus, type TrustAnchor } from './signature/index.js';
+export {
+  LOTL_URL,
+  type LoadOptions,
+  loadTrustLists,
+  parseSnapshot,
+  signatureStatus,
+  type TrustAnchor,
+  type TrustListInfo,
+  type TrustService,
+  type TrustSnapshot,
+  trustAnchorsFromSnapshot,
+} from './signature/index.js';
 export type { ValidateOptions } from './validation/index.js';
 export * as values from './values.js';
 

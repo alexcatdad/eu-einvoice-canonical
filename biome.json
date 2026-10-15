@@ -10,7 +10,8 @@
       "!validation/bundles",
       "!test/fixtures",
       "!test/corpus/repos",
-      "!bun.lock"
+      "!bun.lock",
+      "!trust"
     ]
   },
   "formatter": {
