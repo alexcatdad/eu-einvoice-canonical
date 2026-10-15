@@ -30,6 +30,12 @@ export { signatureStatus, type TrustAnchor } from './signature/index.js';
 export type { ValidateOptions } from './validation/index.js';
 export * as values from './values.js';
 
+/**
+ * Major version of the published JSON Schemas (`schemas/*.v1.schema.json`). Additive changes to the model keep it;
+ * a breaking change to the output shape bumps it and publishes new schema files next to the old ones.
+ */
+export const schemaVersion = 'v1';
+
 export interface InspectedDocument {
   payload: Omit<XmlPayload, 'xml'>;
   detection: Detection;
