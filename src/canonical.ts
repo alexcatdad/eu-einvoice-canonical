@@ -239,6 +239,12 @@ export interface OtherTax {
   amount: Amount;
   /** True if the amount is already included in `totals.taxInclusive`. */
   includedInTotal: boolean;
+  /**
+   * True if the amount is also already inside `totals.taxExclusive`, because the source
+   * charges it as a line or a charge (IT stamp duty as an N1 line). When false or absent,
+   * an `includedInTotal` amount sits on top of BT-109 + BT-110 (ES recargo de equivalencia).
+   */
+  inTaxExclusive?: boolean;
 }
 
 /**
