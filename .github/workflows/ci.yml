@@ -43,6 +43,8 @@ jobs:
           file: coverage/cobertura.xml
           language: TypeScript
           label: code-coverage/bun
+          # Needs GitHub Code Quality enabled on the repository; until then the upload is reported, not fatal.
+          fail-on-error: false
       - name: Upload the coverage report
         if: always()
         uses: actions/upload-artifact@v7
