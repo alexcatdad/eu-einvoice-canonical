@@ -28,8 +28,7 @@ export function parseOrder(input: string | Uint8Array): PurchaseOrder {
   try {
     root = parseXml(xml);
   } catch (e) {
-    if (e instanceof ParseError) throw new MatchInputError(e.message);
-    throw e;
+    throw new MatchInputError(`Order XML is not well-formed: ${(e as Error).message}`);
   }
   if (root.localName !== 'Order' || root.namespaceURI !== NS.order) throw new MatchInputError('Not a UBL 2.1 Order document');
   try {
