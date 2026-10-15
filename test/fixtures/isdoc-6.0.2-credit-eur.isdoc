@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="http://isdoc.cz/namespace/2013" version="6.0.2">
+  <DocumentType>2</DocumentType>
+  <ID>DB-2026-0007</ID>
+  <UUID>0c6bd2a1-5b5e-4c33-9f4e-3a1f0d4a9a02</UUID>
+  <IssueDate>2026-10-12</IssueDate>
+  <TaxPointDate>2026-10-12</TaxPointDate>
+  <VATApplicable>true</VATApplicable>
+  <Note>Vrácené zboží, reklamace č. R-88</Note>
+  <LocalCurrencyCode>CZK</LocalCurrencyCode>
+  <ForeignCurrencyCode>EUR</ForeignCurrencyCode>
+  <CurrRate>25.00</CurrRate>
+  <RefCurrRate>1</RefCurrRate>
+  <ParentDocumentID>FV-2026-0042</ParentDocumentID>
+  <AccountingSupplierParty>
+    <Party>
+      <PartyIdentification><ID>12345679</ID></PartyIdentification>
+      <PartyName><Name>Příklad Software s.r.o.</Name></PartyName>
+      <PostalAddress>
+        <StreetName>Vzorová</StreetName>
+        <BuildingNumber>12</BuildingNumber>
+        <CityName>Brno</CityName>
+        <PostalZone>60200</PostalZone>
+        <Country><IdentificationCode>CZ</IdentificationCode><Name>Česká republika</Name></Country>
+      </PostalAddress>
+      <PartyTaxScheme><CompanyID>CZ12345679</CompanyID><TaxScheme>VAT</TaxScheme></PartyTaxScheme>
+    </Party>
+  </AccountingSupplierParty>
+  <AccountingCustomerParty>
+    <Party>
+      <PartyIdentification><ID>87654321</ID></PartyIdentification>
+      <PartyName><Name>Obec Dolní Lhota</Name></PartyName>
+      <PostalAddress>
+        <StreetName>Náměstí</StreetName>
+        <BuildingNumber>1</BuildingNumber>
+        <CityName>Dolní Lhota</CityName>
+        <PostalZone>70000</PostalZone>
+        <Country><IdentificationCode>CZ</IdentificationCode><Name>Česká republika</Name></Country>
+      </PostalAddress>
+      <PartyTaxScheme><CompanyID>CZ87654321</CompanyID><TaxScheme>VAT</TaxScheme></PartyTaxScheme>
+    </Party>
+  </AccountingCustomerParty>
+  <InvoiceLines>
+    <InvoiceLine>
+      <ID>1</ID>
+      <InvoicedQuantity unitCode="Ks">-2</InvoicedQuantity>
+      <LineExtensionAmountCurr>-40.00</LineExtensionAmountCurr>
+      <LineExtensionAmount>-1000.00</LineExtensionAmount>
+      <LineExtensionAmountTaxInclusiveCurr>-48.40</LineExtensionAmountTaxInclusiveCurr>
+      <LineExtensionAmountTaxInclusive>-1210.00</LineExtensionAmountTaxInclusive>
+      <LineExtensionTaxAmount>-210.00</LineExtensionTaxAmount>
+      <UnitPrice>500.00</UnitPrice>
+      <UnitPriceTaxInclusive>605.00</UnitPriceTaxInclusive>
+      <ClassifiedTaxCategory><Percent>21</Percent><VATCalculationMethod>0</VATCalculationMethod></ClassifiedTaxCategory>
+      <Item>
+        <Description>Čtečka čárových kódů</Description>
+        <SellersItemIdentification><ID>HW-77</ID></SellersItemIdentification>
+      </Item>
+    </InvoiceLine>
+    <InvoiceLine>
+      <ID>2</ID>
+      <InvoicedQuantity unitCode="Ks">-1</InvoicedQuantity>
+      <LineExtensionAmountCurr>-10.00</LineExtensionAmountCurr>
+      <LineExtensionAmount>-250.00</LineExtensionAmount>
+      <LineExtensionAmountTaxInclusiveCurr>-11.20</LineExtensionAmountTaxInclusiveCurr>
+      <LineExtensionAmountTaxInclusive>-280.00</LineExtensionAmountTaxInclusive>
+      <LineExtensionTaxAmount>-30.00</LineExtensionTaxAmount>
+      <UnitPrice>250.00</UnitPrice>
+      <UnitPriceTaxInclusive>280.00</UnitPriceTaxInclusive>
+      <ClassifiedTaxCategory><Percent>12</Percent><VATCalculationMethod>0</VATCalculationMethod></ClassifiedTaxCategory>
+      <Item>
+        <Description>Příručka k čtečce</Description>
+        <SellersItemIdentification><ID>BOOK-77</ID></SellersItemIdentification>
+      </Item>
+    </InvoiceLine>
+  </InvoiceLines>
+  <TaxTotal>
+    <TaxSubTotal>
+      <TaxableAmountCurr>-40.00</TaxableAmountCurr>
+      <TaxableAmount>-1000.00</TaxableAmount>
+      <TaxAmountCurr>-8.40</TaxAmountCurr>
+      <TaxAmount>-210.00</TaxAmount>
+      <TaxInclusiveAmountCurr>-48.40</TaxInclusiveAmountCurr>
+      <TaxInclusiveAmount>-1210.00</TaxInclusiveAmount>
+      <TaxCategory><Percent>21</Percent></TaxCategory>
+    </TaxSubTotal>
+    <TaxSubTotal>
+      <TaxableAmountCurr>-10.00</TaxableAmountCurr>
+      <TaxableAmount>-250.00</TaxableAmount>
+      <TaxAmountCurr>-1.20</TaxAmountCurr>
+      <TaxAmount>-30.00</TaxAmount>
+      <TaxInclusiveAmountCurr>-11.20</TaxInclusiveAmountCurr>
+      <TaxInclusiveAmount>-280.00</TaxInclusiveAmount>
+      <TaxCategory><Percent>12</Percent></TaxCategory>
+    </TaxSubTotal>
+    <TaxAmountCurr>-9.60</TaxAmountCurr>
+    <TaxAmount>-240.00</TaxAmount>
+  </TaxTotal>
+  <LegalMonetaryTotal>
+    <TaxExclusiveAmountCurr>-50.00</TaxExclusiveAmountCurr>
+    <TaxExclusiveAmount>-1250.00</TaxExclusiveAmount>
+    <TaxInclusiveAmountCurr>-59.60</TaxInclusiveAmountCurr>
+    <TaxInclusiveAmount>-1490.00</TaxInclusiveAmount>
+    <AlreadyClaimedTaxExclusiveAmountCurr>0</AlreadyClaimedTaxExclusiveAmountCurr>
+    <AlreadyClaimedTaxExclusiveAmount>0</AlreadyClaimedTaxExclusiveAmount>
+    <AlreadyClaimedTaxInclusiveAmountCurr>0</AlreadyClaimedTaxInclusiveAmountCurr>
+    <AlreadyClaimedTaxInclusiveAmount>0</AlreadyClaimedTaxInclusiveAmount>
+    <DifferenceTaxExclusiveAmountCurr>-50.00</DifferenceTaxExclusiveAmountCurr>
+    <DifferenceTaxExclusiveAmount>-1250.00</DifferenceTaxExclusiveAmount>
+    <DifferenceTaxInclusiveAmountCurr>-59.60</DifferenceTaxInclusiveAmountCurr>
+    <DifferenceTaxInclusiveAmount>-1490.00</DifferenceTaxInclusiveAmount>
+    <PayableRoundingAmountCurr>0</PayableRoundingAmountCurr>
+    <PayableRoundingAmount>0</PayableRoundingAmount>
+    <PaidDepositsAmountCurr>0</PaidDepositsAmountCurr>
+    <PaidDepositsAmount>0</PaidDepositsAmount>
+    <PayableAmountCurr>-59.60</PayableAmountCurr>
+    <PayableAmount>-1490.00</PayableAmount>
+  </LegalMonetaryTotal>
+  <PaymentMeans>
+    <Payment>
+      <PaidAmount>0</PaidAmount>
+      <PaymentMeansCode>42</PaymentMeansCode>
+      <Details>
+        <ID>1920001453</ID>
+        <BankCode>0800</BankCode>
+        <Name>Vzorová banka, a.s.</Name>
+        <IBAN>CZ6508000000192000145399</IBAN>
+        <BIC>GIBACZPX</BIC>
+        <VariableSymbol>20260007</VariableSymbol>
+      </Details>
+    </Payment>
+  </PaymentMeans>
+</Invoice>

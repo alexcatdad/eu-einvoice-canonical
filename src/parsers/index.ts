@@ -3,13 +3,15 @@
  * returns one or more canonical invoices (FatturaPA lots, Facturae batches and
  * e-arve files can hold several).
  *
- * Implemented: ubl, cii, svefaktura. The national families are stubs; build order
+ * Implemented: ubl, cii, svefaktura, isdoc, ebinterface. The national families are stubs; build order
  * and mapping notes are in the README.
  */
 import type { CanonicalInvoice } from '../canonical.js';
 import type { XmlPayload } from '../envelope.js';
 import type { FormatDef, MatchDetails, ParserFamily } from '../formats.js';
 import { parseCii } from './cii.js';
+import { parseEbinterface } from './ebinterface.js';
+import { parseIsdoc } from './isdoc.js';
 import { parseSvefaktura } from './svefaktura.js';
 import { parseUbl } from './ubl.js';
 
@@ -41,8 +43,8 @@ export const PARSERS: Record<ParserFamily, Parser> = {
   fatturapa: stub('fatturapa'),
   ksef: stub('ksef'),
   facturae: stub('facturae'),
-  isdoc: stub('isdoc'),
-  ebinterface: stub('ebinterface'),
+  isdoc: parseIsdoc,
+  ebinterface: parseEbinterface,
   finvoice: stub('finvoice'),
   teappsxml: stub('teappsxml'),
   'e-arve': stub('e-arve'),
@@ -50,4 +52,4 @@ export const PARSERS: Record<ParserFamily, Parser> = {
   mydata: stub('mydata'),
 };
 
-export const IMPLEMENTED_FAMILIES: readonly ParserFamily[] = ['ubl', 'cii', 'svefaktura'];
+export const IMPLEMENTED_FAMILIES: readonly ParserFamily[] = ['ubl', 'cii', 'svefaktura', 'isdoc', 'ebinterface'];

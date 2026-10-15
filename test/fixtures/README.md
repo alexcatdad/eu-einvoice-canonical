@@ -16,6 +16,10 @@ Synthetic documents with fictitious parties. Their numbers are consistent (the E
 | `facturx-minimum.xml` | Factur-X MINIMUM: no lines |
 | `svefaktura-1.0.xml` | Svefaktura 1.0 in ISO-8859-1: Bankgiro + OCR, F-skatt, round-off, free-text units, a line without quantity, lines without VAT category, invoicing fee |
 | `svefaktura-1.0-credit.xml` | Svefaktura 381 credit without VAT breakdown or currency code |
+| `isdoc-6.0.2-invoice.isdoc` | ISDOC 6.0.2 invoice in CZK: IČO/DIČ, two VAT rates, taxed and untaxed deposits, rounding, variable/constant/specific symbols, alternate account, supplement |
+| `isdoc-6.0.2-credit-eur.isdoc` | ISDOC DocumentType 2 with negative amounts in EUR (ForeignCurrencyCode, CurrRate), ParentDocumentID |
+| `ebinterface-6.1-invoice.xml` | ebInterface 6.1 invoice: line and document reductions/surcharges, two VAT rates, GTIN, prepayment, bank transfer, early-payment discount |
+| `ebinterface-4.3-creditmemo.xml` | ebInterface 4.3 CreditMemo (old Tax/VAT/VATItem structure, exempt line, delivery period, bank account without IBAN) |
 
 ## From public sample collections
 
