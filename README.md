@@ -56,6 +56,33 @@ for (const o of outcomes) {
 console.log(skipped);                                      // DOCTYPE, size limits, detached signatures...
 ```
 
+## Command line
+
+`src/cli.ts` is exposed as the `einvoice` bin (`bun src/cli.ts ...` in a checkout; tagged releases attach standalone binaries for linux-x64, darwin-arm64 and windows-x64). A file argument of `-` reads stdin.
+
+```
+einvoice detect  <file...>                 format id, version and profile per document (tab separated)
+einvoice inspect <file...>                 the unwrap and detect result as JSON
+einvoice convert <file...> [--out <dir>]   canonical JSON array on stdout, or one <invoice-id>.json per invoice in <dir>
+einvoice sweep   <dir...> [--expect answers.json]   detection coverage / known-answer check
+```
+
+Flags: `--pretty` indents JSON; `--quiet` silences notes and warnings (errors are still printed); `--limits '{"maxEntries":10}'` overrides `UnwrapLimits`; `--validate` is accepted by `convert` and is a no-op with a message until the validation module lands.
+JSON goes to stdout only; every error is one line on stderr.
+
+| Exit | Meaning |
+| ---- | ------- |
+| 0 | all converted |
+| 1 | usage error (and, for `sweep`, any mismatch or unanswered file) |
+| 2 | unsafe or malformed input (DOCTYPE, limits, not XML) |
+| 3 | unsupported format or profile (including well-formed non-invoice XML) |
+| 4 | validation failed |
+| 5 | partially converted (some documents failed) |
+| 6 | validator unavailable |
+| 7 | internal error (including unreadable files) |
+
+With several failures and no success the code of the first failure is used; with at least one success it is 5.
+
 ## The canonical model
 
 The core is still EN 16931-1, field for field, so every EN-based format maps 1:1. National formats carry concepts EN has no term for. Those go, in order of preference:

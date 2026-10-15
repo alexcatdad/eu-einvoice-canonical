@@ -2,12 +2,16 @@
   "name": "eu-einvoice-canonical",
   "version": "1.1.0",
   "description": "Canonical TypeScript model, detection and parsers for inbound EU e-invoices (Peppol BIS 3, XRechnung, Factur-X, Svefaktura and more)",
+  "bin": {
+    "einvoice": "src/cli.ts"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "sweep:fixtures": "bun scripts/sweep.ts test/fixtures --expect test/fixtures/expected.json",
     "build:site": "bun run site/build.ts",
-    "serve:site": "bun run site/serve.ts"
+    "serve:site": "bun run site/serve.ts",
+    "build:cli": "bun build --compile src/cli.ts --outfile dist/einvoice"
   },
   "author": "",
   "license": "ISC",
