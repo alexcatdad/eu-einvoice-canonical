@@ -36,6 +36,8 @@ export interface XmlPayload {
   sha256: string;
   /** Size of the XML payload in bytes, UTF-8 encoded. */
   byteLength: number;
+  /** Names of the other files in the ZIP this payload came from (ISDOCX attachments); only set for ZIP members. */
+  siblingEntries?: string[];
 }
 
 export interface Skipped {
@@ -161,6 +163,12 @@ async function walk(
         resolve: (uri) => findEntry(entries, uri, entry),
       });
       for (const sig of sigs) for (const p of siblings) p.signatures.push({ ...sig });
+    }
+    for (const p of siblings) {
+      const own = p.envelope.find((s) => s.kind === 'zip' && s.name !== undefined && s.name in entries && !s.name.endsWith('/'))?.name;
+      const others = Object.keys(entries).filter((n) => !n.endsWith('/') && entries[n].length > 0 && n !== own
+        && !siblings.some((q) => q.filename === n) && !sigFiles.some(([s]) => s === n));
+      if (others.length) p.siblingEntries = others;
     }
     return;
   }

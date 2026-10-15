@@ -10,8 +10,10 @@ import type { CanonicalInvoice } from '../canonical.js';
 import type { XmlPayload } from '../envelope.js';
 import type { FormatDef, MatchDetails, ParserFamily } from '../formats.js';
 import { parseCii } from './cii.js';
+import { parseEbinterface } from './ebinterface.js';
 import { parseFacturae } from './facturae.js';
 import { parseFatturaPa } from './fatturapa.js';
+import { parseIsdoc } from './isdoc.js';
 import { parseKsef } from './ksef.js';
 import { parseSvefaktura } from './svefaktura.js';
 import { parseUbl } from './ubl.js';
@@ -51,8 +53,8 @@ export const PARSERS: Record<ParserFamily, Parser> = {
   fatturapa: parseFatturaPa,      // FatturaPA 1.2.x (FPR12/FPA12), semplificata FSM10
   ksef: parseKsef,  // KSeF FA(2), FA(3), FA_RR
   facturae: parseFacturae,        // Facturae 3.2, 3.2.1, 3.2.2
-  isdoc: stub('isdoc'),
-  ebinterface: stub('ebinterface'),
+  isdoc: parseIsdoc,              // ISDOC 5.2+ and 6.x (Czechia)
+  ebinterface: parseEbinterface,  // ebInterface 4.3 to 6.1 (Austria)
   finvoice: stub('finvoice'),
   teappsxml: stub('teappsxml'),
   'e-arve': stub('e-arve'),
