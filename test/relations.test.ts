@@ -29,7 +29,7 @@ describe('the Svefaktura example with descriptors, a markup and an uncovered ite
     const inv = await parse('svefaktura-1.0-descriptors.xml', true);
     expect(inv.lines).toHaveLength(6);
     expect(inv.lineRoles).toEqual({ 1: 'heading', 2: 'description', 3: 'description', 4: 'item', 5: 'surcharge', 6: 'item' });
-    expect(inv.relations).toContainEqual({ from: '5', to: ['4'], type: 'markup', rate: '10', method: 'arithmetic', confidence: 'proven' });
+    expect(inv.relations as unknown[]).toContainEqual({ from: '5', to: ['4'], type: 'markup', rate: '10', method: 'arithmetic', confidence: 'proven' });
     expect(inv.relations).toContainEqual({ from: '1', to: ['4', '5', '6'], type: 'heading', method: 'rule' });
     expect(inv.relations).toHaveLength(2);
     expect(inv.source.warnings.filter((w) => w.code.startsWith('LINE-'))).toEqual([]);
@@ -42,12 +42,12 @@ describe('the Svefaktura example with descriptors, a markup and an uncovered ite
     expect(plain.relations).toBeUndefined();
     expect(rich.lines).toEqual(plain.lines);
     expect(rich.totals).toEqual(plain.totals);
-    expect(plain.totals.lineNetTotal).toBe('372887.00');
+    expect(String(plain.totals.lineNetTotal)).toBe('372887.00');
   });
 
   test('10 % of line 4 is exactly line 5, 10 % of lines 4 and 6 is not', () => {
-    expect(percentOf('337170.00', '10')).toBe('33717.0000');
-    expect(percentOf('339170.00', '10')).toBe('33917.0000');
+    expect(String(percentOf('337170.00', '10'))).toBe('33717.0000');
+    expect(String(percentOf('339170.00', '10'))).toBe('33917.0000');
   });
 
   test('the descriptor lines are zero-valued in the source', async () => {
@@ -76,13 +76,13 @@ describe('percentage lines', () => {
 
   test('a markup on the previous line only', () => {
     const a = rel([...base, ['3', 'Påslag 10 %', '1', '200.00']]);
-    expect(a.relations).toEqual([{ from: '3', to: ['2'], type: 'markup', rate: '10', method: 'arithmetic', confidence: 'proven' }]);
+    expect(a.relations as unknown[]).toEqual([{ from: '3', to: ['2'], type: 'markup', rate: '10', method: 'arithmetic', confidence: 'proven' }]);
     expect(a.lineRoles['3']).toBe('surcharge');
   });
 
   test('a markup on a run of lines', () => {
     const a = rel([...base, ['3', '10% påslag', '1', '300.00']]);
-    expect(a.relations).toEqual([{ from: '3', to: ['1', '2'], type: 'markup', rate: '10', method: 'arithmetic', confidence: 'proven' }]);
+    expect(a.relations as unknown[]).toEqual([{ from: '3', to: ['1', '2'], type: 'markup', rate: '10', method: 'arithmetic', confidence: 'proven' }]);
   });
 
   test('a markup on lines that are not next to each other is found among small subsets', () => {
@@ -97,7 +97,7 @@ describe('percentage lines', () => {
 
   test('a negative line over positive lines is a discount', () => {
     const a = rel([['1', 'Fönster', '1', '5000.00'], ['2', 'Rabatt 10 %', '1', '-500.00']]);
-    expect(a.relations).toEqual([{ from: '2', to: ['1'], type: 'discount', rate: '10', method: 'arithmetic', confidence: 'proven' }]);
+    expect(a.relations as unknown[]).toEqual([{ from: '2', to: ['1'], type: 'discount', rate: '10', method: 'arithmetic', confidence: 'proven' }]);
     expect(a.lineRoles['2']).toBe('discount');
   });
 
@@ -165,7 +165,7 @@ describe('descriptors and grouping', () => {
   test('a heading line and the descriptions after it', () => {
     const a = rel([['1', 'Rubrik', undefined, '0.00'], ['2', 'Mer text', '0', '0.00'], ['3', 'Dörr', '1', '1000.00']]);
     expect(a.lineRoles).toEqual({ 1: 'heading', 2: 'description', 3: 'item' });
-    expect(a.relations).toEqual([{ from: '1', to: ['3'], type: 'heading', method: 'rule' }]);
+    expect(a.relations as unknown[]).toEqual([{ from: '1', to: ['3'], type: 'heading', method: 'rule' }]);
   });
 
   test('a new run of descriptors starts a new group', () => {
@@ -176,7 +176,7 @@ describe('descriptors and grouping', () => {
   test('a change of order reference ends the group', () => {
     const ref = (r: string): Partial<Line> => ({ national: { orderReference: r } });
     const a = rel([['1', 'Rubrik', undefined, '0.00', ref('A')], ['2', 'x', '1', '10.00', ref('A')], ['3', 'y', '1', '20.00', ref('B')]]);
-    expect(a.relations).toEqual([{ from: '1', to: ['2'], type: 'heading', method: 'rule' }]);
+    expect(a.relations as unknown[]).toEqual([{ from: '1', to: ['2'], type: 'heading', method: 'rule' }]);
     const b = rel([['1', 'Rubrik', undefined, '0.00'], ['2', 'x', '1', '10.00', ref('A')], ['3', 'y', '1', '20.00', ref('A')]]);
     expect(b.relations[0].to).toEqual(['2', '3']);
   });
@@ -201,7 +201,7 @@ describe('other links', () => {
   test('a line allowance whose base amount is another line', () => {
     const lines = mk([['1', 'Dörr', '1', '1000.00'], ['2', 'Rabatt', '1', '-100.00', { allowances: [{ amount: '100.00' as never, baseAmount: '1000.00' as never }] }]]);
     const a = analyseLines({ lines });
-    expect(a.relations).toEqual([{ from: '2', to: ['1'], type: 'allowance-base', method: 'arithmetic', confidence: 'likely' }]);
+    expect(a.relations as unknown[]).toEqual([{ from: '2', to: ['1'], type: 'allowance-base', method: 'arithmetic', confidence: 'likely' }]);
   });
 
   test('an allowance on its own amount links nothing', () => {
