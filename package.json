@@ -17,7 +17,7 @@
     "build:cli": "bun build --compile src/cli.ts --outfile dist/einvoice"
   },
   "author": "",
-  "license": "ISC",
+  "license": "0BSD",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/alexcatdad/eu-einvoice-canonical.git"

@@ -1,6 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { detectXml, inspect } from '../src/index.js';
+import { FORMATS } from '../src/formats.js';
 import { CBC, PEPPOL, ciiHeader, fixture, ublHeader, NSI } from './helpers.js';
 
 // ---------------------------------------------------------------------------
@@ -112,6 +113,8 @@ describe('UBL profiles', () => {
     ['urn:cen.eu:en16931:2017#compliant#urn:efactura.mfinante.ro:CIUS-RO:1.0.1', 'cius-ro'],
     ['urn:cen.eu:en16931:2017#compliant#urn:feap.gov.pt:CIUS-PT:2.1.1', 'cius-pt'],
     ['urn:cen.eu:en16931:2017#compliant#urn:mfin.gov.hr:cius-2025:1.0#conformant#urn:mfin.gov.hr:ext-2025:1.0', 'hr-cius'],
+    ['urn:cen.eu:en16931:2017#conformant#urn.cpro.gouv.fr:1p0:extended-ctc-fr', 'fr-ctc-ubl'],
+    ['urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0#extended#urn:fdc:www.efaktura.gov.pl:ver2.0', 'pl-pef'],
     ['urn:fdc:oioubl.dk:trns:billing:invoice:3.0', 'oioubl-3'],
     ['OIOUBL-2.01', 'oioubl-2'],
     ['urn:peppol:pint:billing-1@jp-1', 'peppol-pint'],
@@ -133,8 +136,8 @@ describe('UBL profiles', () => {
     assert.equal(details(ublHeader(`${PEPPOL}#conformant#urn:fdc:anskaffelser.no:2019:ehf:spec:3.0`)).profile, 'urn:fdc:anskaffelser.no:2019:ehf:spec:3.0');
   });
 
-  test('Poland PEF is detected from the urn:pl:extended namespace', () =>
-    assert.equal(id(ublHeader(PEPPOL, { rootAttrs: ' xmlns:ple="urn:pl:extended:1.0"' })), 'pl-pef'));
+  test('Poland PEF profile is the efaktura.gov.pl extension', () =>
+    assert.equal(details(ublHeader('urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0#extended#urn:fdc:www.efaktura.gov.pl:ver2.0')).profile, 'urn:fdc:www.efaktura.gov.pl:ver2.0'));
 });
 
 describe('CII profiles', () => {
@@ -146,6 +149,7 @@ describe('CII profiles', () => {
     ['urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:basic', 'facturx', 'BASIC'],
     ['urn:cen.eu:en16931:2017#conformant#urn:factur-x.eu:1p0:extended', 'facturx', 'EXTENDED'],
     ['urn:cen.eu:en16931:2017#compliant#urn:zugferd.de:2p0:basic', 'facturx', 'BASIC'],
+    ['urn:cen.eu:en16931:2017#conformant#urn.cpro.gouv.fr:1p0:extended-ctc-fr', 'fr-ctc-cii', undefined],
     ['urn:cen.eu:en16931:2017', 'facturx', 'EN 16931', true],
     ['urn:cen.eu:en16931:2017', 'en16931-cii', undefined, false],
     ['urn:example:unknown', 'cii-unknown', undefined],
@@ -157,6 +161,25 @@ describe('CII profiles', () => {
       if (profile) assert.equal(details(xml, fromPdf ?? false).profile, profile);
     });
   }
+});
+
+describe('national header-only rules', () => {
+  test('eSLOG 1.6 is the namespace-less IzdaniRacunEnostavni root', () => {
+    assert.equal(id('<IzdaniRacunEnostavni><GlavaRacuna/></IzdaniRacunEnostavni>'), 'eslog-1');
+    assert.equal(details('<IzdaniRacunEnostavni/>').version, '1.6');
+    assert.equal(id('<IzdaniRacunEnostavni xmlns="urn:other"/>'), 'unknown');
+  });
+
+  test('myDATA is InvoicesDoc in the AADE v1.0 namespace', () => {
+    const xml = '<InvoicesDoc xmlns="http://www.aade.gr/myDATA/invoice/v1.0"><invoice><invoiceHeader><invoiceType>1.1</invoiceType></invoiceHeader></invoice></InvoicesDoc>';
+    assert.equal(id(xml), 'gr-mydata');
+    assert.equal(details(xml).profile, '1.1');
+  });
+
+  test('every rule marked unverified is a fallback', () => {
+    const unverified = FORMATS.filter((f) => f.status === 'unverified').map((f) => f.id).sort();
+    assert.deepEqual(unverified, ['cii-unknown', 'ubl-unknown']);
+  });
 });
 
 describe('header probe robustness', () => {

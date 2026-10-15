@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Faktura xmlns="http://crd.gov.pl/wzor/2025/06/25/13775/" xmlns:etd="http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/01/05/eD/DefinicjeTypy/">
+  <Naglowek><KodFormularza kodSystemowy="FA (3)" wersjaSchemy="1-0E">FA</KodFormularza><WariantFormularza>3</WariantFormularza><DataWytworzeniaFa>2026-10-05T09:30:00Z</DataWytworzeniaFa><SystemInfo>Synthetic fixture</SystemInfo></Naglowek>
+  <Podmiot1><DaneIdentyfikacyjne><NIP>1234563218</NIP><Nazwa>Pracownia Meblowa Przykład sp. z o.o.</Nazwa></DaneIdentyfikacyjne><Adres><KodKraju>PL</KodKraju><AdresL1>ul. Stolarska 12</AdresL1><AdresL2>31-001 Kraków</AdresL2><GLN>5900000000009</GLN></Adres><DaneKontaktowe><Email>faktury@pracownia.example</Email><Telefon>+48 12 000 00 00</Telefon></DaneKontaktowe></Podmiot1>
+  <Podmiot2><DaneIdentyfikacyjne><NIP>5252525252</NIP><Nazwa>Biuro Wzorcowe S.A.</Nazwa></DaneIdentyfikacyjne><Adres><KodKraju>PL</KodKraju><AdresL1>al. Jerozolimskie 100</AdresL1><AdresL2>00-001 Warszawa</AdresL2></Adres><NrKlienta>K-0815</NrKlienta><JST>2</JST><GV>2</GV></Podmiot2>
+  <Podmiot3><DaneIdentyfikacyjne><NIP>7010000009</NIP><Nazwa>Oddział Wzorcowy Gdańsk</Nazwa></DaneIdentyfikacyjne><Adres><KodKraju>PL</KodKraju><AdresL1>ul. Morska 1, 80-001 Gdańsk</AdresL1></Adres><Rola>2</Rola></Podmiot3>
+  <Podmiot3><DaneIdentyfikacyjne><NIP>5260000008</NIP><Nazwa>Faktoring Przykład S.A.</Nazwa></DaneIdentyfikacyjne><Rola>1</Rola></Podmiot3>
+  <Fa>
+    <KodWaluty>PLN</KodWaluty><P_1>2026-10-05</P_1><P_1M>Kraków</P_1M><P_2>FV/2026/10/0042</P_2><P_6>2026-10-04</P_6>
+    <P_13_1>1000.00</P_13_1><P_14_1>230.00</P_14_1>
+    <P_13_2>200.00</P_13_2><P_14_2>16.00</P_14_2>
+    <P_13_3>200.00</P_13_3><P_14_3>10.00</P_14_3>
+    <P_13_6_1>50.00</P_13_6_1>
+    <P_13_7>150.00</P_13_7>
+    <P_15>1856.00</P_15>
+    <Adnotacje><P_16>2</P_16><P_17>2</P_17><P_18>2</P_18><P_18A>2</P_18A><Zwolnienie><P_19>1</P_19><P_19A>art. 43 ust. 1 pkt 37 ustawy</P_19A></Zwolnienie><NoweSrodkiTransportu><P_22N>1</P_22N></NoweSrodkiTransportu><P_23>2</P_23><PMarzy><P_PMarzyN>1</P_PMarzyN></PMarzy></Adnotacje>
+    <RodzajFaktury>VAT</RodzajFaktury>
+    <DodatkowyOpis><Klucz>Nr projektu</Klucz><Wartosc>PRJ-77</Wartosc></DodatkowyOpis>
+    <FaWiersz><NrWierszaFa>1</NrWierszaFa><P_7>Projekt wnętrza</P_7><Indeks>USL-001</Indeks><P_8A>godz.</P_8A><P_8B>10</P_8B><P_9A>100.00</P_9A><P_11>1000.00</P_11><P_12>23</P_12><GTU>GTU_12</GTU></FaWiersz>
+    <FaWiersz><NrWierszaFa>2</NrWierszaFa><P_7>Katalog materiałów</P_7><GTIN>5900000000016</GTIN><P_8A>szt.</P_8A><P_8B>5</P_8B><P_9A>40.00</P_9A><P_11>200.00</P_11><P_12>5</P_12></FaWiersz>
+    <FaWiersz><NrWierszaFa>3</NrWierszaFa><P_7>Drewno bukowe, pakiet próbek</P_7><CN>4407</CN><P_8A>kpl</P_8A><P_8B>10</P_8B><P_9A>20.00</P_9A><P_11>200.00</P_11><P_12>8</P_12></FaWiersz>
+    <FaWiersz><NrWierszaFa>4</NrWierszaFa><P_7>Wysyłka do klienta (stawka 0%)</P_7><P_8A>szt.</P_8A><P_8B>1</P_8B><P_9A>50.00</P_9A><P_11>50.00</P_11><P_12>0 KR</P_12></FaWiersz>
+    <FaWiersz><NrWierszaFa>5</NrWierszaFa><P_7>Szkolenie zwolnione</P_7><P_8A>usł.</P_8A><P_8B>1</P_8B><P_9A>150.00</P_9A><P_11>150.00</P_11><P_12>zw</P_12></FaWiersz>
+    <Platnosc>
+      <TerminPlatnosci><Termin>2026-10-20</Termin></TerminPlatnosci>
+      <TerminPlatnosci><Termin>2026-11-04</Termin></TerminPlatnosci>
+      <FormaPlatnosci>6</FormaPlatnosci>
+      <RachunekBankowy><NrRB>61109010140000071219812874</NrRB><SWIFT>WBKPPLPP</SWIFT><OpisRachunku>Rachunek główny</OpisRachunku></RachunekBankowy>
+      <RachunekBankowyFaktora><NrRB>27114020040000300201355387</NrRB></RachunekBankowyFaktora>
+    </Platnosc>
+    <WarunkiTransakcji><Umowy><DataUmowy>2026-09-01</DataUmowy><NrUmowy>UM/2026/17</NrUmowy></Umowy><Zamowienia><DataZamowienia>2026-09-20</DataZamowienia><NrZamowienia>ZAM-9001</NrZamowienia></Zamowienia></WarunkiTransakcji>
+  </Fa>
+  <Stopka><Informacje><StopkaFaktury>Kapitał zakładowy 50 000 zł</StopkaFaktury></Informacje><Rejestry><KRS>0000123456</KRS><REGON>123456785</REGON></Rejestry></Stopka>
+</Faktura>
