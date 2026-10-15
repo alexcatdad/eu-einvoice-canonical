@@ -402,10 +402,10 @@ describe('SIE 4 export', () => {
     const e = (await entry('svefaktura-1.0.xml')).e;
     const text = toSie4([e], {
       generated: '2026-01-02',
-      company: { name: 'Mitt "Bolag" AB', orgNumber: '556000-0000' },
+      company: { name: 'Mitt "Bolag" \\ AB', orgNumber: '556000-0000' },
       program: PROGRAM,
     }).text;
-    assert.ok(text.includes('#FNAMN "Mitt \\"Bolag\\" AB"\r\n#ORGNR 556000-0000'));
+    assert.ok(text.includes('#FNAMN "Mitt \\"Bolag\\" \\\\ AB"\r\n#ORGNR 556000-0000'));
     assert.ok(!toSie4([e], { generated: '2026-01-02' }).text.includes('#ORGNR'));
   });
 
