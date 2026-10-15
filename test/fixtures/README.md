@@ -16,6 +16,9 @@ Synthetic documents with fictitious parties. Their numbers are consistent (the E
 | `facturx-minimum.xml` | Factur-X MINIMUM: no lines |
 | `svefaktura-1.0.xml` | Svefaktura 1.0 in ISO-8859-1: Bankgiro + OCR, F-skatt, round-off, free-text units, a line without quantity, lines without VAT category, invoicing fee |
 | `svefaktura-1.0-credit.xml` | Svefaktura 381 credit without VAT breakdown or currency code |
+| `zugferd1-comfort.xml` | ZUGFeRD 1.0 COMFORT: two VAT rates, document allowance and charge, line discount, prepayment, GTIN, embedded attachment, BLZ (the test also wraps it in a PDF) |
+| `teappsxml-invoices.xml` | TEAPPSXML 3.0 batch: a sales invoice (row discount, charge, advance payment, an INFO row, Finnish payment reference, e-invoice address) and a credit note with SIGN="-" amounts and no currency element |
+| `mydata-two-invoices.xml` | myDATA InvoicesDoc with a 1.1 sales invoice (MARK, UID, line classifications, two VAT categories) and a 5.1 credit invoice (withholding, correlated MARK, no currency element) |
 | `isdoc-6.0.2-invoice.isdoc` | ISDOC 6.0.2 invoice in CZK: IČO/DIČ, two VAT rates, taxed and untaxed deposits, rounding, variable/constant/specific symbols, alternate account, supplement |
 | `isdoc-6.0.2-credit-eur.isdoc` | ISDOC DocumentType 2 with negative amounts in EUR (ForeignCurrencyCode, CurrRate), ParentDocumentID |
 | `ebinterface-6.1-invoice.xml` | ebInterface 6.1 invoice: line and document reductions/surcharges, two VAT rates, GTIN, prepayment, bank transfer, early-payment discount |
