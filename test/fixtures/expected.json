@@ -36,6 +36,9 @@
   "fatturapa-lot.xml": ["fatturapa"],
   "fatturapa-fsm10.xml": ["fatturapa-semplificata"],
   "mydata.xml": ["gr-mydata"],
+  "mydata-two-invoices.xml": ["gr-mydata"],
+  "teappsxml-invoices.xml": ["teappsxml"],
+  "zugferd1-comfort.xml": ["zugferd-1"],
   "sdi-metadata.xml": ["other"],
   "IT01234567890_FPR12.xml.p7m": ["fatturapa"],
   "IT01234567890_FPR12.base64.xml.p7m": ["fatturapa"],
@@ -44,5 +47,10 @@
   "ksef-fa3-kor-before-after.xml": ["ksef"],
   "ksef-fa3-kor-delta-increase.xml": ["ksef"],
   "ksef-fa3-zal.xml": ["ksef"],
-  "ksef-fa-rr.xml": ["ksef"]
+  "ksef-fa-rr.xml": ["ksef"],
+  "finvoice-invoice.xml": ["finvoice"],
+  "finvoice-credit.xml": ["finvoice"],
+  "e-arve-1.2-two-invoices.xml": ["e-arve"],
+  "eslog-2-invoice.xml": ["eslog-2"],
+  "eslog-2-credit.xml": ["eslog-2"]
 }

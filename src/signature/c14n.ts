@@ -27,6 +27,7 @@ export function canonicalize(node: XNode, opts: C14nOptions): string {
     let seenRoot = false;
     for (let c: XNode | null = doc.firstChild; c; c = c.nextSibling) {
       if (c.nodeType === 1) { parts.push(renderElement(c as XElement, opts, new Map(), true)); seenRoot = true; }
+      else if (c.nodeType === 7 && (c as any).target === 'xml') continue; // the XML declaration is not a PI
       else if (c.nodeType === 7) parts.push((seenRoot ? '\n' : '') + pi(c) + (seenRoot ? '' : '\n'));
       else if (c.nodeType === 8 && opts.withComments) parts.push((seenRoot ? '\n' : '') + `<!--${c.nodeValue}-->` + (seenRoot ? '' : '\n'));
     }

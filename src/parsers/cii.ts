@@ -148,11 +148,11 @@ export function parseCii(input: ParseInput): CanonicalInvoice[] {
   return [finish(inv)];
 }
 
-const withScheme = (value: string | undefined, schemeId: string | undefined): Identifier | undefined =>
+export const withScheme = (value: string | undefined, schemeId: string | undefined): Identifier | undefined =>
   value ? (schemeId ? { value, schemeId } : { value }) : undefined;
 
 /** Elements of the settlement that feed every payment's direct-debit and remittance fields. */
-interface DirectDebitEls { creditor?: Element; mandate?: Element; remittance?: Element }
+export interface DirectDebitEls { creditor?: Element; mandate?: Element; remittance?: Element }
 
 /** Texts of the non-empty elements joined with a newline; the value is bound to all of them. */
 function joinTexts(c: Ctx, els: (Element | undefined)[], bind: string): string | undefined {
@@ -162,7 +162,7 @@ function joinTexts(c: Ctx, els: (Element | undefined)[], bind: string): string |
 }
 
 /** CII dates sit in a udt:DateTimeString / udt:DateString / qdt:DateTimeString child, usually format 102 (YYYYMMDD). */
-function dateOf(c: Ctx, el: Element | undefined, field: string, bind?: string): IsoDate | undefined {
+export function dateOf(c: Ctx, el: Element | undefined, field: string, bind?: string): IsoDate | undefined {
   const inner = c.el(el, '*:DateTimeString') ?? c.el(el, '*:DateString');
   if (!inner) return undefined;
   const fmt = c.attr(inner, undefined, 'format');
@@ -176,7 +176,7 @@ function identifiers(c: Ctx, p: Element | undefined, path: (i: number) => string
   return els.map((e, i) => c.id(e, undefined, 'schemeID', path(i))!);
 }
 
-function party(c: Ctx, p: Element | undefined, s: Scope): Party {
+export function party(c: Ctx, p: Element | undefined, s: Scope): Party {
   const regs = c.all(p, 'ram:SpecifiedTaxRegistration/ram:ID');
   const contactEl = c.el(p, 'ram:DefinedTradeContact');
   const vatEl = regs.filter((e) => c.attr(e, undefined, 'schemeID') === 'VA').find((e) => c.text(e));
@@ -214,7 +214,7 @@ function contact(e: Element, s: Scope): Contact {
   };
 }
 
-function period(c: Ctx, p: Element | undefined, s: Scope): Period | undefined {
+export function period(c: Ctx, p: Element | undefined, s: Scope): Period | undefined {
   if (!p) return undefined;
   const start = dateOf(c, c.el(p, 'ram:StartDateTime'), 'period start', s.path('start'));
   const end = dateOf(c, c.el(p, 'ram:EndDateTime'), 'period end', s.path('end'));
@@ -230,7 +230,7 @@ function taxRepresentative(c: Ctx, t: Element | undefined, s: Scope) {
   };
 }
 
-function delivery(c: Ctx, d: Element | undefined, s: Scope) {
+export function delivery(c: Ctx, d: Element | undefined, s: Scope) {
   if (!d) return undefined;
   const shipTo = c.el(d, 'ram:ShipToTradeParty');
   const date = dateOf(c, c.el(d, 'ram:ActualDeliverySupplyChainEvent/ram:OccurrenceDateTime'), 'BT-72', s.path('actualDate'));
@@ -243,7 +243,7 @@ function delivery(c: Ctx, d: Element | undefined, s: Scope) {
   };
 }
 
-function payment(c: Ctx, pm: Element, direct: DirectDebitEls, s: Scope): PaymentInstructions {
+export function payment(c: Ctx, pm: Element, direct: DirectDebitEls, s: Scope): PaymentInstructions {
   const code = s.text(pm, 'ram:TypeCode', 'meansCode') ?? '';
   const card = c.el(pm, 'ram:ApplicableTradeSettlementFinancialCard');
   const debtorEl = c.el(pm, 'ram:PayerPartyDebtorFinancialAccount/ram:IBANID');

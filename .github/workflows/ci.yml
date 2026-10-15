@@ -16,43 +16,26 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      # Upload coverage to GitHub for the "Restrict code coverage" ruleset.
-      code-quality: write
-      pull-requests: read
     steps:
       - uses: actions/checkout@v7
-        with:
-          # Coverage line numbers must match the PR head that GitHub shows, not the merge commit.
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: oven-sh/setup-bun@v2.2.0
         with:
           bun-version: 1.4.2
       - run: bun install --frozen-lockfile
       - name: Typecheck
         run: bun run typecheck
+      - name: Verify the pinned validator bundles
+        run: bun run verify:bundles
       - name: Unit, parser and hostile-input tests (with coverage)
         run: bun test --coverage --coverage-reporter=lcov --coverage-reporter=text
-      - name: Coverage gate (and Cobertura report for GitHub)
-        run: bun run coverage:check -- --cobertura coverage/cobertura.xml
-      - name: Upload coverage to GitHub
-        if: always() && hashFiles('coverage/cobertura.xml') != ''
-        uses: actions/upload-code-coverage@v1
-        with:
-          file: coverage/cobertura.xml
-          language: TypeScript
-          label: code-coverage/bun
-          # Needs GitHub Code Quality enabled on the repository; until then the upload is reported, not fatal.
-          fail-on-error: false
+      - name: Coverage gate
+        run: bun run coverage:check
       - name: Upload the coverage report
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: coverage-lcov
-          path: |
-            coverage/lcov.info
-            coverage/cobertura.xml
+          path: coverage/lcov.info
           if-no-files-found: ignore
       - name: Known-answer detection sweep over the fixtures
         run: bun run sweep:fixtures

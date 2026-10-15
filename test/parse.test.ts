@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { convert, effectiveSign, IMPLEMENTED_FAMILIES } from '../src/index.js';
-import { PARSERS } from '../src/parsers/index.js';
+import { NotImplementedError, PARSERS } from '../src/parsers/index.js';
 import { fixture, parseOne, utf8, warningCodes } from './helpers.js';
 
 describe('UBL: Peppol BIS 3 invoice', async () => {
@@ -342,9 +342,16 @@ describe('parser registry', () => {
 
 describe('convert outcomes', () => {
   test('formats without a parser are "unsupported", with the detection kept', async () => {
-    const r = await convert(fixture('mydata.xml'), 'mydata.xml');
-    assert.equal(r.outcomes[0].status, 'unsupported');
-    assert.equal(r.outcomes[0].detection.kind, 'invoice');
+    // Every family has a parser now, so stand in a stub for one of them for the duration of the test.
+    const original = PARSERS.mydata;
+    PARSERS.mydata = () => { throw new NotImplementedError('mydata'); };
+    try {
+      const r = await convert(fixture('mydata.xml'), 'mydata.xml');
+      assert.equal(r.outcomes[0].status, 'unsupported');
+      assert.equal(r.outcomes[0].detection.kind, 'invoice');
+    } finally {
+      PARSERS.mydata = original;
+    }
   });
 
   test('a recognised non-invoice is "not-an-invoice"', async () => {

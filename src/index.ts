@@ -4,6 +4,8 @@ import { detectXml, type Detection } from './detect.js';
 import { unwrap, type Skipped, type UnwrapLimits, type UnwrapOptions, type XmlPayload } from './envelope.js';
 import { signatureFindings, signatureStatus } from './signature/index.js';
 import { NotImplementedError, PARSERS, ParseError } from './parsers/index.js';
+import { unavailableSummary } from './validation/plan.js';
+import type { ValidateOptions } from './validation/index.js';
 
 export * from './canonical.js';
 export * from './codes.js';
@@ -14,6 +16,7 @@ export { signatureStatus, type TrustAnchor } from './signature/index.js';
 export { checkTotals, type Finding } from './checks.js';
 export { IMPLEMENTED_FAMILIES, NotImplementedError, ParseError } from './parsers/index.js';
 export * as values from './values.js';
+export type { ValidateOptions } from './validation/index.js';
 
 export interface InspectedDocument {
   payload: Omit<XmlPayload, 'xml'>;
@@ -50,6 +53,23 @@ export interface ConvertResult {
 export interface ConvertOptions extends UnwrapOptions {
   /** Fill `source.provenance` (canonical path -> source XPath) for every value read from the XML. Off by default: it roughly doubles the size of `source`. */
   provenance?: boolean;
+  /**
+   * Run the XSD, EN 16931 Schematron and CIUS/Peppol Schematron layers on UBL and CII invoices and
+   * fill `source.validation`. Off by default: it loads the validators (SaxonJS, xmllint-wasm).
+   */
+  validate?: boolean;
+  /** Where the validator bundles are read from. */
+  validation?: ValidateOptions;
+}
+
+/**
+ * Loaded on demand through a specifier the bundler cannot follow, so the validators never end up
+ * in a bundle that only converts. If the validation/ directory is not next to the bundle the
+ * import fails and every layer reports 'unavailable'.
+ */
+async function loadValidation(): Promise<typeof import('./validation/index.js')> {
+  const specifier = ['.', 'validation', 'index.js'].join('/');
+  return import(/* @vite-ignore */ specifier);
 }
 
 /**
@@ -57,7 +77,8 @@ export interface ConvertOptions extends UnwrapOptions {
  *
  * Signatures are verified (cryptographic validity only) and reported on `source.signatures` and
  * `source.validation.signature`; a failed signature is a finding, never an error. Pass `options.trustAnchors`
- * to also check the signer against a trust list.
+ * to also check the signer against a trust list. With `options.validate`, the schema, semantic and
+ * profile layers are filled in as well; the signature layer is kept.
  */
 export async function convert(bytes: Uint8Array, filename?: string, limits?: Partial<UnwrapLimits>, options: ConvertOptions = {}): Promise<ConvertResult> {
   const { fileSha256, payloads, skipped } = await unwrap(bytes, filename, limits, options);
@@ -83,5 +104,30 @@ export async function convert(bytes: Uint8Array, filename?: string, limits?: Par
       return { status: 'error', detection, payload: meta, error: `Internal error: ${(e as Error).message}` };
     }
   });
+  if (options.validate) {
+    let validation: typeof import('./validation/index.js') | undefined;
+    let loadError = '';
+    try {
+      validation = await loadValidation();
+    } catch (e) {
+      loadError = e instanceof Error ? e.message : String(e);
+    }
+    await Promise.all(outcomes.map(async (outcome, i) => {
+      if (outcome.status !== 'ok') return;
+      const summary = validation
+        ? await validation.validate(payloads[i], outcome.detection, options.validation)
+        : unavailableSummary(outcome.detection, loadError);
+      for (const inv of outcome.invoices) {
+        // Keep the signature layer and its findings, which the conversion already filled in.
+        const before = inv.source.validation;
+        const merged = structuredClone(summary);
+        if (before) {
+          merged.signature = before.signature;
+          merged.findings.push(...before.findings.filter((f) => f.layer === 'signature'));
+        }
+        inv.source.validation = merged;
+      }
+    }));
+  }
   return { fileSha256, outcomes, skipped };
 }
