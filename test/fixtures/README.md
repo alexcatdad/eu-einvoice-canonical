@@ -15,6 +15,7 @@ Synthetic documents with fictitious parties. Their numbers are consistent (the E
 | `facturx-basic-creditnote.xml` | Factur-X BASIC with TypeCode 381 on the CII root |
 | `facturx-minimum.xml` | Factur-X MINIMUM: no lines |
 | `svefaktura-1.0.xml` | Svefaktura 1.0 in ISO-8859-1: Bankgiro + OCR, F-skatt, round-off, free-text units, a line without quantity, lines without VAT category, invoicing fee |
+| `svefaktura-1.0-descriptors.xml` | Svefaktura 1.0 in UTF-8: zero-valued descriptor lines (1-3), a 10 % surcharge line that applies to one item line only (5), lines 1-5 from a real invoice, line 6 synthetic. Used for line roles and relations |
 | `svefaktura-1.0-credit.xml` | Svefaktura 381 credit without VAT breakdown or currency code |
 | `finvoice-invoice.xml` | Finvoice 3.0 INV01 behind a SOAP envelope, ISO-8859-15: comma decimals, Y-tunnus and OVT codes, two VAT rates, unit price in cents (`snt/kWh`), a print-only `SubInvoiceRow` row, EPI account and RF reference |
 | `finvoice-credit.xml` | Finvoice INV02 credit in UTF-8: no EpiDetails (payable and means code derived), account from SellerAccountDetails, original invoice number |

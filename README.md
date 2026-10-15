@@ -118,6 +118,25 @@ The core is still EN 16931-1, field for field, so every EN-based format maps 1:1
 
 Other design rules are unchanged from the PEPPOL/Svefaktura version: decimal strings for money, `YYYY-MM-DD` dates, open code-list unions, credit notes keep their source signs (`effectiveSign()`), and EN-mandatory fields are optional in the type with a separate completeness check.
 
+### Line roles and relations
+
+Many invoices mix real items with lines that only describe or adjust other lines (a heading, "Utförande enligt offert 9633", "10% Materialpåslag"). With `convert(bytes, name, undefined, { relations: true })` every invoice gets two extra fields beside `lines`; the lines and totals are never changed:
+
+```
+lineRoles: { '1': 'heading', '2': 'description', '3': 'description', '4': 'item', '5': 'surcharge', '6': 'item' }
+relations: [
+  { from: '5', to: ['4'], type: 'markup', rate: '10', method: 'arithmetic', confidence: 'proven' },
+  { from: '1', to: ['4', '5', '6'], type: 'heading', method: 'rule' },
+]
+```
+
+- **Descriptors** have zero amount, quantity and price. A run of them heads the priced lines after it, until the next run or a change of order reference (`line.national.orderReference`, when a parser sets it).
+- **Percentage lines**: the rate is read from the text (`10%`, `10 %`, `10,5%`) and the earlier lines of the group are searched, with exact decimals, for the set whose net amounts times the rate equal the line's amount: contiguous runs first, then subsets of up to four of the twelve nearest lines. One match is `proven`. Several matches, or none, add `LINE-RELATION-AMBIGUOUS` or `LINE-RELATION-UNMATCHED` to `source.warnings` and record no relation.
+- Also found: line allowances whose base amount is another line (`allowance-base`), notes naming another line (`note-reference`), and shared item ids or order-line references (`same-item`, `same-order-line`, always `review`).
+- `method` says how a relation was found (`rule`, `arithmetic` or `model`); `confidence` is `proven`, `likely` or `review`, and is absent for structural rules that cannot be wrong.
+
+An optional language model can label what the rules leave as plain items (freight, labour, discount in Swedish and other languages) and propose links. It runs in the browser only (`site/model.ts`: WebLLM with Qwen3, or Chrome's Gemini Nano), is held to a JSON schema, never overrides a rule and marks everything `method: 'model'`, `confidence: 'review'`. `applyModelLabels(invoice, labeller)` merges its output. `site/eval.html` (built next to the converter) scores the rules and the models on the labelled set in `src/relations/labelled.ts` and records accuracy, time, download size and memory.
+
 ## EU coverage
 
 What you will receive from each country, inbound. Format IDs refer to `src/formats.ts`. Every country also sends Peppol BIS 3 (`peppol-bis3`) cross-border.

@@ -3,6 +3,7 @@ import { checkTotals } from './checks.js';
 import { type Detection, detectXml } from './detect.js';
 import { type Skipped, type UnwrapLimits, type UnwrapOptions, unwrap, type XmlPayload } from './envelope.js';
 import { NotImplementedError, PARSERS, ParseError } from './parsers/index.js';
+import { applyRelations } from './relations/rules.js';
 import { signatureFindings, signatureStatus } from './signature/index.js';
 import type { ValidateOptions } from './validation/index.js';
 import { unavailableSummary } from './validation/plan.js';
@@ -14,6 +15,17 @@ export { type Detection, detectXml } from './detect.js';
 export { DEFAULT_LIMITS, decodeXml, type Skipped, type UnwrapLimits, type UnwrapOptions, unwrap, type XmlPayload } from './envelope.js';
 export { FORMATS, FORMATS_BY_ID, type FormatDef, type FormatId, type ParserFamily } from './formats.js';
 export { IMPLEMENTED_FAMILIES, NotImplementedError, ParseError } from './parsers/index.js';
+export {
+  applyModelLabels,
+  buildModelInput,
+  buildPrompt,
+  LABEL_SCHEMA,
+  type ModelInput,
+  type ModelLabeller,
+  type ModelOutput,
+  parseModelOutput,
+} from './relations/model.js';
+export { analyseLines, applyRelations, isDescriptor, type LineAnalysis, percentagesIn } from './relations/rules.js';
 export { signatureStatus, type TrustAnchor } from './signature/index.js';
 export type { ValidateOptions } from './validation/index.js';
 export * as values from './values.js';
@@ -63,6 +75,12 @@ export interface ConvertOptions extends UnwrapOptions {
    * fill `source.validation`. Off by default: it loads the validators (SaxonJS, xmllint-wasm).
    */
   validate?: boolean;
+  /**
+   * Fill `lineRoles` and `relations`: which lines are headings or descriptions, which are items and which
+   * adjust other lines (a 10 % markup, a discount). Rules and exact arithmetic only; ambiguous cases go to
+   * `source.warnings`. The lines and totals never change. Off by default.
+   */
+  relations?: boolean;
   /** Where the validator bundles are read from. */
   validation?: ValidateOptions;
 }
@@ -108,6 +126,7 @@ export async function convert(
       invoices.forEach((inv, i) => {
         if (invoices.length > 1) inv.source.indexInFile = i;
         inv.source.warnings.push(...checkTotals(inv));
+        if (options.relations) applyRelations(inv);
         const sigs = inv.source.signatures;
         inv.source.validation ??= {
           parse: 'passed',

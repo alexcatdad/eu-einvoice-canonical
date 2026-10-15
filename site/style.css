@@ -470,6 +470,46 @@ select {
   color: var(--muted);
   font-size: 0.8rem;
 }
+.lines tr.descriptor td.item {
+  font-style: italic;
+}
+.lines tr.descriptor:not(.under) td.item {
+  font-weight: 600;
+  font-style: normal;
+}
+.lines tr.under td.item {
+  padding-left: 1.25rem;
+}
+.lines tr.adjusts td.item {
+  border-left: 2px solid var(--ink);
+  padding-left: 0.5rem;
+}
+.lines .relation {
+  color: var(--ink);
+}
+.review {
+  display: inline-block;
+  margin-left: 0.25rem;
+  padding: 0 0.35rem;
+  border: 1px solid var(--warn);
+  border-radius: var(--r);
+  color: var(--warn);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.model {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+}
+.model summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+.model-status {
+  color: var(--muted);
+}
 .more-lines {
   margin: 0.4rem 0 0;
   color: var(--muted);

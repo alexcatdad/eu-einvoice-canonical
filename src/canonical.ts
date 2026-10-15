@@ -613,6 +613,42 @@ export interface SourceMeta {
 }
 
 // ---------------------------------------------------------------------------
+// Line roles and relations (opt-in, see `convert(..., { relations: true })`)
+// ---------------------------------------------------------------------------
+
+/**
+ * What a line is for. `item` is anything sold; `heading` and `description` carry text only
+ * (zero quantity, price and amount); the rest adjust or add to other lines.
+ */
+export type LineRole = 'item' | 'heading' | 'description' | 'surcharge' | 'discount' | 'freight' | 'labour' | 'other';
+
+export type LineRelationType =
+  | 'heading' // a text-only line that introduces the priced lines after it
+  | 'markup' // percentage surcharge on other lines
+  | 'discount' // percentage reduction of other lines
+  | 'allowance-base' // a line allowance/charge whose base amount equals another line
+  | 'note-reference' // the line's note names another line
+  | 'same-item' // same seller, buyer or standard item id
+  | 'same-order-line'; // same order-line reference
+
+export interface LineRelation {
+  /** Line id (BT-126) of the line that heads, adjusts or refers to the others. */
+  from: string;
+  to: string[];
+  type: LineRelationType;
+  /** Percentage stated in the line text, for `markup` and `discount`. */
+  rate?: Percentage;
+  /** How it was found. Only `model` is a guess by a language model; `rule` and `arithmetic` are deterministic. */
+  method: 'rule' | 'arithmetic' | 'model';
+  /**
+   * `proven`: the arithmetic matches exactly and uniquely. `likely`: stated in the text or structure of the
+   * invoice. `review`: only a hint (shared ids, model output); do not act on it without a human.
+   * Absent for structural rules that cannot be wrong, such as a heading over the lines that follow it.
+   */
+  confidence?: 'proven' | 'likely' | 'review';
+}
+
+// ---------------------------------------------------------------------------
 // The canonical invoice
 // ---------------------------------------------------------------------------
 
@@ -662,6 +698,9 @@ interface CanonicalBase {
   withholdings: Withholding[];
   attachments: Attachment[]; // BG-24
   lines: Line[]; // BG-25 (empty for Factur-X MINIMUM / BASIC WL)
+  /** Line id -> role. Only with `convert(..., { relations: true })`. Never changes `lines` or `totals`. */
+  lineRoles?: Record<string, LineRole>;
+  relations?: LineRelation[];
   clearance: ClearanceInfo[];
   extensions: CountryExtensions;
   source: SourceMeta;
