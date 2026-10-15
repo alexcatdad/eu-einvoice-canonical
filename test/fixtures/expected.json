@@ -35,5 +35,10 @@
   "sdi-metadata.xml": ["other"],
   "IT01234567890_FPR12.xml.p7m": ["fatturapa"],
   "IT01234567890_FPR12.base64.xml.p7m": ["fatturapa"],
-  "facturx-en16931.pdf": ["facturx"]
+  "facturx-en16931.pdf": ["facturx"],
+  "ksef-fa3-vat-multirate.xml": ["ksef"],
+  "ksef-fa3-kor-before-after.xml": ["ksef"],
+  "ksef-fa3-kor-delta-increase.xml": ["ksef"],
+  "ksef-fa3-zal.xml": ["ksef"],
+  "ksef-fa-rr.xml": ["ksef"]
 }
