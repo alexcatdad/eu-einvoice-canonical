@@ -50,7 +50,7 @@ function withoutComments(text: string): string {
 /** Expected values for a UBL Invoice / CreditNote or a CII CrossIndustryInvoice, or undefined when not reliably readable. */
 function read(raw: string): Known | undefined {
   // Comments and UBL extensions (signatures, vendor blocks) can hold look-alike elements.
-  const xml = raw.replace(/<!--[\s\S]*?-->/g, '').replace(/<(\w+:)?UBLExtensions[\s>][\s\S]*?<\/(?:\w+:)?UBLExtensions>/g, '');
+  const xml = withoutComments(raw).replace(/<(\w+:)?UBLExtensions[\s>][\s\S]*?<\/(?:\w+:)?UBLExtensions>/g, '');
   const root = /<(?:\w+:)?(Invoice|CreditNote|CrossIndustryInvoice)[\s>]/.exec(xml)?.[1];
   if (root === 'Invoice' || root === 'CreditNote') {
     const id = matches(xml, 'ID')[0];
