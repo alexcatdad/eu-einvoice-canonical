@@ -1,0 +1,42 @@
+{
+  "id": "xsd-ksef-fa2",
+  "title": "KSeF FA(2) XSD",
+  "layer": "schema",
+  "syntax": "ksef",
+  "version": "FA (2)",
+  "releaseDate": "2023-06-29",
+  "effectiveFrom": "2023-06-29",
+  "effectiveUntil": null,
+  "license": "No licence text in the files; published by the issuing authority for implementers to validate against (see validation/NOTICE)",
+  "upstream": "https://www.gov.pl/web/finanse/krajowy-system-e-faktur",
+  "note": "Ministry of Finance schema; releaseDate is the date in the schema namespace. schemaLocation of imported schemas rewritten to the vendored copy so nothing is fetched at runtime.",
+  "format": "xsd",
+  "entries": {
+    "Faktura": "schemat.xsd"
+  },
+  "modifiedFiles": [
+    "schemat.xsd"
+  ],
+  "source": [
+    {
+      "url": "https://crd.gov.pl/wzor/2023/06/29/12648/schemat.xsd",
+      "sha256": "b8acb60f0692ac2b05ac40ffcb1929b4d68c12b3c486cac4322e1699796f6999"
+    },
+    {
+      "url": "http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/01/05/eD/DefinicjeTypy/StrukturyDanych_v10-0E.xsd",
+      "sha256": "1137ce6e3c11c2b9ef3f05e4e72d6dcd6b4fa94908ea558f2ba15de0259bb2aa"
+    }
+  ],
+  "files": [
+    {
+      "path": "StrukturyDanych_v10-0E.xsd",
+      "sha256": "1137ce6e3c11c2b9ef3f05e4e72d6dcd6b4fa94908ea558f2ba15de0259bb2aa",
+      "bytes": 31547
+    },
+    {
+      "path": "schemat.xsd",
+      "sha256": "b0c474190393259ba9a589c87e7536f0b5ee06c38bd22ac47578602014d43b74",
+      "bytes": 170600
+    }
+  ]
+}

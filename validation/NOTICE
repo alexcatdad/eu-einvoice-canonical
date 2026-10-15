@@ -44,6 +44,50 @@ xrechnung-3.0.2-ubl, xrechnung-3.0.2-cii
   https://github.com/itplr-kosit/xrechnung-schematron (tag v2.6.0)
   The XSLT 2.0 published in that release, compiled to SaxonJS SEF.
 
+National formats (schema layer only)
+------------------------------------
+The XSDs below are the issuing authorities' own schemas. They are vendored byte-for-byte except where a
+bundle's manifest lists `modifiedFiles`: there the remote `schemaLocation` of an imported schema (the W3C
+XML Signature schema, the Polish common types) is rewritten to the vendored copy so nothing is fetched at
+runtime. The manifest records the SHA-256 of every downloaded original under `source`. Most of these
+files carry no licence text. They are published by the authorities for implementers to validate documents
+against, and vendoring them for that purpose is the same practice as the KoSIT and OpenPEPPOL
+configurations. If a rights holder objects, the bundle is removed from build-validation-bundles.ts and from
+planFor(); nothing else depends on it. Release dates marked "vendoring date" in a manifest mean the
+schema states none; they are the day the file was copied (2026-10-16).
+
+xsd-fatturapa-1.2.2
+  FatturaPA 1.2.2 (Schema_VFPR12), Agenzia delle Entrate, from
+  https://www.fatturapa.gov.it/export/documenti/fatturapa/v1.2.2/
+xsd-fatturapa-semplificata-1.0
+  FatturaPA semplificata 1.0 (Schema_VFSM10), Agenzia delle Entrate. The authority no longer serves this
+  file at a stable address; the copy is the one in Slamdunk/php-validatore-fattura-elettronica (MIT) at commit
+  da1986196bf8a9e993fcd33a059cf08aaca1bf36. It was not compared against an official download.
+xsd-ksef-fa2, xsd-ksef-fa3, xsd-ksef-fa-rr
+  KSeF FA(2), FA(3), FA_RR (1), Ministerstwo Finansow, from https://crd.gov.pl/wzor/ together with the
+  common types StrukturyDanych_v10-0E.xsd.
+xsd-facturae-3.2, xsd-facturae-3.2.1, xsd-facturae-3.2.2
+  Facturae, Ministerio de Asuntos Economicos y Transformacion Digital, from
+  https://www.facturae.gob.es/content/dam/facturae/formato/versiones/. Facturae 3.0 and 3.1 are not covered.
+xsd-isdoc-6.0.2
+  ISDOC 6.0.2, (c) MVCR, ICT UNIE, SPIS. The schema permits use, copying, modification and distribution
+  without fee, provided the notice stays; it does. From https://isdoc.cz/6.0.2/xsd/. The namespace is shared
+  by all 6.x versions, so this one schema is applied to 6.0.0 and 6.0.1 documents too.
+xsd-ebinterface-4.3, xsd-ebinterface-5.0, xsd-ebinterface-6.0, xsd-ebinterface-6.1
+  ebInterface, AUSTRIAPRO / WKO, from https://github.com/austriapro/ebinterface-standards at commit
+  f7e4e4ec8778b7da2bc3468ed976a396fa8b6b29 (the repository has no licence file). 4.0 to 4.2 are not covered.
+xsd-finvoice-3.0
+  Finvoice 3.0 (Finvoice3.0.xsd, modified 17.12.2020), Finance Finland, from https://file.finanssiala.fi/finvoice/
+xsd-earve-1.2
+  Estonian e-invoice 1.2.EN (schema date 28.08.2018), Estonian ICT Cluster, from
+  https://wp.itl.ee/files/IoB/uued/e-invoice_ver1.2.EN.xsd. The file header says "License rules: no".
+xsd-eslog-2.0
+  eSLOG 2.0 INVOIC and its xmldsig-core-schema.xsd, GZS / epos.si, from the package
+  https://epos.si/assets/docs/e-SLOG-2.0-08-2020-EN.zip
+
+The W3C XML Signature schema (xmldsig-core-schema.xsd, 2002 Recommendation) bundled with several of
+these is (c) W3C and under the W3C Software and Document Licence, which permits copying with the notice.
+
 Runtime dependencies (installed from npm, not copied into this repository)
 --------------------------------------------------------------------------
 saxon-js 2.7.0 (Saxonica Ltd): proprietary licence permitting use and redistribution in binary form as part

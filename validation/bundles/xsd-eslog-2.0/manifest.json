@@ -1,0 +1,35 @@
+{
+  "id": "xsd-eslog-2.0",
+  "title": "eSLOG 2.0 INVOIC XSD",
+  "layer": "schema",
+  "syntax": "eslog",
+  "version": "2.0",
+  "releaseDate": "2019-08-05",
+  "effectiveFrom": "2019-08-05",
+  "effectiveUntil": null,
+  "license": "No licence text in the files; published by the issuing authority for implementers to validate against (see validation/NOTICE)",
+  "upstream": "https://www.epos.si/eslog",
+  "note": "GZS / epos.si, package e-SLOG-2.0-08-2020-EN; releaseDate is the date of the schema inside the package. Includes the package xmldsig-core-schema.xsd.",
+  "format": "xsd",
+  "entries": {
+    "Invoice": "eSLOG20_INVOIC_v200.xsd"
+  },
+  "source": [
+    {
+      "url": "https://epos.si/assets/docs/e-SLOG-2.0-08-2020-EN.zip",
+      "sha256": "02094e3b114ccd0a130574f433357e82925c64d042d5ccade135d10fff6e1e47"
+    }
+  ],
+  "files": [
+    {
+      "path": "eSLOG20_INVOIC_v200.xsd",
+      "sha256": "cc6cd50a390e0f5db72f42a532e2fc6947d7346c52f71c54be86db0c0f9c9fce",
+      "bytes": 70866
+    },
+    {
+      "path": "xmldsig-core-schema.xsd",
+      "sha256": "95662daef3f30b699409017fac9e210e8f8870e9268de7496fed3d0d75ab058f",
+      "bytes": 10292
+    }
+  ]
+}
