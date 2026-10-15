@@ -11,6 +11,7 @@ import type { XmlPayload } from '../envelope.js';
 import type { FormatDef, MatchDetails, ParserFamily } from '../formats.js';
 import { parseCii } from './cii.js';
 import { parseFacturae } from './facturae.js';
+import { parseFatturaPa } from './fatturapa.js';
 import { parseSvefaktura } from './svefaktura.js';
 import { parseUbl } from './ubl.js';
 
@@ -44,7 +45,7 @@ export const PARSERS: Record<ParserFamily, Parser> = {
   cii: parseCii,                  // Factur-X/ZUGFeRD 2, XRechnung CII, NLCIUS CII, France CII (D16B and D22B)
   svefaktura: parseSvefaktura,
   zugferd1: stub('zugferd1'),
-  fatturapa: stub('fatturapa'),
+  fatturapa: parseFatturaPa,      // FatturaPA 1.2.x (FPR12/FPA12), semplificata FSM10
   ksef: stub('ksef'),
   facturae: parseFacturae,        // Facturae 3.2, 3.2.1, 3.2.2
   isdoc: stub('isdoc'),
