@@ -16,12 +16,13 @@
  */
 import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import type { Detection } from '../src/detect.js';
 import { convert, FORMATS, type FormatDef, IMPLEMENTED_FAMILIES } from '../src/index.js';
+import { type Layer, planFor } from '../src/validation/plan.js';
 
 interface Notes {
   publicSamples: string[];
   mappingSource: Record<string, string>;
-  validation: Record<string, string[]>;
 }
 
 interface Row {
@@ -63,6 +64,23 @@ for (const file of Object.keys(expected)) {
   }
 }
 
+/**
+ * The validation layers a format runs, taken from planFor() so they cannot drift from the code.
+ * Factur-X runs the EN 16931 rules only for its EN 16931 profile, so its semantic layer is qualified.
+ */
+function validationLayers(f: FormatDef): string[] {
+  const detection = {
+    kind: 'invoice',
+    format: f,
+    details: { profile: f.id === 'facturx' ? 'EN 16931' : undefined },
+    probe: null,
+  } as unknown as Detection;
+  const plan = planFor(detection);
+  return (['schema', 'semantic', 'profile'] as Layer[])
+    .filter((l) => plan[l])
+    .map((l) => (f.id === 'facturx' && l === 'semantic' ? 'semantic (EN 16931 profile only)' : l));
+}
+
 const rows: Row[] = (FORMATS as readonly FormatDef[]).map((f) => ({
   id: f.id,
   name: f.name,
@@ -74,7 +92,7 @@ const rows: Row[] = (FORMATS as readonly FormatDef[]).map((f) => ({
   fixturesConverted: converted.get(f.id) ?? 0,
   publicSamplesConverted: convertedPublic.get(f.id) ?? 0,
   mappingSource: notes.mappingSource[f.id] ?? notes.mappingSource[f.family],
-  validation: notes.validation[f.id] ?? notes.validation[f.family] ?? [],
+  validation: validationLayers(f),
 }));
 
 const totals = {
@@ -168,7 +186,7 @@ function html() {
       .join('')}</tbody>
   </table>
   </div>
-  <p class="wrappers">Generated ${new Date().toISOString().slice(0, 10)} by <code>scripts/conformance.ts</code>. Hand-maintained facts (which fixtures are real public samples, mapping sources, validation layers) live in <code>conformance/notes.json</code>.</p>
+  <p class="wrappers">Generated ${new Date().toISOString().slice(0, 10)} by <code>scripts/conformance.ts</code>. Hand-maintained facts (which fixtures are real public samples, mapping sources) live in <code>conformance/notes.json</code>.</p>
 </main>
 </body>
 </html>`;

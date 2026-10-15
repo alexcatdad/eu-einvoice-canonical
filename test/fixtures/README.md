@@ -21,6 +21,9 @@ Synthetic documents with fictitious parties. Their numbers are consistent (the E
 | `e-arve-1.2-two-invoices.xml` | e-arve 1.2 file with a factored DEB invoice (two lines, one zero-rate) and a CRE credit |
 | `eslog-2-invoice.xml` | eSLOG 2.0 invoice: two VAT rates (22 % and 9.5 %), document charge with VAT, line allowance, GLN/GTIN, prepaid amount, bank (FII), period |
 | `eslog-2-credit.xml` | eSLOG 2.0 credit note (381) with a preceding-invoice reference |
+| `nlcius-ubl.xml`, `cius-pt.xml`, `fr-ctc-ubl.xml`, `oioubl-3.xml`, `pl-pef.xml`, `peppol-bis3-selfbilling.xml`, `ubl-be.xml`, `peppol-bis2.xml`, `oioubl-2.xml`, `ubl-unknown.xml` | One-line UBL invoices (10 x 100.00 at one VAT rate, consistent totals) whose CustomizationID selects the profile: NLCIUS, CIUS-PT, France EXTENDED-CTC-FR, OIOUBL 3.0, Poland PEF, Peppol self-billing (type 389), UBL.BE, Peppol BIS 2 (cenbii), OIOUBL 2.02 and an unrecognised profile. Identifiers follow `src/formats.ts`; those for OIOUBL 3.0 and UBL.BE are not taken from a published specification |
+| `nlcius-cii.xml`, `fr-ctc-cii.xml`, `en16931-cii.xml`, `cii-unknown.xml` | One-line CII invoices of the same shape for NLCIUS, EXTENDED-CTC-FR, bare EN 16931 and an unrecognised guideline ID |
+| `eslog-1.xml` | Header-only stub with the eSLOG 1.6 root `IzdaniRacunEnostavni`; the eslog parser maps 2.0 only, so it is detected and reported as unsupported |
 
 The eSLOG fixtures follow the segment layout of EDIFACT INVOIC D.01B as eSLOG 2.0 uses it (S_ segments, G_SGn groups). They were written from the published mapping rather than copied from a real file, so group numbers around parties, payment (PAI/FII) and the RFF qualifiers BO (BT-10) and PQ (BT-83) should be checked against a real sender's file when one is available.
 | `zugferd1-comfort.xml` | ZUGFeRD 1.0 COMFORT: two VAT rates, document allowance and charge, line discount, prepayment, GTIN, embedded attachment, BLZ (the test also wraps it in a PDF) |
