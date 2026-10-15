@@ -60,11 +60,40 @@ const traced = await convert(bytes, 'invoice.xml', undefined, { provenance: true
 // '/totals/payable' -> '/Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount', '/lines/1/netAmount' -> '/Invoice/cac:InvoiceLine[2]/cbc:LineExtensionAmount'
 ```
 
+<<<<<<< HEAD
 ### Field provenance in a parser
 
 XPaths use the qualified names as written in the document, with a positional predicate only where siblings share a name; attributes end in `/@name`. Values built from several nodes list them joined with ` | `. Values the mapper computed, defaulted or translated (code mappings, sums) have no entry and are listed in `source.derived` or `source.warnings` instead.
 
 Parsers get this from `Ctx` in `src/parsers/context.ts`: construct it with `new Ctx(ns, input.provenance)`, take a scope for a canonical path (`const s = c.in('')`, `s.in('seller')`, `s.in('lines').in(i)`), and read through the scope with the field key as the last argument: `s.text(node, 'cbc:ID', 'id')`, `s.dec(m, 'cbc:PayableAmount', 'payable')`, `s.id(el, 'cbc:EndpointID', 'endpoint')` (records `/value` and `/schemeId`). Use `c.mark(path, el)` / `c.markAll(path, els)` for values assembled by hand, and `c.nonEmpty(els)` before mapping to arrays so indexes match the output. Entries for values that did not survive into the output are pruned by `finish()`.
+=======
+## Command line
+
+`src/cli.ts` is exposed as the `einvoice` bin (`bun src/cli.ts ...` in a checkout; tagged releases attach standalone binaries for linux-x64, darwin-arm64 and windows-x64). A file argument of `-` reads stdin.
+
+```
+einvoice detect  <file...>                 format id, version and profile per document (tab separated)
+einvoice inspect <file...>                 the unwrap and detect result as JSON
+einvoice convert <file...> [--out <dir>]   canonical JSON array on stdout, or one <invoice-id>.json per invoice in <dir>
+einvoice sweep   <dir...> [--expect answers.json]   detection coverage / known-answer check
+```
+
+Flags: `--pretty` indents JSON; `--quiet` silences notes and warnings (errors are still printed); `--limits '{"maxEntries":10}'` overrides `UnwrapLimits`; `--validate` is accepted by `convert` and is a no-op with a message until the validation module lands.
+JSON goes to stdout only; every error is one line on stderr.
+
+| Exit | Meaning |
+| ---- | ------- |
+| 0 | all converted |
+| 1 | usage error (and, for `sweep`, any mismatch or unanswered file) |
+| 2 | unsafe or malformed input (DOCTYPE, limits, not XML) |
+| 3 | unsupported format or profile (including well-formed non-invoice XML) |
+| 4 | validation failed |
+| 5 | partially converted (some documents failed) |
+| 6 | validator unavailable |
+| 7 | internal error (including unreadable files) |
+
+With several failures and no success the code of the first failure is used; with at least one success it is 5.
+>>>>>>> origin/main
 
 ## The canonical model
 
@@ -169,8 +198,12 @@ Skipped files and the reason are returned by both `inspect()` and `convert()`, s
 ## Known gaps
 
 - **Unverified detection rules:** `fr-ctc-*` (exact EXTENDED-CTC-FR identifier), `pl-pef`, `eslog-1` root name and `gr-mydata`. They are marked `unverified` in the registry. The Croatian spec spells its own identifier inconsistently, so `hr-cius` only checks for `urn:mfin.gov.`.
-- **EN 16931-1:2026** was published in March 2026. Detection accepts the `urn:cen.eu:en16931:2026` identifier, but the model only contains the 2017 business terms. Add the new terms once Peppol BIS adopts the revision.
+- **EN 16931-1:2026** (published March 2026; 164 to 216 business terms and 32 to 39 groups, per trade press) is not modelled beyond the identifier. Checked on 2026-10-16: the ConnectingEurope validation artefacts (v1.3.17, UBL 2.1 / CII D16B) and the KoSIT XRechnung Schematron (v2.6.0, XRechnung 3.0) contain no 2026 terms, and the EN 16931-1:2026 text and the updated CEN/TS 16931-3-x bindings are paywalled, so neither the exact BT/BG ids and names nor their UBL/CII paths are confirmed. Secondary sources mention multiple payment terms (BG-33), early-payment discounts (BG-35) and line-level delivery (BG-37) but disagree on detail, so nothing was added to `src/canonical.ts` or the parsers. Missing: the CEN/TS 16931-3-1 and 3-3 binding tables, or the 2026 Schematron/XSD once ConnectingEurope or Peppol BIS publish them. 2026-identified documents still parse, with the 2017 terms only.
 - **Signatures** are detected and recorded, not verified.
 - **No schema or Schematron validation yet.** `source.validation` exists in the model but nothing fills it. The BR-CO arithmetic checks are the only rules run. Use phive or the KoSIT validator for conformance.
 - **National parsers** are still stubs (see the build order). So is the Peppol PINT-specific mapping beyond what plain UBL gives.
 - **Non-XML formats** (EDIFACT INVOIC, PDFs without embedded XML) are out of scope.
+
+## License
+
+[ISC](LICENSE), copyright 2026 alexcatdad.
