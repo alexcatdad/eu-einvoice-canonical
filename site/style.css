@@ -755,6 +755,16 @@ pre.json {
   padding: 0;
   list-style: none;
 }
+.world-title {
+  margin: 1.75rem 0 0;
+  font-size: 1.05rem;
+}
+.world-note {
+  max-width: 46em;
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
 .country {
   padding: 0.65rem 0.75rem 0.7rem;
   background: var(--paper);

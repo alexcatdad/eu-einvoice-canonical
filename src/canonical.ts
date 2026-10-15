@@ -400,8 +400,16 @@ export interface ClearanceInfo {
   secondaryId?: string;
   receivedAt?: string; // ISO 8601 date-time from the authority
   status?: string; // e.g. ANAF 'ok', SdI 'RC' (ricevuta di consegna)
-  /** QR code payload or URL printed on the visual (PT, GR, PL, ES). */
+  /** QR code payload or URL printed on the visual (PT, GR, PL, ES, SA: base64 TLV). */
   qrPayload?: string;
+  /** Invoice counter in the issuer's chain (SA ICV). */
+  counter?: string;
+  /** Hash of the previous invoice in the issuer's chain (SA PIH), as carried. */
+  previousHash?: string;
+  /** Hash of this invoice as carried in the document (SA invoice hash), not recomputed. */
+  hash?: string;
+  /** Cryptographic stamp: the signature value the issuer or the authority put on the invoice (SA, base64). */
+  stamp?: string;
 }
 
 export interface SignatureInfo {
@@ -541,6 +549,125 @@ export interface EeExtension {
   factoring?: boolean;
 }
 
+/**
+ * Peppol PINT (non-EU). GST is carried as a VAT-like scheme: `vatId` of a party holds the GST (or, in
+ * Japan, qualified-invoice) registration number, and the extension repeats it under its national name.
+ * Category codes in `vatBreakdown` stay as sent; the codes used are listed here for the jurisdictions
+ * (SG, MY) whose code lists are not UNCL 5305.
+ */
+export interface SgExtension {
+  sellerUen?: string; // EAS 0195
+  buyerUen?: string;
+  gstRegistrationNumber?: string;
+  buyerGstRegistrationNumber?: string;
+  gstCategories: string[];
+}
+
+/** Australia and New Zealand (PINT A-NZ, one specification for both; stored under `au` or `nz` by seller country). */
+export interface AuNzExtension {
+  abn?: string; // EAS 0151
+  nzbn?: string; // EAS 0088
+  gstRegistrationNumber?: string;
+  buyerAbn?: string;
+  buyerNzbn?: string;
+  buyerGstRegistrationNumber?: string;
+  gstCategories: string[];
+}
+
+/** Japan (PINT JP, Peppol e-invoice for the qualified invoice system). */
+export interface JpExtension {
+  /** Seller's qualified invoice issuer registration number: 'T' + 13 digits. */
+  qualifiedInvoiceIssuerNumber?: string;
+  buyerRegistrationNumber?: string;
+}
+
+/** Malaysia (PINT MY, MyInvois). TIN travels in a PartyTaxScheme with scheme GST; SST registration in the VAT scheme. */
+export interface MyExtension {
+  tin?: string;
+  buyerTin?: string;
+  sstRegistrationNumber?: string;
+  buyerSstRegistrationNumber?: string;
+  businessRegistrationNumber?: string; // BRN
+  msicCode?: string; // seller's industry classification
+  msicDescription?: string;
+  freeTradeAgreement?: string;
+  certifiedExporterNumber?: string;
+  customsForm2?: string;
+  customsImportForms: string[];
+  /** LHDN unique identifier of the document this one corrects. */
+  originalDocumentUuid?: string;
+  taxCategories: string[];
+}
+
+/** United Arab Emirates (PINT AE). */
+export interface AeExtension {
+  /** The eight transaction-type flags as sent (ProfileExecutionID), e.g. '00001000'. */
+  transactionTypeCode?: string;
+  /** Names of the flags that are set: freeTradeZone, deemedSupply, profitMarginScheme, summaryInvoice, continuousSupply, agentBilling, ecommerce, exports. */
+  transactionTypes: string[];
+  uuid?: string;
+  sellerTin?: string;
+  buyerTin?: string;
+  /** Legal registration identifier type and issuing authority (TL trade licence, EID Emirates ID, PAS passport, CD cabinet decision). */
+  sellerRegistrationType?: string;
+  sellerRegistrationAuthority?: string;
+  buyerRegistrationType?: string;
+  buyerRegistrationAuthority?: string;
+  taxExchangeRate?: { sourceCurrency: string; targetCurrency: string; rate: Decimal };
+  /** Frequency of billing (InvoicePeriod description). */
+  billingFrequency?: string;
+}
+
+/** Saudi Arabia, ZATCA (KSA UBL profile, FATOORA). */
+export interface SaExtension {
+  invoiceSubtype?: 'standard' | 'simplified';
+  /** InvoiceTypeCode/@name as sent: NNPNESB. */
+  transactionCode?: string;
+  thirdParty?: boolean;
+  nominal?: boolean;
+  exports?: boolean;
+  summary?: boolean;
+  selfBilled?: boolean;
+  uuid?: string;
+  counter?: string; // ICV
+  previousInvoiceHash?: string; // PIH, as carried
+  /** Digest of the signed invoice as carried in the XAdES signature (reference 'invoiceSignedData'). */
+  invoiceHash?: string;
+  stamp?: { signatureValue?: string; certificate?: string; signedAt?: string };
+  qr?: SaQr;
+  /** Our own recomputation of the invoice hash against what the document carries. Never fails the conversion. */
+  hashCheck?: {
+    status: 'match' | 'mismatch' | 'not-checked';
+    computed: string;
+    carried?: string;
+    qr?: string;
+    reason?: string;
+  };
+  sellerAddress?: SaAddress;
+  buyerAddress?: SaAddress;
+  /** Dates sent in the Hijri calendar and the Gregorian date they were converted to (tabular calendar, may be off by a day). */
+  hijriDates: { field: string; hijri: string; gregorian: IsoDate }[];
+}
+
+export interface SaAddress {
+  buildingNumber?: string;
+  plotIdentification?: string;
+  district?: string;
+}
+
+/** The ZATCA QR code (TLV, tags 1-9). Tags 1-5 are text, 6 is the base64 invoice hash, 7-9 are base64 of binary values. */
+export interface SaQr {
+  sellerName?: string;
+  vatNumber?: string;
+  timestamp?: string;
+  total?: Decimal; // with VAT
+  vatTotal?: Decimal;
+  invoiceHash?: string;
+  signature?: string;
+  publicKey?: string;
+  certificateSignature?: string;
+}
+
 export interface CountryExtensions {
   it?: ItExtension;
   pl?: PlExtension;
@@ -554,6 +681,13 @@ export interface CountryExtensions {
   at?: AtExtension;
   fi?: FiExtension;
   ee?: EeExtension;
+  sg?: SgExtension;
+  au?: AuNzExtension;
+  nz?: AuNzExtension;
+  jp?: JpExtension;
+  my?: MyExtension;
+  ae?: AeExtension;
+  sa?: SaExtension;
 }
 
 // ---------------------------------------------------------------------------

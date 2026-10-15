@@ -30,6 +30,9 @@ const SAMPLES: { file: string; label: string }[] = [
   { file: 'IT01234567890_FPR12.xml.p7m', label: 'FatturaPA, signed .p7m (Italy)' },
   { file: 'ksef-fa3.xml', label: 'KSeF FA(3) (Poland)' },
   { file: 'svefaktura-1.0-descriptors.xml', label: 'Svefaktura 1.0 with headings and a 10 % markup (Sweden)' },
+  { file: 'pint-sg-invoice.xml', label: 'Peppol PINT SG, GST invoice (Singapore)' },
+  { file: 'pint-jp-invoice.xml', label: 'Peppol PINT JP, qualified invoice (Japan)' },
+  { file: 'zatca-simplified-signed.xml', label: 'ZATCA simplified tax invoice, signed (Saudi Arabia)' },
 ];
 const EXAMPLE = SAMPLES[0];
 
@@ -554,22 +557,40 @@ function highlight(json: string) {
 // Coverage grid, generated from the format registry
 // ---------------------------------------------------------------------------
 
+/** Countries outside the EU that the registry covers, with the names the grid shows. */
+const WORLD_COUNTRY_NAMES: Record<string, string> = {
+  AE: 'United Arab Emirates',
+  AU: 'Australia',
+  JP: 'Japan',
+  MY: 'Malaysia',
+  NZ: 'New Zealand',
+  OM: 'Oman',
+  SA: 'Saudi Arabia',
+  SG: 'Singapore',
+};
+
 function renderCoverage() {
   const implemented = new Set<string>(IMPLEMENTED_FAMILIES);
+  const chip = (f: FormatDef) => {
+    const ok = implemented.has(f.family);
+    return `<li class="fmt ${ok ? 'converts' : 'identifies'}" title="${esc(f.notes)}">${esc(shortName(f))}<span class="visually-hidden">${ok ? ', converted' : ', identified only'}</span></li>`;
+  };
+  const eu = new Set<string>(EU_COUNTRIES);
+  const world = (FORMATS as readonly FormatDef[]).filter((f) => f.countries.every((cc) => cc !== 'EU' && !eu.has(cc)));
+  $<HTMLOListElement>('#countries-world').innerHTML = Object.keys(WORLD_COUNTRY_NAMES)
+    .sort((a, b) => WORLD_COUNTRY_NAMES[a].localeCompare(WORLD_COUNTRY_NAMES[b]))
+    .map((cc) => {
+      const formats = world.filter((f) => f.countries.includes(cc));
+      return `<li class="country"><h3><span class="cc">${cc}</span>${esc(WORLD_COUNTRY_NAMES[cc])}</h3><ul>${formats.map(chip).join('')}</ul></li>`;
+    })
+    .join('');
   const national = (FORMATS as readonly FormatDef[]).filter((f) => !f.countries.includes('EU'));
   const list = $<HTMLOListElement>('#countries');
   list.innerHTML = [...EU_COUNTRIES]
     .sort((a, b) => COUNTRY_NAMES[a].localeCompare(COUNTRY_NAMES[b]))
     .map((cc) => {
       const formats = national.filter((f) => f.countries.includes(cc));
-      const chips = formats.length
-        ? formats
-            .map((f) => {
-              const ok = implemented.has(f.family);
-              return `<li class="fmt ${ok ? 'converts' : 'identifies'}" title="${esc(f.notes)}">${esc(shortName(f))}<span class="visually-hidden">${ok ? ', converted' : ', identified only'}</span></li>`;
-            })
-            .join('')
-        : '<li class="fmt converts">Peppol BIS 3</li>';
+      const chips = formats.length ? formats.map(chip).join('') : '<li class="fmt converts">Peppol BIS 3</li>';
       return `<li class="country"><h3><span class="cc">${cc}</span>${esc(COUNTRY_NAMES[cc])}</h3><ul>${chips}</ul></li>`;
     })
     .join('');
@@ -605,6 +626,15 @@ const SHORT_NAMES: Record<string, string> = {
   'eslog-1': 'eSLOG 1.6',
   'svefaktura-1': 'Svefaktura 1.0',
   'gr-mydata': 'myDATA',
+  'peppol-pint': 'PINT',
+  'pint-sg': 'PINT SG',
+  'pint-aunz': 'PINT A-NZ',
+  'pint-jp': 'PINT JP',
+  'pint-my': 'PINT MY',
+  'pint-ae': 'PINT AE',
+  'pint-om': 'PINT OM',
+  'pint-eu': 'PINT EU',
+  'zatca-ubl': 'ZATCA UBL',
 };
 
 function shortName(f: FormatDef) {

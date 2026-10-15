@@ -208,5 +208,44 @@
   ],
   "eslog-1.xml": [
     "eslog-1"
+  ],
+  "pint-base.xml": [
+    "peppol-pint"
+  ],
+  "pint-sg-invoice.xml": [
+    "pint-sg"
+  ],
+  "pint-aunz-au-invoice.xml": [
+    "pint-aunz"
+  ],
+  "pint-aunz-nz-selfbilling-creditnote.xml": [
+    "pint-aunz"
+  ],
+  "pint-jp-invoice.xml": [
+    "pint-jp"
+  ],
+  "pint-jp-ntr-invoice.xml": [
+    "pint-jp"
+  ],
+  "pint-my-invoice.xml": [
+    "pint-my"
+  ],
+  "pint-ae-invoice.xml": [
+    "pint-ae"
+  ],
+  "zatca-simplified-signed.xml": [
+    "zatca-ubl"
+  ],
+  "zatca-standard-signed.xml": [
+    "zatca-ubl"
+  ],
+  "zatca-standard-debit-signed.xml": [
+    "zatca-ubl"
+  ],
+  "pint-eu-invoice.xml": [
+    "pint-eu"
+  ],
+  "pint-om-invoice.xml": [
+    "pint-om"
   ]
 }

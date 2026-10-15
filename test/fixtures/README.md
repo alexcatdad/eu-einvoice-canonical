@@ -50,6 +50,22 @@ The eSLOG fixtures follow the segment layout of EDIFACT INVOIC D.01B as eSLOG 2.
 | `fatturapa-lot.xml` | FatturaPA file with two FatturaElettronicaBody; the second has two instalments (TP01) |
 | `fatturapa-fsm10.xml` | FatturaPA semplificata FSM10 (TD07): VAT-inclusive Importo blocks, one with Natura N4 |
 
+## Peppol PINT and Saudi ZATCA
+
+The PINT fixtures are synthetic: fictitious parties, consistent totals, field locations read from the PINT specification pages. OpenPEPPOL's own examples and Schematron are not copied because its copyright statement does not allow redistribution (see `validation/NOTICE`).
+
+| File | What it covers |
+|---|---|
+| `pint-base.xml`, `pint-eu-invoice.xml`, `pint-om-invoice.xml` | PINT base (`urn:peppol:pint:billing-1`, detected as `peppol-pint`), PINT EU and PINT Oman identifiers on a one-line invoice |
+| `pint-sg-invoice.xml` | PINT SG: UEN endpoints (EAS 0195), GST registration in a tax scheme named GST, SR 9 % and ZR categories |
+| `pint-aunz-au-invoice.xml` | PINT A-NZ from Australia: ABN (EAS 0151) as endpoint and legal id, GST scheme, S 10 % |
+| `pint-aunz-nz-selfbilling-creditnote.xml` | PINT A-NZ self-billed credit note (`selfbilling-1@aunz-1`) from New Zealand: NZBN (EAS 0088), IRD number as GST id, S 15 % |
+| `pint-jp-invoice.xml` | PINT JP: qualified invoice issuer numbers (T + 13 digits), 10 % and 8 % categories, JPY, Japanese text |
+| `pint-jp-ntr-invoice.xml` | PINT JP for a business not registered for the qualified invoice system (`nontaxinvoice-1@jp-1`): no seller tax identifier, category O |
+| `pint-my-invoice.xml` | PINT MY: TIN in a GST-named scheme, SST in VAT, MSIC code and activity, FTA / K2 / customs form references, LHDN UUID of the corrected document, SE category |
+| `pint-ae-invoice.xml` | PINT AE: transaction flags 10000010 (free trade zone, e-commerce), UUID, TIN endpoints (EAS 0235), trade-licence registration with authority, USD invoice with AED tax currency and exchange rate, commodity code G |
+| `zatca-simplified-signed.xml`, `zatca-standard-signed.xml`, `zatca-standard-debit-signed.xml` | Signed ZATCA UBL invoices (simplified 388, standard 388, standard debit note 383) with ICV, PIH, QR (TLV tags 1-9) and the XAdES signature. Copied unchanged from `examples/*/output/*_Signed.xml` of github.com/Saleh7/php-zatca-xml (MIT, Copyright (c) 2023 ~/Saleh). The invoice hashes were checked against the signatures' digests |
+
 ## Provenance of the other fixtures
 
 Re-checked against the public corpora (phive-rules `58e8c83`, mustangproject `68520f6`, FNFE France_RFE `97ba0f3`; all three are Apache License 2.0). "Derived" means the file differs from the named source only in the stated way. Where a file is not a copy of anything found, it is a hand-written header-only stub with fictitious values (written for this project, so no third-party licence applies).

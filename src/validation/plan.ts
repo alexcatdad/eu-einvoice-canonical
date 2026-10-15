@@ -9,7 +9,11 @@ import type { Detection } from '../detect.js';
 export type Layer = 'schema' | 'semantic' | 'profile';
 type Plan = Partial<Record<Layer, string>>;
 
-/** Formats whose EN 16931 conformance is not claimed by the format itself, so the EN rules would judge them unfairly. */
+/**
+ * Formats whose EN 16931 conformance is not claimed by the format itself, so the EN rules would judge them unfairly.
+ * PINT and ZATCA get the UBL XSD only: the PINT Schematron is not bundled (OpenPEPPOL's copyright statement does not
+ * permit redistribution) and neither is ZATCA's; see validation/NOTICE.
+ */
 const NOT_EN16931 = new Set([
   'oioubl-2',
   'oioubl-3',
@@ -18,6 +22,14 @@ const NOT_EN16931 = new Set([
   'ubl-be',
   'peppol-bis2',
   'peppol-pint',
+  'pint-sg',
+  'pint-aunz',
+  'pint-jp',
+  'pint-my',
+  'pint-ae',
+  'pint-om',
+  'pint-eu',
+  'zatca-ubl',
   'peppol-bis3-selfbilling',
   'zugferd-1',
 ]);

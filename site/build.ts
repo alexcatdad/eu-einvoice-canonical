@@ -20,6 +20,9 @@ const SAMPLES = [
   'IT01234567890_FPR12.xml.p7m',
   'ksef-fa3.xml',
   'svefaktura-1.0-descriptors.xml',
+  'pint-sg-invoice.xml',
+  'pint-jp-invoice.xml',
+  'zatca-simplified-signed.xml',
 ];
 
 rmSync(out, { recursive: true, force: true });

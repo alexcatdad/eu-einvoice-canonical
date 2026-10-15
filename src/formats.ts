@@ -123,6 +123,20 @@ function ciiRule(re: RegExp, version?: (id: string) => string | undefined) {
     isCii(p) && re.test(gid(p)) ? { version: version?.(gid(p)), profile: extensionOf(gid(p)) } : null;
 }
 
+/**
+ * PINT customization ids: urn:peppol:pint:{kind}-1[@{jurisdiction}-{n}], where kind is billing, selfbilling or
+ * (Japan, businesses not registered for the qualified invoice system) nontaxinvoice.
+ */
+const PINT_ID = /^urn:peppol:pint:([a-z]+)-1(?:@([a-z0-9]+)-(\d+))?/i;
+const PINT_KIND_PROFILE: Record<string, string> = { selfbilling: 'self-billing', nontaxinvoice: 'non-tax-registered' };
+function pintRule(jurisdiction: string) {
+  return (p: XmlProbe): MatchDetails | null => {
+    const m = isUbl(p) ? PINT_ID.exec(cid(p)) : null;
+    if (!m || m[2]?.toLowerCase() !== jurisdiction) return null;
+    return { version: `${jurisdiction}-${m[3]}`, profile: PINT_KIND_PROFILE[m[1].toLowerCase()] };
+  };
+}
+
 const FACTURX_PROFILES: [RegExp, string][] = [
   [/:minimum$/i, 'MINIMUM'],
   [/:basicwl$/i, 'BASIC WL'],
@@ -256,17 +270,112 @@ export const FORMATS = [
     notes: 'Self-billed invoices; seller and buyer roles stay as in EN 16931.',
     match: peppolRule(/urn:fdc:peppol\.eu:2017:poacc:selfbilling:3\.0/i),
   },
+  // Peppol PINT jurisdictions. The identifier is urn:peppol:pint:billing-1@{jurisdiction}-1 (selfbilling-1 for self-billed).
+  // Source: the PINT specification pages at docs.peppol.eu/poac (PINT, PINT SG, A-NZ, JP, MY, AE).
+  {
+    id: 'pint-sg',
+    name: 'Peppol PINT Singapore (InvoiceNow)',
+    family: 'ubl',
+    countries: ['SG'],
+    status: 'current',
+    phase: 2,
+    notes: 'InvoiceNow (IMDA). GST is carried as a VAT-like tax scheme; seller and buyer UEN in the endpoint (EAS 0195).',
+    match: pintRule('sg'),
+  },
+  {
+    id: 'pint-aunz',
+    name: 'Peppol PINT Australia and New Zealand',
+    family: 'ubl',
+    countries: ['AU', 'NZ'],
+    status: 'current',
+    phase: 2,
+    notes:
+      'One specification for both countries; billing and self-billing. ABN (EAS 0151) or NZBN (EAS 0088) as party identifier, GST as a VAT-like ' +
+      'scheme. The older Peppol BIS Billing International A-NZ identifier is detected as peppol-pint.',
+    match: pintRule('aunz'),
+  },
+  {
+    id: 'pint-jp',
+    name: 'Peppol PINT Japan',
+    family: 'ubl',
+    countries: ['JP'],
+    status: 'current',
+    phase: 2,
+    notes:
+      'Japanese qualified invoice (Peppol e-invoice, from Oct 2023). The seller T-number registration is the tax identifier (scheme VAT). ' +
+      'The variant for businesses not registered for the qualified invoice system (nontaxinvoice-1@jp-1) is detected as profile non-tax-registered.',
+    match: pintRule('jp'),
+  },
+  {
+    id: 'pint-my',
+    name: 'Peppol PINT Malaysia (MyInvois)',
+    family: 'ubl',
+    countries: ['MY'],
+    status: 'current',
+    phase: 2,
+    notes: 'Aligned with LHDN MyInvois. TIN travels in a tax scheme named GST, SST registration in VAT; MSIC code on the seller.',
+    match: pintRule('my'),
+  },
+  {
+    id: 'pint-ae',
+    name: 'Peppol PINT United Arab Emirates',
+    family: 'ubl',
+    countries: ['AE'],
+    status: 'current',
+    phase: 2,
+    notes: 'UAE e-invoicing (five-corner model). Eight transaction-type flags in ProfileExecutionID; TIN as endpoint (EAS 0235).',
+    match: pintRule('ae'),
+  },
+  {
+    id: 'pint-om',
+    name: 'Peppol PINT Oman',
+    family: 'ubl',
+    countries: ['OM'],
+    status: 'current',
+    phase: 3,
+    notes: 'Oman e-invoicing (Peppol PINT OM). Detected and parsed as plain UBL; no Oman-specific fields are mapped.',
+    match: pintRule('om'),
+  },
+  {
+    id: 'pint-eu',
+    name: 'Peppol PINT EU',
+    family: 'ubl',
+    countries: ['EU'],
+    status: 'current',
+    phase: 3,
+    notes: 'PINT EU (urn:peppol:pint:billing-1@eu-1), the PINT specialisation for the European Union.',
+    match: pintRule('eu'),
+  },
   {
     id: 'peppol-pint',
-    name: 'Peppol PINT',
+    name: 'Peppol PINT (base and other jurisdictions)',
     family: 'ubl',
     countries: ['EU'],
     status: 'current',
     phase: 1,
-    notes: 'Peppol International model. Mostly non-EU jurisdictions; accept for cross-border senders.',
+    notes:
+      'Peppol International model: the PINT base (urn:peppol:pint:billing-1), PINT jurisdictions without their own rule, and the older ' +
+      'BIS Billing International identifiers. Accept for cross-border senders.',
     match: (p) =>
       isUbl(p) && /^urn:peppol:pint:|poacc:(self)?billing:international:/i.test(cid(p))
         ? { profile: /@([\w-]+)/.exec(cid(p))?.[1] ?? /international:(\w+)/.exec(cid(p))?.[1] }
+        : null,
+  },
+  {
+    id: 'zatca-ubl',
+    name: 'Saudi ZATCA e-invoice (UBL, KSA profile)',
+    family: 'ubl',
+    countries: ['SA'],
+    status: 'current',
+    phase: 2,
+    // Source: ZATCA E-Invoicing Detailed Technical Guidelines and XML Implementation Standard: ProfileID is
+    // 'reporting:1.0', there is no CustomizationID, InvoiceTypeCode/@name carries the NNPNESB transaction code.
+    notes:
+      'FATOORA phase 2: standard (B2B/B2G, cleared) and simplified (B2C, reported) tax invoices, signed with XAdES in UBLExtensions. ' +
+      'Detected by ProfileID reporting:1.0 (or clearance:1.0).',
+    match: (p) =>
+      isUbl(p) && /^(reporting|clearance):1\.0$/i.test(p.values.ublProfileId ?? '')
+        ? { version: '1.0', profile: p.values.ublProfileId }
         : null,
   },
   {
