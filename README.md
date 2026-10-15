@@ -22,7 +22,7 @@ received file ──► unwrap() ──► XML payload(s) ──► detectXml() 
 |---|---|
 | `src/canonical.ts` | The canonical type. EN 16931 core + EU-wide additions + per-country extensions. |
 | `src/codes.ts` | Code lists as open string unions (UNCL 1001/5305/4461/5189/7161, ISO 4217/3166, ICD/EAS). |
-| `src/formats.ts` | Registry of 36 formats with detection rules, parser family, countries, status and build phase. |
+| `src/formats.ts` | Registry of 37 formats with detection rules, parser family, countries, status and build phase. |
 | `src/probe.ts` | Streaming header read (root, namespaces, CustomizationID, guideline ID, KSeF form code...). |
 | `src/envelope.ts` | Unwrapping: PDF attachments, CMS signed data, base64, ZIP, SBDH, SOAP, encoding. Rejects DOCTYPEs and enforces size/count limits. |
 | `src/detect.ts` | `detectXml()`: invoice format, known non-invoice, or unknown. |
@@ -198,9 +198,35 @@ What you will receive from each country, inbound. Format IDs refer to `src/forma
 | 2 | `ksef` | FA(2), FA(3), FA_RR | `P_12` rate codes (`23`, `zw`, `oo`, `np I`, `0 WDT`...) → VAT category. `P_14_xW` = VAT in PLN. `StanPrzed` → `correctionState`. `Podmiot3` + `Rola` → `additionalParties`. KSeF number from download metadata. |
 | 2 | `facturae` | Facturae 3.2–3.2.2 | Batches (`Modality L`). `TaxesWithheld` → withholdings, recargo → `otherTaxes`. XAdES signature inside. |
 | 2 | `isdoc`, `ebinterface`, `finvoice`, `e-arve`, `eslog` | National formats in active B2B use | ISDOC symbols → `extensions.cz`; ebInterface varies by version; Finvoice: SOAP + ISO-8859-15; e-arve: several invoices per file; eSLOG uses EDIFACT segment names (`S_BGM`, `G_SG26`...). |
-| 3 | `svefaktura`, `zugferd1`, `teappsxml`, `mydata` | Legacy and low-volume | Svefaktura follows SFTI's "Mapping of Svefaktura 1.0 onto EN 16931-1" (see `src/parsers/svefaktura.ts`). |
+| 3 | `svefaktura`, `zugferd1`, `teappsxml`, `mydata`, `cfdi` | Legacy and low-volume (`cfdi` is Mexican, see above) | Svefaktura follows SFTI's "Mapping of Svefaktura 1.0 onto EN 16931-1" (see `src/parsers/svefaktura.ts`). |
 
 Done: `ubl`, `cii`, `svefaktura` and `fatturapa`. Corrective documents whose direction depends on the amounts (KSeF KOR, Facturae rectificativa, ISDOC) must set `kind` from the sign of the correction total; see `effectiveSign()` in `src/canonical.ts`.
+
+### Mexico: CFDI (`mx-cfdi`)
+
+Mexico is outside the EU; CFDI 4.0 (and 3.3 in older files) is supported because it is a clearance format with the same withholding and extra-tax concerns. `cfdi:Comprobante` with `TipoDeComprobante` I is an invoice and E (egreso) a credit note. T (traslado), P (pago, Pagos 1.0/2.0) and N (nómina) are not invoices: detection returns them as other documents with their own label, and `convert` reports `not-an-invoice`.
+
+| CFDI | Canonical |
+|---|---|
+| Emisor / Receptor `Rfc` | `nationalTaxIds` with scheme `MX:RFC` (no `vatId`: Mexican IVA has no VAT number). `NumRegIdTrib` of a foreign receiver is a second national id |
+| `RegimenFiscal`, `RegimenFiscalReceptor`, `DomicilioFiscalReceptor`, `UsoCFDI`, `ResidenciaFiscal`, `LugarExpedicion`, `Exportacion`, `MetodoPago`, `FormaPago`, `InformacionGlobal`, issuer `Sello` / `NoCertificado` | `extensions.mx`. The receiver's postal code is also `buyer.address.postalCode`; the issuer has no address in a CFDI |
+| `Concepto` | `lines`: `ClaveProdServ` is an item classification (`MX:ClaveProdServ`), `ClaveUnidad` is `unitCode` (SAT's catalogue is UN/ECE Rec 20 plus a few SAT codes) and `Unidad` is `unitText`; `ObjetoImp` and `ClaveUnidad` are kept in `line.national`. `Descuento` is a line allowance and `netAmount` is `Importe - Descuento` |
+| Traslado IVA (002) | `vatBreakdown` and `line.vat`: Tasa 0.16 is `S` with rate 16, Tasa 0 is `Z`, Exento is `E`. `ObjetoImp` 01 gives `O` |
+| Traslado IEPS (003) and others | `otherTaxes` (`MX:IEPS`, `includedInTotal`) |
+| Retenciones ISR (001), IVA (002), IEPS (003) | `withholdings` (`MX:ISR`, `MX:IVA`), `totals.withholdingTotal`; the line-level base and rate are on `line.withholdings` |
+| `SubTotal`, `Descuento`, `Total` | `lineNetTotal = taxExclusive = SubTotal - Descuento`, `payable = Total`, `taxInclusive = Total + retenciones`. The original `SubTotal` and `Descuento` are in `extensions.mx` |
+| `FormaPago` | `payments[]`: 01 cash (10), 02 cheque (20), 03 transfer (30), 04 credit card (54), 28 debit card (55); the rest are `ZZZ` with the SAT label |
+| `CfdiRelacionados` | `precedingInvoices`: the UUID is `id` and `clearanceId`, `TipoRelacion` is `relationType` (01 credit note, 04 substitution...) |
+| `TimbreFiscalDigital` | `clearance` with authority `MX:SAT`: UUID, `FechaTimbrado`, `NoCertificadoSAT`, `SelloSAT` (not verified), and the PAC (`RfcProvCertif`) as `intermediary` |
+
+What the model cannot say, and where it goes:
+
+- **No generic tax model.** Every CFDI tax fits `vatBreakdown`, `otherTaxes` or `withholdings`, but two things are lost in shape. IEPS as a fixed amount per unit (`TipoFactor` Cuota) has no rate: `otherTaxes[].rate` is left out and `MX-TAX-CUOTA` is warned (the amount and the quantity base are kept). Document-level retenciones state no base or rate in a CFDI, so `withholdings[].taxableAmount` and `rate` are empty there; the lines carry them.
+- **Local taxes** (complement Impuestos Locales, for example the lodging tax) change `Total` but are not mapped, so the BR-CO-15 / 16 totals check will warn on such files; `MX-COMPLEMENT-UNMAPPED` names the complement. The same warning covers Comercio Exterior, Carta Porte, INE and every other complement except the stamp.
+- IVA `Exento` has no `Importe`; the breakdown uses a tax amount of 0. CFDI 3.3 states no `Base` at document level, so it is summed from the lines (recorded in `source.derived`).
+- `Fecha` has no time zone; the time goes to `issueTime` as written. Amounts are in `Moneda`; `TipoCambio` (conversion to MXN) is `exchangeRate`.
+- The issuer's `Sello` is a digital seal over the original string, not an XML signature, and is not verified. The same holds for `SelloSAT`.
+- `Addenda`, `Parte`, `ACuentaTerceros` and `ComplementoConcepto` are not mapped.
 
 Run `scripts/sweep.ts` over a few months of your real inbound files before building phase 2. It shows which formats you actually receive.
 
