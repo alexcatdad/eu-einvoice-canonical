@@ -1,6 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { convert, effectiveSign } from '../src/index.js';
+import { convert, effectiveSign, IMPLEMENTED_FAMILIES } from '../src/index.js';
+import { PARSERS } from '../src/parsers/index.js';
 import { fixture, parseOne, utf8, warningCodes } from './helpers.js';
 
 describe('UBL: Peppol BIS 3 invoice', async () => {
@@ -330,6 +331,13 @@ describe('real samples (phive-rules / Mustang / ANAF)', () => {
       assert.deepEqual(warningCodes(inv).filter((c) => c.startsWith('BR-CO')), []);
     });
   }
+});
+
+describe('parser registry', () => {
+  test('IMPLEMENTED_FAMILIES is derived from the registry and lists the real parsers', () => {
+    for (const f of ['ubl', 'cii', 'svefaktura'] as const) assert.ok(IMPLEMENTED_FAMILIES.includes(f), f);
+    for (const f of IMPLEMENTED_FAMILIES) assert.ok(f in PARSERS, f);
+  });
 });
 
 describe('convert outcomes', () => {
