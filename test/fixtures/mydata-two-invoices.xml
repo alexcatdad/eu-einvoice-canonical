@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic myDATA InvoicesDoc with two invoices (sales invoice 1.1 and credit invoice 5.1 with withholding). Fictitious issuer and counterpart; totals are consistent. -->
+<InvoicesDoc xmlns="http://www.aade.gr/myDATA/invoice/v1.0"
+    xmlns:icls="https://www.aade.gr/myDATA/incomeClassificaton/v1.0"
+    xmlns:ecls="https://www.aade.gr/myDATA/expensesClassificaton/v1.0">
+  <invoice>
+    <uid>7A1B2C3D4E5F60718293A4B5C6D7E8F901234567</uid>
+    <mark>400000000000101</mark>
+    <issuer>
+      <vatNumber>123456789</vatNumber>
+      <country>GR</country>
+      <branch>0</branch>
+      <name>Δείγμα Εμπορική Α.Ε.</name>
+      <address><street>Οδός Δείγματος</street><number>12</number><postalCode>10431</postalCode><city>Αθήνα</city></address>
+    </issuer>
+    <counterpart>
+      <vatNumber>987654321</vatNumber>
+      <country>GR</country>
+      <branch>0</branch>
+      <name>Παράδειγμα Υπηρεσίες Ε.Π.Ε.</name>
+      <address><postalCode>54623</postalCode><city>Θεσσαλονίκη</city></address>
+    </counterpart>
+    <invoiceHeader>
+      <series>A</series>
+      <aa>101</aa>
+      <issueDate>2026-10-05</issueDate>
+      <invoiceType>1.1</invoiceType>
+      <currency>EUR</currency>
+    </invoiceHeader>
+    <paymentMethods>
+      <paymentMethodDetails><type>1</type><amount>180.50</amount><paymentMethodInfo>Τραπεζική κατάθεση</paymentMethodInfo></paymentMethodDetails>
+    </paymentMethods>
+    <invoiceDetails>
+      <lineNumber>1</lineNumber>
+      <quantity>10</quantity>
+      <measurementUnit>1</measurementUnit>
+      <netValue>100.00</netValue>
+      <vatCategory>1</vatCategory>
+      <vatAmount>24.00</vatAmount>
+      <lineComments>Υπηρεσίες συντήρησης</lineComments>
+      <incomeClassification>
+        <icls:classificationType>E3_561_001</icls:classificationType>
+        <icls:classificationCategory>category1_3</icls:classificationCategory>
+        <icls:amount>100.00</icls:amount>
+      </incomeClassification>
+    </invoiceDetails>
+    <invoiceDetails>
+      <lineNumber>2</lineNumber>
+      <quantity>5</quantity>
+      <measurementUnit>2</measurementUnit>
+      <netValue>50.00</netValue>
+      <vatCategory>2</vatCategory>
+      <vatAmount>6.50</vatAmount>
+      <incomeClassification>
+        <icls:classificationType>E3_561_001</icls:classificationType>
+        <icls:classificationCategory>category1_2</icls:classificationCategory>
+        <icls:amount>50.00</icls:amount>
+      </incomeClassification>
+    </invoiceDetails>
+    <invoiceSummary>
+      <totalNetValue>150.00</totalNetValue>
+      <totalVatAmount>30.50</totalVatAmount>
+      <totalWithheldAmount>0</totalWithheldAmount>
+      <totalFeesAmount>0</totalFeesAmount>
+      <totalStampDutyAmount>0</totalStampDutyAmount>
+      <totalOtherTaxesAmount>0</totalOtherTaxesAmount>
+      <totalDeductionsAmount>0</totalDeductionsAmount>
+      <totalGrossValue>180.50</totalGrossValue>
+      <incomeClassification>
+        <icls:classificationType>E3_561_001</icls:classificationType>
+        <icls:classificationCategory>category1_3</icls:classificationCategory>
+        <icls:amount>150.00</icls:amount>
+      </incomeClassification>
+    </invoiceSummary>
+  </invoice>
+  <invoice>
+    <mark>400000000000102</mark>
+    <issuer>
+      <vatNumber>123456789</vatNumber>
+      <country>GR</country>
+      <branch>0</branch>
+      <name>Δείγμα Εμπορική Α.Ε.</name>
+    </issuer>
+    <counterpart>
+      <vatNumber>987654321</vatNumber>
+      <country>GR</country>
+      <branch>0</branch>
+      <name>Παράδειγμα Υπηρεσίες Ε.Π.Ε.</name>
+    </counterpart>
+    <invoiceHeader>
+      <series>B</series>
+      <aa>7</aa>
+      <issueDate>2026-10-09</issueDate>
+      <invoiceType>5.1</invoiceType>
+      <correlatedInvoices>400000000000101</correlatedInvoices>
+    </invoiceHeader>
+    <invoiceDetails>
+      <lineNumber>1</lineNumber>
+      <netValue>100.00</netValue>
+      <vatCategory>1</vatCategory>
+      <vatAmount>24.00</vatAmount>
+      <withheldAmount>5.00</withheldAmount>
+      <withheldPercentCategory>3</withheldPercentCategory>
+      <lineComments>Πίστωση υπηρεσιών συντήρησης</lineComments>
+    </invoiceDetails>
+    <invoiceSummary>
+      <totalNetValue>100.00</totalNetValue>
+      <totalVatAmount>24.00</totalVatAmount>
+      <totalWithheldAmount>5.00</totalWithheldAmount>
+      <totalFeesAmount>0</totalFeesAmount>
+      <totalStampDutyAmount>0</totalStampDutyAmount>
+      <totalOtherTaxesAmount>0</totalOtherTaxesAmount>
+      <totalDeductionsAmount>0</totalDeductionsAmount>
+      <totalGrossValue>119.00</totalGrossValue>
+    </invoiceSummary>
+  </invoice>
+</InvoicesDoc>

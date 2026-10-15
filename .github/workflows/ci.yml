@@ -24,6 +24,8 @@ jobs:
       - run: bun install --frozen-lockfile
       - name: Typecheck
         run: bun run typecheck
+      - name: Verify the pinned validator bundles
+        run: bun run verify:bundles
       - name: Unit, parser and hostile-input tests
         run: bun test
       - name: Known-answer detection sweep over the fixtures

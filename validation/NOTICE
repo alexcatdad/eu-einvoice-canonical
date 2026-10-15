@@ -1,0 +1,51 @@
+Third-party material in validation/bundles/
+===========================================
+
+These files are pinned copies of published validation artefacts. Each bundle directory has a
+manifest.json with the version, release date, effective dates, upstream source (with the SHA-256
+of the downloaded archive) and the SHA-256 of every file. `bun run verify:bundles` checks them and
+runs in CI. The Schematron bundles are the upstream rules compiled to SaxonJS SEF (gzip) by
+`bun run build:bundles`; the rules themselves are unchanged. effectiveFrom is the publication date of
+the release unless the publisher states another date.
+
+xsd-ubl-2.1
+  OASIS Universal Business Language 2.1, XSD for Invoice and CreditNote and the common modules.
+  Copyright (c) OASIS Open 2013. All Rights Reserved. The OASIS copyright notice stays in each file.
+  https://docs.oasis-open.org/ubl/os-UBL-2.1/
+  Taken from the KoSIT XRechnung validator configuration (Apache License 2.0),
+  https://github.com/itplr-kosit/validator-configuration-xrechnung, release v2026-08-31.
+
+xsd-cii-d16b
+  UN/CEFACT Cross Industry Invoice 100.D16B, XSD.
+  Copyright (C) UN/CEFACT (2016). All Rights Reserved. The notice, which permits copying and derivative
+  works, stays in each file.
+  https://unece.org/trade/uncefact/xml-schemas
+  Taken from the same KoSIT validator configuration release.
+
+en16931-ubl-1.3.17, en16931-cii-1.3.17
+  EN 16931 validation artefacts of the European Commission / CEN TC 434, version 1.3.17.
+  Licensed under the European Union Public Licence (EUPL) v. 1.2.
+  https://github.com/ConnectingEurope/eInvoicing-EN16931 (tag validation-1.3.17)
+  The XSLT 2.0 published in that release, compiled to SaxonJS SEF.
+
+peppol-bis3-3.0.20-ubl
+  Peppol BIS Billing 3.0 rules (PEPPOL-EN16931-UBL.sch), release 3.0.20, OpenPEPPOL AISBL.
+  Licensed under the European Union Public Licence (EUPL) v. 1.2. The Schematron states: "This
+  schematron uses business terms defined the CEN/EN16931-1 and is reproduced with permission from CEN.
+  CEN bears no liability from the use of the content and implementation of this schematron and gives
+  no warranties expressed or implied for any purpose."
+  https://github.com/OpenPEPPOL/peppol-bis-invoice-3 (tag v3.0.20)
+  Compiled with the ISO Schematron skeleton (MIT, https://github.com/Schematron/schematron, commit
+  77dcd36c53d12ed786c144ece3b2af7694abdc56) and then to SaxonJS SEF.
+
+xrechnung-3.0.2-ubl, xrechnung-3.0.2-cii
+  XRechnung 3.0.2 Schematron rules, release 2.6.0, Koordinierungsstelle fuer IT-Standards (KoSIT).
+  Licensed under the Apache License, Version 2.0.
+  https://github.com/itplr-kosit/xrechnung-schematron (tag v2.6.0)
+  The XSLT 2.0 published in that release, compiled to SaxonJS SEF.
+
+Runtime dependencies (installed from npm, not copied into this repository)
+--------------------------------------------------------------------------
+saxon-js 2.7.0 (Saxonica Ltd): proprietary licence permitting use and redistribution in binary form as part
+  of an application; see node_modules/saxon-js/LICENSE.txt. xslt3 2.7.0 (build script only) is under the same licence.
+xmllint-wasm 5.3.0: MIT. Contains libxml2 (MIT).
