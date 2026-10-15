@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { DOMParser, type Element, type Node } from '@xmldom/xmldom';
-import { convert, decodeXml, values, type CanonicalInvoice } from '../src/index.js';
+import { type CanonicalInvoice, convert, decodeXml, values } from '../src/index.js';
 import { fixture } from './helpers.js';
 
 const bytesFor = (name: string) => fixture(name);
@@ -8,7 +8,7 @@ const bytesFor = (name: string) => fixture(name);
 async function traced(name: string, provenance = true): Promise<CanonicalInvoice> {
   const r = await convert(bytesFor(name), name, undefined, { provenance });
   const o = r.outcomes[0];
-  if (!o || o.status !== 'ok') throw new Error(`${name}: ${JSON.stringify(o)}`);
+  if (o?.status !== 'ok') throw new Error(`${name}: ${JSON.stringify(o)}`);
   return o.invoices[0];
 }
 
@@ -31,7 +31,7 @@ function resolve(root: Element, xpath: string): string[] {
       cur = kids[idx ? Number(idx) - 1 : 0];
     });
     if (!cur) throw new Error(`XPath does not resolve: ${one}`);
-    return attr === undefined ? cur.textContent ?? '' : cur.getAttribute(attr) ?? '';
+    return attr === undefined ? (cur.textContent ?? '') : (cur.getAttribute(attr) ?? '');
   });
 }
 
@@ -50,8 +50,16 @@ function matches(path: string, value: string | number | boolean, texts: string[]
   if (joined.length === 1) {
     const t = joined[0];
     if (t === v || t.replace(/\s+/g, '') === v) return true;
-    try { if (values.toDecimal(t) === v) return true; } catch { /* not a number */ }
-    try { if (values.toIsoDate(t).date === v) return true; } catch { /* not a date */ }
+    try {
+      if (values.toDecimal(t) === v) return true;
+    } catch {
+      /* not a number */
+    }
+    try {
+      if (values.toIsoDate(t).date === v) return true;
+    } catch {
+      /* not a date */
+    }
     if (path.endsWith('/accountId') && t.replace(/[\s-]/g, '') === v) return true;
     // Peppol BT-21 subject code and text are two parts of one "#AAI#text" node.
     if (/\/notes\/\d+\/(text|subjectCode)$/.test(path) && t.includes(v)) return true;
@@ -82,14 +90,20 @@ async function check(name: string, constants: RegExp[] = []) {
   const all = new Map(leaves(inv));
   const bad: string[] = [];
   for (const [path, xpath] of Object.entries(prov)) {
-    if (!all.has(path)) { bad.push(`${path}: no such leaf in the output`); continue; }
+    if (!all.has(path)) {
+      bad.push(`${path}: no such leaf in the output`);
+      continue;
+    }
     const texts = resolve(root, xpath);
-    if (!matches(path, all.get(path)!, texts)) bad.push(`${path} = ${JSON.stringify(all.get(path))} but ${xpath} reads ${JSON.stringify(texts)}`);
+    if (!matches(path, all.get(path)!, texts))
+      bad.push(`${path} = ${JSON.stringify(all.get(path))} but ${xpath} reads ${JSON.stringify(texts)}`);
   }
   expect(bad).toEqual([]);
 
   // Coverage over the leaves the XML is responsible for.
-  const candidates = [...all.keys()].filter((p) => !NOT_READ.some((re) => re.test(p)) && !constants.some((re) => re.test(p)) && !isDerived(inv, p));
+  const candidates = [...all.keys()].filter(
+    (p) => !NOT_READ.some((re) => re.test(p)) && !constants.some((re) => re.test(p)) && !isDerived(inv, p),
+  );
   const missing = candidates.filter((p) => !(p in prov));
   const coverage = 1 - missing.length / candidates.length;
   expect(coverage, `uncovered: ${missing.join(', ')}`).toBeGreaterThan(0.95);
@@ -122,9 +136,17 @@ describe('field provenance', () => {
   });
 
   // Svefaktura has no BT-24 and maps schemes and units by table; those leaves are mapped, not read.
-  const SVEFAKTURA_MAPPED = [/^\/specificationId$/, /\/legalRegistrationId\/schemeId$/, /\/(identifiers\/\d+|locationId|standardId)\/schemeId$/, /\/unitCode$/, /\/meansCode$/,
+  const SVEFAKTURA_MAPPED = [
+    /^\/specificationId$/,
+    /\/legalRegistrationId\/schemeId$/,
+    /\/(identifiers\/\d+|locationId|standardId)\/schemeId$/,
+    /\/unitCode$/,
+    /\/meansCode$/,
     // composed or normalised text: F-skatt wording, "Säte <city>", note + penalty, giro codes
-    /^\/seller\/(taxRegistrationId|additionalLegalInfo)$/, /^\/paymentTerms$/, /\/serviceProviderId$/];
+    /^\/seller\/(taxRegistrationId|additionalLegalInfo)$/,
+    /^\/paymentTerms$/,
+    /\/serviceProviderId$/,
+  ];
 
   test('Svefaktura invoice: every XPath resolves to the canonical value, coverage > 95%', async () => {
     const { prov } = await check('svefaktura-1.0.xml', SVEFAKTURA_MAPPED);

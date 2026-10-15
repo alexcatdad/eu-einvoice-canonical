@@ -1,6 +1,6 @@
-import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { convert, effectiveSign, type CanonicalInvoice } from '../src/index.js';
+import { describe, test } from 'node:test';
+import { type CanonicalInvoice, convert, effectiveSign } from '../src/index.js';
 import { fixture, parseOne, utf8, warningCodes } from './helpers.js';
 
 const text = (name: string) => new TextDecoder().decode(fixture(name));
@@ -82,29 +82,52 @@ describe('FatturaPA: standard B2B invoice (TD01)', async () => {
   test('VAT breakdown: Natura N4 keeps its national code', () => {
     assert.deepEqual(inv.vatBreakdown, [
       { taxableAmount: '450.00', taxAmount: '99.00', categoryCode: 'S', rate: '22.00' },
-      { taxableAmount: '100.00', taxAmount: '0.00', categoryCode: 'E', rate: '0.00', exemptionReason: 'Esente art. 10 DPR 633/72', nationalCode: 'IT:N4' },
+      {
+        taxableAmount: '100.00',
+        taxAmount: '0.00',
+        categoryCode: 'E',
+        rate: '0.00',
+        exemptionReason: 'Esente art. 10 DPR 633/72',
+        nationalCode: 'IT:N4',
+      },
     ]);
   });
 
   test('totals and no BR-CO warnings', () => {
     assert.deepEqual(inv.totals, {
-      lineNetTotal: '550.00', taxExclusive: '550.00', vatTotal: '99.00', taxInclusive: '649.00', payable: '649.00',
+      lineNetTotal: '550.00',
+      taxExclusive: '550.00',
+      vatTotal: '99.00',
+      taxInclusive: '649.00',
+      payable: '649.00',
     });
     assert.deepEqual(brco(inv), []);
     assert.ok(inv.source.derived.some((d) => d.field === '/totals/taxInclusive'));
   });
 
   test('payment: MP05 is credit transfer, kept as nationalMeansCode', () => {
-    assert.deepEqual(inv.payments, [{
-      meansCode: '30', nationalMeansCode: 'MP05',
-      creditTransfers: [{ accountId: 'IT60X0542811101000000123456', accountName: 'Rossi Forniture S.r.l.', serviceProviderId: 'BEXAITMM' }],
-    }]);
+    assert.deepEqual(inv.payments, [
+      {
+        meansCode: '30',
+        nationalMeansCode: 'MP05',
+        creditTransfers: [
+          { accountId: 'IT60X0542811101000000123456', accountName: 'Rossi Forniture S.r.l.', serviceProviderId: 'BEXAITMM' },
+        ],
+      },
+    ]);
     assert.deepEqual(inv.paymentSchedule, []);
   });
 
   test('attachment', () => {
     assert.deepEqual(inv.attachments, [
-      { kind: 'embedded', id: 'capitolato.pdf', description: 'Capitolato', mimeCode: 'application/pdf', filename: 'capitolato.pdf', base64: 'Zml4dHVyZQ==' },
+      {
+        kind: 'embedded',
+        id: 'capitolato.pdf',
+        description: 'Capitolato',
+        mimeCode: 'application/pdf',
+        filename: 'capitolato.pdf',
+        base64: 'Zml4dHVyZQ==',
+      },
     ]);
   });
 
@@ -113,7 +136,10 @@ describe('FatturaPA: standard B2B invoice (TD01)', async () => {
     assert.equal(inv.source.fragmentPath, '/FatturaElettronica/FatturaElettronicaBody[1]');
     assert.equal(inv.source.format, 'fatturapa');
     assert.equal(inv.source.formatVersion, 'FPR12');
-    assert.equal(inv.source.unmapped['/FatturaElettronica/FatturaElettronicaHeader/DatiTrasmissione/IdTrasmittente'], 'IdPaese: IT; IdCodice: 01234567890');
+    assert.equal(
+      inv.source.unmapped['/FatturaElettronica/FatturaElettronicaHeader/DatiTrasmissione/IdTrasmittente'],
+      'IdPaese: IT; IdCodice: 01234567890',
+    );
   });
 });
 
@@ -175,10 +201,15 @@ describe('FatturaPA: ritenuta, cassa previdenziale and bollo', async () => {
   });
 
   test('cassa is a charge and is listed in extensions.it.pensionFunds', () => {
-    assert.deepEqual(inv.charges, [{
-      amount: '40.00', baseAmount: '1000.00', percentage: '4.00', reason: 'Cassa previdenziale TC22',
-      vat: { categoryCode: 'S', rate: '22.00' },
-    }]);
+    assert.deepEqual(inv.charges, [
+      {
+        amount: '40.00',
+        baseAmount: '1000.00',
+        percentage: '4.00',
+        reason: 'Cassa previdenziale TC22',
+        vat: { categoryCode: 'S', rate: '22.00' },
+      },
+    ]);
     assert.equal(inv.totals.chargeTotal, '40.00');
     assert.deepEqual(inv.extensions.it?.pensionFunds, [
       { type: 'TC22', rate: '4.00', amount: '40.00', taxableAmount: '1000.00', vatRate: '22.00', subjectToWithholding: true },
@@ -240,13 +271,23 @@ describe('FatturaPA: lot with two bodies', async () => {
   const invoices = o.status === 'ok' ? o.invoices : [];
 
   test('one canonical invoice per FatturaElettronicaBody', () => {
-    assert.deepEqual(invoices.map((i) => i.id), ['2026/0201', '2026/0202']);
-    assert.deepEqual(invoices.map((i) => i.source.indexInFile), [0, 1]);
-    assert.deepEqual(invoices.map((i) => i.source.fragmentPath), [
-      '/FatturaElettronica/FatturaElettronicaBody[1]', '/FatturaElettronica/FatturaElettronicaBody[2]',
-    ]);
+    assert.deepEqual(
+      invoices.map((i) => i.id),
+      ['2026/0201', '2026/0202'],
+    );
+    assert.deepEqual(
+      invoices.map((i) => i.source.indexInFile),
+      [0, 1],
+    );
+    assert.deepEqual(
+      invoices.map((i) => i.source.fragmentPath),
+      ['/FatturaElettronica/FatturaElettronicaBody[1]', '/FatturaElettronica/FatturaElettronicaBody[2]'],
+    );
     assert.equal(invoices[0].source.payloadSha256, invoices[1].source.payloadSha256);
-    assert.deepEqual(invoices.map((i) => i.totals.payable), ['122.00', '61.00']);
+    assert.deepEqual(
+      invoices.map((i) => i.totals.payable),
+      ['122.00', '61.00'],
+    );
     assert.deepEqual(invoices.flatMap(brco), []);
   });
 
@@ -282,8 +323,17 @@ describe('FatturaPA semplificata (FSM10)', async () => {
   });
 
   test('net amounts are Importo minus Imposta, and recorded as derived', () => {
-    assert.deepEqual(inv.lines.map((l) => l.netAmount), ['100.00', '50.00']);
-    assert.deepEqual(inv.totals, { lineNetTotal: '150.00', taxExclusive: '150.00', vatTotal: '22.00', taxInclusive: '172.00', payable: '172.00' });
+    assert.deepEqual(
+      inv.lines.map((l) => l.netAmount),
+      ['100.00', '50.00'],
+    );
+    assert.deepEqual(inv.totals, {
+      lineNetTotal: '150.00',
+      taxExclusive: '150.00',
+      vatTotal: '22.00',
+      taxInclusive: '172.00',
+      payable: '172.00',
+    });
     assert.ok(inv.source.derived.some((d) => d.field === '/lines/*/netAmount'));
     assert.deepEqual(brco(inv), []);
   });
@@ -291,7 +341,14 @@ describe('FatturaPA semplificata (FSM10)', async () => {
   test('VAT breakdown by category, rate and Natura', () => {
     assert.deepEqual(inv.vatBreakdown, [
       { taxableAmount: '100.00', taxAmount: '22.00', categoryCode: 'S', rate: '22.00' },
-      { taxableAmount: '50.00', taxAmount: '0.00', categoryCode: 'E', rate: '0.00', exemptionReason: 'Esente art. 10 DPR 633/72', nationalCode: 'IT:N4' },
+      {
+        taxableAmount: '50.00',
+        taxAmount: '0.00',
+        categoryCode: 'E',
+        rate: '0.00',
+        exemptionReason: 'Esente art. 10 DPR 633/72',
+        nationalCode: 'IT:N4',
+      },
     ]);
   });
 
@@ -311,7 +368,15 @@ describe('FatturaPA semplificata (FSM10)', async () => {
 
 describe('FatturaPA: Natura mapping', () => {
   const cases: [natura: string, category: string][] = [
-    ['N1', 'O'], ['N2.2', 'O'], ['N3.1', 'G'], ['N3.2', 'K'], ['N3.5', 'Z'], ['N4', 'E'], ['N5', 'E'], ['N6.3', 'AE'], ['N7', 'O'],
+    ['N1', 'O'],
+    ['N2.2', 'O'],
+    ['N3.1', 'G'],
+    ['N3.2', 'K'],
+    ['N3.5', 'Z'],
+    ['N4', 'E'],
+    ['N5', 'E'],
+    ['N6.3', 'AE'],
+    ['N7', 'O'],
   ];
   for (const [natura, category] of cases) {
     test(`${natura} -> ${category}, national code kept`, async () => {

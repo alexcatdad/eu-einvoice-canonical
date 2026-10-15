@@ -1,8 +1,8 @@
-import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { detectXml, inspect } from '../src/index.js';
+import { describe, test } from 'node:test';
 import { FORMATS } from '../src/formats.js';
-import { CBC, PEPPOL, ciiHeader, fixture, ublHeader, NSI } from './helpers.js';
+import { detectXml, inspect } from '../src/index.js';
+import { CBC, ciiHeader, fixture, NSI, PEPPOL, ublHeader } from './helpers.js';
 
 // ---------------------------------------------------------------------------
 // Fixtures: unwrap + detect
@@ -56,11 +56,21 @@ describe('fixtures: unwrap and detect', () => {
   for (const c of CASES) {
     test(c.file, async () => {
       const r = await inspect(fixture(c.file), c.file);
-      const got = r.documents.map((d) => (d.detection.kind === 'invoice' ? d.detection.format.id : d.detection.kind === 'other-document' ? 'other' : 'unknown'));
+      const got = r.documents.map((d) =>
+        d.detection.kind === 'invoice' ? d.detection.format.id : d.detection.kind === 'other-document' ? 'other' : 'unknown',
+      );
       assert.deepEqual(got, c.formats);
       const first = r.documents[0];
-      if (c.envelope) assert.deepEqual(first.payload.envelope.map((s) => s.kind), c.envelope);
-      if (c.signature) assert.ok(first.payload.signatures.some((s) => s.type === c.signature), `signature ${c.signature}`);
+      if (c.envelope)
+        assert.deepEqual(
+          first.payload.envelope.map((s) => s.kind),
+          c.envelope,
+        );
+      if (c.signature)
+        assert.ok(
+          first.payload.signatures.some((s) => s.type === c.signature),
+          `signature ${c.signature}`,
+        );
       if (first.detection.kind === 'invoice') {
         if (c.version) assert.equal(first.detection.details.version, c.version);
         if (c.profile) assert.equal(first.detection.details.profile, c.profile);
@@ -80,7 +90,7 @@ describe('fixtures: unwrap and detect', () => {
   });
 
   test('payload byteLength is the UTF-8 size, not the string length', async () => {
-    const xml = ublHeader(PEPPOL).replace('<cbc:ID>', '<cbc:Note>' + 'ąę€'.repeat(50) + '</cbc:Note><cbc:ID>');
+    const xml = ublHeader(PEPPOL).replace('<cbc:ID>', `<cbc:Note>${'ąę€'.repeat(50)}</cbc:Note><cbc:ID>`);
     const bytes = new TextEncoder().encode(xml);
     const r = await inspect(bytes);
     assert.equal(r.documents[0].payload.byteLength, bytes.length);
@@ -108,7 +118,10 @@ describe('UBL profiles', () => {
     [`${PEPPOL}#conformant#urn:fdc:anskaffelser.no:2019:ehf:spec:3.0`, 'peppol-bis3'],
     ['urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:selfbilling:3.0', 'peppol-bis3-selfbilling'],
     ['urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0', 'xrechnung-ubl'],
-    ['urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0#conformant#urn:xeinkauf.de:kosit:extension:xrechnung_3.0', 'xrechnung-ubl'],
+    [
+      'urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0#conformant#urn:xeinkauf.de:kosit:extension:xrechnung_3.0',
+      'xrechnung-ubl',
+    ],
     ['urn:cen.eu:en16931:2017#compliant#urn:fdc:nen.nl:nlcius:v1.0', 'nlcius-ubl'],
     ['urn:cen.eu:en16931:2017#compliant#urn:efactura.mfinante.ro:CIUS-RO:1.0.1', 'cius-ro'],
     ['urn:cen.eu:en16931:2017#compliant#urn:feap.gov.pt:CIUS-PT:2.1.1', 'cius-pt'],
@@ -133,11 +146,19 @@ describe('UBL profiles', () => {
 
   test('Peppol profile shows only the national extension', () => {
     assert.equal(details(ublHeader(PEPPOL)).profile, undefined);
-    assert.equal(details(ublHeader(`${PEPPOL}#conformant#urn:fdc:anskaffelser.no:2019:ehf:spec:3.0`)).profile, 'urn:fdc:anskaffelser.no:2019:ehf:spec:3.0');
+    assert.equal(
+      details(ublHeader(`${PEPPOL}#conformant#urn:fdc:anskaffelser.no:2019:ehf:spec:3.0`)).profile,
+      'urn:fdc:anskaffelser.no:2019:ehf:spec:3.0',
+    );
   });
 
   test('Poland PEF profile is the efaktura.gov.pl extension', () =>
-    assert.equal(details(ublHeader('urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0#extended#urn:fdc:www.efaktura.gov.pl:ver2.0')).profile, 'urn:fdc:www.efaktura.gov.pl:ver2.0'));
+    assert.equal(
+      details(
+        ublHeader('urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0#extended#urn:fdc:www.efaktura.gov.pl:ver2.0'),
+      ).profile,
+      'urn:fdc:www.efaktura.gov.pl:ver2.0',
+    ));
 });
 
 describe('CII profiles', () => {
@@ -171,13 +192,16 @@ describe('national header-only rules', () => {
   });
 
   test('myDATA is InvoicesDoc in the AADE v1.0 namespace', () => {
-    const xml = '<InvoicesDoc xmlns="http://www.aade.gr/myDATA/invoice/v1.0"><invoice><invoiceHeader><invoiceType>1.1</invoiceType></invoiceHeader></invoice></InvoicesDoc>';
+    const xml =
+      '<InvoicesDoc xmlns="http://www.aade.gr/myDATA/invoice/v1.0"><invoice><invoiceHeader><invoiceType>1.1</invoiceType></invoiceHeader></invoice></InvoicesDoc>';
     assert.equal(id(xml), 'gr-mydata');
     assert.equal(details(xml).profile, '1.1');
   });
 
   test('every rule marked unverified is a fallback', () => {
-    const unverified = FORMATS.filter((f) => f.status === 'unverified').map((f) => f.id).sort();
+    const unverified = FORMATS.filter((f) => f.status === 'unverified')
+      .map((f) => f.id)
+      .sort();
     assert.deepEqual(unverified, ['cii-unknown', 'ubl-unknown']);
   });
 });

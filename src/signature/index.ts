@@ -17,7 +17,10 @@ export async function verifyCadesLazy(bytes: Uint8Array, opts: VerifyOptions): P
   return verifyCades(bytes, opts.trustAnchors);
 }
 
-export async function verifyXmlLazy(xml: string, opts: VerifyOptions & { resolve?: (uri: string) => Uint8Array | undefined; type?: SignatureInfo['type'] }): Promise<SignatureInfo[]> {
+export async function verifyXmlLazy(
+  xml: string,
+  opts: VerifyOptions & { resolve?: (uri: string) => Uint8Array | undefined; type?: SignatureInfo['type'] },
+): Promise<SignatureInfo[]> {
   const { verifyXmlSignatures } = await import('./xmldsig.js');
   return verifyXmlSignatures(xml, { trustAnchors: opts.trustAnchors, resolve: opts.resolve, type: opts.type });
 }
@@ -36,10 +39,18 @@ export function signatureStatus(signatures: SignatureInfo[]): CheckStatus {
 export function signatureFindings(signatures: SignatureInfo[]): ValidationSummary['findings'] {
   return signatures.map((s, i): ValidationSummary['findings'][number] => {
     const who = `${s.type} signature${signatures.length > 1 ? ` ${i + 1}` : ''}${s.signer ? ` by ${s.signer}` : ''}`;
-    if (s.verified === false) return { layer: 'signature', severity: 'warning', message: `${who} is invalid: ${s.reason ?? 'verification failed'}` };
-    if (s.verified === undefined) return { layer: 'signature', severity: 'info', message: `${who} could not be checked: ${s.reason ?? 'unsupported'}` };
-    if (s.trust === 'trusted') return { layer: 'signature', severity: 'info', message: `${who} is valid and chains to a configured trust anchor` };
-    if (s.trust === 'untrusted') return { layer: 'signature', severity: 'warning', message: `${who} is valid, but the signer does not chain to the configured trust anchors${s.trustReason ? ` (${s.trustReason})` : ''}` };
+    if (s.verified === false)
+      return { layer: 'signature', severity: 'warning', message: `${who} is invalid: ${s.reason ?? 'verification failed'}` };
+    if (s.verified === undefined)
+      return { layer: 'signature', severity: 'info', message: `${who} could not be checked: ${s.reason ?? 'unsupported'}` };
+    if (s.trust === 'trusted')
+      return { layer: 'signature', severity: 'info', message: `${who} is valid and chains to a configured trust anchor` };
+    if (s.trust === 'untrusted')
+      return {
+        layer: 'signature',
+        severity: 'warning',
+        message: `${who} is valid, but the signer does not chain to the configured trust anchors${s.trustReason ? ` (${s.trustReason})` : ''}`,
+      };
     return { layer: 'signature', severity: 'info', message: `${who} is valid; signer not checked against a trust list` };
   });
 }

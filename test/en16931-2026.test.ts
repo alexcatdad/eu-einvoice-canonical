@@ -1,5 +1,5 @@
-import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { parseOne } from './helpers.js';
 
 // The 2026 revision's new business terms are not modelled yet (see README, Known gaps): no primary

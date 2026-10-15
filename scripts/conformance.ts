@@ -16,7 +16,7 @@
  */
 import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { FORMATS, IMPLEMENTED_FAMILIES, convert, type FormatDef } from '../src/index.js';
+import { convert, FORMATS, type FormatDef, IMPLEMENTED_FAMILIES } from '../src/index.js';
 
 interface Notes {
   publicSamples: string[];
@@ -52,8 +52,11 @@ const converted = new Map<string, number>();
 const convertedPublic = new Map<string, number>();
 for (const file of Object.keys(expected)) {
   const r = await convert(new Uint8Array(readFileSync(join(fixtures, file))), file);
-  const ok = new Set(r.outcomes.filter((o) => o.status === 'ok' && o.detection.kind === 'invoice')
-    .map((o) => (o.detection.kind === 'invoice' ? o.detection.format.id : '')));
+  const ok = new Set(
+    r.outcomes
+      .filter((o) => o.status === 'ok' && o.detection.kind === 'invoice')
+      .map((o) => (o.detection.kind === 'invoice' ? o.detection.format.id : '')),
+  );
   for (const id of ok) {
     converted.set(id, (converted.get(id) ?? 0) + 1);
     if (publicSamples.has(file)) convertedPublic.set(id, (convertedPublic.get(id) ?? 0) + 1);
@@ -92,7 +95,10 @@ const summaryLines = [
 ];
 
 const args = process.argv.slice(2);
-const argValue = (flag: string) => { const i = args.indexOf(flag); return i >= 0 ? args[i + 1] : undefined; };
+const argValue = (flag: string) => {
+  const i = args.indexOf(flag);
+  return i >= 0 ? args[i + 1] : undefined;
+};
 
 // Markdown (stdout and job summary)
 const yes = (b: boolean) => (b ? 'yes' : '—');
@@ -103,7 +109,10 @@ const md = [
   '',
   '| Format | Countries | Detection | Fixtures detected | Parser | Fixtures converted | Real samples converted | Mapping source | Validation |',
   '|---|---|---|---|---|---|---|---|---|',
-  ...rows.map((r) => `| ${r.name} (\`${r.id}\`) | ${r.countries} | ${r.detection} | ${r.fixturesDetected} | ${yes(r.parser)} | ${r.fixturesConverted} | ${r.publicSamplesConverted} | ${r.mappingSource ?? (r.parser ? '**not recorded**' : '—')} | ${r.validation.join(', ') || '—'} |`),
+  ...rows.map(
+    (r) =>
+      `| ${r.name} (\`${r.id}\`) | ${r.countries} | ${r.detection} | ${r.fixturesDetected} | ${yes(r.parser)} | ${r.fixturesConverted} | ${r.publicSamplesConverted} | ${r.mappingSource ?? (r.parser ? '**not recorded**' : '—')} | ${r.validation.join(', ') || '—'} |`,
+  ),
   '',
 ].join('\n');
 console.log(md);
@@ -142,7 +151,9 @@ function html() {
   <div class="table-scroll">
   <table class="conformance">
     <thead><tr><th scope="col">Format</th><th scope="col">Countries</th><th scope="col">Detection rule</th><th scope="col" class="num">Fixtures detected</th><th scope="col">Parser</th><th scope="col" class="num">Fixtures converted</th><th scope="col" class="num">Real samples converted</th><th scope="col">Mapping source</th><th scope="col">Validation</th></tr></thead>
-    <tbody>${rows.map((r) => `<tr>
+    <tbody>${rows
+      .map(
+        (r) => `<tr>
       <th scope="row">${esc(r.name)}<span class="sub">${esc(r.id)}</span></th>
       <td>${esc(r.countries)}</td>
       <td class="${r.detection === 'unverified' ? 'gap' : ''}">${r.detection}</td>
@@ -152,7 +163,9 @@ function html() {
       ${r.parser ? cell(r.publicSamplesConverted, r.publicSamplesConverted > 0) : '<td class="num">—</td>'}
       <td class="${r.parser && !r.mappingSource ? 'gap' : ''}">${r.mappingSource ? esc(r.mappingSource) : r.parser ? 'not recorded' : '—'}</td>
       <td class="${r.validation.length ? 'good' : ''}">${r.validation.length ? esc(r.validation.join(', ')) : 'not yet'}</td>
-    </tr>`).join('')}</tbody>
+    </tr>`,
+      )
+      .join('')}</tbody>
   </table>
   </div>
   <p class="wrappers">Generated ${new Date().toISOString().slice(0, 10)} by <code>scripts/conformance.ts</code>. Hand-maintained facts (which fixtures are real public samples, mapping sources, validation layers) live in <code>conformance/notes.json</code>.</p>

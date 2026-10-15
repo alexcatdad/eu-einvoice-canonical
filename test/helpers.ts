@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { convert, type CanonicalInvoice } from '../src/index.js';
+import { type CanonicalInvoice, convert } from '../src/index.js';
 
 export const fixturePath = (name: string) => fileURLToPath(new URL(`./fixtures/${name}`, import.meta.url));
 export const fixture = (name: string) => new Uint8Array(readFileSync(fixturePath(name)));

@@ -10,7 +10,17 @@ export type Layer = 'schema' | 'semantic' | 'profile';
 type Plan = Partial<Record<Layer, string>>;
 
 /** Formats whose EN 16931 conformance is not claimed by the format itself, so the EN rules would judge them unfairly. */
-const NOT_EN16931 = new Set(['oioubl-2', 'oioubl-3', 'ubl-unknown', 'cii-unknown', 'ubl-be', 'peppol-bis2', 'peppol-pint', 'peppol-bis3-selfbilling', 'zugferd-1']);
+const NOT_EN16931 = new Set([
+  'oioubl-2',
+  'oioubl-3',
+  'ubl-unknown',
+  'cii-unknown',
+  'ubl-be',
+  'peppol-bis2',
+  'peppol-pint',
+  'peppol-bis3-selfbilling',
+  'zugferd-1',
+]);
 /** UBL 2.0 documents are not valid against the 2.1 schema. */
 const NOT_UBL21 = new Set(['oioubl-2']);
 const FACTURX_EN16931_PROFILES = new Set(['EN 16931']);
@@ -31,7 +41,16 @@ export function planFor(detection: Detection): Plan {
 }
 
 export function emptySummary(status: CheckStatus = 'not-run'): ValidationSummary {
-  return { parse: status, schema: status, semantic: status, profile: status, signature: 'not-run', clearance: 'not-run', bundles: {}, findings: [] };
+  return {
+    parse: status,
+    schema: status,
+    semantic: status,
+    profile: status,
+    signature: 'not-run',
+    clearance: 'not-run',
+    bundles: {},
+    findings: [],
+  };
 }
 
 /** Every planned layer is reported 'unavailable'; used when the validator itself cannot be loaded. */
@@ -45,4 +64,3 @@ export function unavailableSummary(detection: Detection, reason: string): Valida
   }
   return s;
 }
-

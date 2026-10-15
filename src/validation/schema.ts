@@ -1,4 +1,4 @@
-import { BundleReaderFor } from './bundles.js';
+import type { BundleReaderFor } from './bundles.js';
 import type { Finding } from './types.js';
 
 /** xmllint reads UTF-8 only; the payload is already decoded, so drop a BOM and the declared encoding. */

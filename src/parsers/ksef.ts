@@ -17,11 +17,26 @@
  */
 import type { Element } from '@xmldom/xmldom';
 import type {
-  AdditionalParty, Address, CanonicalInvoice, Correction, CreditTransfer, Decimal, Identifier, Line, Party,
-  PaymentInstallment, PaymentInstructions, PlExtension, PrecedingInvoiceRef, Seller, Totals, VatBreakdown, VatInfo,
+  AdditionalParty,
+  Address,
+  CanonicalInvoice,
+  Correction,
+  CreditTransfer,
+  Decimal,
+  Identifier,
+  Line,
+  Party,
+  PaymentInstallment,
+  PaymentInstructions,
+  PlExtension,
+  PrecedingInvoiceRef,
+  Seller,
+  Totals,
+  VatBreakdown,
+  VatInfo,
 } from '../canonical.js';
 import { add, cmp, isZero, neg, sign, sub, sum } from '../values.js';
-import { Ctx, ParseError, finish, parseXml, sourceMeta } from './context.js';
+import { Ctx, finish, ParseError, parseXml, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 
 const AMOUNT_ZERO = '0.00';
@@ -30,12 +45,21 @@ const AMOUNT_ZERO = '0.00';
 function vatFromRateCode(code: string, exemption?: string): VatInfo | undefined {
   const nationalCode = `PL:P_12:${code}`;
   switch (code) {
-    case '0 KR': case '0': return { categoryCode: 'Z', rate: '0' as never, nationalCode };
-    case '0 WDT': return { categoryCode: 'K', rate: '0' as never, nationalCode };
-    case '0 EX': return { categoryCode: 'G', rate: '0' as never, nationalCode };
-    case 'zw': return { categoryCode: 'E', nationalCode, ...(exemption ? { exemptionReason: exemption } : {}) };
-    case 'oo': return { categoryCode: 'AE', nationalCode };
-    case 'np I': case 'np II': case 'np': return { categoryCode: 'O', nationalCode };
+    case '0 KR':
+    case '0':
+      return { categoryCode: 'Z', rate: '0' as never, nationalCode };
+    case '0 WDT':
+      return { categoryCode: 'K', rate: '0' as never, nationalCode };
+    case '0 EX':
+      return { categoryCode: 'G', rate: '0' as never, nationalCode };
+    case 'zw':
+      return { categoryCode: 'E', nationalCode, ...(exemption ? { exemptionReason: exemption } : {}) };
+    case 'oo':
+      return { categoryCode: 'AE', nationalCode };
+    case 'np I':
+    case 'np II':
+    case 'np':
+      return { categoryCode: 'O', nationalCode };
     default:
       if (/^\d+(\.\d+)?$/.test(code)) return { categoryCode: 'S', rate: code as never, nationalCode };
       return undefined;
@@ -44,27 +68,78 @@ function vatFromRateCode(code: string, exemption?: string): VatInfo | undefined 
 
 /** Free-text units seen on Polish invoices -> UN/ECE Rec 20. The source text always stays in `unitText`. */
 const UNITS: Record<string, string> = {
-  szt: 'H87', 'szt.': 'H87', sztuka: 'H87', sztuk: 'H87', kg: 'KGM', g: 'GRM', t: 'TNE', l: 'LTR', litr: 'LTR',
-  m: 'MTR', mb: 'MTR', km: 'KMT', m2: 'MTK', 'm²': 'MTK', m3: 'MTQ', 'm³': 'MTQ',
-  godz: 'HUR', 'godz.': 'HUR', h: 'HUR', dzień: 'DAY', dni: 'DAY', mies: 'MON', 'mies.': 'MON', mc: 'MON',
-  kpl: 'SET', 'kpl.': 'SET', kwh: 'KWH', usł: 'C62', 'usł.': 'C62',
+  szt: 'H87',
+  'szt.': 'H87',
+  sztuka: 'H87',
+  sztuk: 'H87',
+  kg: 'KGM',
+  g: 'GRM',
+  t: 'TNE',
+  l: 'LTR',
+  litr: 'LTR',
+  m: 'MTR',
+  mb: 'MTR',
+  km: 'KMT',
+  m2: 'MTK',
+  'm²': 'MTK',
+  m3: 'MTQ',
+  'm³': 'MTQ',
+  godz: 'HUR',
+  'godz.': 'HUR',
+  h: 'HUR',
+  dzień: 'DAY',
+  dni: 'DAY',
+  mies: 'MON',
+  'mies.': 'MON',
+  mc: 'MON',
+  kpl: 'SET',
+  'kpl.': 'SET',
+  kwh: 'KWH',
+  usł: 'C62',
+  'usł.': 'C62',
 };
 
 /** Podmiot3 Rola -> canonical role. */
 const ROLES: Record<string, string> = {
-  1: 'factor', 2: 'recipient-unit', 3: 'original-entity', 4: 'additional-buyer', 5: 'issuer', 6: 'payer',
-  7: 'local-government-issuer', 8: 'local-government-recipient', 9: 'vat-group-issuer', 10: 'vat-group-recipient', 11: 'employee',
+  1: 'factor',
+  2: 'recipient-unit',
+  3: 'original-entity',
+  4: 'additional-buyer',
+  5: 'issuer',
+  6: 'payer',
+  7: 'local-government-issuer',
+  8: 'local-government-recipient',
+  9: 'vat-group-issuer',
+  10: 'vat-group-recipient',
+  11: 'employee',
 };
 const AUTHORISED_ROLES: Record<string, string> = { 1: 'enforcement-authority', 2: 'bailiff', 3: 'tax-representative' };
 const KIND_LABELS: Record<string, string> = {
-  VAT: 'Faktura podstawowa', KOR: 'Faktura korygująca', ZAL: 'Faktura zaliczkowa', ROZ: 'Faktura rozliczeniowa (art. 106f ust. 3)',
-  UPR: 'Faktura uproszczona', KOR_ZAL: 'Korekta faktury zaliczkowej', KOR_ROZ: 'Korekta faktury rozliczeniowej',
-  VAT_RR: 'Faktura VAT RR', KOR_VAT_RR: 'Faktura korygująca VAT RR',
+  VAT: 'Faktura podstawowa',
+  KOR: 'Faktura korygująca',
+  ZAL: 'Faktura zaliczkowa',
+  ROZ: 'Faktura rozliczeniowa (art. 106f ust. 3)',
+  UPR: 'Faktura uproszczona',
+  KOR_ZAL: 'Korekta faktury zaliczkowej',
+  KOR_ROZ: 'Korekta faktury rozliczeniowej',
+  VAT_RR: 'Faktura VAT RR',
+  KOR_VAT_RR: 'Faktura korygująca VAT RR',
 };
-const TAXPAYER_STATUS: Record<string, string> = { 1: 'w likwidacji', 2: 'w restrukturyzacji', 3: 'w upadłości', 4: 'w postępowaniu spadkowym' };
+const TAXPAYER_STATUS: Record<string, string> = {
+  1: 'w likwidacji',
+  2: 'w restrukturyzacji',
+  3: 'w upadłości',
+  4: 'w postępowaniu spadkowym',
+};
 /** UNCL 4461 for FormaPlatnosci 1-7. Kredyt (trade credit), Bon and Mobilna have no exact code and stay 'ZZZ' with the text. */
 const PAYMENT_MEANS: Record<string, [code: string, text: string]> = {
-  1: ['10', 'Gotówka'], 2: ['48', 'Karta'], 3: ['ZZZ', 'Bon'], 4: ['20', 'Czek'], 5: ['ZZZ', 'Kredyt'], 6: ['30', 'Przelew'], 7: ['ZZZ', 'Płatność mobilna'],
+  1: ['10', 'Gotówka'],
+  2: ['48', 'Karta'],
+  3: ['ZZZ', 'Bon'],
+  4: ['20', 'Czek'],
+  5: ['ZZZ', 'Kredyt'],
+  6: ['30', 'Przelew'],
+  7: ['ZZZ', 'Płatność mobilna'],
 };
 /** Aggregate buckets of the FA header: field, VAT category, source code, candidate P_12 codes for the rate. */
 const BUCKETS: { n: string; tax?: string; category: string; code: string; rates?: string[]; zeroRate?: boolean }[] = [
@@ -155,7 +230,11 @@ export function parseKsef(input: ParseInput): CanonicalInvoice[] {
   const authorised = c.el(root, 'PodmiotUpowazniony');
   if (authorised) {
     const rp = c.text(authorised, 'RolaPU') ?? '';
-    additionalParties.push({ role: AUTHORISED_ROLES[rp] ?? 'authorised-entity', sourceRole: `PL:RolaPU:${rp}`, party: party(c, authorised, '/Faktura/PodmiotUpowazniony') });
+    additionalParties.push({
+      role: AUTHORISED_ROLES[rp] ?? 'authorised-entity',
+      sourceRole: `PL:RolaPU:${rp}`,
+      party: party(c, authorised, '/Faktura/PodmiotUpowazniony'),
+    });
   }
 
   // ---- header references, corrections, payment ---------------------------------------
@@ -163,7 +242,11 @@ export function parseKsef(input: ParseInput): CanonicalInvoice[] {
     ...c.all(body, 'DaneFaKorygowanej').map((d) => {
       const clearanceId = c.text(d, 'NrKSeFFaKorygowanej');
       const issued = c.date(d, 'DataWystFaKorygowanej', 'DataWystFaKorygowanej');
-      return { id: c.text(d, 'NrFaKorygowanej') ?? clearanceId ?? '', ...(issued ? { issueDate: issued } : {}), ...(clearanceId ? { clearanceId } : {}) };
+      return {
+        id: c.text(d, 'NrFaKorygowanej') ?? clearanceId ?? '',
+        ...(issued ? { issueDate: issued } : {}),
+        ...(clearanceId ? { clearanceId } : {}),
+      };
     }),
     ...c.all(body, 'FakturaZaliczkowa').map((d) => {
       const clearanceId = c.text(d, 'NrKSeFFaZaliczkowej');
@@ -177,7 +260,10 @@ export function parseKsef(input: ParseInput): CanonicalInvoice[] {
     const v = c.text(body, tag);
     if (v) c.unmapped[`/Faktura/${bodyName(isRR)}/${tag}`] = v;
   }
-  for (const tag of ['Podmiot1K', 'Podmiot2K']) c.all(body, tag).forEach((e, i) => dump(c, e, `/Faktura/${bodyName(isRR)}/${tag}[${i + 1}]`));
+  for (const tag of ['Podmiot1K', 'Podmiot2K'])
+    c.all(body, tag).forEach((e, i) => {
+      dump(c, e, `/Faktura/${bodyName(isRR)}/${tag}[${i + 1}]`);
+    });
 
   const { payments, paymentSchedule, dueDate } = payment(c, body, isRR);
   const settle = settlement_(c, body, totals, isRR);
@@ -190,19 +276,33 @@ export function parseKsef(input: ParseInput): CanonicalInvoice[] {
   const umowy = c.all(body, 'WarunkiTransakcji/Umowy');
   const zamowienia = c.all(body, 'WarunkiTransakcji/Zamowienia');
   const wz = c.texts(body, 'WZ');
-  umowy.slice(1).forEach((u, i) => dump(c, u, `/Faktura/Fa/WarunkiTransakcji/Umowy[${i + 2}]`));
-  zamowienia.slice(1).forEach((z, i) => dump(c, z, `/Faktura/Fa/WarunkiTransakcji/Zamowienia[${i + 2}]`));
-  wz.slice(1).forEach((w, i) => { c.unmapped[`/Faktura/Fa/WZ[${i + 2}]`] = w; });
+  umowy.slice(1).forEach((u, i) => {
+    dump(c, u, `/Faktura/Fa/WarunkiTransakcji/Umowy[${i + 2}]`);
+  });
+  zamowienia.slice(1).forEach((z, i) => {
+    dump(c, z, `/Faktura/Fa/WarunkiTransakcji/Zamowienia[${i + 2}]`);
+  });
+  wz.slice(1).forEach((w, i) => {
+    c.unmapped[`/Faktura/Fa/WZ[${i + 2}]`] = w;
+  });
   for (const first of [umowy[0], zamowienia[0]]) {
     const date = first && c.text(first, first.localName === 'Umowy' ? 'DataUmowy' : 'DataZamowienia');
-    if (date) c.unmapped[`/Faktura/Fa/WarunkiTransakcji/${first.localName}[1]/${first.localName === 'Umowy' ? 'DataUmowy' : 'DataZamowienia'}`] = date;
+    if (date)
+      c.unmapped[`/Faktura/Fa/WarunkiTransakcji/${first.localName}[1]/${first.localName === 'Umowy' ? 'DataUmowy' : 'DataZamowienia'}`] =
+        date;
   }
   for (const tag of ['NrPartiiTowaru', 'WarunkiDostawy', 'KursUmowny', 'WalutaUmowna', 'PodmiotPosredniczacy']) {
-    c.texts(body, `WarunkiTransakcji/${tag}`).forEach((v, i) => { c.unmapped[`/Faktura/Fa/WarunkiTransakcji/${tag}[${i + 1}]`] = v; });
+    c.texts(body, `WarunkiTransakcji/${tag}`).forEach((v, i) => {
+      c.unmapped[`/Faktura/Fa/WarunkiTransakcji/${tag}[${i + 1}]`] = v;
+    });
   }
-  c.all(body, 'WarunkiTransakcji/Transport').forEach((t, i) => dump(c, t, `/Faktura/Fa/WarunkiTransakcji/Transport[${i + 1}]`));
+  c.all(body, 'WarunkiTransakcji/Transport').forEach((t, i) => {
+    dump(c, t, `/Faktura/Fa/WarunkiTransakcji/Transport[${i + 1}]`);
+  });
   dump(c, c.el(body, 'Zamowienie'), '/Faktura/Fa/Zamowienie');
-  c.all(body, 'ZaliczkaCzesciowa').forEach((z, i) => dump(c, z, `/Faktura/Fa/ZaliczkaCzesciowa[${i + 1}]`));
+  c.all(body, 'ZaliczkaCzesciowa').forEach((z, i) => {
+    dump(c, z, `/Faktura/Fa/ZaliczkaCzesciowa[${i + 1}]`);
+  });
   dump(c, c.el(root, 'Zalacznik'), '/Faktura/Zalacznik');
   for (const tag of ['P_1M', 'FP', 'TP', 'ZwrotAkcyzy', 'KursWalutyZ']) {
     const v = c.text(body, tag);
@@ -213,7 +313,8 @@ export function parseKsef(input: ParseInput): CanonicalInvoice[] {
       const v = c.text(body, `Adnotacje/${tag}`);
       if (v === '1') c.unmapped[`/Faktura/Fa/Adnotacje/${tag}`] = v;
     }
-    if (c.text(body, 'Adnotacje/NoweSrodkiTransportu/P_22') === '1') dump(c, c.el(body, 'Adnotacje/NoweSrodkiTransportu'), '/Faktura/Fa/Adnotacje/NoweSrodkiTransportu');
+    if (c.text(body, 'Adnotacje/NoweSrodkiTransportu/P_22') === '1')
+      dump(c, c.el(body, 'Adnotacje/NoweSrodkiTransportu'), '/Faktura/Fa/Adnotacje/NoweSrodkiTransportu');
   }
 
   // ---- header kind, sign handling ----------------------------------------------------
@@ -223,12 +324,18 @@ export function parseKsef(input: ParseInput): CanonicalInvoice[] {
   else if (advanceLike) typeCode = '386';
   else typeCode = selfBilled ? '389' : '380';
   if (isCorrection) {
-    c.derive('/kind', `RodzajFaktury ${kindCode}: kind from the sign of the correction total (${signedTotal}): ${reduces ? 'reduction -> creditNote' : 'increase or zero -> invoice'}`);
+    c.derive(
+      '/kind',
+      `RodzajFaktury ${kindCode}: kind from the sign of the correction total (${signedTotal}): ${reduces ? 'reduction -> creditNote' : 'increase or zero -> invoice'}`,
+    );
   }
 
   const ext = extensions(c, root, body, isRR, kindCode, schemaVariant, selfBilled);
   if (isRR) {
-    c.warn('PL-RR-REFUND', 'FA_RR: the flat-rate refund (zryczałtowany zwrot podatku) is mapped as VAT category S; it is paid by the buyer on top of the purchase value but is not VAT output tax');
+    c.warn(
+      'PL-RR-REFUND',
+      'FA_RR: the flat-rate refund (zryczałtowany zwrot podatku) is mapped as VAT category S; it is paid by the buyer on top of the purchase value but is not VAT output tax',
+    );
   }
 
   const actualDate = isRR ? c.date(body, 'P_4A', 'P_4A') : undefined;
@@ -331,8 +438,12 @@ function party(c: Ctx, el: Element | undefined, path: string): Party {
   const emails = contacts.flatMap((d) => c.texts(d, 'Email').concat(c.texts(d, 'EmailPU')));
   const phones = contacts.flatMap((d) => c.texts(d, 'Telefon').concat(c.texts(d, 'TelefonPU')));
   if (emails[0] || phones[0]) out.contact = { email: emails[0], phone: phones[0] };
-  emails.slice(1).forEach((v, i) => { c.unmapped[`${path}/DaneKontaktowe/Email[${i + 2}]`] = v; });
-  phones.slice(1).forEach((v, i) => { c.unmapped[`${path}/DaneKontaktowe/Telefon[${i + 2}]`] = v; });
+  emails.slice(1).forEach((v, i) => {
+    c.unmapped[`${path}/DaneKontaktowe/Email[${i + 2}]`] = v;
+  });
+  phones.slice(1).forEach((v, i) => {
+    c.unmapped[`${path}/DaneKontaktowe/Telefon[${i + 2}]`] = v;
+  });
   for (const flag of ['JST', 'GV']) {
     const v = c.text(el, flag);
     if (v === '1') c.unmapped[`${path}/${flag}`] = v;
@@ -394,7 +505,11 @@ function faLine(c: Ctx, r: Element, isCorrection: boolean, hasBefore: boolean, e
       c.derive(`/lines/${lineNo}/netAmount`, 'P_11A (gross) minus P_11Vat');
     } else if (gross !== undefined) {
       net = gross;
-      c.warn('PL-LINE-GROSS-ONLY', `Line ${lineNo} states only the gross value (P_11A); it is carried in netAmount unchanged`, '/Faktura/Fa/FaWiersz/P_11A');
+      c.warn(
+        'PL-LINE-GROSS-ONLY',
+        `Line ${lineNo} states only the gross value (P_11A); it is carried in netAmount unchanged`,
+        '/Faktura/Fa/FaWiersz/P_11A',
+      );
     } else {
       net = AMOUNT_ZERO as never;
       c.warn('PL-LINE-NO-VALUE', `Line ${lineNo} has no P_11 or P_11A; netAmount set to 0.00`, '/Faktura/Fa/FaWiersz');
@@ -405,7 +520,11 @@ function faLine(c: Ctx, r: Element, isCorrection: boolean, hasBefore: boolean, e
   const discount = c.dec(r, 'P_10');
   const gtin = c.text(r, 'GTIN');
   const classifications: Line['item']['classifications'] = [];
-  for (const [tag, listId] of [['CN', 'PL:CN'], ['PKWiU', 'PL:PKWiU'], ['PKOB', 'PL:PKOB']] as const) {
+  for (const [tag, listId] of [
+    ['CN', 'PL:CN'],
+    ['PKWiU', 'PL:PKWiU'],
+    ['PKOB', 'PL:PKOB'],
+  ] as const) {
     const v = c.text(r, tag);
     if (v) classifications.push({ code: v, listId });
   }
@@ -443,7 +562,10 @@ function rrLine(c: Ctx, r: Element, isCorrection: boolean, hasBefore: boolean): 
   const rate = c.text(r, 'P_9');
   const gtin = c.text(r, 'GTIN');
   const classifications: Line['item']['classifications'] = [];
-  for (const [tag, listId] of [['CN', 'PL:CN'], ['PKWiU', 'PL:PKWiU']] as const) {
+  for (const [tag, listId] of [
+    ['CN', 'PL:CN'],
+    ['PKWiU', 'PL:PKWiU'],
+  ] as const) {
     const v = c.text(r, tag);
     if (v) classifications.push({ code: v, listId });
   }
@@ -482,8 +604,17 @@ function rrLine(c: Ctx, r: Element, isCorrection: boolean, hasBefore: boolean): 
 type TotalsResult = { totals: Totals; vatBreakdown: VatBreakdown[]; taxCurrency: string | undefined; signedTotal: string };
 
 function faTotals(c: Ctx, body: Element, lines: Line[], settlement: boolean, exemption: string | undefined): TotalsResult {
-  const lineRates = (codes: string[]) => [...new Set(lines.map((l) => l.vat?.nationalCode?.replace('PL:P_12:', '')).filter((x): x is string => !!x && codes.includes(x)))];
-  const xiiRates = [...new Set(lines.filter((l) => l.vat?.nationalCode === 'PL:P_12_XII').map((l) => l.vat?.rate).filter(Boolean))];
+  const lineRates = (codes: string[]) => [
+    ...new Set(lines.map((l) => l.vat?.nationalCode?.replace('PL:P_12:', '')).filter((x): x is string => !!x && codes.includes(x))),
+  ];
+  const xiiRates = [
+    ...new Set(
+      lines
+        .filter((l) => l.vat?.nationalCode === 'PL:P_12_XII')
+        .map((l) => l.vat?.rate)
+        .filter(Boolean),
+    ),
+  ];
   const vatBreakdown: VatBreakdown[] = [];
   let anyW = false;
   const wAmounts: string[] = [];
@@ -495,7 +626,12 @@ function faTotals(c: Ctx, body: Element, lines: Line[], settlement: boolean, exe
       taxAmount = AMOUNT_ZERO as never;
       if (b.tax) c.warn('PL-MISSING-TAX', `${b.n} is present without ${b.tax}; tax amount set to 0.00`);
     }
-    const row: VatBreakdown = { taxableAmount: taxable, taxAmount: taxAmount as never, categoryCode: b.category, nationalCode: `PL:${b.code}` };
+    const row: VatBreakdown = {
+      taxableAmount: taxable,
+      taxAmount: taxAmount as never,
+      categoryCode: b.category,
+      nationalCode: `PL:${b.code}`,
+    };
     if (b.rates) {
       const found = lineRates(b.rates);
       if (found.length === 1) row.rate = found[0] as never;
@@ -505,7 +641,11 @@ function faTotals(c: Ctx, body: Element, lines: Line[], settlement: boolean, exe
     } else if (b.zeroRate) row.rate = '0' as never;
     if (b.category === 'E' && exemption) row.exemptionReason = exemption;
     const w = b.tax ? c.dec(body, `${b.tax}W`) : undefined;
-    if (w !== undefined) { row.taxAmountInTaxCurrency = w; anyW = true; wAmounts.push(w); }
+    if (w !== undefined) {
+      row.taxAmountInTaxCurrency = w;
+      anyW = true;
+      wAmounts.push(w);
+    }
     vatBreakdown.push(row);
   }
   const taxExclusive = sum(vatBreakdown.map((v) => v.taxableAmount));
@@ -535,7 +675,8 @@ function rrTotals(c: Ctx, body: Element, lines: Line[]): TotalsResult {
   const net = c.dec(body, 'P_11_1');
   const refund = c.dec(body, 'P_11_2');
   const gross = c.dec(body, 'P_12_1');
-  if (net === undefined || refund === undefined || gross === undefined) throw new ParseError('FakturaRR totals (P_11_1, P_11_2, P_12_1) missing');
+  if (net === undefined || refund === undefined || gross === undefined)
+    throw new ParseError('FakturaRR totals (P_11_1, P_11_2, P_12_1) missing');
   const refundW = c.dec(body, 'P_11_2W');
   for (const tag of ['P_11_1W', 'P_12_1W']) {
     const v = c.text(body, tag);
@@ -550,7 +691,13 @@ function rrTotals(c: Ctx, body: Element, lines: Line[]): TotalsResult {
     vatBreakdown = rates.map((rate) => {
       const rows = base.filter((l) => l.vat?.rate === rate);
       const refunds = rows.map((l) => (l.national?.refundAmount as string | undefined) ?? '0');
-      return { taxableAmount: sum(rows.map((l) => l.netAmount)), taxAmount: sum(refunds), categoryCode: 'S', rate, nationalCode: `PL:RR:${rate}` } as VatBreakdown;
+      return {
+        taxableAmount: sum(rows.map((l) => l.netAmount)),
+        taxAmount: sum(refunds),
+        categoryCode: 'S',
+        rate,
+        nationalCode: `PL:RR:${rate}`,
+      } as VatBreakdown;
     });
     c.derive('/vatBreakdown', 'grouped by P_9 over the lines (FakturaRR has no per-rate totals)');
   } else {
@@ -586,7 +733,10 @@ function payment(c: Ctx, body: Element, isRR: boolean) {
   const other = c.text(pay, 'PlatnoscInna') === '1';
   const desc = c.text(pay, 'OpisPlatnosci');
   const accounts = c.all(pay, isRR ? 'RachunekBankowy1' : 'RachunekBankowy').map((a) => account(c, a));
-  if (isRR) c.all(pay, 'RachunekBankowy2').forEach((a, i) => { c.unmapped[`/Faktura/FakturaRR/Platnosc/RachunekBankowy2[${i + 1}]`] = c.text(a, 'NrRB') ?? ''; });
+  if (isRR)
+    c.all(pay, 'RachunekBankowy2').forEach((a, i) => {
+      c.unmapped[`/Faktura/FakturaRR/Platnosc/RachunekBankowy2[${i + 1}]`] = c.text(a, 'NrRB') ?? '';
+    });
   let means: PaymentInstructions | undefined;
   if (other) {
     means = { meansCode: 'ZZZ', meansText: desc, creditTransfers: accounts };
@@ -604,7 +754,9 @@ function payment(c: Ctx, body: Element, isRR: boolean) {
   const terms = c.all(pay, 'TerminPlatnosci').map((t): PaymentInstallment => {
     const termin = c.date(t, 'Termin', 'Termin');
     const opis = c.el(t, 'TerminOpis');
-    const description = opis ? [c.text(opis, 'Ilosc'), c.text(opis, 'Jednostka'), c.text(opis, 'ZdarzeniePoczatkowe')].filter(Boolean).join(' ') : undefined;
+    const description = opis
+      ? [c.text(opis, 'Ilosc'), c.text(opis, 'Jednostka'), c.text(opis, 'ZdarzeniePoczatkowe')].filter(Boolean).join(' ')
+      : undefined;
     return { ...(termin ? { dueDate: termin } : {}), ...(description ? { description } : {}) };
   });
   if (terms.length === 1 && terms[0].dueDate && !terms[0].description) dueDate = terms[0].dueDate;
@@ -615,7 +767,9 @@ function payment(c: Ctx, body: Element, isRR: boolean) {
     if (v) c.unmapped[`/Faktura/${bodyName(isRR)}/Platnosc/${tag}`] = v;
   }
   dump(c, c.el(pay, 'Skonto'), `/Faktura/${bodyName(isRR)}/Platnosc/Skonto`);
-  c.all(pay, 'ZaplataCzesciowa').forEach((z, i) => dump(c, z, `/Faktura/${bodyName(isRR)}/Platnosc/ZaplataCzesciowa[${i + 1}]`));
+  c.all(pay, 'ZaplataCzesciowa').forEach((z, i) => {
+    dump(c, z, `/Faktura/${bodyName(isRR)}/Platnosc/ZaplataCzesciowa[${i + 1}]`);
+  });
   const mark = c.text(pay, 'ZnacznikZaplatyCzesciowej');
   if (mark) c.unmapped[`/Faktura/${bodyName(isRR)}/Platnosc/ZnacznikZaplatyCzesciowej`] = mark;
   return { payments, paymentSchedule, dueDate };
@@ -626,14 +780,22 @@ function settlement_(c: Ctx, body: Element, totals: Totals, isRR: boolean): Deci
   const r = c.el(body, 'Rozliczenie');
   if (!r) return undefined;
   const base = `/Faktura/${bodyName(isRR)}/Rozliczenie`;
-  c.all(r, 'Obciazenia').forEach((o, i) => dump(c, o, `${base}/Obciazenia[${i + 1}]`));
-  c.all(r, 'Odliczenia').forEach((o, i) => dump(c, o, `${base}/Odliczenia[${i + 1}]`));
+  c.all(r, 'Obciazenia').forEach((o, i) => {
+    dump(c, o, `${base}/Obciazenia[${i + 1}]`);
+  });
+  c.all(r, 'Odliczenia').forEach((o, i) => {
+    dump(c, o, `${base}/Odliczenia[${i + 1}]`);
+  });
   const due = c.dec(r, 'DoZaplaty');
   const over = c.dec(r, 'DoRozliczenia');
   const computed = sub(totals.taxInclusive, totals.prepaid ?? '0');
   if (due !== undefined) {
     if (cmp(due, computed) !== 0) {
-      c.warn('PL-SETTLEMENT', `DoZaplaty ${due} differs from the invoice total less advances (${computed}) because of Obciazenia/Odliczenia; the stated amount to pay is used`, `${base}/DoZaplaty`);
+      c.warn(
+        'PL-SETTLEMENT',
+        `DoZaplaty ${due} differs from the invoice total less advances (${computed}) because of Obciazenia/Odliczenia; the stated amount to pay is used`,
+        `${base}/DoZaplaty`,
+      );
     }
     return due;
   }
@@ -648,7 +810,15 @@ function settlement_(c: Ctx, body: Element, totals: Totals, isRR: boolean): Deci
 // Extensions, helpers
 // ---------------------------------------------------------------------------------------
 
-function extensions(c: Ctx, root: Element, body: Element, isRR: boolean, kindCode: string, schemaVariant: string | undefined, selfBilled: boolean): PlExtension {
+function extensions(
+  c: Ctx,
+  root: Element,
+  body: Element,
+  isRR: boolean,
+  kindCode: string,
+  schemaVariant: string | undefined,
+  selfBilled: boolean,
+): PlExtension {
   const ext: PlExtension = { invoiceKind: kindCode, schemaVariant };
   if (!isRR) {
     const flag = (tag: string) => c.text(body, `Adnotacje/${tag}`) === '1';
@@ -659,8 +829,17 @@ function extensions(c: Ctx, root: Element, body: Element, isRR: boolean, kindCod
     const basis = exemptionText(c, body);
     if (basis) ext.exemptionBasis = basis;
     if (flag('PMarzy/P_PMarzy')) {
-      const kinds: [string, string][] = [['P_PMarzy_2', 'travel-agent'], ['P_PMarzy_3_1', 'used-goods'], ['P_PMarzy_3_2', 'works-of-art'], ['P_PMarzy_3_3', 'collectors-items-antiques']];
-      ext.marginScheme = kinds.filter(([t]) => flag(`PMarzy/${t}`)).map(([, k]) => k).join(',') || 'margin';
+      const kinds: [string, string][] = [
+        ['P_PMarzy_2', 'travel-agent'],
+        ['P_PMarzy_3_1', 'used-goods'],
+        ['P_PMarzy_3_2', 'works-of-art'],
+        ['P_PMarzy_3_3', 'collectors-items-antiques'],
+      ];
+      ext.marginScheme =
+        kinds
+          .filter(([t]) => flag(`PMarzy/${t}`))
+          .map(([, k]) => k)
+          .join(',') || 'margin';
     }
     if (c.text(root, 'Podmiot2/JST') === '1') ext.buyerIsLocalGovernmentUnit = true;
     if (c.text(root, 'Podmiot2/GV') === '1') ext.buyerIsVatGroupMember = true;
@@ -717,5 +896,8 @@ function negateForReduction(c: Ctx, inv: CanonicalInvoice): void {
     l.quantity = n(l.quantity);
     for (const a of l.allowances) a.amount = n(a.amount)!;
   }
-  c.derive('/totals', 'reduction correction: totals, VAT breakdown and delta lines negated to positive magnitudes, direction carried by kind=creditNote');
+  c.derive(
+    '/totals',
+    'reduction correction: totals, VAT breakdown and delta lines negated to positive magnitudes, direction carried by kind=creditNote',
+  );
 }

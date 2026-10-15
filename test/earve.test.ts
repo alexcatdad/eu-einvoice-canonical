@@ -1,5 +1,5 @@
-import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { convert, effectiveSign } from '../src/index.js';
 import { fixture, utf8 } from './helpers.js';
 
@@ -51,16 +51,24 @@ describe('e-arve 1.2: two invoices in one file', async () => {
 
   test('DEB: totals, VAT, payment', () => {
     assert.deepEqual(deb.totals, {
-      lineNetTotal: '130.00', taxExclusive: '130.00', vatTotal: '24.00', taxInclusive: '154.00', payable: '154.00',
+      lineNetTotal: '130.00',
+      taxExclusive: '130.00',
+      vatTotal: '24.00',
+      taxInclusive: '154.00',
+      payable: '154.00',
     });
     assert.deepEqual(deb.vatBreakdown, [
       { taxableAmount: '100.00', taxAmount: '24.00', categoryCode: 'S', rate: '24' },
       { taxableAmount: '30.00', taxAmount: '0.00', categoryCode: 'E', rate: '0' },
     ]);
-    assert.deepEqual(deb.payments, [{
-      meansCode: '30', meansText: 'Arve 2026-001', remittanceInformation: '20260013',
-      creditTransfers: [{ accountId: 'EE382200221020145685', accountName: 'Näidis OÜ', serviceProviderId: 'HABAEE2X' }],
-    }]);
+    assert.deepEqual(deb.payments, [
+      {
+        meansCode: '30',
+        meansText: 'Arve 2026-001',
+        remittanceInformation: '20260013',
+        creditTransfers: [{ accountId: 'EE382200221020145685', accountName: 'Näidis OÜ', serviceProviderId: 'HABAEE2X' }],
+      },
+    ]);
   });
 
   test('DEB: TAXEX maps to E without guessing; nothing warns', () => {
@@ -72,9 +80,15 @@ describe('e-arve 1.2: two invoices in one file', async () => {
   });
 
   test('DEB: embedded attachment', () => {
-    assert.deepEqual(deb.attachments, [{
-      kind: 'embedded', id: 'arve-2026-001.pdf', mimeCode: 'application/pdf', filename: 'arve-2026-001.pdf', base64: 'JVBERi0xLjQK',
-    }]);
+    assert.deepEqual(deb.attachments, [
+      {
+        kind: 'embedded',
+        id: 'arve-2026-001.pdf',
+        mimeCode: 'application/pdf',
+        filename: 'arve-2026-001.pdf',
+        base64: 'JVBERi0xLjQK',
+      },
+    ]);
   });
 
   test('DEB: lines', () => {
@@ -99,7 +113,11 @@ describe('e-arve 1.2: two invoices in one file', async () => {
     assert.deepEqual(cre.extensions.ee, { invoiceType: 'CRE' });
     assert.deepEqual(cre.additionalParties, []);
     assert.deepEqual(cre.totals, {
-      lineNetTotal: '50.00', taxExclusive: '50.00', vatTotal: '12.00', taxInclusive: '62.00', payable: '62.00',
+      lineNetTotal: '50.00',
+      taxExclusive: '50.00',
+      vatTotal: '12.00',
+      taxInclusive: '62.00',
+      payable: '62.00',
     });
     assert.deepEqual(cre.payments, []);
     assert.deepEqual(cre.source.warnings, []);
@@ -125,7 +143,13 @@ describe('e-arve 1.2: VAT ids, prepaid amount and rounding', async () => {
   test('NOTTAX is category O; TotalSum excludes Rounding; payable = TotalSum - prepaid + Rounding', () => {
     assert.deepEqual(inv?.vatBreakdown, [{ taxableAmount: '100.00', taxAmount: '0.00', categoryCode: 'O', rate: '0' }]);
     assert.deepEqual(inv?.totals, {
-      lineNetTotal: '100.00', taxExclusive: '100.00', vatTotal: '0.00', taxInclusive: '100.00', prepaid: '40.00', rounding: '0.01', payable: '60.01',
+      lineNetTotal: '100.00',
+      taxExclusive: '100.00',
+      vatTotal: '0.00',
+      taxInclusive: '100.00',
+      prepaid: '40.00',
+      rounding: '0.01',
+      payable: '60.01',
     });
     assert.deepEqual(inv?.source.warnings, []);
   });

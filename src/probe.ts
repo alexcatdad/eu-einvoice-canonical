@@ -6,10 +6,20 @@
 import { SaxesParser, type SaxesTagNS } from 'saxes';
 
 export type ProbeKey =
-  | 'ublCustomizationId' | 'ublProfileId' | 'ublVersionId'
-  | 'ciiGuidelineId' | 'ciiBusinessProcessId' | 'zf1GuidelineId'
-  | 'ksefFormCode' | 'eArveVersion' | 'facturaeSchemaVersion' | 'facturaeModality'
-  | 'fatturaTipoDocumento' | 'isdocDocumentType' | 'finvoiceTypeCode' | 'myDataInvoiceType';
+  | 'ublCustomizationId'
+  | 'ublProfileId'
+  | 'ublVersionId'
+  | 'ciiGuidelineId'
+  | 'ciiBusinessProcessId'
+  | 'zf1GuidelineId'
+  | 'ksefFormCode'
+  | 'eArveVersion'
+  | 'facturaeSchemaVersion'
+  | 'facturaeModality'
+  | 'fatturaTipoDocumento'
+  | 'isdocDocumentType'
+  | 'finvoiceTypeCode'
+  | 'myDataInvoiceType';
 
 const UBL_CBC = 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2';
 
@@ -72,7 +82,9 @@ export function probeXml(xml: string): XmlProbe | null {
   let hasDoctype = false;
 
   // saxes does not expand DTD entities or fetch external DTDs; this only records that one was declared.
-  parser.on('doctype', () => { hasDoctype = true; });
+  parser.on('doctype', () => {
+    hasDoctype = true;
+  });
 
   parser.on('opentag', (tag: SaxesTagNS) => {
     if (!probe) {
@@ -99,8 +111,12 @@ export function probeXml(xml: string): XmlProbe | null {
     }
     if (++count > MAX_ELEMENTS) throw new Stop();
   });
-  parser.on('text', (t) => { if (capture) capture.text += t; });
-  parser.on('cdata', (t) => { if (capture) capture.text += t; });
+  parser.on('text', (t) => {
+    if (capture) capture.text += t;
+  });
+  parser.on('cdata', (t) => {
+    if (capture) capture.text += t;
+  });
   parser.on('closetag', () => {
     if (capture && probe) {
       probe.values[capture.key] = capture.text.trim();

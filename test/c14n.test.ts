@@ -1,7 +1,7 @@
-import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { DOMParser } from '@xmldom/xmldom';
-import { canonicalize, type C14nOptions } from '../src/signature/c14n.js';
+import { type C14nOptions, canonicalize } from '../src/signature/c14n.js';
 
 const parse = (xml: string) => new DOMParser().parseFromString(xml, 'text/xml');
 const c14n = (xml: string, opts: Partial<C14nOptions> = {}, pick?: string) => {
@@ -11,19 +11,23 @@ const c14n = (xml: string, opts: Partial<C14nOptions> = {}, pick?: string) => {
 };
 
 describe('Canonical XML 1.0 (W3C REC examples, without DTD)', () => {
-  const ex31 = '<?xml version="1.0"?>\n\n<?xml-stylesheet   href="doc.xsl"\n   type="text/xsl"   ?>\n\n<doc>Hello, world!<!-- Comment 1 --></doc>\n\n<?pi-without-data     ?>\n\n<!-- Comment 2 -->\n\n<!-- Comment 3 -->';
+  const ex31 =
+    '<?xml version="1.0"?>\n\n<?xml-stylesheet   href="doc.xsl"\n   type="text/xsl"   ?>\n\n<doc>Hello, world!<!-- Comment 1 --></doc>\n\n<?pi-without-data     ?>\n\n<!-- Comment 2 -->\n\n<!-- Comment 3 -->';
 
   test('3.1 PIs and comments, comments omitted', () => {
     assert.equal(c14n(ex31), '<?xml-stylesheet href="doc.xsl"\n   type="text/xsl"   ?>\n<doc>Hello, world!</doc>\n<?pi-without-data?>');
   });
 
   test('3.1 PIs and comments, comments kept', () => {
-    assert.equal(c14n(ex31, { withComments: true }),
-      '<?xml-stylesheet href="doc.xsl"\n   type="text/xsl"   ?>\n<doc>Hello, world!<!-- Comment 1 --></doc>\n<?pi-without-data?>\n<!-- Comment 2 -->\n<!-- Comment 3 -->');
+    assert.equal(
+      c14n(ex31, { withComments: true }),
+      '<?xml-stylesheet href="doc.xsl"\n   type="text/xsl"   ?>\n<doc>Hello, world!<!-- Comment 1 --></doc>\n<?pi-without-data?>\n<!-- Comment 2 -->\n<!-- Comment 3 -->',
+    );
   });
 
   test('3.2 whitespace in document content is kept as is', () => {
-    const doc = '<doc>\n   <clean>   </clean>\n   <dirty>   A   B   </dirty>\n   <mixed>\n      A\n      <clean>   </clean>\n      B\n      <dirty>   A   B   </dirty>\n      C\n   </mixed>\n</doc>';
+    const doc =
+      '<doc>\n   <clean>   </clean>\n   <dirty>   A   B   </dirty>\n   <mixed>\n      A\n      <clean>   </clean>\n      B\n      <dirty>   A   B   </dirty>\n      C\n   </mixed>\n</doc>';
     assert.equal(c14n(doc), doc);
   });
 
@@ -51,8 +55,10 @@ Second line</text>
   });
 
   test('empty elements are expanded and attributes sorted (no namespace first, then by URI, then local name)', () => {
-    assert.equal(c14n('<r xmlns:a="urn:b" xmlns:b="urn:a"><x a:z="1" b:y="2" m="3" c="4"/></r>', {}, 'x'),
-      '<x xmlns:a="urn:b" xmlns:b="urn:a" c="4" m="3" b:y="2" a:z="1"></x>');
+    assert.equal(
+      c14n('<r xmlns:a="urn:b" xmlns:b="urn:a"><x a:z="1" b:y="2" m="3" c="4"/></r>', {}, 'x'),
+      '<x xmlns:a="urn:b" xmlns:b="urn:a" c="4" m="3" b:y="2" a:z="1"></x>',
+    );
   });
 
   test('inclusive: a subtree carries every in-scope namespace and inherited xml:* attributes', () => {
@@ -78,13 +84,17 @@ describe('Exclusive XML Canonicalization 1.0', () => {
 </n0:local>`;
 
   test('spec example: only visibly used namespaces, xml:lang not inherited from ancestors', () => {
-    assert.equal(c14n(spec, { exclusive: true }, 'n1:elem2'),
-      '<n1:elem2 xmlns:n1="http://example.net" xml:lang="en">\n    <n3:stuff xmlns:n3="ftp://example.org"></n3:stuff>\n  </n1:elem2>');
+    assert.equal(
+      c14n(spec, { exclusive: true }, 'n1:elem2'),
+      '<n1:elem2 xmlns:n1="http://example.net" xml:lang="en">\n    <n3:stuff xmlns:n3="ftp://example.org"></n3:stuff>\n  </n1:elem2>',
+    );
   });
 
   test('the same subtree canonicalised inclusively keeps all in-scope namespaces once', () => {
-    assert.equal(c14n(spec, {}, 'n1:elem2'),
-      '<n1:elem2 xmlns:n0="foo:bar" xmlns:n1="http://example.net" xmlns:n3="ftp://example.org" xml:lang="en">\n    <n3:stuff></n3:stuff>\n  </n1:elem2>');
+    assert.equal(
+      c14n(spec, {}, 'n1:elem2'),
+      '<n1:elem2 xmlns:n0="foo:bar" xmlns:n1="http://example.net" xmlns:n3="ftp://example.org" xml:lang="en">\n    <n3:stuff></n3:stuff>\n  </n1:elem2>',
+    );
   });
 
   test('an inherited xml:lang is not added to an exclusive subtree', () => {
@@ -95,7 +105,10 @@ describe('Exclusive XML Canonicalization 1.0', () => {
   test('InclusiveNamespaces PrefixList forces declarations that are not visibly used', () => {
     const xml = '<foo:Root xmlns:foo="urn:foo" xmlns:bar="urn:bar"><foo:Child/></foo:Root>';
     assert.equal(c14n(xml, { exclusive: true }), '<foo:Root xmlns:foo="urn:foo"><foo:Child></foo:Child></foo:Root>');
-    assert.equal(c14n(xml, { exclusive: true, inclusivePrefixes: ['bar'] }), '<foo:Root xmlns:bar="urn:bar" xmlns:foo="urn:foo"><foo:Child></foo:Child></foo:Root>');
+    assert.equal(
+      c14n(xml, { exclusive: true, inclusivePrefixes: ['bar'] }),
+      '<foo:Root xmlns:bar="urn:bar" xmlns:foo="urn:foo"><foo:Child></foo:Child></foo:Root>',
+    );
   });
 
   test('PrefixList #default emits the default namespace even when only prefixed names are used', () => {
@@ -114,8 +127,10 @@ describe('Exclusive XML Canonicalization 1.0', () => {
   });
 
   test('a namespace is redeclared once when a descendant rebinds the prefix', () => {
-    assert.equal(c14n('<a:r xmlns:a="urn:1"><a:x xmlns:a="urn:2"><a:y/></a:x></a:r>', { exclusive: true }),
-      '<a:r xmlns:a="urn:1"><a:x xmlns:a="urn:2"><a:y></a:y></a:x></a:r>');
+    assert.equal(
+      c14n('<a:r xmlns:a="urn:1"><a:x xmlns:a="urn:2"><a:y/></a:x></a:r>', { exclusive: true }),
+      '<a:r xmlns:a="urn:1"><a:x xmlns:a="urn:2"><a:y></a:y></a:x></a:r>',
+    );
   });
 });
 

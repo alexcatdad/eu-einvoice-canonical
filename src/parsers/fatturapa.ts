@@ -17,17 +17,40 @@
  */
 import type { Element } from '@xmldom/xmldom';
 import type {
-  Address, AllowanceCharge, Attachment, CanonicalInvoice, Decimal, Identifier, ItExtension, Line, Party, PaymentInstallment,
-  PaymentInstructions, Seller, Totals, VatBreakdown, VatInfo, Withholding,
+  Address,
+  AllowanceCharge,
+  Attachment,
+  CanonicalInvoice,
+  Decimal,
+  Identifier,
+  ItExtension,
+  Line,
+  Party,
+  PaymentInstallment,
+  PaymentInstructions,
+  Seller,
+  Totals,
+  VatBreakdown,
+  VatInfo,
+  Withholding,
 } from '../canonical.js';
 import { add, cmp, isZero, sub, sum } from '../values.js';
-import { Ctx, ParseError, finish, parseXml, sourceMeta } from './context.js';
+import { Ctx, finish, ParseError, parseXml, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 
-interface DocType { typeCode: string; credit: boolean; selfBilled: boolean; label: string }
+interface DocType {
+  typeCode: string;
+  credit: boolean;
+  selfBilled: boolean;
+  label: string;
+}
 
-const T = (typeCode: string, label: string, opts: { credit?: boolean; selfBilled?: boolean } = {}): DocType =>
-  ({ typeCode, label, credit: opts.credit ?? false, selfBilled: opts.selfBilled ?? false });
+const T = (typeCode: string, label: string, opts: { credit?: boolean; selfBilled?: boolean } = {}): DocType => ({
+  typeCode,
+  label,
+  credit: opts.credit ?? false,
+  selfBilled: opts.selfBilled ?? false,
+});
 
 /** TipoDocumento -> UNCL 1001. TD04 and TD08 are credit notes; the buyer-issued integrations and self-invoices map to 389. */
 const DOC_TYPES: Record<string, DocType> = {
@@ -41,7 +64,7 @@ const DOC_TYPES: Record<string, DocType> = {
   TD08: T('381', 'Nota di credito semplificata', { credit: true }),
   TD09: T('383', 'Nota di debito semplificata'),
   TD16: T('389', 'Integrazione fattura reverse charge interno', { selfBilled: true }),
-  TD17: T('389', 'Integrazione/autofattura per acquisto servizi dall\'estero', { selfBilled: true }),
+  TD17: T('389', "Integrazione/autofattura per acquisto servizi dall'estero", { selfBilled: true }),
   TD18: T('389', 'Integrazione per acquisto di beni intracomunitari', { selfBilled: true }),
   TD19: T('389', 'Integrazione/autofattura per acquisto di beni ex art. 17 c.2 DPR 633/72', { selfBilled: true }),
   TD20: T('389', 'Autofattura per regolarizzazione e integrazione delle fatture', { selfBilled: true }),
@@ -57,31 +80,62 @@ const DOC_TYPES: Record<string, DocType> = {
 
 /** Natura -> UNCL 5305. Sub-codes fall back to their group (N6.3 -> N6). */
 const NATURA: Record<string, string> = {
-  N1: 'O',                        // escluse ex art. 15
-  N2: 'O', 'N2.1': 'O', 'N2.2': 'O', // non soggette
-  N3: 'Z', 'N3.1': 'G', 'N3.2': 'K', 'N3.3': 'G', 'N3.4': 'G', 'N3.5': 'Z', 'N3.6': 'Z', // non imponibili
-  N4: 'E',                        // esenti
-  N5: 'E',                        // regime del margine
-  N6: 'AE',                       // reverse charge (N6.1 .. N6.9)
-  N7: 'O',                        // IVA assolta in altro stato UE
+  N1: 'O', // escluse ex art. 15
+  N2: 'O',
+  'N2.1': 'O',
+  'N2.2': 'O', // non soggette
+  N3: 'Z',
+  'N3.1': 'G',
+  'N3.2': 'K',
+  'N3.3': 'G',
+  'N3.4': 'G',
+  'N3.5': 'Z',
+  'N3.6': 'Z', // non imponibili
+  N4: 'E', // esenti
+  N5: 'E', // regime del margine
+  N6: 'AE', // reverse charge (N6.1 .. N6.9)
+  N7: 'O', // IVA assolta in altro stato UE
 };
 
 /** ModalitaPagamento -> UNCL 4461 (ZZZ where there is no equivalent), with the Italian label kept in meansText for those. */
 const PAYMENT_MEANS: Record<string, [code: string, label: string]> = {
-  MP01: ['10', 'Contanti'], MP02: ['20', 'Assegno'], MP03: ['23', 'Assegno circolare'], MP04: ['10', 'Contanti presso Tesoreria'],
-  MP05: ['30', 'Bonifico'], MP06: ['60', 'Vaglia cambiario'], MP07: ['ZZZ', 'Bollettino bancario'], MP08: ['48', 'Carta di pagamento'],
-  MP09: ['49', 'RID'], MP10: ['49', 'RID utenze'], MP11: ['49', 'RID veloce'], MP12: ['49', 'RIBA'],
-  MP13: ['ZZZ', 'MAV'], MP14: ['ZZZ', 'Quietanza erario'], MP15: ['30', 'Giroconto su conti di contabilità speciale'],
-  MP16: ['49', 'Domiciliazione bancaria'], MP17: ['49', 'Domiciliazione postale'], MP18: ['ZZZ', 'Bollettino di c/c postale'],
-  MP19: ['59', 'SEPA Direct Debit'], MP20: ['59', 'SEPA Direct Debit CORE'], MP21: ['59', 'SEPA Direct Debit B2B'],
-  MP22: ['ZZZ', 'Trattenuta su somme già riscosse'], MP23: ['ZZZ', 'PagoPA'],
+  MP01: ['10', 'Contanti'],
+  MP02: ['20', 'Assegno'],
+  MP03: ['23', 'Assegno circolare'],
+  MP04: ['10', 'Contanti presso Tesoreria'],
+  MP05: ['30', 'Bonifico'],
+  MP06: ['60', 'Vaglia cambiario'],
+  MP07: ['ZZZ', 'Bollettino bancario'],
+  MP08: ['48', 'Carta di pagamento'],
+  MP09: ['49', 'RID'],
+  MP10: ['49', 'RID utenze'],
+  MP11: ['49', 'RID veloce'],
+  MP12: ['49', 'RIBA'],
+  MP13: ['ZZZ', 'MAV'],
+  MP14: ['ZZZ', 'Quietanza erario'],
+  MP15: ['30', 'Giroconto su conti di contabilità speciale'],
+  MP16: ['49', 'Domiciliazione bancaria'],
+  MP17: ['49', 'Domiciliazione postale'],
+  MP18: ['ZZZ', 'Bollettino di c/c postale'],
+  MP19: ['59', 'SEPA Direct Debit'],
+  MP20: ['59', 'SEPA Direct Debit CORE'],
+  MP21: ['59', 'SEPA Direct Debit B2B'],
+  MP22: ['ZZZ', 'Trattenuta su somme già riscosse'],
+  MP23: ['ZZZ', 'PagoPA'],
 };
 
 const PAYMENT_TERMS: Record<string, string> = { TP01: 'Pagamento a rate', TP02: 'Pagamento completo', TP03: 'Anticipo' };
 
 const MIME: Record<string, string> = {
-  PDF: 'application/pdf', XML: 'application/xml', JPG: 'image/jpeg', JPEG: 'image/jpeg', PNG: 'image/png',
-  TXT: 'text/plain', CSV: 'text/csv', TIF: 'image/tiff', TIFF: 'image/tiff',
+  PDF: 'application/pdf',
+  XML: 'application/xml',
+  JPG: 'image/jpeg',
+  JPEG: 'image/jpeg',
+  PNG: 'image/png',
+  TXT: 'text/plain',
+  CSV: 'text/csv',
+  TIF: 'image/tiff',
+  TIFF: 'image/tiff',
 };
 
 export function parseFatturaPa(input: ParseInput): CanonicalInvoice[] {
@@ -120,11 +174,18 @@ function parseBody(c: Ctx, root: Element, body: Element, frag: string): Canonica
   const docType = documentType(c, c.text(dg, 'TipoDocumento'));
 
   unmapAll(c, header, '/FatturaElettronica/FatturaElettronicaHeader', [
-    'DatiTrasmissione/IdTrasmittente', 'DatiTrasmissione/ContattiTrasmittente', 'CedentePrestatore/StabileOrganizzazione',
-    'CedentePrestatore/RiferimentoAmministrazione', 'CessionarioCommittente/StabileOrganizzazione',
+    'DatiTrasmissione/IdTrasmittente',
+    'DatiTrasmissione/ContattiTrasmittente',
+    'CedentePrestatore/StabileOrganizzazione',
+    'CedentePrestatore/RiferimentoAmministrazione',
+    'CessionarioCommittente/StabileOrganizzazione',
   ]);
   unmapAll(c, body, frag, [
-    'DatiGenerali/DatiSAL', 'DatiGenerali/DatiTrasporto', 'DatiGenerali/FatturaPrincipale', 'DatiGenerali/DatiConvenzione', 'DatiVeicoli',
+    'DatiGenerali/DatiSAL',
+    'DatiGenerali/DatiTrasporto',
+    'DatiGenerali/FatturaPrincipale',
+    'DatiGenerali/DatiConvenzione',
+    'DatiVeicoli',
   ]);
 
   const seller = party(c, c.el(header, 'CedentePrestatore/DatiAnagrafici'), c.el(header, 'CedentePrestatore/Sede')) as Seller;
@@ -147,7 +208,12 @@ function parseBody(c: Ctx, root: Element, body: Element, frag: string): Canonica
 
   const additionalParties: CanonicalInvoice['additionalParties'] = [];
   const buyerRep = c.el(header, 'CessionarioCommittente/RappresentanteFiscale');
-  if (buyerRep) additionalParties.push({ role: 'buyer-tax-representative', sourceRole: 'IT:CessionarioCommittente/RappresentanteFiscale', party: party(c, buyerRep, undefined) });
+  if (buyerRep)
+    additionalParties.push({
+      role: 'buyer-tax-representative',
+      sourceRole: 'IT:CessionarioCommittente/RappresentanteFiscale',
+      party: party(c, buyerRep, undefined),
+    });
   const emitter = c.text(header, 'SoggettoEmittente');
   const third = c.el(header, 'TerzoIntermediarioOSoggettoEmittente/DatiAnagrafici');
   if (third) {
@@ -165,10 +231,13 @@ function parseBody(c: Ctx, root: Element, body: Element, frag: string): Canonica
   const summaries = c.all(body, 'DatiBeniServizi/DatiRiepilogo');
   if (summaries.length === 0) throw new ParseError('DatiRiepilogo (VAT summary) missing');
   const vatBreakdown = summaries.map((s) => summary(c, s));
-  const splitVat = summaries.filter((s) => c.text(s, 'EsigibilitaIVA') === 'S')
-    .map((s) => c.dec(s, 'Imposta') ?? ('0' as Decimal));
+  const splitVat = summaries.filter((s) => c.text(s, 'EsigibilitaIVA') === 'S').map((s) => c.dec(s, 'Imposta') ?? ('0' as Decimal));
   const chargeabilities = new Set(summaries.map((s) => c.text(s, 'EsigibilitaIVA')).filter(Boolean));
-  if (chargeabilities.size > 1) c.warn('IT_MIXED_ESIGIBILITA', `DatiRiepilogo mixes EsigibilitaIVA values (${[...chargeabilities].join(', ')}); extensions.it.vatChargeability left unset`);
+  if (chargeabilities.size > 1)
+    c.warn(
+      'IT_MIXED_ESIGIBILITA',
+      `DatiRiepilogo mixes EsigibilitaIVA values (${[...chargeabilities].join(', ')}); extensions.it.vatChargeability left unset`,
+    );
 
   // Allowances and charges
   const allowances: AllowanceCharge[] = [];
@@ -179,7 +248,11 @@ function parseBody(c: Ctx, root: Element, body: Element, frag: string): Canonica
     if (amount === undefined) {
       c.unmapped[`${frag}/DatiGenerali/DatiGeneraliDocumento/ScontoMaggiorazione[${n + 1}]`] =
         `${c.text(s, 'Tipo') ?? ''} ${percentage ?? ''}%`.trim();
-      c.warn('IT_DISCOUNT_WITHOUT_AMOUNT', 'Document-level ScontoMaggiorazione has no Importo; amount not derived', `${frag}/DatiGenerali/DatiGeneraliDocumento/ScontoMaggiorazione`);
+      c.warn(
+        'IT_DISCOUNT_WITHOUT_AMOUNT',
+        'Document-level ScontoMaggiorazione has no Importo; amount not derived',
+        `${frag}/DatiGenerali/DatiGeneraliDocumento/ScontoMaggiorazione`,
+      );
       return;
     }
     (c.text(s, 'Tipo') === 'MG' ? charges : allowances).push({ amount, percentage });
@@ -193,12 +266,20 @@ function parseBody(c: Ctx, root: Element, body: Element, frag: string): Canonica
     const rate = c.dec(k, 'AliquotaIVA');
     const taxable = c.dec(k, 'ImponibileCassa');
     charges.push({
-      amount, baseAmount: taxable, percentage: c.dec(k, 'AlCassa'), reason: `Cassa previdenziale ${type}`.trim(),
+      amount,
+      baseAmount: taxable,
+      percentage: c.dec(k, 'AlCassa'),
+      reason: `Cassa previdenziale ${type}`.trim(),
       vat: { categoryCode: vatCategory(c, rate, natura), rate, nationalCode: natura ? `IT:${natura}` : undefined },
     });
     pensionFunds.push({
-      type, rate: c.dec(k, 'AlCassa'), amount, taxableAmount: taxable, vatRate: rate,
-      subjectToWithholding: c.text(k, 'Ritenuta') ? c.text(k, 'Ritenuta') === 'SI' : undefined, nature: natura,
+      type,
+      rate: c.dec(k, 'AlCassa'),
+      amount,
+      taxableAmount: taxable,
+      vatRate: rate,
+      subjectToWithholding: c.text(k, 'Ritenuta') ? c.text(k, 'Ritenuta') === 'SI' : undefined,
+      nature: natura,
     });
   }
   summaries.forEach((s) => {
@@ -206,14 +287,23 @@ function parseBody(c: Ctx, root: Element, body: Element, frag: string): Canonica
     if (spese === undefined || isZero(spese)) return;
     const rate = c.dec(s, 'AliquotaIVA');
     const natura = c.text(s, 'Natura');
-    charges.push({ amount: spese, reason: 'Spese accessorie', vat: { categoryCode: vatCategory(c, rate, natura), rate, nationalCode: natura ? `IT:${natura}` : undefined } });
+    charges.push({
+      amount: spese,
+      reason: 'Spese accessorie',
+      vat: { categoryCode: vatCategory(c, rate, natura), rate, nationalCode: natura ? `IT:${natura}` : undefined },
+    });
   });
 
   // Withholdings and stamp duty
   const withholdings: Withholding[] = c.all(dg, 'DatiRitenuta').map((r) => {
     const amount = c.dec(r, 'ImportoRitenuta');
     if (amount === undefined) throw new ParseError('DatiRitenuta without ImportoRitenuta');
-    return { scheme: `IT:${c.text(r, 'TipoRitenuta') ?? 'RT'}`, rate: c.dec(r, 'AliquotaRitenuta'), amount, reasonCode: c.text(r, 'CausalePagamento') };
+    return {
+      scheme: `IT:${c.text(r, 'TipoRitenuta') ?? 'RT'}`,
+      rate: c.dec(r, 'AliquotaRitenuta'),
+      amount,
+      reasonCode: c.text(r, 'CausalePagamento'),
+    };
   });
   const bollo = c.el(dg, 'DatiBollo');
   const stamp = bollo ? c.dec(bollo, 'ImportoBollo') : undefined;
@@ -231,13 +321,20 @@ function parseBody(c: Ctx, root: Element, body: Element, frag: string): Canonica
   const withholdingTotal = withholdings.length ? sum(withholdings.map((w) => w.amount)) : undefined;
   const splitPaymentVat = splitVat.length ? sum(splitVat) : undefined;
   const gross = docTotal ?? add(taxInclusive, rounding ?? '0');
-  if (docTotal === undefined) c.derive('/totals/payable', 'taxInclusive + Arrotondamento - withholdings - split-payment VAT (ImportoTotaleDocumento absent)');
+  if (docTotal === undefined)
+    c.derive('/totals/payable', 'taxInclusive + Arrotondamento - withholdings - split-payment VAT (ImportoTotaleDocumento absent)');
   const payable = sub(sub(gross, withholdingTotal ?? '0'), splitPaymentVat ?? '0');
   const totals: Totals = {
     lineNetTotal,
     allowanceTotal: allowances.length ? sum(allowances.map((a) => a.amount)) : undefined,
     chargeTotal: charges.length ? sum(charges.map((a) => a.amount)) : undefined,
-    taxExclusive, vatTotal, taxInclusive, rounding, withholdingTotal, splitPaymentVat, payable,
+    taxExclusive,
+    vatTotal,
+    taxInclusive,
+    rounding,
+    withholdingTotal,
+    splitPaymentVat,
+    payable,
   };
 
   const otherTaxes: CanonicalInvoice['otherTaxes'] = [];
@@ -245,7 +342,11 @@ function parseBody(c: Ctx, root: Element, body: Element, frag: string): Canonica
     // Bollo charged to the buyer normally travels as an N1 line, so it is already in the VAT base. When
     // ImportoTotaleDocumento exceeds the VAT-inclusive total by exactly the stamp, it is on top.
     const extra = docTotal !== undefined && !isZero(stamp) && cmp(sub(docTotal, add(taxInclusive, rounding ?? '0')), stamp) === 0;
-    if (extra) c.warn('IT_BOLLO_ON_TOP', 'ImportoTotaleDocumento includes the stamp duty on top of the VAT-inclusive total; taxInclusive excludes it');
+    if (extra)
+      c.warn(
+        'IT_BOLLO_ON_TOP',
+        'ImportoTotaleDocumento includes the stamp duty on top of the VAT-inclusive total; taxInclusive excludes it',
+      );
     otherTaxes.push({ scheme: 'IT:BOLLO', amount: stamp, includedInTotal: !extra, inTaxExclusive: !extra });
   }
 
@@ -282,7 +383,10 @@ function parseBody(c: Ctx, root: Element, body: Element, frag: string): Canonica
     purchaseOrderRef: idRef(orders),
     contractRef: idRef(contracts),
     receivingAdviceRef: idRef(c.all(body, 'DatiGenerali/DatiRicezione')),
-    despatchAdviceRef: c.all(body, 'DatiGenerali/DatiDDT').map((e) => c.text(e, 'NumeroDDT')).find(Boolean),
+    despatchAdviceRef: c
+      .all(body, 'DatiGenerali/DatiDDT')
+      .map((e) => c.text(e, 'NumeroDDT'))
+      .find(Boolean),
     paymentTerms: terms.length ? terms.join('; ') : undefined,
     notes: [],
     specificationId: '',
@@ -333,7 +437,10 @@ function flatten(e: Element): string {
   const walk = (n: Element) => {
     let hasChild = false;
     for (let ch = n.firstChild; ch; ch = ch.nextSibling) {
-      if (ch.nodeType === 1) { hasChild = true; walk(ch as Element); }
+      if (ch.nodeType === 1) {
+        hasChild = true;
+        walk(ch as Element);
+      }
     }
     const t = n.textContent?.trim();
     if (!hasChild && t) out.push(n === e ? t : `${n.localName}: ${t}`);
@@ -412,7 +519,8 @@ function summary(c: Ctx, s: Element): VatBreakdown {
   const rate = c.dec(s, 'AliquotaIVA');
   const natura = c.text(s, 'Natura');
   return {
-    taxableAmount, taxAmount,
+    taxableAmount,
+    taxAmount,
     categoryCode: vatCategory(c, rate, natura),
     rate,
     exemptionReason: c.text(s, 'RiferimentoNormativo'),
@@ -444,12 +552,18 @@ function line(c: Ctx, l: Element): Line {
     const tipo = c.text(s, 'Tipo') ?? '';
     const amount = c.dec(s, 'Importo');
     const percentage = c.dec(s, 'Percentuale');
-    if (amount === undefined) { unstructured.push(`${tipo} ${percentage ?? ''}%`.trim()); continue; }
+    if (amount === undefined) {
+      unstructured.push(`${tipo} ${percentage ?? ''}%`.trim());
+      continue;
+    }
     (tipo === 'MG' ? charges : allowances).push({ amount, percentage });
   }
   if (unstructured.length) national.ScontoMaggiorazione = unstructured;
 
-  const codes = c.all(l, 'CodiceArticolo').map((k) => ({ type: c.text(k, 'CodiceTipo') ?? '', value: c.text(k, 'CodiceValore') ?? '' })).filter((k) => k.value);
+  const codes = c
+    .all(l, 'CodiceArticolo')
+    .map((k) => ({ type: c.text(k, 'CodiceTipo') ?? '', value: c.text(k, 'CodiceValore') ?? '' }))
+    .filter((k) => k.value);
   const gtin = codes.find((k) => /^(EAN|GTIN)/i.test(k.type));
   const others = codes.filter((k) => k !== gtin);
   const start = c.date(l, 'DataInizioPeriodo', 'line period start');
@@ -490,7 +604,15 @@ function paymentData(c: Ctx, body: Element, frag: string) {
     const iban = c.text(d, 'IBAN');
     const bic = c.text(d, 'BIC');
     const base = `${frag}/DatiPagamento/DettaglioPagamento[${n}]`;
-    for (const k of ['IstitutoFinanziario', 'ABI', 'CAB', 'ScontoPagamentoAnticipato', 'DataLimitePagamentoAnticipato', 'PenalitaPagamentiRitardati', 'DataDecorrenzaPenale']) {
+    for (const k of [
+      'IstitutoFinanziario',
+      'ABI',
+      'CAB',
+      'ScontoPagamentoAnticipato',
+      'DataLimitePagamentoAnticipato',
+      'PenalitaPagamentiRitardati',
+      'DataDecorrenzaPenale',
+    ]) {
       const v = c.text(d, k);
       if (v) c.unmapped[`${base}/${k}`] = v;
     }
@@ -524,14 +646,19 @@ function attachment(c: Ctx, a: Element): Attachment {
   const name = c.text(a, 'NomeAttachment') ?? '';
   const format = c.text(a, 'FormatoAttachment');
   const compression = c.text(a, 'AlgoritmoCompressione');
-  if (compression) c.warn('IT_ATTACHMENT_COMPRESSED', `Attachment "${name}" is compressed (${compression}); base64 holds the compressed bytes`);
+  if (compression)
+    c.warn('IT_ATTACHMENT_COMPRESSED', `Attachment "${name}" is compressed (${compression}); base64 holds the compressed bytes`);
   let mimeCode = format ? MIME[format.toUpperCase()] : undefined;
   if (!mimeCode) {
     if (format) c.warn('IT_ATTACHMENT_FORMAT', `FormatoAttachment "${format}" has no known MIME type; set to application/octet-stream`);
     mimeCode = 'application/octet-stream';
   }
   return {
-    kind: 'embedded', id: name, description: c.text(a, 'DescrizioneAttachment'), mimeCode, filename: name,
+    kind: 'embedded',
+    id: name,
+    description: c.text(a, 'DescrizioneAttachment'),
+    mimeCode,
+    filename: name,
     base64: (c.el(a, 'Attachment')?.textContent ?? '').replace(/\s+/g, ''),
   };
 }
@@ -548,7 +675,10 @@ function parseSimplifiedBody(c: Ctx, root: Element, body: Element, frag: string)
   if (!dg || !id || !issueDate) throw new ParseError('Invoice number (Numero) or date (Data) missing');
   const docType = documentType(c, c.text(dg, 'TipoDocumento'));
   let currency = c.text(dg, 'Divisa');
-  if (!currency) { currency = 'EUR'; c.derive('/currency', 'Divisa absent in FSM10; EUR assumed'); }
+  if (!currency) {
+    currency = 'EUR';
+    c.derive('/currency', 'Divisa absent in FSM10; EUR assumed');
+  }
 
   const sellerEl = c.el(header, 'CedentePrestatore');
   const seller = party(c, sellerEl, c.el(sellerEl, 'Sede')) as Seller;
@@ -568,7 +698,11 @@ function parseSimplifiedBody(c: Ctx, root: Element, body: Element, frag: string)
     const natura = c.text(b, 'Natura');
     const reference = c.text(b, 'RiferimentoNormativo');
     if (imposta === undefined && !natura && (rate === undefined || !isZero(rate))) {
-      c.warn('IT_FSM_VAT_AMOUNT_MISSING', `DatiBeniServizi ${n + 1} has no Imposta; Importo taken as net`, `${frag}/DatiBeniServizi[${n + 1}]`);
+      c.warn(
+        'IT_FSM_VAT_AMOUNT_MISSING',
+        `DatiBeniServizi ${n + 1} has no Imposta; Importo taken as net`,
+        `${frag}/DatiBeniServizi[${n + 1}]`,
+      );
     }
     const tax = imposta ?? ('0' as Decimal);
     const net = sub(importo, tax);
@@ -578,7 +712,8 @@ function parseSimplifiedBody(c: Ctx, root: Element, body: Element, frag: string)
     lines.push({
       id: String(n + 1),
       netAmount: net,
-      allowances: [], charges: [],
+      allowances: [],
+      charges: [],
       vat,
       item: { name: c.texts(b, 'Descrizione').join('\n'), classifications: [], attributes: [] },
     });
@@ -587,7 +722,10 @@ function parseSimplifiedBody(c: Ctx, root: Element, body: Element, frag: string)
     breakdown.set(key, {
       taxableAmount: add(prev?.taxableAmount ?? '0', net),
       taxAmount: add(prev?.taxAmount ?? '0', tax),
-      categoryCode: vat.categoryCode, rate, exemptionReason: reference, nationalCode: vat.nationalCode,
+      categoryCode: vat.categoryCode,
+      rate,
+      exemptionReason: reference,
+      nationalCode: vat.nationalCode,
     });
   });
   if (lines.length === 0) throw new ParseError('DatiBeniServizi missing');
@@ -621,15 +759,22 @@ function parseSimplifiedBody(c: Ctx, root: Element, body: Element, frag: string)
     currency,
     notes: [],
     specificationId: '',
-    precedingInvoices: rectified && c.text(rectified, 'NumeroFR')
-      ? [{ id: c.text(rectified, 'NumeroFR') ?? '', issueDate: c.date(rectified, 'DataFR', 'BT-26') }] : [],
+    precedingInvoices:
+      rectified && c.text(rectified, 'NumeroFR')
+        ? [{ id: c.text(rectified, 'NumeroFR') ?? '', issueDate: c.date(rectified, 'DataFR', 'BT-26') }]
+        : [],
     seller,
     buyer,
     additionalParties: [],
-    payments: [], paymentSchedule: [], allowances: [], charges: [],
+    payments: [],
+    paymentSchedule: [],
+    allowances: [],
+    charges: [],
     totals,
     vatBreakdown: [...breakdown.values()],
-    otherTaxes: [], withholdings: [], attachments: [],
+    otherTaxes: [],
+    withholdings: [],
+    attachments: [],
     lines,
     clearance: [],
     extensions: { it },

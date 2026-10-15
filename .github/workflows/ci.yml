@@ -22,6 +22,8 @@ jobs:
         with:
           bun-version: 1.4.2
       - run: bun install --frozen-lockfile
+      - name: Lint and formatting (Biome)
+        run: bun run lint:ci
       - name: Typecheck
         run: bun run typecheck
       - name: Verify the pinned validator bundles

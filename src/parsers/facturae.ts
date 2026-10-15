@@ -22,35 +22,119 @@
  */
 import type { Element } from '@xmldom/xmldom';
 import type {
-  AllowanceCharge, Attachment, CanonicalInvoice, Contact, Decimal, Line, OtherTax, Party,
-  PaymentInstallment, PaymentInstructions, Period, Seller, Totals, VatBreakdown, VatInfo, Withholding,
+  AllowanceCharge,
+  Attachment,
+  CanonicalInvoice,
+  Contact,
+  Decimal,
+  Line,
+  OtherTax,
+  Party,
+  PaymentInstallment,
+  PaymentInstructions,
+  Period,
+  Seller,
+  Totals,
+  VatBreakdown,
+  VatInfo,
+  Withholding,
 } from '../canonical.js';
 import { add, isZero, neg, sign, sub, sum } from '../values.js';
-import { Ctx, ParseError, finish, parseXml, sourceMeta } from './context.js';
+import { Ctx, finish, ParseError, parseXml, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 
 /** ISO 3166-1 alpha-3 (used by Facturae) -> alpha-2. */
 const COUNTRY3: Record<string, string> = {
-  AUT: 'AT', BEL: 'BE', BGR: 'BG', HRV: 'HR', CYP: 'CY', CZE: 'CZ', DNK: 'DK', EST: 'EE', FIN: 'FI', FRA: 'FR',
-  DEU: 'DE', GRC: 'GR', HUN: 'HU', IRL: 'IE', ITA: 'IT', LVA: 'LV', LTU: 'LT', LUX: 'LU', MLT: 'MT', NLD: 'NL',
-  POL: 'PL', PRT: 'PT', ROU: 'RO', SVK: 'SK', SVN: 'SI', ESP: 'ES', SWE: 'SE',
-  GBR: 'GB', CHE: 'CH', NOR: 'NO', ISL: 'IS', LIE: 'LI', AND: 'AD', USA: 'US', CAN: 'CA', MEX: 'MX', BRA: 'BR',
-  ARG: 'AR', CHN: 'CN', JPN: 'JP', IND: 'IN', MAR: 'MA', AUS: 'AU', TUR: 'TR', UKR: 'UA',
+  AUT: 'AT',
+  BEL: 'BE',
+  BGR: 'BG',
+  HRV: 'HR',
+  CYP: 'CY',
+  CZE: 'CZ',
+  DNK: 'DK',
+  EST: 'EE',
+  FIN: 'FI',
+  FRA: 'FR',
+  DEU: 'DE',
+  GRC: 'GR',
+  HUN: 'HU',
+  IRL: 'IE',
+  ITA: 'IT',
+  LVA: 'LV',
+  LTU: 'LT',
+  LUX: 'LU',
+  MLT: 'MT',
+  NLD: 'NL',
+  POL: 'PL',
+  PRT: 'PT',
+  ROU: 'RO',
+  SVK: 'SK',
+  SVN: 'SI',
+  ESP: 'ES',
+  SWE: 'SE',
+  GBR: 'GB',
+  CHE: 'CH',
+  NOR: 'NO',
+  ISL: 'IS',
+  LIE: 'LI',
+  AND: 'AD',
+  USA: 'US',
+  CAN: 'CA',
+  MEX: 'MX',
+  BRA: 'BR',
+  ARG: 'AR',
+  CHN: 'CN',
+  JPN: 'JP',
+  IND: 'IN',
+  MAR: 'MA',
+  AUS: 'AU',
+  TUR: 'TR',
+  UKR: 'UA',
 };
 
 /** Facturae UnitOfMeasure -> UN/ECE Rec 20/21. Codes without a certain match (05 other, 07 trays...) stay in `unitText`. */
 const UNITS: Record<string, string> = {
-  '01': 'H87', '02': 'HUR', '03': 'KGM', '04': 'LTR', '06': 'XBX', '15': 'CLT', '16': 'CMT', '18': 'DZN',
-  '21': 'GRM', '22': 'KMT', '25': 'MTR', '26': 'MMT', '33': 'MTQ', '34': 'SEC', '35': 'WTT', '36': 'KWH',
+  '01': 'H87',
+  '02': 'HUR',
+  '03': 'KGM',
+  '04': 'LTR',
+  '06': 'XBX',
+  '15': 'CLT',
+  '16': 'CMT',
+  '18': 'DZN',
+  '21': 'GRM',
+  '22': 'KMT',
+  '25': 'MTR',
+  '26': 'MMT',
+  '33': 'MTQ',
+  '34': 'SEC',
+  '35': 'WTT',
+  '36': 'KWH',
 };
 
 /** Facturae PaymentMeans -> UNCL 4461; the rest become ZZZ with the Facturae label in `meansText`. */
 const MEANS: Record<string, string> = {
-  '01': '10', '02': '49', '04': '30', '09': '60', '10': '60', '11': '20', '16': '25', '17': '21', '19': '48',
+  '01': '10',
+  '02': '49',
+  '04': '30',
+  '09': '60',
+  '10': '60',
+  '11': '20',
+  '16': '25',
+  '17': '21',
+  '19': '48',
 };
 const MEANS_LABEL: Record<string, string> = {
-  '03': 'Recibo', '05': 'Aceptación de efecto', '06': 'Crédito documentario', '07': 'Contrato adjudicación', '08': 'Letra de cambio',
-  '12': 'Pago por cuenta ajena', '13': 'Pago especial', '14': 'Compensación', '15': 'Giro postal', '18': 'Contra reembolso',
+  '03': 'Recibo',
+  '05': 'Aceptación de efecto',
+  '06': 'Crédito documentario',
+  '07': 'Contrato adjudicación',
+  '08': 'Letra de cambio',
+  '12': 'Pago por cuenta ajena',
+  '13': 'Pago especial',
+  '14': 'Compensación',
+  '15': 'Giro postal',
+  '18': 'Contra reembolso',
 };
 
 const TAX_VAT_LIKE = new Set(['01', '02', '03']);
@@ -66,7 +150,9 @@ export function parseFacturae(input: ParseInput): CanonicalInvoice[] {
 function invoice(input: ParseInput, root: Element, inv: Element, index: number, count: number): CanonicalInvoice {
   const c = new Ctx({});
   const base = `/Facturae/Invoices/Invoice[${index + 1}]`;
-  const unm = (path: string, value: string | undefined) => { if (value !== undefined) c.unmapped[path] = value; };
+  const unm = (path: string, value: string | undefined) => {
+    if (value !== undefined) c.unmapped[path] = value;
+  };
 
   // --- header ----------------------------------------------------------------
   const header = c.el(inv, 'InvoiceHeader');
@@ -93,7 +179,10 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number, 
   const flip = isCorrective && sign(rawTotal) < 0;
   if (flip) {
     c.derive('/kind', 'Corrective invoice with negative InvoiceTotal: a reduction, so kind is creditNote (CreditNote typeCode 381)');
-    c.derive('/totals', 'Amounts and quantities of the negative corrective invoice negated, so the credit note carries positive magnitudes');
+    c.derive(
+      '/totals',
+      'Amounts and quantities of the negative corrective invoice negated, so the credit note carries positive magnitudes',
+    );
   } else if (isCorrective) {
     c.derive('/kind', 'Corrective invoice with non-negative InvoiceTotal: an increase, so kind is invoice (typeCode 384)');
   }
@@ -117,23 +206,34 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number, 
   if (registration) {
     const parts = [
       c.text(registration, 'RegisterOfCompaniesLocation'),
-      ...(['Book', 'Sheet', 'Folio', 'Section', 'Volume'] as const).map((k) => { const v = c.text(registration, k); return v ? `${k} ${v}` : undefined; }),
+      ...(['Book', 'Sheet', 'Folio', 'Section', 'Volume'] as const).map((k) => {
+        const v = c.text(registration, k);
+        return v ? `${k} ${v}` : undefined;
+      }),
       c.text(registration, 'AdditionalRegistrationData'),
     ].filter(Boolean);
     if (parts.length) seller.additionalLegalInfo = parts.join(', ');
   }
-  const centres = c.all(buyerEl, 'AdministrativeCentres/AdministrativeCentre').map((a) => ({
-    roleCode: c.text(a, 'RoleTypeCode') ?? '',
-    code: c.text(a, 'CentreCode') ?? '',
-    name: c.text(a, 'CentreDescription') ?? c.text(a, 'Name'),
-  })).filter((a) => a.code);
+  const centres = c
+    .all(buyerEl, 'AdministrativeCentres/AdministrativeCentre')
+    .map((a) => ({
+      roleCode: c.text(a, 'RoleTypeCode') ?? '',
+      code: c.text(a, 'CentreCode') ?? '',
+      name: c.text(a, 'CentreDescription') ?? c.text(a, 'Name'),
+    }))
+    .filter((a) => a.code);
   for (const a of c.all(sellerEl, 'AdministrativeCentres/AdministrativeCentre')) {
     unm(`/Facturae/Parties/SellerParty/AdministrativeCentres/${c.text(a, 'RoleTypeCode') ?? '?'}`, c.text(a, 'CentreCode'));
   }
 
   const additionalParties = [] as CanonicalInvoice['additionalParties'];
   const third = c.el(fileHeader, 'ThirdParty');
-  if (third) additionalParties.push({ role: 'third-party', sourceRole: 'ES:ThirdParty', party: party(c, third, 'third', '/Facturae/FileHeader/ThirdParty', false) });
+  if (third)
+    additionalParties.push({
+      role: 'third-party',
+      sourceRole: 'ES:ThirdParty',
+      party: party(c, third, 'third', '/Facturae/FileHeader/ThirdParty', false),
+    });
   const issuerType = c.text(fileHeader, 'InvoiceIssuerType');
   if (issuerType && issuerType !== 'EM') unm('/Facturae/FileHeader/InvoiceIssuerType', issuerType);
   const selfBilled = docType === 'AF' || issuerType === 'RE';
@@ -161,15 +261,26 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number, 
       const cat = category(type, rate, event);
       const inTaxCurrency = m(t, 'TaxAmount/EquivalentInEuros');
       vatBreakdown.push({
-        taxableAmount: taxable, taxAmount: amount, categoryCode: cat, rate,
-        exemptionReason: event?.reason, taxAmountInTaxCurrency: inTaxCurrency, nationalCode: `ES:${type}`,
+        taxableAmount: taxable,
+        taxAmount: amount,
+        categoryCode: cat,
+        rate,
+        exemptionReason: event?.reason,
+        taxAmountInTaxCurrency: inTaxCurrency,
+        nationalCode: `ES:${type}`,
       });
     } else {
       otherTaxes.push({ scheme: `ES:TAX:${type}`, taxableAmount: taxable, rate, amount, includedInTotal: true });
     }
     const reAmount = m(t, 'EquivalenceSurchargeAmount');
     if (reAmount !== undefined) {
-      otherTaxes.push({ scheme: 'ES:RE', taxableAmount: taxable, rate: c.dec(t, 'EquivalenceSurcharge'), amount: reAmount, includedInTotal: true });
+      otherTaxes.push({
+        scheme: 'ES:RE',
+        taxableAmount: taxable,
+        rate: c.dec(t, 'EquivalenceSurcharge'),
+        amount: reAmount,
+        includedInTotal: true,
+      });
     }
   }
 
@@ -178,7 +289,12 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number, 
   for (const w of c.all(totalsEl, 'AmountsWithheld')) {
     const amount = m(w, 'WithholdingAmount');
     if (amount === undefined) continue;
-    withholdings.push({ scheme: 'ES:CONTRACT-RETENTION', rate: c.dec(w, 'WithholdingRate'), amount, reasonCode: c.text(w, 'WithholdingReason') });
+    withholdings.push({
+      scheme: 'ES:CONTRACT-RETENTION',
+      rate: c.dec(w, 'WithholdingRate'),
+      amount,
+      reasonCode: c.text(w, 'WithholdingReason'),
+    });
   }
 
   // --- totals ----------------------------------------------------------------
@@ -197,13 +313,20 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number, 
   const headerWithheld = m(totalsEl, 'TotalTaxesWithheld');
   const invoiceTotal = flip ? neg(rawTotal) : rawTotal;
   const taxInclusive = headerWithheld !== undefined && !isZero(headerWithheld) ? add(invoiceTotal, headerWithheld) : invoiceTotal;
-  if (taxInclusive !== invoiceTotal) c.derive('/totals/taxInclusive', 'InvoiceTotal + TotalTaxesWithheld: Facturae InvoiceTotal is already net of withheld taxes');
+  if (taxInclusive !== invoiceTotal)
+    c.derive('/totals/taxInclusive', 'InvoiceTotal + TotalTaxesWithheld: Facturae InvoiceTotal is already net of withheld taxes');
 
   const executable = m(totalsEl, 'TotalExecutableAmount');
   const outstanding = m(totalsEl, 'TotalOutstandingAmount');
   const payable = executable ?? outstanding ?? invoiceTotal;
-  c.derive('/totals/payable', executable !== undefined ? 'TotalExecutableAmount'
-    : outstanding !== undefined ? 'TotalOutstandingAmount (TotalExecutableAmount absent)' : 'InvoiceTotal (TotalOutstandingAmount and TotalExecutableAmount absent)');
+  c.derive(
+    '/totals/payable',
+    executable !== undefined
+      ? 'TotalExecutableAmount'
+      : outstanding !== undefined
+        ? 'TotalOutstandingAmount (TotalExecutableAmount absent)'
+        : 'InvoiceTotal (TotalOutstandingAmount and TotalExecutableAmount absent)',
+  );
   if (outstanding !== undefined && executable !== undefined && outstanding !== executable) {
     unm(`${base}/InvoiceTotals/TotalOutstandingAmount`, outstanding);
   }
@@ -211,11 +334,19 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number, 
     const v = c.dec(totalsEl, k);
     if (v !== undefined && !isZero(v)) {
       unm(`${base}/InvoiceTotals/${k}`, v);
-      c.warn('ES-TOTAL-UNMAPPED', `${k} ${v} has no EN 16931 equivalent and is not part of the mapped totals`, `${base}/InvoiceTotals/${k}`);
+      c.warn(
+        'ES-TOTAL-UNMAPPED',
+        `${k} ${v} has no EN 16931 equivalent and is not part of the mapped totals`,
+        `${base}/InvoiceTotals/${k}`,
+      );
     }
   }
-  const withholdingTotal = withholdings.length > 0 ? sum(withholdings.map((w) => w.amount))
-    : headerWithheld !== undefined && !isZero(headerWithheld) ? headerWithheld : undefined;
+  const withholdingTotal =
+    withholdings.length > 0
+      ? sum(withholdings.map((w) => w.amount))
+      : headerWithheld !== undefined && !isZero(headerWithheld)
+        ? headerWithheld
+        : undefined;
 
   const allowances = discounts(c, totalsEl, 'GeneralDiscounts/Discount', 'Discount', m);
   const charges = discounts(c, totalsEl, 'GeneralSurcharges/Charge', 'Charge', m);
@@ -238,7 +369,8 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number, 
   const refs = (get: (l: Element) => string[]) => {
     const per = lineEls.map(get);
     const all = [...new Set(per.flat())];
-    if (all.length > 1) c.warn('ES-REF-MULTIPLE', `Lines carry ${all.length} different values (${all.join(', ')}); document-level reference left empty`);
+    if (all.length > 1)
+      c.warn('ES-REF-MULTIPLE', `Lines carry ${all.length} different values (${all.join(', ')}); document-level reference left empty`);
     return all.length === 1 && per.every((p) => p.length > 0) ? all[0] : undefined;
   };
   const contractRef = refs((l) => c.texts(l, 'IssuerContractReference').concat(c.texts(l, 'ReceiverContractReference')).slice(0, 1));
@@ -260,20 +392,31 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number, 
     unm(`${base}/InvoiceHeader/Corrective/CorrectionMethodDescription`, c.text(corrective, 'CorrectionMethodDescription'));
     unm(`${base}/InvoiceHeader/Corrective/AdditionalReasonDescription`, c.text(corrective, 'AdditionalReasonDescription'));
     if (method === '01') {
-      c.warn('ES-CORRECTION-REPLACES', 'CorrectionMethod 01 (rectificación íntegra): the amounts are those of the whole corrected invoice, not a difference', `${base}/InvoiceHeader/Corrective`);
+      c.warn(
+        'ES-CORRECTION-REPLACES',
+        'CorrectionMethod 01 (rectificación íntegra): the amounts are those of the whole corrected invoice, not a difference',
+        `${base}/InvoiceHeader/Corrective`,
+      );
     }
   } else if (isCorrective) {
-    c.warn('ES-CORRECTIVE-NO-REFERENCE', 'Corrective invoice (class OR/CR) without a Corrective element: the corrected invoice is not identified', `${base}/InvoiceHeader`);
+    c.warn(
+      'ES-CORRECTIVE-NO-REFERENCE',
+      'Corrective invoice (class OR/CR) without a Corrective element: the corrected invoice is not identified',
+      `${base}/InvoiceHeader`,
+    );
   }
   if (invClass === 'CO' || invClass === 'CR' || invClass === 'CC') {
-    c.warn('ES-COPY', `InvoiceClass ${invClass} marks a copy of an invoice already issued; do not post it twice`, `${base}/InvoiceHeader/InvoiceClass`);
+    c.warn(
+      'ES-COPY',
+      `InvoiceClass ${invClass} marks a copy of an invoice already issued; do not post it twice`,
+      `${base}/InvoiceHeader/InvoiceClass`,
+    );
   }
 
   // --- notes, attachments, remaining data ----------------------------------------
-  const notes = [
-    ...c.texts(inv, 'LegalLiterals/LegalReference'),
-    ...c.texts(inv, 'AdditionalData/InvoiceAdditionalInformation'),
-  ].map((text) => ({ text }));
+  const notes = [...c.texts(inv, 'LegalLiterals/LegalReference'), ...c.texts(inv, 'AdditionalData/InvoiceAdditionalInformation')].map(
+    (text) => ({ text }),
+  );
   const related = c.text(inv, 'AdditionalData/RelatedInvoice');
   unm(`${base}/AdditionalData/RelatedInvoice`, related);
   unm(`${base}/InvoiceIssueData/PlaceOfIssue`, c.text(issue, 'PlaceOfIssue/PlaceOfIssueDescription'));
@@ -281,7 +424,11 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number, 
 
   const batchCount = c.text(fileHeader, 'Batch/InvoicesCount');
   if (batchCount !== undefined && Number(batchCount) !== count) {
-    c.warn('ES-BATCH-COUNT', `Batch/InvoicesCount is ${batchCount} but the file holds ${count} invoices`, '/Facturae/FileHeader/Batch/InvoicesCount');
+    c.warn(
+      'ES-BATCH-COUNT',
+      `Batch/InvoicesCount is ${batchCount} but the file holds ${count} invoices`,
+      '/Facturae/FileHeader/Batch/InvoicesCount',
+    );
   }
 
   const rate = c.dec(issue, 'ExchangeRateDetails/ExchangeRate');
@@ -297,7 +444,8 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number, 
     selfBilled,
     currency: cur,
     taxCurrency: c.text(issue, 'TaxCurrencyCode'),
-    exchangeRate: rate !== undefined ? { rate, date: c.date(issue, 'ExchangeRateDetails/ExchangeRateDate', 'ExchangeRateDate') } : undefined,
+    exchangeRate:
+      rate !== undefined ? { rate, date: c.date(issue, 'ExchangeRateDetails/ExchangeRateDate', 'ExchangeRateDate') } : undefined,
     taxPointDate: c.date(issue, 'OperationDate', 'BT-7'),
     dueDate: pay.schedule.length === 1 ? pay.schedule[0].dueDate : undefined,
     purchaseOrderRef: refs((l) => c.texts(l, 'ReceiverTransactionReference').slice(0, 1)),
@@ -341,8 +489,12 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number, 
 }
 
 const CLASS_LABEL: Record<string, string> = {
-  OO: 'Original', OR: 'Original rectificativa', OC: 'Original recapitulativa',
-  CO: 'Copia del original', CR: 'Copia de la rectificativa', CC: 'Copia de la recapitulativa',
+  OO: 'Original',
+  OR: 'Original rectificativa',
+  OC: 'Original recapitulativa',
+  CO: 'Copia del original',
+  CR: 'Copia de la rectificativa',
+  CC: 'Copia de la recapitulativa',
 };
 
 /** VAT category for IVA (01), IPSI (02) and IGIC (03). Zero-rated IVA is E/O when a line says it is exempt / not subject. */
@@ -353,7 +505,12 @@ function category(type: string, rate: Decimal | undefined, event?: { code: strin
   return event?.code === '01' ? 'E' : event?.code === '02' ? 'O' : 'Z';
 }
 
-function withholding(c: Ctx, t: Element, mReq: (n: Element | undefined, p: string) => Decimal, m: (n: Element | undefined, p?: string) => Decimal | undefined): Withholding {
+function withholding(
+  c: Ctx,
+  t: Element,
+  mReq: (n: Element | undefined, p: string) => Decimal,
+  m: (n: Element | undefined, p?: string) => Decimal | undefined,
+): Withholding {
   const type = c.text(t, 'TaxTypeCode') ?? '';
   return {
     scheme: type === '04' ? 'ES:IRPF' : `ES:TAX:${type}`,
@@ -364,7 +521,10 @@ function withholding(c: Ctx, t: Element, mReq: (n: Element | undefined, p: strin
 }
 
 function discounts(
-  c: Ctx, node: Element | undefined, path: string, kind: 'Discount' | 'Charge',
+  c: Ctx,
+  node: Element | undefined,
+  path: string,
+  kind: 'Discount' | 'Charge',
   m: (n: Element | undefined, p?: string) => Decimal | undefined,
 ): AllowanceCharge[] {
   return c.all(node, path).flatMap((d) => {
@@ -375,7 +535,9 @@ function discounts(
 }
 
 function line(
-  c: Ctx, l: Element, index: number,
+  c: Ctx,
+  l: Element,
+  index: number,
   m: (n: Element | undefined, p?: string) => Decimal | undefined,
   mReq: (n: Element | undefined, p: string) => Decimal,
   events: Map<string, { code: string; reason?: string }>,
@@ -388,7 +550,9 @@ function line(
 
   const taxes = c.all(l, 'TaxesOutputs/Tax');
   const event = c.el(l, 'SpecialTaxableEvent');
-  const eventInfo = event ? { code: c.text(event, 'SpecialTaxableEventCode') ?? '', reason: c.text(event, 'SpecialTaxableEventReason') } : undefined;
+  const eventInfo = event
+    ? { code: c.text(event, 'SpecialTaxableEventCode') ?? '', reason: c.text(event, 'SpecialTaxableEventReason') }
+    : undefined;
   let vat: VatInfo | undefined;
   const otherTaxes: OtherTax[] = [];
   for (const t of taxes) {
@@ -397,18 +561,33 @@ function line(
     const taxable = m(t, 'TaxableBase/TotalAmount');
     if (TAX_VAT_LIKE.has(type)) {
       if (rate !== undefined && isZero(rate) && eventInfo?.code && !events.has(type)) events.set(type, eventInfo);
-      if (!vat) vat = { categoryCode: category(type, rate, rate !== undefined && isZero(rate) ? eventInfo : undefined), rate, nationalCode: `ES:${type}`, exemptionReason: rate !== undefined && isZero(rate) ? eventInfo?.reason : undefined };
+      if (!vat)
+        vat = {
+          categoryCode: category(type, rate, rate !== undefined && isZero(rate) ? eventInfo : undefined),
+          rate,
+          nationalCode: `ES:${type}`,
+          exemptionReason: rate !== undefined && isZero(rate) ? eventInfo?.reason : undefined,
+        };
     } else {
       const amount = m(t, 'TaxAmount/TotalAmount');
       if (amount !== undefined) otherTaxes.push({ scheme: `ES:TAX:${type}`, taxableAmount: taxable, rate, amount, includedInTotal: true });
     }
     const re = m(t, 'EquivalenceSurchargeAmount');
-    if (re !== undefined) otherTaxes.push({ scheme: 'ES:RE', taxableAmount: taxable, rate: c.dec(t, 'EquivalenceSurcharge'), amount: re, includedInTotal: true });
+    if (re !== undefined)
+      otherTaxes.push({
+        scheme: 'ES:RE',
+        taxableAmount: taxable,
+        rate: c.dec(t, 'EquivalenceSurcharge'),
+        amount: re,
+        includedInTotal: true,
+      });
   }
   const withholdings = c.all(l, 'TaxesWithheld/Tax').map((t) => withholding(c, t, mReq, m));
 
   const national: Record<string, string | string[]> = {};
-  const put = (k: string, v: string | string[] | undefined) => { if (v !== undefined && v.length > 0) national[k] = v; };
+  const put = (k: string, v: string | string[] | undefined) => {
+    if (v !== undefined && v.length > 0) national[k] = v;
+  };
   put('issuerContractReference', c.text(l, 'IssuerContractReference'));
   put('receiverContractReference', c.text(l, 'ReceiverContractReference'));
   put('issuerTransactionReference', c.text(l, 'IssuerTransactionReference'));
@@ -493,15 +672,24 @@ function party(c: Ctx, e: Element, role: 'seller' | 'buyer' | 'third', path: str
     const abroad = c.el(kindEl, 'OverseasAddress');
     if (spain) {
       out.address = {
-        line1: c.text(spain, 'Address'), city: c.text(spain, 'Town'), postalCode: c.text(spain, 'PostCode'),
-        countrySubdivision: c.text(spain, 'Province'), countryCode: country(c, c.text(spain, 'CountryCode'), `${path}/AddressInSpain/CountryCode`),
+        line1: c.text(spain, 'Address'),
+        city: c.text(spain, 'Town'),
+        postalCode: c.text(spain, 'PostCode'),
+        countrySubdivision: c.text(spain, 'Province'),
+        countryCode: country(c, c.text(spain, 'CountryCode'), `${path}/AddressInSpain/CountryCode`),
       };
     } else if (abroad) {
       out.address = {
-        line1: c.text(abroad, 'Address'), city: c.text(abroad, 'PostCodeAndTown'),
-        countrySubdivision: c.text(abroad, 'Province'), countryCode: country(c, c.text(abroad, 'CountryCode'), `${path}/OverseasAddress/CountryCode`),
+        line1: c.text(abroad, 'Address'),
+        city: c.text(abroad, 'PostCodeAndTown'),
+        countrySubdivision: c.text(abroad, 'Province'),
+        countryCode: country(c, c.text(abroad, 'CountryCode'), `${path}/OverseasAddress/CountryCode`),
       };
-      c.warn('ES-OVERSEAS-TOWN', 'OverseasAddress/PostCodeAndTown is one field; stored in city without splitting the postal code', `${path}/OverseasAddress`);
+      c.warn(
+        'ES-OVERSEAS-TOWN',
+        'OverseasAddress/PostCodeAndTown is one field; stored in city without splitting the postal code',
+        `${path}/OverseasAddress`,
+      );
     }
     const cd = c.el(kindEl, 'ContactDetails');
     if (cd) {
@@ -519,7 +707,9 @@ function party(c: Ctx, e: Element, role: 'seller' | 'buyer' | 'third', path: str
 }
 
 function payment(
-  c: Ctx, inv: Element, m: (n: Element | undefined, p?: string) => Decimal | undefined,
+  c: Ctx,
+  inv: Element,
+  m: (n: Element | undefined, p?: string) => Decimal | undefined,
 ): { payments: PaymentInstructions[]; schedule: PaymentInstallment[] } {
   const payments: PaymentInstructions[] = [];
   const schedule: PaymentInstallment[] = [];
@@ -562,8 +752,15 @@ function account(c: Ctx, e: Element | undefined): { id: string; bic?: string } |
 }
 
 const MIME: Record<string, string> = {
-  pdf: 'application/pdf', xml: 'application/xml', gif: 'image/gif', jpg: 'image/jpeg', bmp: 'image/bmp',
-  tiff: 'image/tiff', doc: 'application/msword', rtf: 'application/rtf', xls: 'application/vnd.ms-excel',
+  pdf: 'application/pdf',
+  xml: 'application/xml',
+  gif: 'image/gif',
+  jpg: 'image/jpeg',
+  bmp: 'image/bmp',
+  tiff: 'image/tiff',
+  doc: 'application/msword',
+  rtf: 'application/rtf',
+  xls: 'application/vnd.ms-excel',
 };
 
 function attachment(c: Ctx, a: Element, index: number): Attachment {
@@ -575,8 +772,19 @@ function attachment(c: Ctx, a: Element, index: number): Attachment {
   const id = String(index + 1);
   const plain = (!compressed || compressed === '0000') && encoding === '0001';
   if (data && plain && MIME[format]) {
-    return { kind: 'embedded', id, description, mimeCode: MIME[format], filename: `attachment-${id}.${format}`, base64: data.replace(/\s+/g, '') };
+    return {
+      kind: 'embedded',
+      id,
+      description,
+      mimeCode: MIME[format],
+      filename: `attachment-${id}.${format}`,
+      base64: data.replace(/\s+/g, ''),
+    };
   }
-  if (data) c.warn('ES-ATTACHMENT', `Attachment ${id} (format '${format}', compression '${compressed ?? ''}', encoding '${encoding ?? ''}') cannot be embedded as is; content dropped`);
+  if (data)
+    c.warn(
+      'ES-ATTACHMENT',
+      `Attachment ${id} (format '${format}', compression '${compressed ?? ''}', encoding '${encoding ?? ''}') cannot be embedded as is; content dropped`,
+    );
   return { kind: 'reference', id, description, typeCode: format || undefined };
 }

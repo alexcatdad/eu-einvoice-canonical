@@ -1,5 +1,5 @@
-import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { effectiveSign } from '../src/index.js';
 import { fixture, parseOne, utf8, warningCodes } from './helpers.js';
 
@@ -49,9 +49,25 @@ describe('ISDOC 6.0.2 invoice (CZK)', async () => {
   test('lines', () => {
     assert.equal(inv.lines.length, 3);
     assert.deepEqual(inv.lines[0], {
-      id: '1', note: 'Zelená varianta', quantity: '10', unitCode: 'H87', unitText: 'Ks', netAmount: '1000.00', orderLineRef: '1',
-      allowances: [], charges: [], price: { net: '100.00' }, vat: { categoryCode: 'S', rate: '21' },
-      item: { name: 'Licenční klíč Vzor Office', sellerId: 'LIC-001', buyerId: 'OBEC-4711', standardId: { value: '8590000000019', schemeId: '0160' }, classifications: [], attributes: [] },
+      id: '1',
+      note: 'Zelená varianta',
+      quantity: '10',
+      unitCode: 'H87',
+      unitText: 'Ks',
+      netAmount: '1000.00',
+      orderLineRef: '1',
+      allowances: [],
+      charges: [],
+      price: { net: '100.00' },
+      vat: { categoryCode: 'S', rate: '21' },
+      item: {
+        name: 'Licenční klíč Vzor Office',
+        sellerId: 'LIC-001',
+        buyerId: 'OBEC-4711',
+        standardId: { value: '8590000000019', schemeId: '0160' },
+        classifications: [],
+        attributes: [],
+      },
     });
     assert.equal(inv.lines[1].unitCode, 'HUR');
     assert.equal(inv.lines[2].vat?.rate, '12');
@@ -59,8 +75,13 @@ describe('ISDOC 6.0.2 invoice (CZK)', async () => {
 
   test('totals: deposits already claimed and paid become the prepaid amount', () => {
     assert.deepEqual(inv.totals, {
-      lineNetTotal: '5300.00', taxExclusive: '5300.00', vatTotal: '1086.00', taxInclusive: '6386.00',
-      prepaid: '1710.50', rounding: '0.50', payable: '4676.00',
+      lineNetTotal: '5300.00',
+      taxExclusive: '5300.00',
+      vatTotal: '1086.00',
+      taxInclusive: '6386.00',
+      prepaid: '1710.50',
+      rounding: '0.50',
+      payable: '4676.00',
     });
     assert.deepEqual(inv.vatBreakdown, [
       { taxableAmount: '5000.00', taxAmount: '1050.00', categoryCode: 'S', rate: '21' },
@@ -72,13 +93,16 @@ describe('ISDOC 6.0.2 invoice (CZK)', async () => {
   });
 
   test('payment: symbols go to extensions.cz and the variable symbol is BT-83', () => {
-    assert.deepEqual(inv.payments, [{
-      meansCode: '42', remittanceInformation: '2026042',
-      creditTransfers: [
-        { accountId: 'CZ6508000000192000145399', serviceProviderId: 'GIBACZPX' },
-        { accountId: 'CZ0801000000002000145399', serviceProviderId: 'KOMBCZPP' },
-      ],
-    }]);
+    assert.deepEqual(inv.payments, [
+      {
+        meansCode: '42',
+        remittanceInformation: '2026042',
+        creditTransfers: [
+          { accountId: 'CZ6508000000192000145399', serviceProviderId: 'GIBACZPX' },
+          { accountId: 'CZ0801000000002000145399', serviceProviderId: 'KOMBCZPP' },
+        ],
+      },
+    ]);
     assert.deepEqual(inv.extensions.cz, { documentType: '1', variableSymbol: '2026042', constantSymbol: '0308', specificSymbol: '105512' });
     assert.deepEqual(inv.paymentSchedule, []);
   });
@@ -112,8 +136,13 @@ describe('ISDOC 6.0.2 credit note in a foreign currency', async () => {
     assert.equal(inv.taxCurrency, 'CZK');
     assert.deepEqual(inv.exchangeRate, { rate: '25.00' });
     assert.deepEqual(inv.totals, {
-      lineNetTotal: '-50.00', taxExclusive: '-50.00', vatTotal: '-9.60', vatTotalInTaxCurrency: '-240.00',
-      taxInclusive: '-59.60', rounding: '0', payable: '-59.60',
+      lineNetTotal: '-50.00',
+      taxExclusive: '-50.00',
+      vatTotal: '-9.60',
+      vatTotalInTaxCurrency: '-240.00',
+      taxInclusive: '-59.60',
+      rounding: '0',
+      payable: '-59.60',
     });
     assert.deepEqual(inv.vatBreakdown, [
       { taxableAmount: '-40.00', taxAmount: '-8.40', categoryCode: 'S', rate: '21', taxAmountInTaxCurrency: '-210.00' },
@@ -140,7 +169,12 @@ describe('ISDOC document types', () => {
   const as = (type: string) => parseOne(utf8(base.replace('<DocumentType>1<', `<DocumentType>${type}<`)), 'x.isdoc');
 
   test('1, 7 -> invoice 380; 4, 5 -> prepayment invoice 386', async () => {
-    for (const [t, code] of [['1', '380'], ['7', '380'], ['4', '386'], ['5', '386']] as const) {
+    for (const [t, code] of [
+      ['1', '380'],
+      ['7', '380'],
+      ['4', '386'],
+      ['5', '386'],
+    ] as const) {
       const inv = await as(t);
       assert.equal(inv.kind, 'invoice');
       assert.equal(inv.typeCode, code);
@@ -164,8 +198,7 @@ describe('ISDOC document types', () => {
   });
 
   test('a zero-total correction follows the document type and says so', async () => {
-    const zero = text('isdoc-6.0.2-credit-eur.isdoc')
-      .replace(/<(\w*(?:Amount|Total)\w*)>-?[\d.]+<\/\1>/g, '<$1>0</$1>');
+    const zero = text('isdoc-6.0.2-credit-eur.isdoc').replace(/<(\w*(?:Amount|Total)\w*)>-?[\d.]+<\/\1>/g, '<$1>0</$1>');
     const inv = await parseOne(utf8(zero), 'x.isdoc');
     assert.equal(inv.kind, 'creditNote');
     assert.match(inv.source.derived.find((d) => d.field === '/kind')!.rule, /zero total/);
@@ -198,7 +231,10 @@ describe('ISDOCX: the sample from the ISDOC specification', async () => {
 
   test('two payments with different due dates fill the schedule', () => {
     assert.equal(inv.dueDate, '2013-03-13');
-    assert.deepEqual(inv.paymentSchedule.map((s) => s.dueDate), ['2013-03-13', '2013-06-30']);
+    assert.deepEqual(
+      inv.paymentSchedule.map((s) => s.dueDate),
+      ['2013-03-13', '2013-06-30'],
+    );
     assert.ok(warningCodes(inv).includes('ISDOC-DUEDATES'));
     assert.ok(warningCodes(inv).includes('ISDOC-ORDERS'));
     assert.equal(inv.extensions.cz?.variableSymbol, '111999');

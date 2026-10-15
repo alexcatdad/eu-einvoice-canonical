@@ -30,7 +30,14 @@ interface Floors {
   excludeReasons?: Record<string, string>;
 }
 
-interface FileCov { file: string; lf: number; lh: number; fnf: number; fnh: number; lines: [number, number][] }
+interface FileCov {
+  file: string;
+  lf: number;
+  lh: number;
+  fnf: number;
+  fnh: number;
+  lines: [number, number][];
+}
 
 const root = join(import.meta.dir, '..');
 const lcovPath = join(root, 'coverage', 'lcov.info');
@@ -45,14 +52,20 @@ const files: FileCov[] = [];
 let cur: FileCov | undefined;
 for (const line of readFileSync(lcovPath, 'utf8').split('\n')) {
   const [tag, value = ''] = line.split(/:(.*)/s);
-  if (tag === 'SF') cur = { file: relative(root, value.startsWith('/') ? value : join(root, value)), lf: 0, lh: 0, fnf: 0, fnh: 0, lines: [] };
+  if (tag === 'SF')
+    cur = { file: relative(root, value.startsWith('/') ? value : join(root, value)), lf: 0, lh: 0, fnf: 0, fnh: 0, lines: [] };
   else if (!cur) continue;
   else if (tag === 'LF') cur.lf = Number(value);
   else if (tag === 'LH') cur.lh = Number(value);
   else if (tag === 'FNF') cur.fnf = Number(value);
   else if (tag === 'FNH') cur.fnh = Number(value);
-  else if (tag === 'DA') { const [n, hits] = value.split(','); cur.lines.push([Number(n), Number(hits)]); }
-  else if (tag === 'end_of_record') { files.push(cur); cur = undefined; }
+  else if (tag === 'DA') {
+    const [n, hits] = value.split(',');
+    cur.lines.push([Number(n), Number(hits)]);
+  } else if (tag === 'end_of_record') {
+    files.push(cur);
+    cur = undefined;
+  }
 }
 
 const src = files.filter((f) => f.file.startsWith('src/')).sort((a, b) => a.file.localeCompare(b.file));
@@ -65,7 +78,8 @@ const totalLines = pct(sum(gated, 'lh'), sum(gated, 'lf'));
 const totalFunctions = pct(sum(gated, 'fnh'), sum(gated, 'fnf'));
 const failures: string[] = [];
 if (totalLines < floors.totalLines) failures.push(`total line coverage ${fmt(totalLines)} is below the floor of ${floors.totalLines}%`);
-if (totalFunctions < floors.totalFunctions) failures.push(`total function coverage ${fmt(totalFunctions)} is below the floor of ${floors.totalFunctions}%`);
+if (totalFunctions < floors.totalFunctions)
+  failures.push(`total function coverage ${fmt(totalFunctions)} is below the floor of ${floors.totalFunctions}%`);
 for (const f of gated) {
   const l = pct(f.lh, f.lf);
   if (l < floors.perFileLines) failures.push(`${f.file}: line coverage ${fmt(l)} is below the per-file floor of ${floors.perFileLines}%`);
@@ -74,7 +88,11 @@ for (const f of gated) {
 const rows = src.map((f) => {
   const l = pct(f.lh, f.lf);
   const excluded = floors.exclude.includes(f.file);
-  const flag = excluded ? `not gated: ${floors.excludeReasons?.[f.file] ?? 'no reason recorded'}` : l < floors.perFileLines ? 'below floor' : '';
+  const flag = excluded
+    ? `not gated: ${floors.excludeReasons?.[f.file] ?? 'no reason recorded'}`
+    : l < floors.perFileLines
+      ? 'below floor'
+      : '';
   return `| \`${f.file}\` | ${fmt(l)} (${f.lh}/${f.lf}) | ${fmt(pct(f.fnh, f.fnf))} (${f.fnh}/${f.fnf}) | ${flag} |`;
 });
 const report = [
@@ -96,7 +114,10 @@ if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMM
 const coberturaIdx = process.argv.indexOf('--cobertura');
 if (coberturaIdx >= 0) {
   const out = process.argv[coberturaIdx + 1];
-  if (!out) { console.error('--cobertura needs an output path'); process.exit(1); }
+  if (!out) {
+    console.error('--cobertura needs an output path');
+    process.exit(1);
+  }
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, cobertura(gated));
   console.log(`Wrote Cobertura report for ${gated.length} files to ${out}`);
@@ -112,13 +133,20 @@ function cobertura(fs: FileCov[]): string {
   for (const f of fs) byDir.set(dirname(f.file), [...(byDir.get(dirname(f.file)) ?? []), f]);
   const lh = sum(fs, 'lh');
   const lf = sum(fs, 'lf');
-  const packages = [...byDir].map(([dir, list]) => {
-    const classes = list.map((f) => {
-      const lines = [...f.lines].sort((a, b) => a[0] - b[0]).map(([n, hits]) => `<line number="${n}" hits="${hits}" branch="false"/>`).join('');
-      return `<class name="${attr(f.file.slice(dir.length + 1))}" filename="${attr(f.file)}" line-rate="${rate(f.lh, f.lf)}" branch-rate="0" complexity="0"><methods/><lines>${lines}</lines></class>`;
-    }).join('\n');
-    return `<package name="${attr(dir)}" line-rate="${rate(sum(list, 'lh'), sum(list, 'lf'))}" branch-rate="0" complexity="0"><classes>\n${classes}\n</classes></package>`;
-  }).join('\n');
+  const packages = [...byDir]
+    .map(([dir, list]) => {
+      const classes = list
+        .map((f) => {
+          const lines = [...f.lines]
+            .sort((a, b) => a[0] - b[0])
+            .map(([n, hits]) => `<line number="${n}" hits="${hits}" branch="false"/>`)
+            .join('');
+          return `<class name="${attr(f.file.slice(dir.length + 1))}" filename="${attr(f.file)}" line-rate="${rate(f.lh, f.lf)}" branch-rate="0" complexity="0"><methods/><lines>${lines}</lines></class>`;
+        })
+        .join('\n');
+      return `<package name="${attr(dir)}" line-rate="${rate(sum(list, 'lh'), sum(list, 'lf'))}" branch-rate="0" complexity="0"><classes>\n${classes}\n</classes></package>`;
+    })
+    .join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>
 <coverage line-rate="${rate(lh, lf)}" branch-rate="0" lines-covered="${lh}" lines-valid="${lf}" branches-covered="0" branches-valid="0" complexity="0" version="1" timestamp="${Date.now()}">
 <sources><source>.</source></sources>

@@ -14,28 +14,72 @@
  */
 import type { Element } from '@xmldom/xmldom';
 import type {
-  AdditionalParty, Address, AllowanceCharge, Attachment, CanonicalInvoice, Decimal, Identifier, IsoDate, Line,
-  Party, PaymentInstallment, PaymentInstructions, Seller, Totals, VatBreakdown, VatInfo,
+  AdditionalParty,
+  Address,
+  AllowanceCharge,
+  Attachment,
+  CanonicalInvoice,
+  Decimal,
+  Identifier,
+  IsoDate,
+  Line,
+  Party,
+  PaymentInstallment,
+  PaymentInstructions,
+  Seller,
+  Totals,
+  VatBreakdown,
+  VatInfo,
 } from '../canonical.js';
-import { ValueError, add, isZero, sub, toDecimal, toIsoDate } from '../values.js';
-import { CREDIT_TYPE_CODES, Ctx, ParseError, SELF_BILLED_TYPE_CODES, finish, parseXml, sourceMeta } from './context.js';
+import { add, isZero, sub, toDecimal, toIsoDate, ValueError } from '../values.js';
+import { CREDIT_TYPE_CODES, Ctx, finish, ParseError, parseXml, SELF_BILLED_TYPE_CODES, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 import { recordUnmapped } from './leftover.js';
 
 /** HEADER/INVOICE_TYPE codes (TEAPPSXML) -> UNTDID 1001, used when UNTDID_CODE is not given. */
 const TYPE_MAP: Record<string, string> = {
-  '00': '380', '01': '381', '02': '380', '03': '380', '04': '381', '05': '381', '06': '380', '07': '381', '31': '381',
+  '00': '380',
+  '01': '381',
+  '02': '380',
+  '03': '380',
+  '04': '381',
+  '05': '381',
+  '06': '380',
+  '07': '381',
+  '31': '381',
 };
 
 const PARTY_HANDLED = [
-  'CUSTOMER_NAME', 'CUSTOMER_ID', 'ADDRESS', 'TRADING_NAME', 'VAT_NUMBER', 'ORGANIZATION_NUMBER', 'PARTY_IDENTIFICATION_ID',
-  'CONTACT_INFORMATION', 'E-MAIL_ADDRESS',
+  'CUSTOMER_NAME',
+  'CUSTOMER_ID',
+  'ADDRESS',
+  'TRADING_NAME',
+  'VAT_NUMBER',
+  'ORGANIZATION_NUMBER',
+  'PARTY_IDENTIFICATION_ID',
+  'CONTACT_INFORMATION',
+  'E-MAIL_ADDRESS',
 ];
-const ADDRESS_HANDLED = ['STREET_ADDRESS1', 'STREET_ADDRESS2', 'STREET_ADDRESS3', 'SUBDIVISION', 'POSTAL_CODE', 'POST_OFFICE', 'COUNTRY_CODE'];
+const ADDRESS_HANDLED = [
+  'STREET_ADDRESS1',
+  'STREET_ADDRESS2',
+  'STREET_ADDRESS3',
+  'SUBDIVISION',
+  'POSTAL_CODE',
+  'POST_OFFICE',
+  'COUNTRY_CODE',
+];
 /** Parties other than PAYEE and RECEIVER and the role each gets in `additionalParties`. */
 const OTHER_PARTIES: [element: string, role: string][] = [
-  ['INVOICE_SENDER', 'issuer'], ['INVOICE_RECIPIENT', 'recipient'], ['SALES_CONTACT', 'sales-contact'], ['ORDERER', 'orderer'],
-  ['DELIVERER', 'deliverer'], ['PAYER', 'payer'], ['PAYOR', 'payor'], ['MANUFACTURER', 'manufacturer'], ['HOLDER', 'holder'],
+  ['INVOICE_SENDER', 'issuer'],
+  ['INVOICE_RECIPIENT', 'recipient'],
+  ['SALES_CONTACT', 'sales-contact'],
+  ['ORDERER', 'orderer'],
+  ['DELIVERER', 'deliverer'],
+  ['PAYER', 'payer'],
+  ['PAYOR', 'payor'],
+  ['MANUFACTURER', 'manufacturer'],
+  ['HOLDER', 'holder'],
 ];
 
 export function parseTeappsxml(input: ParseInput): CanonicalInvoice[] {
@@ -54,7 +98,13 @@ export function parseTeappsxml(input: ParseInput): CanonicalInvoice[] {
   return out;
 }
 
-function parseInvoice(input: ParseInput, root: Element, inv: Element, formatVersion: string | undefined, fragmentPath: string): CanonicalInvoice {
+function parseInvoice(
+  input: ParseInput,
+  root: Element,
+  inv: Element,
+  formatVersion: string | undefined,
+  fragmentPath: string,
+): CanonicalInvoice {
   const c = new Ctx({});
   const header = c.el(inv, 'HEADER');
   if (!header) throw new ParseError('INVOICE without HEADER');
@@ -74,7 +124,10 @@ function parseInvoice(input: ParseInput, root: Element, inv: Element, formatVers
   if (!untdid && typeCode) c.derive('/typeCode', `TEAPPSXML INVOICE_TYPE ${typeText} mapped to UNTDID 1001 ${typeCode}`);
   if (!typeCode) {
     typeCode = '380';
-    c.derive('/typeCode', typeText ? `TEAPPSXML INVOICE_TYPE ${typeText} has no UNTDID equivalent; assumed 380` : 'INVOICE_TYPE absent; assumed 380');
+    c.derive(
+      '/typeCode',
+      typeText ? `TEAPPSXML INVOICE_TYPE ${typeText} has no UNTDID equivalent; assumed 380` : 'INVOICE_TYPE absent; assumed 380',
+    );
     if (typeText) c.warn('TYPE_UNKNOWN', `INVOICE_TYPE ${typeText} is not a sales or credit invoice type; treated as 380`);
   }
 
@@ -100,7 +153,12 @@ function parseInvoice(input: ParseInput, root: Element, inv: Element, formatVers
     for (const p of c.all(inv, element)) additionalParties.push({ role, sourceRole: element, party: partyOf(c, p) });
   }
   const other = c.all(inv, 'OTHER_PARTNER');
-  for (const p of other) additionalParties.push({ role: c.attr(p, undefined, 'PARTNER_TYPE') ?? 'other', sourceRole: `OTHER_PARTNER:${c.attr(p, undefined, 'PARTNER_TYPE') ?? ''}`, party: partyOf(c, p) });
+  for (const p of other)
+    additionalParties.push({
+      role: c.attr(p, undefined, 'PARTNER_TYPE') ?? 'other',
+      sourceRole: `OTHER_PARTNER:${c.attr(p, undefined, 'PARTNER_TYPE') ?? ''}`,
+      party: partyOf(c, p),
+    });
   const deliveryParty = c.el(inv, 'DELIVERY_PARTY');
 
   // References
@@ -115,7 +173,9 @@ function parseInvoice(input: ParseInput, root: Element, inv: Element, formatVers
 
   // Notes
   const notes = [
-    ...c.all(header, 'HEADER_INFO').map((h) => ({ subjectCode: c.attr(h, 'TITLE', 'INFO_TYPE'), text: c.text(h, 'CONTENT') ?? c.text(h, 'TITLE') ?? '' })),
+    ...c
+      .all(header, 'HEADER_INFO')
+      .map((h) => ({ subjectCode: c.attr(h, 'TITLE', 'INFO_TYPE'), text: c.text(h, 'CONTENT') ?? c.text(h, 'TITLE') ?? '' })),
     ...c.all(header, 'FREE_TEXT').map((t) => ({ text: c.text(t) ?? '' })),
   ].filter((nn) => nn.text);
 
@@ -125,11 +185,20 @@ function parseInvoice(input: ParseInput, root: Element, inv: Element, formatVers
   if (lines.length === 0) c.warn('NO_LINES', 'The invoice has no invoice rows');
   const { totals, vatBreakdown } = totalsAndVat(c, summary);
 
-  const epi = c.text(payeeEl, 'DETAILS_OF_PAYMENT/FI_PAYMENT_REFERENCE') ?? c.text(inv, 'EpiDetails/EpiPaymentInstructionDetails/EpiRemittanceInfoIdentifier');
+  const epi =
+    c.text(payeeEl, 'DETAILS_OF_PAYMENT/FI_PAYMENT_REFERENCE') ??
+    c.text(inv, 'EpiDetails/EpiPaymentInstructionDetails/EpiRemittanceInfoIdentifier');
   const specId = c.text(header, 'SPECIFICATION_ID');
   if (!specId) c.derive('/specificationId', 'SPECIFICATION_ID absent; synthesised from the TEAPPSXML format version');
 
-  unmappedFor(c, inv, header, payeeEl, receiverEl, [co, vn, contract, project].filter((x): x is Element => !!x));
+  unmappedFor(
+    c,
+    inv,
+    header,
+    payeeEl,
+    receiverEl,
+    [co, vn, contract, project].filter((x): x is Element => !!x),
+  );
 
   const result = {
     kind: CREDIT_TYPE_CODES.has(typeCode) ? 'creditNote' : 'invoice',
@@ -166,11 +235,13 @@ function parseInvoice(input: ParseInput, root: Element, inv: Element, formatVers
     additionalParties,
     delivery: deliveryOf(c, header, deliveryParty),
     payments,
-    paymentSchedule: c.all(inv, 'PART_PAYMENTS/PAYMENT').map((p): PaymentInstallment => ({
-      dueDate: dateOf(c, c.el(p, 'PART_DUE_DATE'), 'part payment due date'),
-      amount: amount(c, p, 'PART_SUM', 'INCLUDED'),
-      description: c.text(p, 'PART_ID'),
-    })),
+    paymentSchedule: c.all(inv, 'PART_PAYMENTS/PAYMENT').map(
+      (p): PaymentInstallment => ({
+        dueDate: dateOf(c, c.el(p, 'PART_DUE_DATE'), 'part payment due date'),
+        amount: amount(c, p, 'PART_SUM', 'INCLUDED'),
+        description: c.text(p, 'PART_ID'),
+      }),
+    ),
     allowances: allowanceCharges(c, summary, 'DISCOUNT', 'DISCOUNT_NAME', 'DISCOUNT_FROM_AMOUNT', 'DISCOUNT_AMOUNT', true),
     charges: allowanceCharges(c, summary, 'CHARGES', 'CHARGE_NAME', 'CHARGE_FROM_AMOUNT', 'CHARGE_AMOUNT', true),
     totals,
@@ -294,11 +365,14 @@ function partyOf(c: Ctx, holder: Element | undefined): Party {
     nationalTaxIds: [],
     endpoint: service ? (code ? { value: service, schemeId: code } : { value: service }) : undefined,
     address: addressOf(c, addr),
-    contact: contactEl || c.text(info, 'E-MAIL_ADDRESS') ? {
-      name: c.text(contactEl, 'CONTACT_PERSON'),
-      phone: c.text(contactEl, 'TELEPHONE_NUMBER'),
-      email: c.text(contactEl, 'E-MAIL_ADDRESS') ?? c.text(info, 'E-MAIL_ADDRESS'),
-    } : undefined,
+    contact:
+      contactEl || c.text(info, 'E-MAIL_ADDRESS')
+        ? {
+            name: c.text(contactEl, 'CONTACT_PERSON'),
+            phone: c.text(contactEl, 'TELEPHONE_NUMBER'),
+            email: c.text(contactEl, 'E-MAIL_ADDRESS') ?? c.text(info, 'E-MAIL_ADDRESS'),
+          }
+        : undefined,
   };
 }
 
@@ -329,7 +403,7 @@ function precedingInvoices(c: Ctx, header: Element | undefined, summary: Element
   return refs;
 }
 
-function paymentsOf(c: Ctx, inv: Element, header: Element | undefined, payee: Element | undefined): PaymentInstructions[] {
+function paymentsOf(c: Ctx, _inv: Element, header: Element | undefined, payee: Element | undefined): PaymentInstructions[] {
   const banks = c.all(payee, 'BANKS');
   const card = c.el(header, 'PAYMENT_CARD_INFORMATION');
   const debit = c.el(header, 'DIRECT_DEBIT_INFO');
@@ -345,29 +419,36 @@ function paymentsOf(c: Ctx, inv: Element, header: Element | undefined, payee: El
   const remittance = refName ? c.text(details, refName) : undefined;
   if (!meansCode && !card && !debit && !remittance) return [];
   const debited = c.el(debit, 'DEBITED_ACCOUNT');
-  return [{
-    meansCode: meansCode ?? '',
-    meansText: c.text(meansEl),
-    remittanceInformation: remittance,
-    creditTransfers: banks.map((b) => ({
-      accountId: c.text(b, 'IBAN_ACCOUNT_NUMBER') ?? c.text(b, 'BANK_ACCOUNT_NUMBER') ?? '',
-      accountName: c.text(b, 'BANK_NAME'),
-      serviceProviderId: c.text(b, 'SWIFT_CODE'),
-    })),
-    card: card ? { primaryAccountNumber: c.text(card, 'PRIMARY_ACCOUNT_NUMBER') ?? '', holderName: c.text(card, 'PAYMENT_CARD_HOLDER') } : undefined,
-    directDebit: debit ? {
-      mandateId: c.text(debit, 'MANDATE_REFERENCE'),
-      creditorId: c.text(debit, 'CREDITOR_ID'),
-      debitedAccountId: c.text(debited, 'IBAN_ACCOUNT_NUMBER') ?? c.text(debited, 'BANK_ACCOUNT_NUMBER'),
-    } : undefined,
-  }];
+  return [
+    {
+      meansCode: meansCode ?? '',
+      meansText: c.text(meansEl),
+      remittanceInformation: remittance,
+      creditTransfers: banks.map((b) => ({
+        accountId: c.text(b, 'IBAN_ACCOUNT_NUMBER') ?? c.text(b, 'BANK_ACCOUNT_NUMBER') ?? '',
+        accountName: c.text(b, 'BANK_NAME'),
+        serviceProviderId: c.text(b, 'SWIFT_CODE'),
+      })),
+      card: card
+        ? { primaryAccountNumber: c.text(card, 'PRIMARY_ACCOUNT_NUMBER') ?? '', holderName: c.text(card, 'PAYMENT_CARD_HOLDER') }
+        : undefined,
+      directDebit: debit
+        ? {
+            mandateId: c.text(debit, 'MANDATE_REFERENCE'),
+            creditorId: c.text(debit, 'CREDITOR_ID'),
+            debitedAccountId: c.text(debited, 'IBAN_ACCOUNT_NUMBER') ?? c.text(debited, 'BANK_ACCOUNT_NUMBER'),
+          }
+        : undefined,
+    },
+  ];
 }
 
 function attachments(c: Ctx, inv: Element, header: Element | undefined): Attachment[] {
   const out: Attachment[] = [];
   for (const img of c.all(inv, 'CONTROL/IMAGE_CONTROL')) {
     const file = c.text(img, 'IMAGE_FILE');
-    if (file) out.push({ kind: 'reference', id: file, description: c.text(img, 'IMAGE_DESCRIPTION'), typeCode: c.attr(img, undefined, 'TYPE') });
+    if (file)
+      out.push({ kind: 'reference', id: file, description: c.text(img, 'IMAGE_DESCRIPTION'), typeCode: c.attr(img, undefined, 'TYPE') });
   }
   for (const link of c.all(header, 'LINKS/LINK')) {
     const uri = c.attr(link, undefined, 'OBJECT') ?? c.text(link);
@@ -381,7 +462,13 @@ function attachments(c: Ctx, inv: Element, header: Element | undefined): Attachm
 // ---------------------------------------------------------------------------
 
 function allowanceCharges(
-  c: Ctx, parent: Element | undefined, element: string, nameEl: string, fromEl: string, amountEl: string, docLevel: boolean,
+  c: Ctx,
+  parent: Element | undefined,
+  element: string,
+  nameEl: string,
+  fromEl: string,
+  amountEl: string,
+  docLevel: boolean,
 ): AllowanceCharge[] {
   return c.all(parent, element).map((a) => {
     const value = amount(c, a, amountEl, 'EXCLUDED');
@@ -447,16 +534,41 @@ function totalsAndVat(c: Ctx, s: Element | undefined): { totals: Totals; vatBrea
     if (taxableAmount === undefined || taxAmount === undefined) throw new ParseError('VAT_SUMMARY without ACCORDING or VAT_RATE_TOTAL');
     const categoryCode = c.attr(v, undefined, 'VAT_TYPE');
     if (!categoryCode) c.warn('VAT_CATEGORY_MISSING', 'VAT_SUMMARY without VAT_TYPE (UNTDID 5305 category)');
-    recordUnmapped(c, v, ['RATE', 'ACCORDING', 'VAT_RATE_TOTAL', 'VAT_DESCRIPTION', 'EXEMPTION_REASON_CODE', 'CURRENCY_CODE'], '/INVOICE_CENTER/.../SUMMARY/VAT_SUMMARY');
+    recordUnmapped(
+      c,
+      v,
+      ['RATE', 'ACCORDING', 'VAT_RATE_TOTAL', 'VAT_DESCRIPTION', 'EXEMPTION_REASON_CODE', 'CURRENCY_CODE'],
+      '/INVOICE_CENTER/.../SUMMARY/VAT_SUMMARY',
+    );
     return {
-      taxableAmount, taxAmount, categoryCode: categoryCode ?? '', rate: c.dec(v, 'RATE'),
-      exemptionReason: c.text(v, 'VAT_DESCRIPTION'), exemptionReasonCode: c.text(v, 'EXEMPTION_REASON_CODE'),
+      taxableAmount,
+      taxAmount,
+      categoryCode: categoryCode ?? '',
+      rate: c.dec(v, 'RATE'),
+      exemptionReason: c.text(v, 'VAT_DESCRIPTION'),
+      exemptionReasonCode: c.text(v, 'EXEMPTION_REASON_CODE'),
     };
   });
-  recordUnmapped(c, s, [
-    'ROWS_TOTAL', 'INVOICE_TOTAL', 'VAT_SUMMARY', 'VAT_TOTAL', 'ROUNDINGS', 'DISCOUNT', 'DISCOUNTS_TOTAL', 'CHARGES', 'CHARGES_TOTAL',
-    'PRECEDING_INVOICE_INFORMATION', 'INVOICE_TOTAL_WITHOUT_ADVANCE_PAYMENT', 'ADVANCE_PAYMENT', 'VAT_TOTAL_IN_OTHER_CURRENCY',
-  ], '/INVOICE_CENTER/.../INVOICE/SUMMARY');
+  recordUnmapped(
+    c,
+    s,
+    [
+      'ROWS_TOTAL',
+      'INVOICE_TOTAL',
+      'VAT_SUMMARY',
+      'VAT_TOTAL',
+      'ROUNDINGS',
+      'DISCOUNT',
+      'DISCOUNTS_TOTAL',
+      'CHARGES',
+      'CHARGES_TOTAL',
+      'PRECEDING_INVOICE_INFORMATION',
+      'INVOICE_TOTAL_WITHOUT_ADVANCE_PAYMENT',
+      'ADVANCE_PAYMENT',
+      'VAT_TOTAL_IN_OTHER_CURRENCY',
+    ],
+    '/INVOICE_CENTER/.../INVOICE/SUMMARY',
+  );
   return { totals, vatBreakdown };
 }
 
@@ -476,7 +588,10 @@ function rowsOf(c: Ctx, inv: Element): Line[] {
       return;
     }
     if (t === 'MAIN' && specified.has(c.attr(r, undefined, 'ROW_ID') ?? '')) {
-      c.warn('ROW_SKIPPED', `Row ${c.text(r, 'ROW_NUMBER') ?? i + 1} is a MAIN heading row with SPECIFICATION rows; only the specification rows are lines`);
+      c.warn(
+        'ROW_SKIPPED',
+        `Row ${c.text(r, 'ROW_NUMBER') ?? i + 1} is a MAIN heading row with SPECIFICATION rows; only the specification rows are lines`,
+      );
       return;
     }
     lines.push(rowLine(c, r, i));
@@ -485,9 +600,25 @@ function rowsOf(c: Ctx, inv: Element): Line[] {
 }
 
 const ROW_HANDLED = [
-  'ROW_NUMBER', 'ARTICLE', 'START_PERIOD', 'END_PERIOD', 'QUANTITY', 'INVOICED_OBJECT', 'ORDER_INFORMATION', 'PRICE_PER_UNIT',
-  'DISCOUNT_FROM_PRICE_PER_UNIT', 'PRICE_PER_UNIT_WITH_DISCOUNT', 'PRICE_PER_UNIT_NET', 'DISCOUNT', 'ROW_CHARGE', 'ROW_TOTAL', 'VAT',
-  'CN', 'RECEIVER_PRODUCT_CODE', 'DEFAULT_ROW_POSTING', 'FREE_TEXT',
+  'ROW_NUMBER',
+  'ARTICLE',
+  'START_PERIOD',
+  'END_PERIOD',
+  'QUANTITY',
+  'INVOICED_OBJECT',
+  'ORDER_INFORMATION',
+  'PRICE_PER_UNIT',
+  'DISCOUNT_FROM_PRICE_PER_UNIT',
+  'PRICE_PER_UNIT_WITH_DISCOUNT',
+  'PRICE_PER_UNIT_NET',
+  'DISCOUNT',
+  'ROW_CHARGE',
+  'ROW_TOTAL',
+  'VAT',
+  'CN',
+  'RECEIVER_PRODUCT_CODE',
+  'DEFAULT_ROW_POSTING',
+  'FREE_TEXT',
 ];
 
 function rowLine(c: Ctx, r: Element, index: number): Line {
@@ -504,14 +635,18 @@ function rowLine(c: Ctx, r: Element, index: number): Line {
   let netPrice = amount(c, r, 'PRICE_PER_UNIT_NET', 'EXCLUDED');
   if (netPrice === undefined) {
     netPrice = amount(c, r, 'PRICE_PER_UNIT_WITH_DISCOUNT', 'EXCLUDED') ?? grossPrice;
-    if (netPrice !== undefined) c.derive(`/lines/${index}/price/net`, 'PRICE_PER_UNIT_NET absent; taken from the discounted or the plain unit price');
+    if (netPrice !== undefined)
+      c.derive(`/lines/${index}/price/net`, 'PRICE_PER_UNIT_NET absent; taken from the discounted or the plain unit price');
   }
   const prQty = priceEl ? numAttr(c, priceEl, 'PR_QTY') : undefined;
   const at = `/INVOICE_CENTER/.../ROWS/ROW[${lineId}]`;
   recordUnmapped(c, r, ROW_HANDLED, at);
-  recordUnmapped(c, article, [
-    'ARTICLE_ID', 'ARTICLE_NAME', 'EAN_CODE', 'PRODUCT_GROUP', 'FREE_TEXT', 'ARTICLE_DESCRIPTIONS',
-  ], `${at}/ARTICLE`);
+  recordUnmapped(
+    c,
+    article,
+    ['ARTICLE_ID', 'ARTICLE_NAME', 'EAN_CODE', 'PRODUCT_GROUP', 'FREE_TEXT', 'ARTICLE_DESCRIPTIONS'],
+    `${at}/ARTICLE`,
+  );
   recordUnmapped(c, c.el(r, 'CN'), ['COUNTRY_OF_ORIGIN_CODE'], `${at}/CN`);
   recordUnmapped(c, c.el(r, 'QUANTITY'), ['CHARGED'], `${at}/QUANTITY`);
   recordUnmapped(c, co, ['ORDER_POSITION'], `${at}/ORDER_INFORMATION`);
@@ -530,13 +665,16 @@ function rowLine(c: Ctx, r: Element, index: number): Line {
     period: periodOf(c, r),
     allowances: allowanceCharges(c, r, 'DISCOUNT', 'DISCOUNT_NAME', 'DISCOUNT_FROM_AMOUNT', 'DISCOUNT_AMOUNT', false),
     charges: allowanceCharges(c, r, 'ROW_CHARGE', 'CHARGE_NAME', 'CHARGE_FROM_AMOUNT', 'CHARGE_AMOUNT', false),
-    price: netPrice === undefined ? undefined : {
-      net: netPrice,
-      discount: amount(c, r, 'DISCOUNT_FROM_PRICE_PER_UNIT', 'EXCLUDED'),
-      gross: grossPrice,
-      baseQuantity: prQty,
-      baseQuantityUnit: c.attr(priceEl, undefined, 'PR_UNIT_UNECE_CODE'),
-    },
+    price:
+      netPrice === undefined
+        ? undefined
+        : {
+            net: netPrice,
+            discount: amount(c, r, 'DISCOUNT_FROM_PRICE_PER_UNIT', 'EXCLUDED'),
+            gross: grossPrice,
+            baseQuantity: prQty,
+            baseQuantityUnit: c.attr(priceEl, undefined, 'PR_UNIT_UNECE_CODE'),
+          },
     vat: vatOf(c, vat),
     item: {
       name: c.text(article, 'ARTICLE_NAME') ?? '',
@@ -561,7 +699,11 @@ function rowLine(c: Ctx, r: Element, index: number): Line {
 function numAttr(c: Ctx, el: Element, name: string): Decimal | undefined {
   const raw = c.attr(el, undefined, name);
   if (raw === undefined) return undefined;
-  try { return toDecimal(raw); } catch { throw new ParseError(`${el.localName}/@${name}: not a decimal: "${raw}"`); }
+  try {
+    return toDecimal(raw);
+  } catch {
+    throw new ParseError(`${el.localName}/@${name}: not a decimal: "${raw}"`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -569,33 +711,98 @@ function numAttr(c: Ctx, el: Element, name: string): Decimal | undefined {
 // ---------------------------------------------------------------------------
 
 const HEADER_HANDLED = [
-  'INVOICE_ID', 'INVOICE_TYPE', 'BUSINESS_PROCESS_TYPE', 'SPECIFICATION_ID', 'CREDIT_INVOICE_NUMBER', 'CREDIT_INVOICE_DATE', 'INVOICE_DATE',
-  'DUE_DATE', 'TAX_POINT_DATE', 'START_PERIOD', 'END_PERIOD', 'DELIVERY_DATE', 'NOTE_NUMBER', 'TERMS_OF_PAYMENT', 'CURRENCY',
-  'ORDER_REFERENCE', 'ORDER_INFORMATION', 'CONTRACT_INFORMATION', 'PROJECT_INFORMATION', 'TRANSPORT_INFORMATION', 'PAYER_POSTING_GROUP_DEFAULTS',
-  'BUYER_REFERENCE', 'OFFER_REFERENCE', 'INVOICED_OBJECT', 'HEADER_INFO', 'PAYMENT_CARD_INFORMATION', 'DIRECT_DEBIT_INFO', 'LINKS',
-  'FREE_TEXT', 'INVOICE_ORDER_NUMBER',
+  'INVOICE_ID',
+  'INVOICE_TYPE',
+  'BUSINESS_PROCESS_TYPE',
+  'SPECIFICATION_ID',
+  'CREDIT_INVOICE_NUMBER',
+  'CREDIT_INVOICE_DATE',
+  'INVOICE_DATE',
+  'DUE_DATE',
+  'TAX_POINT_DATE',
+  'START_PERIOD',
+  'END_PERIOD',
+  'DELIVERY_DATE',
+  'NOTE_NUMBER',
+  'TERMS_OF_PAYMENT',
+  'CURRENCY',
+  'ORDER_REFERENCE',
+  'ORDER_INFORMATION',
+  'CONTRACT_INFORMATION',
+  'PROJECT_INFORMATION',
+  'TRANSPORT_INFORMATION',
+  'PAYER_POSTING_GROUP_DEFAULTS',
+  'BUYER_REFERENCE',
+  'OFFER_REFERENCE',
+  'INVOICED_OBJECT',
+  'HEADER_INFO',
+  'PAYMENT_CARD_INFORMATION',
+  'DIRECT_DEBIT_INFO',
+  'LINKS',
+  'FREE_TEXT',
+  'INVOICE_ORDER_NUMBER',
 ];
 
 function unmappedFor(
-  c: Ctx, inv: Element, header: Element, payee: Element | undefined, receiver: Element | undefined, refs: Element[],
+  c: Ctx,
+  inv: Element,
+  header: Element,
+  payee: Element | undefined,
+  receiver: Element | undefined,
+  refs: Element[],
 ): void {
   recordUnmapped(c, header, HEADER_HANDLED, '/INVOICE_CENTER/.../INVOICE/HEADER');
   recordUnmapped(c, c.el(header, 'TRANSPORT_INFORMATION'), ['TRANSPORT_NOTE'], '/INVOICE_CENTER/.../HEADER/TRANSPORT_INFORMATION');
   for (const o of refs) {
     const name = o.localName ?? '';
-    const keep = name === 'ORDER_INFORMATION' ? ['ORDER_NUMBER', 'ORDER_REFERENCE'] : name === 'CONTRACT_INFORMATION' ? ['CONTRACT_NUMBER'] : ['PROJECT_NUMBER'];
+    const keep =
+      name === 'ORDER_INFORMATION'
+        ? ['ORDER_NUMBER', 'ORDER_REFERENCE']
+        : name === 'CONTRACT_INFORMATION'
+          ? ['CONTRACT_NUMBER']
+          : ['PROJECT_NUMBER'];
     recordUnmapped(c, o, keep, `/INVOICE_CENTER/.../HEADER/${name}`);
   }
-  recordUnmapped(c, payee, [
-    'CUSTOMER_INFORMATION', 'BANKS', 'NET_SERVICE_ID', 'EADDRESS_SCHEME_ID_CODE', 'PRELIMINARY_TAX_REGISTERED', 'ADDITIONAL_LEGAL_INFO',
-    'PAYMENT_MEANS', 'DETAILS_OF_PAYMENT',
-  ], '/INVOICE_CENTER/.../INVOICE/PAYEE');
-  recordUnmapped(c, receiver, ['CUSTOMER_INFORMATION', 'NET_SERVICE_ID', 'EADDRESS_SCHEME_ID_CODE'], '/INVOICE_CENTER/.../INVOICE/RECEIVER');
+  recordUnmapped(
+    c,
+    payee,
+    [
+      'CUSTOMER_INFORMATION',
+      'BANKS',
+      'NET_SERVICE_ID',
+      'EADDRESS_SCHEME_ID_CODE',
+      'PRELIMINARY_TAX_REGISTERED',
+      'ADDITIONAL_LEGAL_INFO',
+      'PAYMENT_MEANS',
+      'DETAILS_OF_PAYMENT',
+    ],
+    '/INVOICE_CENTER/.../INVOICE/PAYEE',
+  );
+  recordUnmapped(
+    c,
+    receiver,
+    ['CUSTOMER_INFORMATION', 'NET_SERVICE_ID', 'EADDRESS_SCHEME_ID_CODE'],
+    '/INVOICE_CENTER/.../INVOICE/RECEIVER',
+  );
   for (const b of c.all(payee, 'BANKS')) {
     recordUnmapped(c, b, ['BANK_NAME', 'BANK_ACCOUNT_NUMBER', 'IBAN_ACCOUNT_NUMBER', 'SWIFT_CODE'], '/INVOICE_CENTER/.../PAYEE/BANKS');
   }
   recordUnmapped(c, c.el(inv, 'CONTROL'), ['IMAGE_CONTROL'], '/INVOICE_CENTER/.../INVOICE/CONTROL');
-  recordUnmapped(c, inv, [
-    'CONTROL', 'HEADER', 'SUMMARY', 'ROWS', 'PAYEE', 'RECEIVER', 'DELIVERY_PARTY', 'PART_PAYMENTS', ...OTHER_PARTIES.map(([e]) => e), 'OTHER_PARTNER',
-  ], '/INVOICE_CENTER/.../INVOICE');
+  recordUnmapped(
+    c,
+    inv,
+    [
+      'CONTROL',
+      'HEADER',
+      'SUMMARY',
+      'ROWS',
+      'PAYEE',
+      'RECEIVER',
+      'DELIVERY_PARTY',
+      'PART_PAYMENTS',
+      ...OTHER_PARTIES.map(([e]) => e),
+      'OTHER_PARTNER',
+    ],
+    '/INVOICE_CENTER/.../INVOICE',
+  );
 }

@@ -1,6 +1,6 @@
 import { DOMParser, type Element } from '@xmldom/xmldom';
 import { gunzipSync } from 'fflate';
-import { BundleReaderFor } from './bundles.js';
+import type { BundleReaderFor } from './bundles.js';
 import { forValidator } from './schema.js';
 import type { Finding } from './types.js';
 
@@ -27,12 +27,19 @@ function severityOf(flag: string, role: string): Finding['severity'] {
 
 /** Runs a Schematron that was compiled ahead of time to a SaxonJS SEF and returns the failed assertions. */
 export async function runSchematron(
-  bundles: BundleReaderFor, bundleId: string, layer: 'semantic' | 'profile', xml: string, scope: string,
+  bundles: BundleReaderFor,
+  bundleId: string,
+  layer: 'semantic' | 'profile',
+  xml: string,
+  scope: string,
 ): Promise<Finding[]> {
   const manifest = await bundles.manifest(bundleId);
   const stylesheet = await loadSef(bundles, bundleId, manifest.entry!, scope);
   const { default: SaxonJS } = await import('saxon-js');
-  const result = await SaxonJS.transform({ stylesheetInternal: stylesheet, sourceText: forValidator(xml), destination: 'serialized' }, 'async');
+  const result = await SaxonJS.transform(
+    { stylesheetInternal: stylesheet, sourceText: forValidator(xml), destination: 'serialized' },
+    'async',
+  );
   return parseSvrl(result.principalResult, layer);
 }
 

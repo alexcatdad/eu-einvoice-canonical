@@ -33,16 +33,52 @@ interface Group {
 const R = 'phive-rules';
 const GROUPS: Group[] = [
   // OpenPEPPOL BIS 3 examples: every invoice or credit note in the folder is Peppol BIS 3.
-  { dir: 'peppol-bis-invoice-3/rules/examples', path: /(base|Allowance|Vat-category).*\.xml$/i, expect: 'peppol-bis3', id: /poacc:billing:3\.0/, max: 20 },
+  {
+    dir: 'peppol-bis-invoice-3/rules/examples',
+    path: /(base|Allowance|Vat-category).*\.xml$/i,
+    expect: 'peppol-bis3',
+    id: /poacc:billing:3\.0/,
+    max: 20,
+  },
   // KoSIT XRechnung test suite: *_ubl.xml / *_uncefact.xml are the two syntaxes of every business case.
   { dir: 'xrechnung-testsuite/src/test/business-cases', path: /_ubl\.xml$/, expect: 'xrechnung-ubl', id: /xrechnung/i, max: 40 },
   { dir: 'xrechnung-testsuite/src/test/business-cases', path: /_uncefact\.xml$/, expect: 'xrechnung-cii', id: /xrechnung/i, max: 40 },
   // FNFE-MPE France_RFE examples: the folder names the French profile.
-  { dir: 'France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EXTENDED-CTC-FR', path: /\.xml$/, expect: 'fr-ctc-ubl', id: /extended-ctc-fr/, max: 10 },
-  { dir: 'France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/CII/EXTENDED-CTC-FR', path: /\.xml$/, expect: 'fr-ctc-cii', id: /extended-ctc-fr/, max: 10 },
-  { dir: 'France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EN16931', path: /\.xml$/, expect: 'en16931-ubl', id: /^urn:cen\.eu:en16931:2017$/, max: 10 },
-  { dir: 'France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/CII/EN16931', path: /\.xml$/, expect: 'en16931-cii', id: /^urn:cen\.eu:en16931:2017$/, max: 10 },
-  { dir: 'France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/FX', path: /(BASICWL|EXTENDED).*\.xml$/, expect: 'facturx', id: /factur-x\.eu/, max: 10 },
+  {
+    dir: 'France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EXTENDED-CTC-FR',
+    path: /\.xml$/,
+    expect: 'fr-ctc-ubl',
+    id: /extended-ctc-fr/,
+    max: 10,
+  },
+  {
+    dir: 'France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/CII/EXTENDED-CTC-FR',
+    path: /\.xml$/,
+    expect: 'fr-ctc-cii',
+    id: /extended-ctc-fr/,
+    max: 10,
+  },
+  {
+    dir: 'France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/UBL/EN16931',
+    path: /\.xml$/,
+    expect: 'en16931-ubl',
+    id: /^urn:cen\.eu:en16931:2017$/,
+    max: 10,
+  },
+  {
+    dir: 'France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/CII/EN16931',
+    path: /\.xml$/,
+    expect: 'en16931-cii',
+    id: /^urn:cen\.eu:en16931:2017$/,
+    max: 10,
+  },
+  {
+    dir: 'France_RFE/FNFE_RFE_INVOICE/Z.example/TEST/FX',
+    path: /(BASICWL|EXTENDED).*\.xml$/,
+    expect: 'facturx',
+    id: /factur-x\.eu/,
+    max: 10,
+  },
   // phive-rules test files, one module per national format.
   { dir: `${R}/phive-rules-cius-ro`, path: /test-files\/.*\.xml$/, expect: 'cius-ro', id: /CIUS-RO/i, max: 20 },
   { dir: `${R}/phive-rules-cius-pt`, path: /test-files\/.*\.xml$/, expect: 'cius-pt', id: /CIUS-PT/i, max: 20 },
@@ -54,10 +90,34 @@ const GROUPS: Group[] = [
   { dir: `${R}/phive-rules-ehf`, path: /test-files\/.*\.xml$/, expect: 'peppol-bis3', id: /poacc:billing:3\.0/, max: 20 },
   { dir: `${R}/phive-rules-simplerinvoicing`, path: /NLCIUS-CII.*\.xml$/i, expect: 'nlcius-cii', id: /nlcius/i, max: 20 },
   { dir: `${R}/phive-rules-simplerinvoicing`, path: /SI-UBL-2\.0.*\.xml$/i, expect: 'nlcius-ubl', id: /nlcius/i, max: 20 },
-  { dir: 'mustangproject/library/src/test/resources', path: /^XRECHNUNG_[^/]*\.ubl\.xml$/, expect: 'xrechnung-ubl', id: /xrechnung/i, max: 10 },
-  { dir: 'mustangproject/library/src/test/resources', path: /^(factur-x-extended|Extended_fremdwaehrung)\.xml$/, expect: 'facturx', id: /factur-x\.eu|zugferd\.de/, max: 5 },
-  { dir: `${R}/phive-rules-zugferd`, path: /test-files\/.*\/(basic|basicwl|extended|minimum)\/.*\.xml$/i, expect: 'facturx', id: /factur-x\.eu|zugferd\.de/, max: 30 },
-  { dir: `${R}/phive-rules-zugferd`, path: /test-files\/.*\/en16931\/.*\.xml$/i, expect: 'en16931-cii', id: /^urn:cen\.eu:en16931:2017$/, max: 20 },
+  {
+    dir: 'mustangproject/library/src/test/resources',
+    path: /^XRECHNUNG_[^/]*\.ubl\.xml$/,
+    expect: 'xrechnung-ubl',
+    id: /xrechnung/i,
+    max: 10,
+  },
+  {
+    dir: 'mustangproject/library/src/test/resources',
+    path: /^(factur-x-extended|Extended_fremdwaehrung)\.xml$/,
+    expect: 'facturx',
+    id: /factur-x\.eu|zugferd\.de/,
+    max: 5,
+  },
+  {
+    dir: `${R}/phive-rules-zugferd`,
+    path: /test-files\/.*\/(basic|basicwl|extended|minimum)\/.*\.xml$/i,
+    expect: 'facturx',
+    id: /factur-x\.eu|zugferd\.de/,
+    max: 30,
+  },
+  {
+    dir: `${R}/phive-rules-zugferd`,
+    path: /test-files\/.*\/en16931\/.*\.xml$/i,
+    expect: 'en16931-cii',
+    id: /^urn:cen\.eu:en16931:2017$/,
+    max: 20,
+  },
 ];
 
 function* walk(dir: string): Generator<string> {
@@ -71,8 +131,9 @@ function* walk(dir: string): Generator<string> {
 
 /** First CustomizationID / GuidelineSpecifiedDocumentContextParameter ID, by regex: independent of src/probe.ts. */
 function identifier(text: string): string | undefined {
-  const m = /<(?:\w+:)?CustomizationID[^>]*>\s*([^<]*?)\s*</.exec(text)
-    ?? /GuidelineSpecifiedDocumentContextParameter[^>]*>\s*<(?:\w+:)?ID[^>]*>\s*([^<]*?)\s*</.exec(text);
+  const m =
+    /<(?:\w+:)?CustomizationID[^>]*>\s*([^<]*?)\s*</.exec(text) ??
+    /GuidelineSpecifiedDocumentContextParameter[^>]*>\s*<(?:\w+:)?ID[^>]*>\s*([^<]*?)\s*</.exec(text);
   return m?.[1];
 }
 
@@ -84,7 +145,12 @@ const claimed = new Set<string>();
 for (const g of GROUPS) {
   const base = join(root, g.dir);
   let all: string[];
-  try { all = [...walk(base)]; } catch { console.log(`missing ${g.dir}`); continue; }
+  try {
+    all = [...walk(base)];
+  } catch {
+    console.log(`missing ${g.dir}`);
+    continue;
+  }
   const hits: string[] = [];
   for (const f of all) {
     const rel = relative(base, f);
@@ -92,8 +158,16 @@ for (const g of GROUPS) {
     const head = readFileSync(f, 'utf8').slice(0, 200_000);
     const id = identifier(head);
     // Only invoices: skip other UBL/CII document types that happen to sit in the same folder.
-    if (!/<(?:\w+:)?(Invoice|CreditNote|CrossIndustryInvoice|CrossIndustryDocument|Faktura)\b/.test(head.replace(/<\?xml[^>]*\?>|<!--[\s\S]*?-->/g, ''))) continue;
-    if (g.id && !g.id.test(id ?? '')) { console.log(`skip ${relative(root, f)}: identifier ${JSON.stringify(id)} does not look like ${g.expect}`); continue; }
+    if (
+      !/<(?:\w+:)?(Invoice|CreditNote|CrossIndustryInvoice|CrossIndustryDocument|Faktura)\b/.test(
+        head.replace(/<\?xml[^>]*\?>|<!--[\s\S]*?-->/g, ''),
+      )
+    )
+      continue;
+    if (g.id && !g.id.test(id ?? '')) {
+      console.log(`skip ${relative(root, f)}: identifier ${JSON.stringify(id)} does not look like ${g.expect}`);
+      continue;
+    }
     hits.push(f);
   }
   const step = Math.max(1, hits.length / g.max);
@@ -106,5 +180,5 @@ for (const g of GROUPS) {
   console.log(`${g.expect.padEnd(14)} ${picked.size}/${hits.length}  ${g.dir}`);
 }
 
-writeFileSync(out, JSON.stringify(answers, null, 2) + '\n');
+writeFileSync(out, `${JSON.stringify(answers, null, 2)}\n`);
 console.log(`\n${Object.keys(answers).length} files -> ${relative(process.cwd(), out)}`);

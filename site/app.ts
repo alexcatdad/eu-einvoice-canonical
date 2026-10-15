@@ -1,7 +1,14 @@
 /** Browser front end: everything runs locally through the same `convert()` the library exports. */
 import {
-  convert, FORMATS, IMPLEMENTED_FAMILIES, EU_COUNTRIES,
-  type CanonicalInvoice, type ConvertOutcome, type ConvertResult, type FormatDef, type Party,
+  type CanonicalInvoice,
+  type ConvertOutcome,
+  type ConvertResult,
+  convert,
+  EU_COUNTRIES,
+  FORMATS,
+  type FormatDef,
+  IMPLEMENTED_FAMILIES,
+  type Party,
 } from '../src/index.js';
 
 const SAMPLES: { file: string; label: string }[] = [
@@ -20,21 +27,62 @@ const SAMPLES: { file: string; label: string }[] = [
 const EXAMPLE = SAMPLES[0];
 
 const COUNTRY_NAMES: Record<string, string> = {
-  AT: 'Austria', BE: 'Belgium', BG: 'Bulgaria', HR: 'Croatia', CY: 'Cyprus', CZ: 'Czechia', DK: 'Denmark',
-  EE: 'Estonia', FI: 'Finland', FR: 'France', DE: 'Germany', GR: 'Greece', HU: 'Hungary', IE: 'Ireland',
-  IT: 'Italy', LV: 'Latvia', LT: 'Lithuania', LU: 'Luxembourg', MT: 'Malta', NL: 'Netherlands', PL: 'Poland',
-  PT: 'Portugal', RO: 'Romania', SK: 'Slovakia', SI: 'Slovenia', ES: 'Spain', SE: 'Sweden',
+  AT: 'Austria',
+  BE: 'Belgium',
+  BG: 'Bulgaria',
+  HR: 'Croatia',
+  CY: 'Cyprus',
+  CZ: 'Czechia',
+  DK: 'Denmark',
+  EE: 'Estonia',
+  FI: 'Finland',
+  FR: 'France',
+  DE: 'Germany',
+  GR: 'Greece',
+  HU: 'Hungary',
+  IE: 'Ireland',
+  IT: 'Italy',
+  LV: 'Latvia',
+  LT: 'Lithuania',
+  LU: 'Luxembourg',
+  MT: 'Malta',
+  NL: 'Netherlands',
+  PL: 'Poland',
+  PT: 'Portugal',
+  RO: 'Romania',
+  SK: 'Slovakia',
+  SI: 'Slovenia',
+  ES: 'Spain',
+  SE: 'Sweden',
 };
 
 const MEANS: Record<string, string> = {
-  '1': 'Not defined', '10': 'Cash', '20': 'Cheque', '30': 'Credit transfer', '31': 'Debit transfer', '42': 'Payment to bank account',
-  '48': 'Bank card', '49': 'Direct debit', '54': 'Credit card', '55': 'Debit card', '57': 'Standing agreement',
-  '58': 'SEPA credit transfer', '59': 'SEPA direct debit', '68': 'Online payment service', '97': 'Clearing between partners', ZZZ: 'Mutually defined',
+  '1': 'Not defined',
+  '10': 'Cash',
+  '20': 'Cheque',
+  '30': 'Credit transfer',
+  '31': 'Debit transfer',
+  '42': 'Payment to bank account',
+  '48': 'Bank card',
+  '49': 'Direct debit',
+  '54': 'Credit card',
+  '55': 'Debit card',
+  '57': 'Standing agreement',
+  '58': 'SEPA credit transfer',
+  '59': 'SEPA direct debit',
+  '68': 'Online payment service',
+  '97': 'Clearing between partners',
+  ZZZ: 'Mutually defined',
 };
 
 const ENVELOPE_LABEL: Record<string, string> = {
-  'pdf-attachment': 'PDF attachment', 'cms-p7m': 'CAdES signature (.p7m)', base64: 'base64 text', zip: 'ZIP archive',
-  sbdh: 'Peppol SBDH', soap: 'SOAP envelope', xml: '',
+  'pdf-attachment': 'PDF attachment',
+  'cms-p7m': 'CAdES signature (.p7m)',
+  base64: 'base64 text',
+  zip: 'ZIP archive',
+  sbdh: 'Peppol SBDH',
+  soap: 'SOAP envelope',
+  xml: '',
 };
 
 const MAX_LINES = 12;
@@ -51,17 +99,31 @@ fileInput.addEventListener('change', async () => {
   if (f) await run(new Uint8Array(await f.arrayBuffer()), f.name);
   fileInput.value = '';
 });
-sampleSelect.addEventListener('change', () => { if (sampleSelect.value) void loadSample(sampleSelect.value, false); });
+sampleSelect.addEventListener('change', () => {
+  if (sampleSelect.value) void loadSample(sampleSelect.value, false);
+});
 $<HTMLButtonElement>('#convert-pasted').addEventListener('click', () => {
   const text = pasted.value.trim();
-  if (!text) { pasted.focus(); return; }
+  if (!text) {
+    pasted.focus();
+    return;
+  }
   void run(new TextEncoder().encode(text), 'pasted.xml');
 });
 
 // Drag and drop anywhere on the page; the slot shows where it lands.
 let dragDepth = 0;
-window.addEventListener('dragenter', (e) => { e.preventDefault(); dragDepth++; slot.classList.add('dragging'); });
-window.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; slot.classList.remove('dragging'); } });
+window.addEventListener('dragenter', (e) => {
+  e.preventDefault();
+  dragDepth++;
+  slot.classList.add('dragging');
+});
+window.addEventListener('dragleave', () => {
+  if (--dragDepth <= 0) {
+    dragDepth = 0;
+    slot.classList.remove('dragging');
+  }
+});
 window.addEventListener('dragover', (e) => e.preventDefault());
 window.addEventListener('drop', async (e) => {
   e.preventDefault();
@@ -85,7 +147,11 @@ async function loadSample(name: string, isExample: boolean) {
 // Conversion and rendering
 // ---------------------------------------------------------------------------
 
-interface Item { tab: string; outcome: ConvertOutcome; invoice?: CanonicalInvoice }
+interface Item {
+  tab: string;
+  outcome: ConvertOutcome;
+  invoice?: CanonicalInvoice;
+}
 let current: { result: ConvertResult; filename: string; items: Item[]; isExample: boolean } | undefined;
 
 async function run(bytes: Uint8Array, filename: string, isExample = false) {
@@ -95,10 +161,12 @@ async function run(bytes: Uint8Array, filename: string, isExample = false) {
     const items = result.outcomes.flatMap((o, i): Item[] =>
       o.status === 'ok'
         ? o.invoices.map((inv) => ({ tab: `${inv.kind === 'creditNote' ? 'Credit note' : 'Invoice'} ${inv.id}`, outcome: o, invoice: inv }))
-        : [{ tab: `Document ${i + 1}`, outcome: o }]);
+        : [{ tab: `Document ${i + 1}`, outcome: o }],
+    );
     current = { result, filename, items, isExample };
     render(0);
-    if (!isExample) resultEl.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    if (!isExample)
+      resultEl.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
   } catch (e) {
     showNotice('This file could not be read.', (e as Error).message);
   }
@@ -115,15 +183,20 @@ function render(index: number) {
     <span class="file-meta">SHA-256 ${result.fileSha256.slice(0, 12)}…, ${items.length} document${items.length === 1 ? '' : 's'}</span></div>`;
 
   if (items.length === 0) {
-    const reasons = result.skipped.map((s) => `<p>${s.name ? `${esc(s.name)}: ` : ''}${esc(s.reason)}</p>`).join('') || '<p>The file holds no XML document.</p>';
+    const reasons =
+      result.skipped.map((s) => `<p>${s.name ? `${esc(s.name)}: ` : ''}${esc(s.reason)}</p>`).join('') ||
+      '<p>The file holds no XML document.</p>';
     resultEl.innerHTML = `${head}<div class="notice"><p><strong>No invoice found in this file.</strong></p>${reasons}</div>`;
     return;
   }
-  const tabs = items.length > 1
-    ? `<div class="doc-tabs" role="tablist">${items.map((it, i) => `<button role="tab" type="button" data-tab="${i}" aria-selected="${i === index}">${esc(it.tab)}</button>`).join('')}</div>`
-    : '';
+  const tabs =
+    items.length > 1
+      ? `<div class="doc-tabs" role="tablist">${items.map((it, i) => `<button role="tab" type="button" data-tab="${i}" aria-selected="${i === index}">${esc(it.tab)}</button>`).join('')}</div>`
+      : '';
   resultEl.innerHTML = `${head}${tabs}<div class="doc">${sheet(items[index], result)}${jsonPanel(items[index])}</div>`;
-  resultEl.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach((b) => b.addEventListener('click', () => render(Number(b.dataset.tab))));
+  resultEl.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach((b) => {
+    b.addEventListener('click', () => render(Number(b.dataset.tab)));
+  });
   wireJson(items[index], result);
   if (!isExample) resultEl.querySelector('.stamp')?.classList.add('fresh');
 }
@@ -136,7 +209,8 @@ function stampFor(item: Item): { cls: string; title: string; note: string } {
     const n = item.invoice!.source.warnings.length;
     return { cls: n ? 'warn' : '', title, note: n ? `Converted, ${n} warning${n === 1 ? '' : 's'}` : 'Converted' };
   }
-  if (o.status === 'unsupported') return { cls: 'warn', title, note: det.kind === 'invoice' ? 'Identified, no parser yet' : 'Not recognised' };
+  if (o.status === 'unsupported')
+    return { cls: 'warn', title, note: det.kind === 'invoice' ? 'Identified, no parser yet' : 'Not recognised' };
   if (o.status === 'not-an-invoice') return { cls: 'warn', title, note: det.kind === 'other-document' ? det.label.split(':')[0] : '' };
   return { cls: 'bad', title, note: 'Could not convert' };
 }
@@ -148,7 +222,14 @@ function sheet(item: Item, result: ConvertResult): string {
   const stamp = `<div class="stamp ${s.cls}">${esc(s.title)}${s.note ? `<small>${esc(s.note)}</small>` : ''}</div>`;
 
   if (!inv) {
-    const reason = o.status === 'error' ? o.error : o.status === 'unsupported' ? o.reason : o.status === 'not-an-invoice' && o.detection.kind === 'other-document' ? o.detection.label : '';
+    const reason =
+      o.status === 'error'
+        ? o.error
+        : o.status === 'unsupported'
+          ? o.reason
+          : o.status === 'not-an-invoice' && o.detection.kind === 'other-document'
+            ? o.detection.label
+            : '';
     return `<article class="sheet">
       <div class="sheet-top"><div><h3 class="doc-title">${o.status === 'error' ? 'Not converted' : o.status === 'unsupported' ? 'Identified' : 'Not an invoice'}</h3></div>${stamp}</div>
       ${reason ? `<p class="reason">${esc(reason)}</p>` : ''}
@@ -159,17 +240,27 @@ function sheet(item: Item, result: ConvertResult): string {
 
   const cur = inv.currency;
   const dates: [string, string | undefined][] = [
-    ['Issued', inv.issueDate], ['Due', inv.dueDate],
+    ['Issued', inv.issueDate],
+    ['Due', inv.dueDate],
     ['Period', inv.invoicePeriod ? `${inv.invoicePeriod.start ?? '…'} to ${inv.invoicePeriod.end ?? '…'}` : undefined],
-    ['Delivered', inv.delivery?.actualDate], ['Buyer reference', inv.buyerReference], ['Order', inv.purchaseOrderRef],
+    ['Delivered', inv.delivery?.actualDate],
+    ['Buyer reference', inv.buyerReference],
+    ['Order', inv.purchaseOrderRef],
   ];
   const t = inv.totals;
   const totals: [string, string | undefined, string?][] = [
-    ['Lines', t.lineNetTotal], ['Allowances', t.allowanceTotal && `−${t.allowanceTotal}`], ['Charges', t.chargeTotal],
+    ['Lines', t.lineNetTotal],
+    ['Allowances', t.allowanceTotal && `−${t.allowanceTotal}`],
+    ['Charges', t.chargeTotal],
     ['Without VAT', t.taxExclusive],
-    ...inv.vatBreakdown.map((v): [string, string] => [`VAT ${v.categoryCode}${v.rate !== undefined ? ` ${v.rate} %` : ''} on ${v.taxableAmount}`, v.taxAmount]),
-    ['With VAT', t.taxInclusive], ['Withheld', t.withholdingTotal && `−${t.withholdingTotal}`],
-    ['Prepaid', t.prepaid && `−${t.prepaid}`], ['Rounding', t.rounding],
+    ...inv.vatBreakdown.map((v): [string, string] => [
+      `VAT ${v.categoryCode}${v.rate !== undefined ? ` ${v.rate} %` : ''} on ${v.taxableAmount}`,
+      v.taxAmount,
+    ]),
+    ['With VAT', t.taxInclusive],
+    ['Withheld', t.withholdingTotal && `−${t.withholdingTotal}`],
+    ['Prepaid', t.prepaid && `−${t.prepaid}`],
+    ['Rounding', t.rounding],
   ];
   const shown = inv.lines.slice(0, MAX_LINES);
   const pay = inv.payments[0];
@@ -182,27 +273,44 @@ function sheet(item: Item, result: ConvertResult): string {
       </div>
       ${stamp}
     </div>
-    <dl class="dates">${dates.filter(([, v]) => v).map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v!)}</dd></div>`).join('')}</dl>
+    <dl class="dates">${dates
+      .filter(([, v]) => v)
+      .map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v!)}</dd></div>`)
+      .join('')}</dl>
     <div class="parties">${party('From', inv.seller)}${party('To', inv.buyer)}</div>
-    ${shown.length ? `<table class="lines">
+    ${
+      shown.length
+        ? `<table class="lines">
       <thead><tr><th scope="col" class="hide-narrow">#</th><th scope="col">Item</th><th scope="col" class="num">Qty</th><th scope="col" class="num hide-narrow">Price</th><th scope="col" class="num">Net</th></tr></thead>
-      <tbody>${shown.map((l) => `<tr>
+      <tbody>${shown
+        .map(
+          (l) => `<tr>
         <td class="hide-narrow">${esc(l.id)}</td>
         <td class="item">${esc(l.item.name || l.item.description || '(no name)')}${l.vat ? `<span class="sub">VAT ${esc(l.vat.categoryCode)}${l.vat.rate !== undefined ? ` ${esc(l.vat.rate)} %` : ''}</span>` : ''}</td>
         <td class="num">${l.quantity !== undefined ? `${esc(l.quantity)} ${esc(l.unitText ?? l.unitCode ?? '')}` : '<span class="sub">not stated</span>'}</td>
         <td class="num hide-narrow">${l.price ? `${esc(l.price.net)}${l.price.baseQuantity && l.price.baseQuantity !== '1' ? `<span class="sub">per ${esc(l.price.baseQuantity)}</span>` : ''}` : ''}</td>
-        <td class="num">${esc(l.netAmount)}</td></tr>`).join('')}</tbody>
+        <td class="num">${esc(l.netAmount)}</td></tr>`,
+        )
+        .join('')}</tbody>
     </table>${inv.lines.length > MAX_LINES ? `<p class="more-lines">${inv.lines.length - MAX_LINES} more lines are in the JSON.</p>` : ''}`
-    : '<p class="more-lines">This document has no lines.</p>'}
+        : '<p class="more-lines">This document has no lines.</p>'
+    }
     <div class="sums">
-      <div class="payment">${pay ? `<span class="label">Payment</span>
+      <div class="payment">${
+        pay
+          ? `<span class="label">Payment</span>
         <p>${esc(MEANS[pay.meansCode] ?? `Code ${pay.meansCode}`)}${pay.meansText ? ` (${esc(pay.meansText)})` : ''}</p>
         ${pay.creditTransfers.map((c) => `<p>${esc(c.accountId)}${c.serviceProviderId ? `, ${esc(c.serviceProviderId)}` : ''}</p>`).join('')}
-        ${pay.remittanceInformation ? `<p>Reference ${esc(pay.remittanceInformation)}</p>` : ''}` : ''}
+        ${pay.remittanceInformation ? `<p>Reference ${esc(pay.remittanceInformation)}</p>` : ''}`
+          : ''
+      }
         ${inv.paymentTerms ? `<span class="label" style="margin-top:.5rem">Terms</span><p>${esc(inv.paymentTerms)}</p>` : ''}
       </div>
       <dl class="totals">
-        ${totals.filter(([, v]) => v !== undefined).map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v!)}</dd></div>`).join('')}
+        ${totals
+          .filter(([, v]) => v !== undefined)
+          .map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v!)}</dd></div>`)
+          .join('')}
         <div class="grand"><dt>Amount due</dt><dd>${esc(t.payable)} ${esc(cur)}</dd></div>
       </dl>
     </div>
@@ -214,7 +322,11 @@ function sheet(item: Item, result: ConvertResult): string {
 function party(label: string, p: Party): string {
   const a = p.address;
   const place = a ? [[a.postalCode, a.city].filter(Boolean).join(' '), a.countryCode].filter(Boolean).join(', ') : '';
-  const ids = [p.vatId && `VAT ${p.vatId}`, p.legalRegistrationId && `Reg. ${p.legalRegistrationId.value}`, p.endpoint && `Address ${p.endpoint.value}`].filter(Boolean);
+  const ids = [
+    p.vatId && `VAT ${p.vatId}`,
+    p.legalRegistrationId && `Reg. ${p.legalRegistrationId.value}`,
+    p.endpoint && `Address ${p.endpoint.value}`,
+  ].filter(Boolean);
   return `<div class="party"><span class="label">${label}</span>
     <p class="name">${esc(p.name ?? p.tradingName ?? 'Name not stated')}</p>
     ${a?.line1 ? `<p>${esc(a.line1)}</p>` : ''}${a?.line2 ? `<p>${esc(a.line2)}</p>` : ''}${place ? `<p>${esc(place)}</p>` : ''}
@@ -233,7 +345,16 @@ function provenance(item: Item): string {
   const env = o.payload.envelope.map((s) => ENVELOPE_LABEL[s.kind]).filter(Boolean);
   if (env.length) rows.push(['Unwrapped from', env.join(', then ')]);
   rows.push(['Encoding', o.payload.encoding]);
-  if (o.payload.signatures.length) rows.push(['Signatures', o.payload.signatures.map((s) => `${s.type}${s.signer ? ` (${s.signer})` : ''}${s.verified === undefined ? ', not verified' : s.verified ? ', verified' : ', INVALID'}`).join('; ')]);
+  if (o.payload.signatures.length)
+    rows.push([
+      'Signatures',
+      o.payload.signatures
+        .map(
+          (s) =>
+            `${s.type}${s.signer ? ` (${s.signer})` : ''}${s.verified === undefined ? ', not verified' : s.verified ? ', verified' : ', INVALID'}`,
+        )
+        .join('; '),
+    ]);
   return `<dl class="provenance">${rows.map(([k, v]) => `<div><dt class="label">${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>`;
 }
 
@@ -242,9 +363,29 @@ function penNotes(item: Item, result: ConvertResult): string {
   const blocks: string[] = [];
   const block = (title: string, rows: { code?: string; message: string }[], quiet = false) =>
     `<section class="${quiet ? 'quiet' : ''}"><h3>${esc(title)}</h3><ul>${rows.map((r) => `<li>${r.code ? `<span class="code">${esc(r.code)}</span> ` : ''}${esc(r.message)}</li>`).join('')}</ul></section>`;
-  if (inv?.source.warnings.length) blocks.push(block('Check these', inv.source.warnings.map((w) => ({ code: w.code, message: w.message }))));
-  if (inv?.source.derived.length) blocks.push(block('Filled in by the converter', inv.source.derived.map((d) => ({ code: d.field, message: d.rule })), true));
-  if (result.skipped.length) blocks.push(block('Skipped in this file', result.skipped.map((s) => ({ code: s.name, message: s.reason })), true));
+  if (inv?.source.warnings.length)
+    blocks.push(
+      block(
+        'Check these',
+        inv.source.warnings.map((w) => ({ code: w.code, message: w.message })),
+      ),
+    );
+  if (inv?.source.derived.length)
+    blocks.push(
+      block(
+        'Filled in by the converter',
+        inv.source.derived.map((d) => ({ code: d.field, message: d.rule })),
+        true,
+      ),
+    );
+  if (result.skipped.length)
+    blocks.push(
+      block(
+        'Skipped in this file',
+        result.skipped.map((s) => ({ code: s.name, message: s.reason })),
+        true,
+      ),
+    );
   return blocks.length ? `<div class="pen">${blocks.join('')}</div>` : '';
 }
 
@@ -264,15 +405,26 @@ function wireJson(item: Item, result: ConvertResult) {
   const full = { fileSha256: result.fileSha256, ...item.outcome, skipped: result.skipped };
   let view: 'invoice' | 'full' = item.invoice ? 'invoice' : 'full';
   const data = () => (view === 'invoice' ? item.invoice : full);
-  const show = () => { pre.innerHTML = highlight(JSON.stringify(data(), shortenForDisplay, 2)); };
+  const show = () => {
+    pre.innerHTML = highlight(JSON.stringify(data(), shortenForDisplay, 2));
+  };
   show();
-  resultEl.querySelectorAll<HTMLButtonElement>('[data-view]').forEach((b) => b.addEventListener('click', () => {
-    view = b.dataset.view as typeof view;
-    resultEl.querySelectorAll<HTMLButtonElement>('[data-view]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-    show();
-  }));
+  resultEl.querySelectorAll<HTMLButtonElement>('[data-view]').forEach((b) => {
+    b.addEventListener('click', () => {
+      view = b.dataset.view as typeof view;
+      resultEl.querySelectorAll<HTMLButtonElement>('[data-view]').forEach((x) => {
+        x.setAttribute('aria-pressed', String(x === b));
+      });
+      show();
+    });
+  });
   resultEl.querySelector<HTMLButtonElement>('[data-act="copy"]')!.addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(JSON.stringify(data(), null, 2)); toast('JSON copied'); } catch { toast('Copying is blocked here; use Download JSON'); }
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(data(), null, 2));
+      toast('JSON copied');
+    } catch {
+      toast('Copying is blocked here; use Download JSON');
+    }
   });
   resultEl.querySelector<HTMLButtonElement>('[data-act="download"]')!.addEventListener('click', () => {
     const base = item.invoice ? item.invoice.id.replace(/[^\w.-]+/g, '_') : (current?.filename ?? 'result').replace(/\.[^.]+$/, '');
@@ -287,17 +439,21 @@ function wireJson(item: Item, result: ConvertResult) {
 
 /** Long base64 attachments are shortened on screen only; Copy and Download keep them whole. */
 function shortenForDisplay(this: unknown, key: string, value: unknown) {
-  if (key === 'base64' && typeof value === 'string' && value.length > 240) return `${value.slice(0, 120)}… (${value.length} characters, kept whole in the download)`;
+  if (key === 'base64' && typeof value === 'string' && value.length > 240)
+    return `${value.slice(0, 120)}… (${value.length} characters, kept whole in the download)`;
   return value;
 }
 
 function highlight(json: string) {
   const escd = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  return escd.replace(/("(?:\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*")(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g, (m, str, colon, lit) => {
-    if (str) return colon ? `<span class="k">${str}</span>${colon}` : `<span class="s">${str}</span>`;
-    if (lit) return `<span class="l">${m}</span>`;
-    return `<span class="n">${m}</span>`;
-  });
+  return escd.replace(
+    /("(?:\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*")(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g,
+    (m, str, colon, lit) => {
+      if (str) return colon ? `<span class="k">${str}</span>${colon}` : `<span class="s">${str}</span>`;
+      if (lit) return `<span class="l">${m}</span>`;
+      return `<span class="n">${m}</span>`;
+    },
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -313,23 +469,48 @@ function renderCoverage() {
     .map((cc) => {
       const formats = national.filter((f) => f.countries.includes(cc));
       const chips = formats.length
-        ? formats.map((f) => {
-          const ok = implemented.has(f.family);
-          return `<li class="fmt ${ok ? 'converts' : 'identifies'}" title="${esc(f.notes)}">${esc(shortName(f))}<span class="visually-hidden">${ok ? ', converted' : ', identified only'}</span></li>`;
-        }).join('')
+        ? formats
+            .map((f) => {
+              const ok = implemented.has(f.family);
+              return `<li class="fmt ${ok ? 'converts' : 'identifies'}" title="${esc(f.notes)}">${esc(shortName(f))}<span class="visually-hidden">${ok ? ', converted' : ', identified only'}</span></li>`;
+            })
+            .join('')
         : '<li class="fmt converts">Peppol BIS 3</li>';
       return `<li class="country"><h3><span class="cc">${cc}</span>${esc(COUNTRY_NAMES[cc])}</h3><ul>${chips}</ul></li>`;
-    }).join('');
+    })
+    .join('');
 }
 
 /** Short chip labels; anything not listed falls back to the registry name without its parenthesis. */
 const SHORT_NAMES: Record<string, string> = {
-  'xrechnung-ubl': 'XRechnung UBL', 'xrechnung-cii': 'XRechnung CII', 'nlcius-ubl': 'NLCIUS UBL', 'nlcius-cii': 'NLCIUS CII',
-  'cius-ro': 'CIUS-RO', 'cius-pt': 'CIUS-PT', 'hr-cius': 'HR-CIUS', 'fr-ctc-ubl': 'France CTC UBL', 'fr-ctc-cii': 'France CTC CII',
-  'oioubl-3': 'OIOUBL 3', 'oioubl-2': 'OIOUBL 2', 'pl-pef': 'PEF', ksef: 'KSeF', 'ubl-be': 'UBL.BE', facturx: 'Factur-X / ZUGFeRD 2',
-  'zugferd-1': 'ZUGFeRD 1', fatturapa: 'FatturaPA', 'fatturapa-semplificata': 'FatturaPA simplified', facturae: 'Facturae',
-  isdoc: 'ISDOC', ebinterface: 'ebInterface', finvoice: 'Finvoice', teappsxml: 'TEAPPSXML', 'e-arve': 'e-arve',
-  'eslog-2': 'eSLOG 2.0', 'eslog-1': 'eSLOG 1.6', 'svefaktura-1': 'Svefaktura 1.0', 'gr-mydata': 'myDATA',
+  'xrechnung-ubl': 'XRechnung UBL',
+  'xrechnung-cii': 'XRechnung CII',
+  'nlcius-ubl': 'NLCIUS UBL',
+  'nlcius-cii': 'NLCIUS CII',
+  'cius-ro': 'CIUS-RO',
+  'cius-pt': 'CIUS-PT',
+  'hr-cius': 'HR-CIUS',
+  'fr-ctc-ubl': 'France CTC UBL',
+  'fr-ctc-cii': 'France CTC CII',
+  'oioubl-3': 'OIOUBL 3',
+  'oioubl-2': 'OIOUBL 2',
+  'pl-pef': 'PEF',
+  ksef: 'KSeF',
+  'ubl-be': 'UBL.BE',
+  facturx: 'Factur-X / ZUGFeRD 2',
+  'zugferd-1': 'ZUGFeRD 1',
+  fatturapa: 'FatturaPA',
+  'fatturapa-semplificata': 'FatturaPA simplified',
+  facturae: 'Facturae',
+  isdoc: 'ISDOC',
+  ebinterface: 'ebInterface',
+  finvoice: 'Finvoice',
+  teappsxml: 'TEAPPSXML',
+  'e-arve': 'e-arve',
+  'eslog-2': 'eSLOG 2.0',
+  'eslog-1': 'eSLOG 1.6',
+  'svefaktura-1': 'Svefaktura 1.0',
+  'gr-mydata': 'myDATA',
 };
 
 function shortName(f: FormatDef) {

@@ -1,7 +1,7 @@
-import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { convert, type CanonicalInvoice, type ValidationSummary } from '../src/index.js';
+import { describe, test } from 'node:test';
+import { type CanonicalInvoice, convert, type ValidationSummary } from '../src/index.js';
 import { defaultReader } from '../src/validation/bundles.js';
 import { fixture, utf8 } from './helpers.js';
 
@@ -10,7 +10,11 @@ const validXml = readFileSync(VALID, 'utf8');
 /** The first test to run loads the SaxonJS stylesheets; give every validation test room. */
 const slow = (name: string, fn: () => Promise<void>) => test(name, { timeout: 60_000 }, fn);
 
-async function validated(bytes: Uint8Array, name = 'x.xml', validation?: Parameters<typeof convert>[3]): Promise<{ invoice: CanonicalInvoice; v: ValidationSummary }> {
+async function validated(
+  bytes: Uint8Array,
+  name = 'x.xml',
+  validation?: Parameters<typeof convert>[3],
+): Promise<{ invoice: CanonicalInvoice; v: ValidationSummary }> {
   const result = await convert(bytes, name, undefined, { validate: true, ...validation });
   const outcome = result.outcomes[0];
   if (outcome.status !== 'ok') throw new Error(`not converted: ${outcome.status}`);
@@ -22,14 +26,18 @@ function matches(actual: unknown, expected: Record<string, unknown>) {
   for (const [k, e] of Object.entries(expected)) assert.deepEqual((actual as Record<string, unknown>)[k], e, k);
 }
 
-const ruleIds = (v: ValidationSummary, layer: string) => v.findings.filter((f) => f.layer === layer && f.severity === 'fatal').map((f) => f.ruleId);
+const ruleIds = (v: ValidationSummary, layer: string) =>
+  v.findings.filter((f) => f.layer === layer && f.severity === 'fatal').map((f) => f.ruleId);
 
 describe('validation', () => {
   slow('a valid Peppol invoice passes every layer', async () => {
     const { v } = await validated(utf8(validXml));
     matches(v, { parse: 'passed', schema: 'passed', semantic: 'passed', profile: 'passed', signature: 'not-run', clearance: 'not-run' });
     assert.deepEqual(v.bundles, { schema: 'xsd-ubl-2.1', semantic: 'en16931-ubl-1.3.17', profile: 'peppol-bis3-3.0.20-ubl' });
-    assert.deepEqual(v.findings.filter((f) => f.severity === 'fatal'), []);
+    assert.deepEqual(
+      v.findings.filter((f) => f.severity === 'fatal'),
+      [],
+    );
   });
 
   test('validation is opt-in', async () => {
@@ -48,9 +56,9 @@ describe('validation', () => {
     const { v } = await validated(utf8(xml));
     assert.equal(v.schema, 'passed');
     assert.equal(v.semantic, 'failed');
-    assert.ok((ruleIds(v, 'semantic')).includes('BR-CO-15'), String('BR-CO-15'));
+    assert.ok(ruleIds(v, 'semantic').includes('BR-CO-15'), String('BR-CO-15'));
     const finding = v.findings.find((f) => f.ruleId === 'BR-CO-15')!;
-    assert.ok((finding.message).includes('Invoice total amount with VAT'), String('Invoice total amount with VAT'));
+    assert.ok(finding.message.includes('Invoice total amount with VAT'), String('Invoice total amount with VAT'));
     assert.ok(finding.path?.includes('Invoice'), String('Invoice'));
   });
 
@@ -59,18 +67,23 @@ describe('validation', () => {
     const { v } = await validated(utf8(xml));
     assert.equal(v.schema, 'passed');
     assert.equal(v.profile, 'failed');
-    assert.ok((ruleIds(v, 'profile')).includes('PEPPOL-EN16931-R004'), String('PEPPOL-EN16931-R004'));
+    assert.ok(ruleIds(v, 'profile').includes('PEPPOL-EN16931-R004'), String('PEPPOL-EN16931-R004'));
   });
 
   slow('an element in the wrong order fails the schema layer only', async () => {
-    const xml = validXml.replace('<cbc:DueDate>2026-11-14</cbc:DueDate>\n', '').replace('<cbc:IssueDate>', '<cbc:DueDate>2026-11-14</cbc:DueDate>\n  <cbc:IssueDate>');
+    const xml = validXml
+      .replace('<cbc:DueDate>2026-11-14</cbc:DueDate>\n', '')
+      .replace('<cbc:IssueDate>', '<cbc:DueDate>2026-11-14</cbc:DueDate>\n  <cbc:IssueDate>');
     assert.notEqual(xml, validXml);
     const { v } = await validated(utf8(xml));
     assert.equal(v.schema, 'failed');
     assert.equal(v.semantic, 'passed');
     assert.equal(v.profile, 'passed');
     assert.ok(v.findings.filter((f) => f.layer === 'schema' && f.severity === 'fatal').length > 0);
-    assert.deepEqual(v.findings.filter((f) => f.layer !== 'schema' && f.severity === 'fatal'), []);
+    assert.deepEqual(
+      v.findings.filter((f) => f.layer !== 'schema' && f.severity === 'fatal'),
+      [],
+    );
   });
 
   slow('CII invoices run the CII schema, EN 16931 and XRechnung bundles', async () => {
@@ -103,11 +116,20 @@ describe('validation', () => {
 
   slow('validators that cannot run are unavailable, not failed', async () => {
     const { v } = await validated(utf8(validXml), 'x.xml', {
-      validation: { bundles: { read: async () => { throw new Error('offline'); } } },
+      validation: {
+        bundles: {
+          read: async () => {
+            throw new Error('offline');
+          },
+        },
+      },
     });
     matches(v, { parse: 'passed', schema: 'unavailable', semantic: 'unavailable', profile: 'unavailable' });
     assert.ok(v.findings.every((f) => f.severity === 'info' && /unavailable/i.test(f.message)));
-    assert.equal(v.findings.some((f) => f.severity === 'fatal'), false);
+    assert.equal(
+      v.findings.some((f) => f.severity === 'fatal'),
+      false,
+    );
   });
 
   slow('a bundle file that does not match its manifest hash is unavailable', async () => {
@@ -151,6 +173,9 @@ describe('validation keeps the signature layer', () => {
     const after = b.invoices[0].source.validation!;
     assert.notEqual(before.signature, 'not-run');
     assert.equal(after.signature, before.signature);
-    assert.deepEqual(after.findings.filter((f) => f.layer === 'signature'), before.findings.filter((f) => f.layer === 'signature'));
+    assert.deepEqual(
+      after.findings.filter((f) => f.layer === 'signature'),
+      before.findings.filter((f) => f.layer === 'signature'),
+    );
   });
 });

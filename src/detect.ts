@@ -1,4 +1,4 @@
-import { FORMATS, OTHER_DOCUMENTS, type DetectContext, type FormatDef, type MatchDetails } from './formats.js';
+import { type DetectContext, FORMATS, type FormatDef, type MatchDetails, OTHER_DOCUMENTS } from './formats.js';
 import { probeXml, type XmlProbe } from './probe.js';
 
 export type Detection =

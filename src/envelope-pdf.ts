@@ -1,6 +1,6 @@
 /** PDF/A-3 attachment extraction. Loaded on demand by envelope.ts so pdf-lib stays out of the initial bundle. */
 import { Inflate, Unzlib } from 'fflate';
-import { PDFArray, PDFDict, PDFDocument, PDFHexString, PDFName, PDFRawStream, PDFString, type PDFObject } from 'pdf-lib';
+import { PDFArray, PDFDict, PDFDocument, PDFHexString, PDFName, type PDFObject, PDFRawStream, PDFString } from 'pdf-lib';
 import { concat } from './bytes.js';
 import type { UnwrapLimits, UnwrapResult } from './envelope.js';
 
@@ -10,14 +10,22 @@ export interface PdfCtx {
   unpacked: number;
 }
 
-export async function pdfAttachments(bytes: Uint8Array, pdfName: string | undefined, ctx: PdfCtx): Promise<{ name: string; data: Uint8Array }[]> {
+export async function pdfAttachments(
+  bytes: Uint8Array,
+  pdfName: string | undefined,
+  ctx: PdfCtx,
+): Promise<{ name: string; data: Uint8Array }[]> {
   const pdf = await PDFDocument.load(bytes, { ignoreEncryption: true, updateMetadata: false, throwOnInvalidObject: false });
   const specs: PDFDict[] = [];
   const names = pdf.catalog.lookupMaybe(PDFName.of('Names'), PDFDict);
   const tree = names?.lookupMaybe(PDFName.of('EmbeddedFiles'), PDFDict);
   if (tree) collectNameTree(tree, specs, 0);
   const af = pdf.catalog.lookupMaybe(PDFName.of('AF'), PDFArray);
-  if (af) for (let i = 0; i < af.size(); i++) { const d = af.lookupMaybe(i, PDFDict); if (d && !specs.includes(d)) specs.push(d); }
+  if (af)
+    for (let i = 0; i < af.size(); i++) {
+      const d = af.lookupMaybe(i, PDFDict);
+      if (d && !specs.includes(d)) specs.push(d);
+    }
 
   const out: { name: string; data: Uint8Array }[] = [];
   const seen = new Set<string>();
@@ -36,7 +44,10 @@ export async function pdfAttachments(bytes: Uint8Array, pdfName: string | undefi
       continue;
     }
     const data = decodeStreamCapped(stream, budget);
-    if (typeof data === 'string') { ctx.out.skipped.push({ name: `${pdfName ?? 'pdf'}#${name}`, reason: data }); continue; }
+    if (typeof data === 'string') {
+      ctx.out.skipped.push({ name: `${pdfName ?? 'pdf'}#${name}`, reason: data });
+      continue;
+    }
     ctx.unpacked += data.length;
     out.push({ name, data });
   }
@@ -63,7 +74,8 @@ function decodeStreamCapped(stream: PDFRawStream, max: number): Uint8Array | str
   let over = false;
   const onData = (chunk: Uint8Array) => {
     total += chunk.length;
-    if (total > max) over = true; else chunks.push(chunk);
+    if (total > max) over = true;
+    else chunks.push(chunk);
   };
   const src = stream.contents;
   // FlateDecode is zlib-wrapped (RFC 1950); a few writers emit raw deflate, so check the header.
@@ -83,9 +95,17 @@ function decodeStreamCapped(stream: PDFRawStream, max: number): Uint8Array | str
 function collectNameTree(node: PDFDict, out: PDFDict[], depth: number) {
   if (depth > 20) return; // malformed or cyclic name tree
   const pairs = node.lookupMaybe(PDFName.of('Names'), PDFArray);
-  if (pairs) for (let i = 1; i < pairs.size(); i += 2) { const d = pairs.lookupMaybe(i, PDFDict); if (d) out.push(d); }
+  if (pairs)
+    for (let i = 1; i < pairs.size(); i += 2) {
+      const d = pairs.lookupMaybe(i, PDFDict);
+      if (d) out.push(d);
+    }
   const kids = node.lookupMaybe(PDFName.of('Kids'), PDFArray);
-  if (kids) for (let i = 0; i < kids.size(); i++) { const k = kids.lookupMaybe(i, PDFDict); if (k) collectNameTree(k, out, depth + 1); }
+  if (kids)
+    for (let i = 0; i < kids.size(); i++) {
+      const k = kids.lookupMaybe(i, PDFDict);
+      if (k) collectNameTree(k, out, depth + 1);
+    }
 }
 
 function pdfText(o: PDFObject | undefined): string | undefined {

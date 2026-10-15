@@ -1,9 +1,12 @@
-import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { b64, makeIdentity } from './sig-helpers.js';
+import { describe, test } from 'node:test';
 import { certificateDetails, commonName, dn, evaluateTrust, parseAnchors, parseCertificate } from '../src/signature/trust.js';
+import { b64, makeIdentity } from './sig-helpers.js';
 
-const pem = (der: Uint8Array) => `-----BEGIN CERTIFICATE-----\n${b64(der).match(/.{1,64}/g)!.join('\n')}\n-----END CERTIFICATE-----\n`;
+const pem = (der: Uint8Array) =>
+  `-----BEGIN CERTIFICATE-----\n${b64(der)
+    .match(/.{1,64}/g)!
+    .join('\n')}\n-----END CERTIFICATE-----\n`;
 const now = new Date();
 
 describe('trust evaluation', () => {

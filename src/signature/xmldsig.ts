@@ -11,7 +11,7 @@
 import { DOMParser, type Document as XDocument, type Element as XElement, type Node as XNode } from '@xmldom/xmldom';
 import type * as pkijs from 'pkijs';
 import type { SignatureInfo } from '../canonical.js';
-import { canonicalize, type C14nOptions } from './c14n.js';
+import { type C14nOptions, canonicalize } from './c14n.js';
 import { certificateDetails, commonName, evaluateTrust, parseAnchors, parseCertificate, type TrustAnchor } from './trust.js';
 
 const DSIG = 'http://www.w3.org/2000/09/xmldsig#';
@@ -32,16 +32,16 @@ const C14N: Record<string, Omit<C14nOptions, 'omit' | 'inclusivePrefixes'>> = {
   'http://www.w3.org/TR/2001/REC-xml-c14n-20010315': { exclusive: false, withComments: false },
   'http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments': { exclusive: false, withComments: true },
   [EXC]: { exclusive: true, withComments: false },
-  [EXC + 'WithComments']: { exclusive: true, withComments: true },
+  [`${EXC}WithComments`]: { exclusive: true, withComments: true },
 };
 const DIGESTS: Record<string, string> = {
-  [DSIG + 'sha1']: 'SHA-1',
+  [`${DSIG}sha1`]: 'SHA-1',
   'http://www.w3.org/2001/04/xmlenc#sha256': 'SHA-256',
   'http://www.w3.org/2001/04/xmldsig-more#sha384': 'SHA-384',
   'http://www.w3.org/2001/04/xmlenc#sha512': 'SHA-512',
 };
 const SIG_ALGS: Record<string, { kind: 'rsa' | 'ec'; hash: string }> = {
-  [DSIG + 'rsa-sha1']: { kind: 'rsa', hash: 'SHA-1' },
+  [`${DSIG}rsa-sha1`]: { kind: 'rsa', hash: 'SHA-1' },
   'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256': { kind: 'rsa', hash: 'SHA-256' },
   'http://www.w3.org/2001/04/xmldsig-more#rsa-sha384': { kind: 'rsa', hash: 'SHA-384' },
   'http://www.w3.org/2001/04/xmldsig-more#rsa-sha512': { kind: 'rsa', hash: 'SHA-512' },
@@ -56,7 +56,11 @@ const CURVES: Record<string, string> = { '1.2.840.10045.3.1.7': 'P-256', '1.3.13
 export async function verifyXmlSignatures(xml: string, opts: XmlSigOptions = {}): Promise<SignatureInfo[]> {
   let doc: XDocument;
   try {
-    doc = new DOMParser({ onError: (level: string, msg: string) => { if (level !== 'warning') throw new Error(msg); } }).parseFromString(xml, 'text/xml');
+    doc = new DOMParser({
+      onError: (level: string, msg: string) => {
+        if (level !== 'warning') throw new Error(msg);
+      },
+    }).parseFromString(xml, 'text/xml');
   } catch (e) {
     return [{ type: opts.type ?? 'XMLDSig', reason: `XML could not be parsed for signature checking: ${(e as Error).message}` }];
   }
@@ -68,14 +72,21 @@ export async function verifyXmlSignatures(xml: string, opts: XmlSigOptions = {})
   return out;
 }
 
-async function verifyOne(doc: XDocument, sig: XElement, ids: Map<string, XElement[]>, anchors: pkijs.Certificate[], opts: XmlSigOptions): Promise<SignatureInfo> {
+async function verifyOne(
+  doc: XDocument,
+  sig: XElement,
+  ids: Map<string, XElement[]>,
+  anchors: pkijs.Certificate[],
+  opts: XmlSigOptions,
+): Promise<SignatureInfo> {
   const xades = !!first(sig, XADES_URI, 'QualifyingProperties', true);
   const info: SignatureInfo = { type: opts.type ?? (xades ? 'XAdES' : 'XMLDSig') };
   try {
     const signedInfo = child(sig, DSIG, 'SignedInfo');
     const sigValueEl = child(sig, DSIG, 'SignatureValue');
     const refs = signedInfo ? children(signedInfo, DSIG, 'Reference') : [];
-    if (!signedInfo || !sigValueEl || refs.length === 0) throw new Malformed('Signature is incomplete (SignedInfo, Reference or SignatureValue missing)');
+    if (!signedInfo || !sigValueEl || refs.length === 0)
+      throw new Malformed('Signature is incomplete (SignedInfo, Reference or SignatureValue missing)');
     const c14nAlg = child(signedInfo, DSIG, 'CanonicalizationMethod')?.getAttribute('Algorithm') ?? '';
     const c14nOpts = C14N[c14nAlg];
     if (!c14nOpts) throw new Unsupported(`Unsupported canonicalization ${c14nAlg || '(none)'}`);
@@ -115,7 +126,9 @@ async function verifyOne(doc: XDocument, sig: XElement, ids: Map<string, XElemen
 
     // SignatureValue over canonical SignedInfo.
     const incl = child(child(signedInfo, DSIG, 'CanonicalizationMethod'), EXC, 'InclusiveNamespaces')?.getAttribute('PrefixList');
-    const signedBytes = new TextEncoder().encode(canonicalize(signedInfo, { ...c14nOpts, inclusivePrefixes: incl?.split(/\s+/).filter(Boolean) }));
+    const signedBytes = new TextEncoder().encode(
+      canonicalize(signedInfo, { ...c14nOpts, inclusivePrefixes: incl?.split(/\s+/).filter(Boolean) }),
+    );
     const sigValue = b64(sigValueEl.textContent ?? '');
     if (!sigValue) throw new Malformed('Empty SignatureValue');
 
@@ -133,21 +146,39 @@ async function verifyOne(doc: XDocument, sig: XElement, ids: Map<string, XElemen
       const hash = DIGESTS[certDigest.alg];
       const match = hash ? await findByDigest(certs, hash, certDigest.value) : undefined;
       if (match) signer = match;
-      else if (certs.length) info.reason = 'Signing certificate digest in the signed properties matches none of the certificates in the signature';
+      else if (certs.length)
+        info.reason = 'Signing certificate digest in the signed properties matches none of the certificates in the signature';
     }
     const key = signer ? await importKey(signer.cert, sigAlg) : await keyFromKeyValue(child(sig, DSIG, 'KeyInfo'), sigAlg);
-    if (signer) { info.signer = commonName(signer.cert); info.certificate = certificateDetails(signer.cert); }
-    const sigOk = await crypto.subtle.verify(sigAlg.kind === 'rsa' ? { name: 'RSASSA-PKCS1-v1_5' } : { name: 'ECDSA', hash: sigAlg.hash }, key, sigValue as BufferSource, signedBytes as BufferSource);
+    if (signer) {
+      info.signer = commonName(signer.cert);
+      info.certificate = certificateDetails(signer.cert);
+    }
+    const sigOk = await crypto.subtle.verify(
+      sigAlg.kind === 'rsa' ? { name: 'RSASSA-PKCS1-v1_5' } : { name: 'ECDSA', hash: sigAlg.hash },
+      key,
+      sigValue as BufferSource,
+      signedBytes as BufferSource,
+    );
 
     const covers = targets.some((t) => t === 'external' || t === doc || t === doc.documentElement);
     const problems = [...refProblems];
     if (!sigOk) problems.unshift('SignatureValue does not match the signed information (wrong key or altered SignedInfo)');
     if (info.reason) problems.push(info.reason);
     if (sigOk && !refProblems.length && !covers) problems.push('the signed references do not cover the whole document');
-    if (problems.length) { info.verified = false; info.reason = problems.join('; '); return info; }
+    if (problems.length) {
+      info.verified = false;
+      info.reason = problems.join('; ');
+      return info;
+    }
     info.verified = true;
     if (signer) {
-      const t = await evaluateTrust(signer.cert, certs.map((c) => c.cert), anchors, info.signedAt ? new Date(info.signedAt) : new Date());
+      const t = await evaluateTrust(
+        signer.cert,
+        certs.map((c) => c.cert),
+        anchors,
+        info.signedAt ? new Date(info.signedAt) : new Date(),
+      );
       info.trust = t.trust;
       if (t.reason) info.trustReason = t.reason;
     }
@@ -155,14 +186,24 @@ async function verifyOne(doc: XDocument, sig: XElement, ids: Map<string, XElemen
     return info;
   } catch (e) {
     if (e instanceof Unsupported) info.reason = e.message;
-    else { info.verified = false; info.reason = e instanceof Malformed ? e.message : `Verification error: ${(e as Error).message}`; }
+    else {
+      info.verified = false;
+      info.reason = e instanceof Malformed ? e.message : `Verification error: ${(e as Error).message}`;
+    }
     return info;
   }
 }
 
 class Malformed extends Error {}
 
-function dereference(doc: XDocument, sig: XElement, ref: XElement, uri: string | null, ids: Map<string, XElement[]>, opts: XmlSigOptions): { bytes: Uint8Array; target: XNode | 'external' } {
+function dereference(
+  doc: XDocument,
+  sig: XElement,
+  ref: XElement,
+  uri: string | null,
+  ids: Map<string, XElement[]>,
+  opts: XmlSigOptions,
+): { bytes: Uint8Array; target: XNode | 'external' } {
   let target: XNode | 'external';
   let octets: Uint8Array | undefined;
   if (uri === null || uri === '') target = doc;
@@ -179,24 +220,37 @@ function dereference(doc: XDocument, sig: XElement, ref: XElement, uri: string |
   }
 
   let omit: XElement | undefined;
-  let canon: (Omit<C14nOptions, 'omit'>) | undefined;
+  let canon: Omit<C14nOptions, 'omit'> | undefined;
   let node: XNode | undefined = target === 'external' ? undefined : target;
   const transforms = children(child(ref, DSIG, 'Transforms'), DSIG, 'Transform');
   for (const t of transforms) {
     const alg = t.getAttribute('Algorithm') ?? '';
-    if (alg === DSIG + 'enveloped-signature') { omit = sig; continue; }
+    if (alg === `${DSIG}enveloped-signature`) {
+      omit = sig;
+      continue;
+    }
     const c = C14N[alg];
     if (c) {
       const prefixes = child(t, EXC, 'InclusiveNamespaces')?.getAttribute('PrefixList');
       canon = { ...c, inclusivePrefixes: prefixes?.split(/\s+/).filter(Boolean) };
       continue;
     }
-    if (alg === 'http://www.w3.org/TR/1999/REC-xpath-19991116' && /^\s*not\(ancestor-or-self::(?:[\w.-]+:)?Signature\)\s*$/.test(child(t, DSIG, 'XPath')?.textContent ?? '')) { omit = sig; continue; }
+    if (
+      alg === 'http://www.w3.org/TR/1999/REC-xpath-19991116' &&
+      /^\s*not\(ancestor-or-self::(?:[\w.-]+:)?Signature\)\s*$/.test(child(t, DSIG, 'XPath')?.textContent ?? '')
+    ) {
+      omit = sig;
+      continue;
+    }
     throw new Unsupported(`Unsupported transform ${alg}`);
   }
   if (octets) {
     if (!canon) return { bytes: octets, target };
-    node = new DOMParser({ onError: (l: string, m: string) => { if (l !== 'warning') throw new Error(m); } }).parseFromString(new TextDecoder('utf-8').decode(octets), 'text/xml');
+    node = new DOMParser({
+      onError: (l: string, m: string) => {
+        if (l !== 'warning') throw new Error(m);
+      },
+    }).parseFromString(new TextDecoder('utf-8').decode(octets), 'text/xml');
   }
   const opt = canon ?? { exclusive: false, withComments: false };
   return { bytes: new TextEncoder().encode(canonicalize(node!, { ...opt, omit })), target };
@@ -236,7 +290,8 @@ function findSignatures(doc: XDocument): XElement[] {
   for (let i = 0; i < list.length; i++) {
     const el = list.item(i)!;
     let nested = false;
-    for (let p = el.parentNode; p && p.nodeType === 1; p = p.parentNode) if ((p as XElement).namespaceURI === DSIG && (p as XElement).localName === 'Signature') nested = true;
+    for (let p = el.parentNode; p && p.nodeType === 1; p = p.parentNode)
+      if ((p as XElement).namespaceURI === DSIG && (p as XElement).localName === 'Signature') nested = true;
     if (!nested) out.push(el);
   }
   return out;
@@ -286,14 +341,25 @@ async function importKey(cert: pkijs.Certificate, alg: { kind: 'rsa' | 'ec'; has
 async function keyFromKeyValue(keyInfo: XElement | null, alg: { kind: 'rsa' | 'ec'; hash: string }): Promise<CryptoKey> {
   const rsa = child(child(keyInfo, DSIG, 'KeyValue'), DSIG, 'RSAKeyValue');
   if (!rsa || alg.kind !== 'rsa') throw new Unsupported('No signer certificate or supported key in KeyInfo');
-  const part = (n: string) => (textOf(child(rsa, DSIG, n)) ?? '').replace(/\s+/g, '').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  return crypto.subtle.importKey('jwk', { kty: 'RSA', n: part('Modulus'), e: part('Exponent'), ext: true }, { name: 'RSASSA-PKCS1-v1_5', hash: alg.hash }, false, ['verify']);
+  const part = (n: string) =>
+    (textOf(child(rsa, DSIG, n)) ?? '').replace(/\s+/g, '').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return crypto.subtle.importKey(
+    'jwk',
+    { kty: 'RSA', n: part('Modulus'), e: part('Exponent'), ext: true },
+    { name: 'RSASSA-PKCS1-v1_5', hash: alg.hash },
+    false,
+    ['verify'],
+  );
 }
 
 function b64(s: string): Uint8Array | undefined {
   const t = s.replace(/\s+/g, '');
   if (!t) return undefined;
-  try { return Uint8Array.from(atob(t), (c) => c.charCodeAt(0)); } catch { return undefined; }
+  try {
+    return Uint8Array.from(atob(t), (c) => c.charCodeAt(0));
+  } catch {
+    return undefined;
+  }
 }
 
 function equal(a: Uint8Array, b: Uint8Array) {
