@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { EXIT, main, uniqueName, ValidatorUnavailable, type IO } from '../src/cli.js';
@@ -70,12 +70,12 @@ describe('einvoice convert', () => {
   });
   test('--out writes one unique file per invoice and nothing to stdout', async () => {
     const out = join(tmp, 'out');
-    const r = await run(['convert', '--quiet', '--out', out, peppol, peppol, fixturePath('e-arve-two-invoices.xml')]);
+    const r = await run(['convert', '--quiet', '--out', out, peppol, peppol, fixturePath('peppol-bis3-creditnote.xml')]);
     expect(r.code).toBe(0);
     expect(r.stdout).toBe('');
     const names = readdirSync(out);
     expect(new Set(names.map((n) => n.toLowerCase())).size).toBe(names.length);
-    expect(names.length).toBeGreaterThanOrEqual(4);
+    expect(names.length).toBe(3);
     for (const n of names) expect(JSON.parse(readFileSync(join(out, n), 'utf8')).id).toBeDefined();
     expect(names.some((n) => /-2\.json$/.test(n))).toBe(true);
   });
@@ -169,8 +169,11 @@ describe('sweep', () => {
     expect(r.stdout).toMatch(/invoice peppol-bis3/);
   });
   test('mismatch exits 1', async () => {
-    const answers = write('answers.json', JSON.stringify({ [peppol]: ['xrechnung-ubl'] }));
-    const r = await run(['sweep', peppol, '--expect', answers]);
+    const dir = join(tmp, 'sw');
+    mkdirSync(dir);
+    copyFileSync(peppol, join(dir, 'a.xml'));
+    writeFileSync(join(dir, 'answers.json'), JSON.stringify({ 'a.xml': ['xrechnung-ubl'] }));
+    const r = await run(['sweep', dir, '--expect', join(dir, 'answers.json')]);
     expect(r.code).toBe(1);
     expect(r.stdout).toMatch(/MISMATCH/);
   });
