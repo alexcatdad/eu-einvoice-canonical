@@ -425,7 +425,7 @@ describe('einvoice trust-lists', () => {
     const inv = join(dir, 'signed.xml');
     const base = readFileSync(fixturePath('peppol-bis3-invoice.xml'), 'utf8').replace(/<\/Invoice>\s*$/, '<!--SIG--></Invoice>');
     writeFileSync(inv, await signXml(base, { signer: w.leaves.valid! }));
-    const ok = await run(['convert', inv, '--eu-trust', file], { now: NOW });
+    const ok = await run(['convert', inv, `--eu-trust=${file}`], { now: NOW });
     assert.equal(ok.code, EXIT.ok, ok.stderr);
     const sig = JSON.parse(ok.stdout)[0].source.signatures[0];
     assert.equal(sig.euTrust.qualified, true);
@@ -433,9 +433,9 @@ describe('einvoice trust-lists', () => {
     const noSnap = await run(['convert', inv, `--eu-trust=${join(dir, 'missing.json')}`]);
     assert.equal(noSnap.code, EXIT.usage);
     assert.match(noSnap.stderr, /trust-lists update/);
-    const stale = await run(['convert', inv, '--eu-trust', file], { now: new Date('2027-01-01T00:00:00Z') });
+    const stale = await run(['convert', inv, `--eu-trust=${file}`], { now: new Date('2027-01-01T00:00:00Z') });
     assert.match(stale.stderr, /past its next update 2026-07-01/);
-    const ignored = await run(['detect', inv, '--eu-trust', file]);
+    const ignored = await run(['detect', inv, `--eu-trust=${file}`]);
     assert.match(ignored.stderr, /only applies to convert/);
   });
 
