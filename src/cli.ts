@@ -5,6 +5,7 @@
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { runDuplicates } from './duplicates/run.js';
 import { type CanonicalInvoice, convert, DEFAULT_LIMITS, type Detection, inspect, type UnwrapLimits } from './index.js';
 import { runSweep } from './sweep.js';
 
@@ -17,6 +18,7 @@ export const EXIT = {
   partial: 5,
   validatorUnavailable: 6,
   internal: 7,
+  duplicates: 8,
 } as const;
 
 /** Thrown by a validator that cannot run (missing rules, no network...). Maps to exit code 6. */
@@ -43,11 +45,13 @@ const USAGE = `Usage:
   einvoice inspect <file...>                 unwrap and detect result as JSON
   einvoice convert <file...> [--out <dir>]   canonical JSON (stdout, or one <invoice-id>.json per invoice in <dir>)
   einvoice sweep   <dir...> [--expect answers.json]
+  einvoice duplicates <dir...> [--window days] [--index index.json] [--json]
+                                             duplicate and re-sent invoices across files; exit 8 if any
 
 A file argument of "-" reads stdin.
 Flags: --pretty  --quiet  --limits '<json>'  --validate  --help
 Exit codes: 0 ok, 1 usage, 2 unsafe/malformed input, 3 unsupported format, 4 validation failed,
-            5 partially converted, 6 validator unavailable, 7 internal error.`;
+            5 partially converted, 6 validator unavailable, 7 internal error, 8 duplicates found.`;
 
 class UsageError extends Error {}
 
@@ -59,12 +63,15 @@ interface Parsed {
   validate: boolean;
   out?: string;
   expect?: string;
+  index?: string;
+  window?: number;
+  json: boolean;
   limits?: Partial<UnwrapLimits>;
 }
 
 function parseArgs(argv: string[]): Parsed {
-  const p: Parsed = { command: '', files: [], pretty: false, quiet: false, validate: false };
-  const takesValue = new Set(['--out', '--expect', '--limits']);
+  const p: Parsed = { command: '', files: [], pretty: false, quiet: false, validate: false, json: false };
+  const takesValue = new Set(['--out', '--expect', '--limits', '--index', '--window']);
   for (let i = 0; i < argv.length; i++) {
     let a = argv[i]!;
     if (a === '-' || !a.startsWith('-')) {
@@ -97,6 +104,18 @@ function parseArgs(argv: string[]): Parsed {
         break;
       case '--expect':
         p.expect = value;
+        break;
+      case '--index':
+        p.index = value;
+        break;
+      case '--window': {
+        const n = Number(value);
+        if (!Number.isInteger(n) || n < 0) throw new UsageError('--window must be a non-negative whole number of days');
+        p.window = n;
+        break;
+      }
+      case '--json':
+        p.json = true;
         break;
       case '--limits':
         p.limits = parseLimits(value!);
@@ -166,13 +185,15 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     io.stdout(`${USAGE}\n`);
     return EXIT.ok;
   }
-  const commands = ['detect', 'inspect', 'convert', 'sweep'];
+  const commands = ['detect', 'inspect', 'convert', 'sweep', 'duplicates'];
   if (!commands.includes(args.command)) {
     io.stderr(`einvoice: unknown command "${args.command}" (try --help)`);
     return EXIT.usage;
   }
   if (args.files.length === 0) {
-    io.stderr(`einvoice: ${args.command} needs at least one ${args.command === 'sweep' ? 'directory' : 'file'}`);
+    io.stderr(
+      `einvoice: ${args.command} needs at least one ${args.command === 'sweep' || args.command === 'duplicates' ? 'directory' : 'file'}`,
+    );
     return EXIT.usage;
   }
   const err = (line: string) => io.stderr(`einvoice: ${oneLine(line)}`);
@@ -185,6 +206,15 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     if (args.command === 'sweep') {
       if (args.validate) note('--validate has no effect on sweep');
       return await runSweep(args.files, { expect: args.expect, limits: args.limits }, (l) => io.stdout(`${l}\n`));
+    }
+
+    if (args.command === 'duplicates') {
+      return await runDuplicates(
+        args.files,
+        { windowDays: args.window, indexFile: args.index, json: args.json, pretty: args.pretty, limits: args.limits },
+        (l) => io.stdout(`${l}\n`),
+        note,
+      );
     }
 
     let validator: Validator | null = null;
