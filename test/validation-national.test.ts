@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { describe, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { detectXml } from '../src/detect.js';
 import { type CanonicalInvoice, convert, type ValidationSummary } from '../src/index.js';
+import { validate } from '../src/validation/index.js';
 import { utf8 } from './helpers.js';
 
 const DIR = new URL('./validation-fixtures/national/', import.meta.url);
@@ -111,6 +113,11 @@ async function validated(xml: string, file: string): Promise<{ invoice: Canonica
   return { invoice, v: invoice.source.validation! };
 }
 
+/** The mutated documents go straight to the validator: a parser would reject several of them before validation runs. */
+async function validatedXml(xml: string): Promise<ValidationSummary> {
+  return validate({ xml }, detectXml(xml));
+}
+
 const fatal = (v: ValidationSummary) => v.findings.filter((f) => f.layer === 'schema' && f.severity === 'fatal');
 
 describe('national schemas', () => {
@@ -129,7 +136,7 @@ describe('national schemas', () => {
       slow(`a missing <${c.drop}> fails with a located finding`, async () => {
         const xml = drop(read(c.file), c.drop);
         assert.notEqual(xml, read(c.file));
-        const { v } = await validated(xml, c.file);
+        const v = await validatedXml(xml);
         assert.equal(v.schema, 'failed');
         assert.ok(fatal(v).length > 0);
         assert.ok(
@@ -139,7 +146,7 @@ describe('national schemas', () => {
       });
 
       slow(`<${c.swap[0]}> and <${c.swap[1]}> in the wrong order fail with a located finding`, async () => {
-        const { v } = await validated(swap(read(c.file), c.swap[0], c.swap[1]), c.file);
+        const v = await validatedXml(swap(read(c.file), c.swap[0], c.swap[1]));
         assert.equal(v.schema, 'failed');
         assert.ok(
           fatal(v).some((f) => /\(line \d+\)/.test(f.message)),

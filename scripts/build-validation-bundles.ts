@@ -203,7 +203,8 @@ const OFFLINE = 'schemaLocation of imported schemas rewritten to the vendored co
 const FATTURAPA = 'https://www.fatturapa.gov.it/export/documenti/fatturapa';
 const SLAMDUNK =
   'https://raw.githubusercontent.com/Slamdunk/php-validatore-fattura-elettronica/da1986196bf8a9e993fcd33a059cf08aaca1bf36/xsd';
-const ETD = 'http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/01/05/eD/DefinicjeTypy/StrukturyDanych_v10-0E.xsd';
+const ETD_BASE = 'http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/01/05/eD/DefinicjeTypy/';
+const ETD = (f: string) => `${ETD_BASE}${f}`;
 const EBI = (v: string, f: string) =>
   `https://raw.githubusercontent.com/austriapro/ebinterface-standards/f7e4e4ec8778b7da2bc3468ed976a396fa8b6b29/schemas/ebInterface${v}/${f}`;
 const FACTURAE = (v: string) => `https://www.facturae.gob.es/content/dam/facturae/formato/versiones/Facturaev${v}.xml`;
@@ -252,8 +253,18 @@ const ksef = (id: string, title: string, ns: string, date: string, url: string) 
     NO_LICENCE,
     'Ministry of Finance schema; releaseDate is the date in the schema namespace.',
     [
-      { url, to: 'schemat.xsd', replace: [[ETD, 'StrukturyDanych_v10-0E.xsd']] },
-      { url: ETD, to: 'StrukturyDanych_v10-0E.xsd' },
+      { url, to: 'schemat.xsd', replace: [[ETD('StrukturyDanych_v10-0E.xsd'), 'StrukturyDanych_v10-0E.xsd']] },
+      {
+        url: ETD('StrukturyDanych_v10-0E.xsd'),
+        to: 'StrukturyDanych_v10-0E.xsd',
+        replace: [[ETD('ElementarneTypyDanych_v10-0E.xsd'), 'ElementarneTypyDanych_v10-0E.xsd']],
+      },
+      {
+        url: ETD('ElementarneTypyDanych_v10-0E.xsd'),
+        to: 'ElementarneTypyDanych_v10-0E.xsd',
+        replace: [[ETD('KodyKrajow_v10-0E.xsd'), 'KodyKrajow_v10-0E.xsd']],
+      },
+      { url: ETD('KodyKrajow_v10-0E.xsd'), to: 'KodyKrajow_v10-0E.xsd' },
     ],
     { Faktura: 'schemat.xsd' },
   );
