@@ -8,6 +8,9 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "bun test",
+    "coverage": "bun test --coverage --coverage-reporter=lcov --coverage-reporter=text",
+    "coverage:check": "bun scripts/coverage.ts",
+    "conformance": "bun scripts/conformance.ts",
     "sweep:fixtures": "bun scripts/sweep.ts test/fixtures --expect test/fixtures/expected.json",
     "build:site": "bun run site/build.ts",
     "serve:site": "bun run site/serve.ts",
