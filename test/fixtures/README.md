@@ -16,6 +16,12 @@ Synthetic documents with fictitious parties. Their numbers are consistent (the E
 | `facturx-minimum.xml` | Factur-X MINIMUM: no lines |
 | `svefaktura-1.0.xml` | Svefaktura 1.0 in ISO-8859-1: Bankgiro + OCR, F-skatt, round-off, free-text units, a line without quantity, lines without VAT category, invoicing fee |
 | `svefaktura-1.0-credit.xml` | Svefaktura 381 credit without VAT breakdown or currency code |
+| `fatturapa-b2b.xml` | FatturaPA FPR12 TD01: two VAT rates and a Natura N4 line, REA data, PEC routing, order/contract/DDT references, EAN code, embedded PDF, credit-transfer payment |
+| `fatturapa-credit-note.xml` | FatturaPA TD04 credit note referencing the B2B invoice (DatiFattureCollegate) |
+| `fatturapa-ritenuta-cassa-bollo.xml` | FatturaPA TD06 from a natural-person professional: RT01 ritenuta, TC22 cassa previdenziale, virtual stamp duty as an N1 line |
+| `fatturapa-split-payment.xml` | FatturaPA FPA12 to a public body: EsigibilitaIVA S, 6-character office code, CUP/CIG |
+| `fatturapa-lot.xml` | FatturaPA file with two FatturaElettronicaBody; the second has two instalments (TP01) |
+| `fatturapa-fsm10.xml` | FatturaPA semplificata FSM10 (TD07): VAT-inclusive Importo blocks, one with Natura N4 |
 
 ## From public sample collections
 
