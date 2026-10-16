@@ -1,5 +1,7 @@
 # eu-einvoice-canonical
 
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/alexcatdad/eu-einvoice-canonical/badge)](https://scorecard.dev/viewer/?uri=github.com/alexcatdad/eu-einvoice-canonical)
+
 One TypeScript model for every XML e-invoice you can receive from the 27 EU member states, plus the layer that gets you from a received file to "this is format X, version Y": unwrapping (PDF/A-3, `.p7m`, ZIP, SBDH, SOAP, legacy encodings), detection, and parsing into canonical JSON.
 
 **Try it in the browser:** [alexcatdad.github.io/eu-einvoice-canonical](https://alexcatdad.github.io/eu-einvoice-canonical/). Drop an invoice and get the JSON. The page runs the same code as the library, entirely client-side; files are never uploaded.
@@ -402,6 +404,8 @@ No decompression runs unbounded:
 - **PDF:** the optional `/Params /Size` allows an early refusal, but it is not trusted. The attachment stream is inflated in 4 KB slices and stopped as soon as the output passes the limit. Only `FlateDecode` (zlib or raw) and unfiltered streams are accepted.
 
 Skipped files and the reason are returned by both `inspect()` and `convert()`, so a rejected file is never just an empty result.
+
+Release binaries come with `SHA256SUMS`, a CycloneDX SBOM and signed build provenance; verify a download with `gh attestation verify` (see [docs/SUPPLY-CHAIN.md](docs/SUPPLY-CHAIN.md)). To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
 ## Decisions
 
