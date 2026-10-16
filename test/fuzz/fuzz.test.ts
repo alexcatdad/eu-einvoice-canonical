@@ -30,7 +30,10 @@ const OUT = process.env.FUZZ_OUT ?? 'fuzz-failures';
 
 function record(name: string, details: fc.RunDetails<[unknown]>, c: FuzzCase | undefined): string {
   mkdirSync(OUT, { recursive: true });
-  const message = details.errorInstance instanceof Error ? details.errorInstance.message : String(details.errorInstance);
+  const message =
+    details.errorInstance instanceof Error
+      ? details.errorInstance.message
+      : `${String(details.errorInstance)} (${details.error ?? 'no message'})`;
   const textual = c && c.bytes.length <= 4000 && c.bytes.every((b) => b >= 0x20 || b === 0x09 || b === 0x0a || b === 0x0d);
   const summary = [
     `### ${name}`,

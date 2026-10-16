@@ -65,6 +65,7 @@ async function run(c: FuzzCase): Promise<{ result: ConvertResult; ms: number }> 
 /** Checks all properties for one case. */
 export async function checkCase(c: FuzzCase): Promise<void> {
   const { result, ms } = await run(c);
+  if (ms > 1000) console.log(`slow fuzz case (${Math.round(ms)} ms): ${c.label}, ${c.bytes.length} bytes`);
   if (ms > BUDGET_MS) throw new Error(`took ${Math.round(ms)} ms, over the ${BUDGET_MS} ms budget`);
   checkResult(result);
   const again = await run(c);
