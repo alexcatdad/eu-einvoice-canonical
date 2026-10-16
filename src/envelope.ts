@@ -397,7 +397,12 @@ function isDetachedSignature(bytes: Uint8Array): boolean {
 
 /** Serialises the first element child (optionally of a named descendant) that passes the filter, keeping in-scope namespaces. */
 function firstPayloadElement(xml: string, accept: (el: XElement) => boolean, container?: string): string | null {
-  const doc = new DOMParser({ onError: () => {} }).parseFromString(xml, 'text/xml');
+  let doc: ReturnType<DOMParser['parseFromString']>;
+  try {
+    doc = new DOMParser({ onError: () => {} }).parseFromString(xml, 'text/xml');
+  } catch {
+    return null; // xmldom throws on fatal errors such as mismatched tags
+  }
   let parent: XElement | null = doc.documentElement;
   if (container && parent) parent = parent.getElementsByTagNameNS('*', container).item(0);
   if (!parent) return null;

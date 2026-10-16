@@ -188,6 +188,14 @@ export const xmlOp: fc.Arbitrary<XmlOp> = fc.oneof(
 
 export const encodingArb: fc.Arbitrary<Encoding> = fc.constantFrom('utf8', 'utf8-bom', 'utf16le', 'utf16be', 'latin1-lie', 'as-is');
 
+function parseDoc(bytes: Uint8Array): Document | undefined {
+  try {
+    return new DOMParser({ onError: () => {} }).parseFromString(decoder.decode(bytes), 'text/xml') as unknown as Document;
+  } catch {
+    return undefined;
+  }
+}
+
 function elementsOf(doc: Document): ElementNode[] {
   return Array.from(doc.getElementsByTagName('*')) as ElementNode[];
 }
@@ -546,8 +554,8 @@ export const generatedXml: fc.Arbitrary<FuzzCase> = fc
   .map(({ f, trees, where }): FuzzCase | undefined => {
     const fixture = XML_FIXTURES[f % XML_FIXTURES.length];
     // Keep the root element and its declarations (so detection routes to this fixture's parser), then fill it from the grammar.
-    const doc = new DOMParser({ onError: () => {} }).parseFromString(decoder.decode(fixture.bytes), 'text/xml') as unknown as Document;
-    if (!doc.documentElement) return undefined;
+    const doc = parseDoc(fixture.bytes);
+    if (!doc?.documentElement) return undefined;
     const vocab = vocabulary(doc);
     const root = doc.documentElement;
     while (root.firstChild) root.removeChild(root.firstChild);
@@ -577,8 +585,8 @@ export const shapedXml: fc.Arbitrary<FuzzCase> = fc
   })
   .map(({ f, shape, n, pick, text }): FuzzCase | undefined => {
     const fixture = XML_FIXTURES[f % XML_FIXTURES.length];
-    const doc = new DOMParser({ onError: () => {} }).parseFromString(decoder.decode(fixture.bytes), 'text/xml') as unknown as Document;
-    if (!doc.documentElement) return undefined;
+    const doc = parseDoc(fixture.bytes);
+    if (!doc?.documentElement) return undefined;
     const names = vocabulary(doc).map((v) => v.qname);
     const root = doc.documentElement;
     const shallow = new XMLSerializer().serializeToString(root.cloneNode(false) as never);
