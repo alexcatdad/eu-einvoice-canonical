@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { zipSync } from 'fflate';
 import { PDFDocument } from 'pdf-lib';
 import { DuplicateIndex, findDuplicates, formatReport, normaliseInvoiceNumber } from '../src/duplicates/index.js';
-import { runDuplicates } from '../src/duplicates/run.js';
+import { DUPLICATES_FOUND, runDuplicates } from '../src/duplicates/run.js';
 import { type CanonicalInvoice, convert } from '../src/index.js';
 import { fixture, parseOne, utf8 } from './helpers.js';
 import { makeIdentity, signCms } from './sig-helpers.js';
@@ -261,7 +261,7 @@ describe('runDuplicates', () => {
     const dup = put('dup', 'a.xml', base);
     put('dup', 'b.xml', variant({ id: 'inv-2026-1042' }));
     out.length = 0;
-    expect(await runDuplicates([dup], {}, (l) => out.push(l))).toBe(8);
+    expect(await runDuplicates([dup], {}, (l) => out.push(l))).toBe(DUPLICATES_FOUND);
     expect(out.join('\n')).toContain('same-invoice');
 
     const broken = put('broken', 'x.xml', 'not xml at all');
@@ -286,7 +286,7 @@ describe('runDuplicates', () => {
     // Same files again do not become duplicates of themselves.
     expect(await runDuplicates([first], { indexFile, json: true }, (l) => out.push(l))).toBe(0);
     out.length = 0;
-    expect(await runDuplicates([second], { indexFile, json: true, pretty: true }, (l) => out.push(l))).toBe(8);
+    expect(await runDuplicates([second], { indexFile, json: true, pretty: true }, (l) => out.push(l))).toBe(DUPLICATES_FOUND);
     const report = JSON.parse(out.join('\n'));
     expect(report.invoices).toBe(2);
     expect(report.groups[0].level).toBe('conflicting-resend');
@@ -304,14 +304,14 @@ describe('einvoice duplicates (CLI)', () => {
   writeFileSync(join(dir, 'a.xml'), base);
   writeFileSync(join(dir, 'b.xml'), variant({ id: 'inv-2026-1042' }));
 
-  test('prints a report and exits 8', async () => {
+  test('prints a report and exits with DUPLICATES_FOUND (9)', async () => {
     const r = await run(['duplicates', dir]);
-    expect(r.code).toBe(8);
+    expect(r.code).toBe(DUPLICATES_FOUND);
     expect(r.stdout).toContain('[2] same-invoice');
   });
   test('--window and --json', async () => {
     const r = await run(['duplicates', dir, '--window', '2', '--json']);
-    expect(r.code).toBe(8);
+    expect(r.code).toBe(DUPLICATES_FOUND);
     expect(JSON.parse(r.stdout).groups).toHaveLength(1);
   });
   test('rejects a bad --window and a missing directory', async () => {

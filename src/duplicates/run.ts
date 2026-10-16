@@ -12,9 +12,9 @@ export interface DuplicatesRunOptions extends DuplicateOptions {
   limits?: Partial<UnwrapLimits>;
 }
 
-export const DUPLICATES_FOUND = 8;
+export const DUPLICATES_FOUND = 9;
 
-/** Returns 0 (no duplicates), 8 (duplicates found) or 5 (nothing found, but some files could not be converted). */
+/** Returns 0 (no duplicates), 9 (duplicates found) or 5 (nothing found, but some files could not be converted). */
 export async function runDuplicates(
   roots: string[],
   opts: DuplicatesRunOptions,

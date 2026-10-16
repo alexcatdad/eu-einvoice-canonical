@@ -22,7 +22,7 @@ received file ──► unwrap() ──► XML payload(s) ──► detectXml() 
 |---|---|
 | `src/canonical.ts` | The canonical type. EN 16931 core + EU-wide additions + per-country extensions. |
 | `src/codes.ts` | Code lists as open string unions (UNCL 1001/5305/4461/5189/7161, ISO 4217/3166, ICD/EAS). |
-| `src/formats.ts` | Registry of 36 formats with detection rules, parser family, countries, status and build phase. |
+| `src/formats.ts` | Registry of 37 formats with detection rules, parser family, countries, status and build phase. |
 | `src/probe.ts` | Streaming header read (root, namespaces, CustomizationID, guideline ID, KSeF form code...). |
 | `src/envelope.ts` | Unwrapping: PDF attachments, CMS signed data, base64, ZIP, SBDH, SOAP, encoding. Rejects DOCTYPEs and enforces size/count limits. |
 | `src/detect.ts` | `detectXml()`: invoice format, known non-invoice, or unknown. |
@@ -32,6 +32,7 @@ received file ──► unwrap() ──► XML payload(s) ──► detectXml() 
 | `src/index.ts` | `inspect(bytes)` (unwrap + detect) and `convert(bytes)` (unwrap + detect + parse). Both return everything that was skipped, with the reason. |
 | `test/` | Detection, parser, hostile-input and value tests (about 160), plus `fixtures/expected.json` for the known-answer sweep. |
 | `scripts/sweep.ts` | Runs detection over a directory tree. Without `--expect` it counts formats; with `--expect answers.json` it checks each file against a known answer and exits 1 on a mismatch. |
+| `schemas/` | Generated JSON Schemas (draft 2020-12) for `CanonicalInvoice` and `ConvertResult`. `bun run build:schemas` regenerates them from `src/canonical.ts`; CI fails when they are stale. |
 | `site/` | The browser converter published to GitHub Pages (`bun run build:site` builds it into `dist/`). |
 
 Development uses [Bun](https://bun.sh) 1.4+. The library itself has no Bun or Node dependency: it runs in Node 20+, Bun and browsers.
@@ -78,8 +79,12 @@ einvoice detect  <file...>                 format id, version and profile per do
 einvoice inspect <file...>                 the unwrap and detect result as JSON
 einvoice convert <file...> [--out <dir>]   canonical JSON array on stdout, or one <invoice-id>.json per invoice in <dir>
 einvoice sweep   <dir...> [--expect answers.json]   detection coverage / known-answer check
-einvoice duplicates <dir...> [--window days] [--index index.json] [--json]   duplicate and re-sent invoices; exit 8 if found
+einvoice trust-lists update [--out <snapshot.json>] [--lotl-signer <cert.pem>]   fetch and verify the EU trusted lists
+einvoice match   --po <order.json|order.xml>... [--receipts r.json] [--tolerance '<json>'] <invoice...>   match to purchase orders
+einvoice duplicates <dir...> [--window days] [--index index.json] [--json]   duplicate and re-sent invoices; exit 9 if found
 ```
+
+`convert --eu-trust[=<snapshot.json>]` checks signers against a trusted-list snapshot (see [EU trusted lists](#eu-trusted-lists)).
 
 Flags: `--pretty` indents JSON; `--quiet` silences notes and warnings (errors are still printed); `--limits '{"maxEntries":10}'` overrides `UnwrapLimits`; `--validate` is accepted by `convert` and is a no-op with a message until the validation module lands.
 `duplicates` converts every file under the directories and groups repeats in four levels: identical payload (same XML in another wrapper), same seller + number + date, same seller + number with a different date or amount, and likely duplicates (same seller and amount, dates within `--window` days, similar lines, different number). Numbers are normalised (case, separators, leading zeros) and the evidence lists every step; credit notes that cite an invoice in BG-3 are paired with it, not flagged. `--index` keeps the index in a JSON file so later runs only add new files. The same logic is exported as `DuplicateIndex`.
@@ -96,9 +101,37 @@ JSON goes to stdout only; every error is one line on stderr.
 | 5 | partially converted (some documents failed) |
 | 6 | validator unavailable |
 | 7 | internal error (including unreadable files) |
-| 8 | `duplicates` found at least one duplicate group |
+| 8 | `match` verdict is `needs-review` |
+| 9 | `duplicates` found at least one duplicate group |
 
 With several failures and no success the code of the first failure is used; with at least one success it is 5.
+
+## EU trusted lists
+
+Opt-in. `loadTrustLists()` fetches the EU List of Trusted Lists (LOTL) and the national lists (ETSI TS 119 612), accepts a list only if its own XML signature verifies (the LOTL against pinned signer certificates, each national list against the certificates the LOTL publishes for it), and keeps the qualified CA/QC services with their certificates and dated status history. The result is a snapshot with its fetch date; `trust/eu-trust-snapshot.json` is one, refreshed weekly by a workflow that opens a pull request.
+
+```ts
+const euTrust = await loadTrustLists(); // or parseSnapshot(fileText)
+const result = await convert(bytes, 'invoice.xml', undefined, { euTrust });
+result.outcomes[0].invoices[0].source.signatures[0].euTrust;
+// { qualified: true, status: 'qualified', service: { name, provider, territory, statusAtSigning, currentStatus }, snapshot: { fetchedAt, nextUpdate, stale } }
+```
+
+`qualified` means the signer chains to a CA/QC service whose status was granted at the signing time (a service withdrawn later still counts, one withdrawn before does not); `snapshot.stale` says the snapshot is older than its next-update date. `trustAnchorsFromSnapshot(snapshot, at?)` gives the service certificates as `trustAnchors` if you only want the chain check. The LOTL signer is pinned from `lotlSigners`, else from the `previous` snapshot, else trusted on first use (the snapshot says which, and the first update prints a note): pass the certificate from the Official Journal to pin it. Revocation of the signer's own certificate (CRL/OCSP) is not checked.
+
+In the browser page the check is a checkbox and loads lazily. The national servers mostly do not allow browser access (CORS), so the page falls back to the snapshot published with the site and says so.
+
+## Matching invoices to purchase orders
+
+`src/matching/` matches the lines of a canonical invoice to purchase orders (two-way) and, with goods receipts, to what was received (three-way). Orders come from a small JSON model (`PurchaseOrder`: `id`, `currency`, `lines[]` with `id`, `description`, `sellerItemId`, `buyerItemId`, `standardItemId`, `quantity`, `unit`, `unitPrice`, `baseQuantity`, `vat`, and `invoicedQuantity` for what earlier invoices already billed) or from a UBL 2.1 Order / Peppol BIS Order 3 XML (`parseOrder`). Receipts are `[{ "poId": "PO-1", "lines": [{ "lineId": "1", "quantity": "6" }] }]`.
+
+Per invoice line, in this order: order-line reference (BT-132, within the order named by BT-13 or by the line itself, as Svefaktura's `BuyersID`), item identifiers (seller, buyer, standard/GTIN), line relations (a markup or discount follows the lines it applies to; text-only lines are ignored), and description similarity as a last resort. Each match carries its `method`, `confidence` and variances (quantity, unit price, line total, VAT) against the tolerances you set (`{ "unitPrice": { "percent": "2" }, "quantity": { "absolute": "1" } }`; a limit given as both absolute and percent must hold in both; no tolerance means zero). The result also lists unmatched invoice lines, over-invoiced order lines and, with receipts, order lines not yet received, and a verdict: `match`, `within-tolerance` or `needs-review`. Description-only and low-confidence matches always need review. Fewer units than expected is partial invoicing, not a variance error. A credit note is held against what has been invoiced, at the order price.
+
+```ts
+import { convert, matching } from 'eu-einvoice-canonical';
+const r = await convert(bytes, 'inv.xml', undefined, { relations: true });
+const result = matching.matchInvoice(invoice, [matching.parseOrder(orderXml)], { tolerances: { unitPrice: { percent: '2' } } });
+```
 
 ## The canonical model
 
@@ -140,6 +173,22 @@ relations: [
 - `method` says how a relation was found (`rule`, `arithmetic` or `model`); `confidence` is `proven`, `likely` or `review`, and is absent for structural rules that cannot be wrong.
 
 An optional language model can label what the rules leave as plain items (freight, labour, discount in Swedish and other languages) and propose links. It runs in the browser only (`site/model.ts`: WebLLM with Qwen3, or Chrome's Gemini Nano), is held to a JSON schema, never overrides a rule and marks everything `method: 'model'`, `confidence: 'review'`. `applyModelLabels(invoice, labeller)` merges its output. `site/eval.html` (built next to the converter) scores the rules and the models on the labelled set in `src/relations/labelled.ts` and records accuracy, time, download size and memory.
+
+## JSON Schema
+
+Consumers that are not written in TypeScript can validate and generate code from the output with two JSON Schemas (draft 2020-12), generated from the types and published with the site:
+
+- [`canonical-invoice.v1.schema.json`](https://alexcatdad.github.io/eu-einvoice-canonical/schemas/canonical-invoice.v1.schema.json): one `CanonicalInvoice`
+- [`convert-result.v1.schema.json`](https://alexcatdad.github.io/eu-einvoice-canonical/schemas/convert-result.v1.schema.json): what `convert()` returns (`outcomes[].invoices[]` are `CanonicalInvoice`s)
+
+Decimals, dates and times are strings with a `pattern`; open code lists (currency, country, VAT category, unit...) are plain strings whose common values are listed under `examples`; the BT/BG comments are the `description`s. Objects are open (`additionalProperties` is not false), so a payload from a newer minor release still validates. `bun run build:schemas` rewrites the files and the CI `test` job runs `bun run check:schemas`, which fails when the committed files differ from the types. Every test fixture's converted output is validated against them in `test/schema.test.ts`.
+
+### Schema versioning
+
+The library exports `schemaVersion` (`'v1'`), the major version in the schema file names and `$id`s.
+
+- **Additive changes keep v1**: new optional fields, new extension blocks, new code-list examples, new formats, new warning codes. Files are regenerated in place.
+- **Breaking changes go to v2**: removing or renaming a field, changing a field's type or meaning, making an optional field required, or narrowing a pattern. `*.v2.schema.json` is published next to the v1 files, which stay available at their URLs.
 
 ## EU coverage
 
@@ -185,9 +234,35 @@ What you will receive from each country, inbound. Format IDs refer to `src/forma
 | 2 | `ksef` | FA(2), FA(3), FA_RR | `P_12` rate codes (`23`, `zw`, `oo`, `np I`, `0 WDT`...) → VAT category. `P_14_xW` = VAT in PLN. `StanPrzed` → `correctionState`. `Podmiot3` + `Rola` → `additionalParties`. KSeF number from download metadata. |
 | 2 | `facturae` | Facturae 3.2–3.2.2 | Batches (`Modality L`). `TaxesWithheld` → withholdings, recargo → `otherTaxes`. XAdES signature inside. |
 | 2 | `isdoc`, `ebinterface`, `finvoice`, `e-arve`, `eslog` | National formats in active B2B use | ISDOC symbols → `extensions.cz`; ebInterface varies by version; Finvoice: SOAP + ISO-8859-15; e-arve: several invoices per file; eSLOG uses EDIFACT segment names (`S_BGM`, `G_SG26`...). |
-| 3 | `svefaktura`, `zugferd1`, `teappsxml`, `mydata` | Legacy and low-volume | Svefaktura follows SFTI's "Mapping of Svefaktura 1.0 onto EN 16931-1" (see `src/parsers/svefaktura.ts`). |
+| 3 | `svefaktura`, `zugferd1`, `teappsxml`, `mydata`, `cfdi` | Legacy and low-volume (`cfdi` is Mexican, see above) | Svefaktura follows SFTI's "Mapping of Svefaktura 1.0 onto EN 16931-1" (see `src/parsers/svefaktura.ts`). |
 
 Done: `ubl`, `cii`, `svefaktura` and `fatturapa`. Corrective documents whose direction depends on the amounts (KSeF KOR, Facturae rectificativa, ISDOC) must set `kind` from the sign of the correction total; see `effectiveSign()` in `src/canonical.ts`.
+
+### Mexico: CFDI (`mx-cfdi`)
+
+Mexico is outside the EU; CFDI 4.0 (and 3.3 in older files) is supported because it is a clearance format with the same withholding and extra-tax concerns. `cfdi:Comprobante` with `TipoDeComprobante` I is an invoice and E (egreso) a credit note. T (traslado), P (pago, Pagos 1.0/2.0) and N (nómina) are not invoices: detection returns them as other documents with their own label, and `convert` reports `not-an-invoice`.
+
+| CFDI | Canonical |
+|---|---|
+| Emisor / Receptor `Rfc` | `nationalTaxIds` with scheme `MX:RFC` (no `vatId`: Mexican IVA has no VAT number). `NumRegIdTrib` of a foreign receiver is a second national id |
+| `RegimenFiscal`, `RegimenFiscalReceptor`, `DomicilioFiscalReceptor`, `UsoCFDI`, `ResidenciaFiscal`, `LugarExpedicion`, `Exportacion`, `MetodoPago`, `FormaPago`, `InformacionGlobal`, issuer `Sello` / `NoCertificado` | `extensions.mx`. The receiver's postal code is also `buyer.address.postalCode`; the issuer has no address in a CFDI |
+| `Concepto` | `lines`: `ClaveProdServ` is an item classification (`MX:ClaveProdServ`), `ClaveUnidad` is `unitCode` (SAT's catalogue is UN/ECE Rec 20 plus a few SAT codes) and `Unidad` is `unitText`; `ObjetoImp` and `ClaveUnidad` are kept in `line.national`. `Descuento` is a line allowance and `netAmount` is `Importe - Descuento` |
+| Traslado IVA (002) | `vatBreakdown` and `line.vat`: Tasa 0.16 is `S` with rate 16, Tasa 0 is `Z`, Exento is `E`. `ObjetoImp` 01 gives `O` |
+| Traslado IEPS (003) and others | `otherTaxes` (`MX:IEPS`, `includedInTotal`) |
+| Retenciones ISR (001), IVA (002), IEPS (003) | `withholdings` (`MX:ISR`, `MX:IVA`), `totals.withholdingTotal`; the line-level base and rate are on `line.withholdings` |
+| `SubTotal`, `Descuento`, `Total` | `lineNetTotal = taxExclusive = SubTotal - Descuento`, `payable = Total`, `taxInclusive = Total + retenciones`. The original `SubTotal` and `Descuento` are in `extensions.mx` |
+| `FormaPago` | `payments[]`: 01 cash (10), 02 cheque (20), 03 transfer (30), 04 credit card (54), 28 debit card (55); the rest are `ZZZ` with the SAT label |
+| `CfdiRelacionados` | `precedingInvoices`: the UUID is `id` and `clearanceId`, `TipoRelacion` is `relationType` (01 credit note, 04 substitution...) |
+| `TimbreFiscalDigital` | `clearance` with authority `MX:SAT`: UUID, `FechaTimbrado`, `NoCertificadoSAT`, `SelloSAT` (not verified), and the PAC (`RfcProvCertif`) as `intermediary` |
+
+What the model cannot say, and where it goes:
+
+- **No generic tax model.** Every CFDI tax fits `vatBreakdown`, `otherTaxes` or `withholdings`, but two things are lost in shape. IEPS as a fixed amount per unit (`TipoFactor` Cuota) has no rate: `otherTaxes[].rate` is left out and `MX-TAX-CUOTA` is warned (the amount and the quantity base are kept). Document-level retenciones state no base or rate in a CFDI, so `withholdings[].taxableAmount` and `rate` are empty there; the lines carry them.
+- **Local taxes** (complement Impuestos Locales, for example the lodging tax) change `Total` but are not mapped, so the BR-CO-15 / 16 totals check will warn on such files; `MX-COMPLEMENT-UNMAPPED` names the complement. The same warning covers Comercio Exterior, Carta Porte, INE and every other complement except the stamp.
+- IVA `Exento` has no `Importe`; the breakdown uses a tax amount of 0. CFDI 3.3 states no `Base` at document level, so it is summed from the lines (recorded in `source.derived`).
+- `Fecha` has no time zone; the time goes to `issueTime` as written. Amounts are in `Moneda`; `TipoCambio` (conversion to MXN) is `exchangeRate`.
+- The issuer's `Sello` is a digital seal over the original string, not an XML signature, and is not verified. The same holds for `SelloSAT`.
+- `Addenda`, `Parte`, `ACuentaTerceros` and `ComplementoConcepto` are not mapped.
 
 Run `scripts/sweep.ts` over a few months of your real inbound files before building phase 2. It shows which formats you actually receive.
 
@@ -223,7 +298,7 @@ Skipped files and the reason are returned by both `inspect()` and `convert()`, s
 
 - **Unverified detection rules:** `ubl-unknown` and `cii-unknown` are fallbacks, not confirmed formats. The Croatian spec spells its own identifier inconsistently, so `hr-cius` only checks for `urn:mfin.gov.`.
 - **EN 16931-1:2026** (published March 2026; 164 to 216 business terms and 32 to 39 groups, per trade press) is not modelled beyond the identifier. Checked on 2026-10-16: the ConnectingEurope validation artefacts (v1.3.17, UBL 2.1 / CII D16B) and the KoSIT XRechnung Schematron (v2.6.0, XRechnung 3.0) contain no 2026 terms, and the EN 16931-1:2026 text and the updated CEN/TS 16931-3-x bindings are paywalled, so neither the exact BT/BG ids and names nor their UBL/CII paths are confirmed. Secondary sources mention multiple payment terms (BG-33), early-payment discounts (BG-35) and line-level delivery (BG-37) but disagree on detail, so nothing was added to `src/canonical.ts` or the parsers. Missing: the CEN/TS 16931-3-1 and 3-3 binding tables, or the 2026 Schematron/XSD once ConnectingEurope or Peppol BIS publish them. 2026-identified documents still parse, with the 2017 terms only.
-- **Signature trust:** signatures are verified cryptographically, but signers are only checked against a trust list when you pass `trustAnchors`; no EU trust lists ship with the library.
+- **Signature trust:** signatures are verified cryptographically; signers are checked only when you pass `trustAnchors` or an `euTrust` snapshot. The snapshot is only as current as its fetch date and drops services the lists identify by name or key id without a certificate, and no revocation check is made on the signer's own certificate.
 - **Validation covers UBL and CII only** (XSD, EN 16931 and Peppol/XRechnung Schematron). National formats get the BR-CO arithmetic checks only; their official schemas are not run yet.
 - **Synthetic fixtures:** most national parsers were built from specifications and tested on synthetic files. Formats without a converted real sample are listed in the conformance checklist; run `sweep --expect` on your own inbound files before relying on them.
 - **Peppol PINT** gets the plain UBL mapping; PINT-specific rules are not applied.
