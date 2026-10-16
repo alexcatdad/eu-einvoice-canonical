@@ -9,6 +9,7 @@
  * validation is asked for. The rule sets are pinned bundles under validation/bundles/.
  * 'unavailable' means a layer could not run; 'failed' means it ran and found errors.
  */
+import { SaxesParser, type SaxesTagNS } from 'saxes';
 import type { CheckStatus, ValidationSummary } from '../canonical.js';
 import type { Detection } from '../detect.js';
 import { BundleReaderFor, type BundleSource, defaultReader } from './bundles.js';
@@ -33,14 +34,29 @@ export interface ValidateOptions {
 
 export const DEFAULT_MAX_SCHEMATRON_LINES = 2000;
 
-/** Invoice and credit note lines in UBL (InvoiceLine, CreditNoteLine) and CII (IncludedSupplyChainTradeLineItem), by tag. */
-const LINE_TAG = /<(?:[\w.-]+:)?(?:InvoiceLine|CreditNoteLine|IncludedSupplyChainTradeLineItem)[\s>]/g;
+/** Line elements, by namespace: UBL InvoiceLine and CreditNoteLine, CII IncludedSupplyChainTradeLineItem. */
+const LINE_ELEMENTS: Record<string, readonly string[]> = {
+  'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2': ['InvoiceLine', 'CreditNoteLine'],
+  'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100': ['IncludedSupplyChainTradeLineItem'],
+};
 
-/** Counts line elements, stopping once `limit` is passed. */
+class Stop extends Error {}
+
+/**
+ * Counts line elements with a namespace-aware parse, so comments, CDATA and odd prefixes cannot inflate or hide the count.
+ * Stops once `limit` is passed. A document that is not well-formed is counted up to the error (the schema layer reports it).
+ */
 export function countLines(xml: string, limit = Number.POSITIVE_INFINITY): number {
+  const parser = new SaxesParser({ xmlns: true, position: false });
   let n = 0;
-  LINE_TAG.lastIndex = 0;
-  while (LINE_TAG.exec(xml) && n <= limit) n++;
+  parser.on('opentag', (tag: SaxesTagNS) => {
+    if (LINE_ELEMENTS[tag.uri ?? '']?.includes(tag.local) && ++n > limit) throw new Stop();
+  });
+  try {
+    parser.write(xml).close();
+  } catch {
+    // Stop, or not well-formed: n is what was counted so far.
+  }
   return n;
 }
 

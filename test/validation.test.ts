@@ -116,12 +116,29 @@ describe('validation', () => {
     matches(atLimit, { semantic: 'passed', profile: 'passed' });
   });
 
-  test('countLines counts UBL and CII line elements and stops past the limit', () => {
-    assert.equal(countLines('<Invoice><cac:InvoiceLine><x/></cac:InvoiceLine><cac:InvoiceLine/></Invoice>'), 2);
-    assert.equal(countLines('<CreditNote><CreditNoteLine></CreditNoteLine></CreditNote>'), 1);
-    assert.equal(countLines('<rsm:X><ram:IncludedSupplyChainTradeLineItem>a</ram:IncludedSupplyChainTradeLineItem></rsm:X>'), 1);
-    assert.equal(countLines('<cac:InvoiceLineReference/><InvoiceLines>'), 0);
-    assert.equal(countLines('<a:InvoiceLine>'.repeat(50), 3), 4);
+  test('countLines counts UBL and CII line elements by namespace and stops past the limit', () => {
+    const cac = 'xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"';
+    const ram = 'xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"';
+    assert.equal(countLines(`<Invoice ${cac}><cac:InvoiceLine><x/></cac:InvoiceLine><cac:InvoiceLine/></Invoice>`), 2);
+    assert.equal(
+      countLines(
+        `<CreditNote xmlns:é="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"><é:CreditNoteLine/></CreditNote>`,
+      ),
+      1,
+    );
+    assert.equal(
+      countLines(`<rsm:X xmlns:rsm="r" ${ram}><ram:IncludedSupplyChainTradeLineItem>a</ram:IncludedSupplyChainTradeLineItem></rsm:X>`),
+      1,
+    );
+    // Comments, CDATA, lookalike names and other namespaces do not count.
+    assert.equal(
+      countLines(
+        `<Invoice ${cac}><!-- <cac:InvoiceLine> --><![CDATA[<cac:InvoiceLine>]]><cac:InvoiceLineReference/><InvoiceLine/></Invoice>`,
+      ),
+      0,
+    );
+    assert.equal(countLines(`<Invoice ${cac}>${'<cac:InvoiceLine/>'.repeat(50)}</Invoice>`, 3), 4);
+    assert.equal(countLines(`<Invoice ${cac}><cac:InvoiceLine/><cac:InvoiceLine>`), 2);
   });
 
   slow('layers that do not apply are not-run, not passed', async () => {
