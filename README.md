@@ -361,7 +361,7 @@ What you will receive from each country, inbound. Format IDs refer to `src/forma
 
 | Country | Formats you will see | Notes |
 |---|---|---|
-| AT | `ebinterface` 4.3–6.1, `peppol-bis3` | ebInterface 7.0 announced for Q4 2026. |
+| AT | `ebinterface` 3.0–6.1, `peppol-bis3`, legacy `ebinterface-2` (detected, not mapped) | The portal accepts 4.3–6.1; ebInterface 7.0 announced for Q4 2026. |
 | BE | `peppol-bis3`, legacy `ubl-be` | B2B Peppol mandate since 1 Jan 2026. |
 | BG | `en16931-ubl` / `-cii`, `peppol-bis3` | No exchange mandate yet; B2B proposed for 2028. |
 | HR | `hr-cius`, `peppol-bis3` | Fiskalizacija 2.0: B2B and B2G since 1 Jan 2026. OIB = EAS 9934. |

@@ -1,5 +1,5 @@
 /**
- * ebInterface 4.3 - 6.1 (Austrian national invoice format) -> canonical.
+ * ebInterface 3.0 - 6.1 (Austrian national invoice format) -> canonical.
  *
  * The namespace carries the version (http://www.ebinterface.at/schema/6p1/), so every element is
  * matched by local name. Attributes are read by local name too, because senders qualify them
@@ -9,6 +9,14 @@
  * - 4.3 states VAT in Tax/VAT/VATItem (TaxedAmount, VATRate or TaxExemption, Amount) and on lines as
  *   VATRate / TaxExemption; 5.0 and later use TaxItem (TaxableAmount, TaxPercent@TaxCategoryCode, TaxAmount).
  * - 4.3 has one Phone, Email and a text Contact inside Address; 5.0 and later have a Contact element.
+ * - 4.1 and 4.2 have the 4.3 structure (4.3 only added AccountingCurrencyAmount and Currency).
+ * - 3.0, 3.02 and 4.0 state VAT in Tax/VAT/Item (TaxedAmount, TaxRate, Amount), or exempt the whole invoice
+ *   with Tax/VAT/TaxExemption; lines and reductions carry TaxRate. They have no PayableAmount, name the
+ *   cancelled invoice in the CancelledOriginalDocument attribute, and choose the payment method with
+ *   xsi:type on PaymentMethod instead of a child element. 3.x reductions sit in ReductionDetails, its line
+ *   discount is a ReductionRate already applied to LineItemAmount, and its article numbers are
+ *   BillersArticleNumber / InvoiceRecipientsArticleNumber. Source: the ebInterface 3.0, 3.0.2, 4.0 and 4.1
+ *   XSDs (as shipped in phax/ph-ebinterface) and the samples in the ph-ebinterface and ebinterface-web corpora.
  *
  * ebInterface has no net total. BT-106 is the sum of the line amounts and BT-109 follows from it
  * and the document-level reductions and surcharges; both are recorded in `source.derived`.
@@ -29,9 +37,9 @@ import type {
   VatBreakdown,
   VatInfo,
 } from '../canonical.js';
-import { add, cmp, isZero, sub, sum, toDecimal } from '../values.js';
+import { add, cmp, isZero, mul, percentOf, round, sub, sum, toDecimal } from '../values.js';
 import { Ctx, finish, need, ParseError, parseXml, sourceMeta } from './context.js';
-import type { ParseInput } from './index.js';
+import { NotImplementedError, type ParseInput } from './index.js';
 
 /** DocumentType -> UNCL 1001 code and direction. */
 const DOCUMENT_TYPES: Record<string, { typeCode: string; credit?: boolean; selfBilled?: boolean }> = {
@@ -78,8 +86,12 @@ function attrOf(e: Element | undefined, name: string): string | undefined {
 }
 
 export function parseEbinterface(input: ParseInput): CanonicalInvoice[] {
+  if (input.format.id !== 'ebinterface')
+    throw new NotImplementedError('ebinterface', `ebInterface ${input.details.version ?? ''} is not mapped: only 3.0 to 6.1 are`);
   const root = parseXml(input.payload.xml);
   const c = new Ctx({});
+  // 3.0, 3.02 and 4.0: the structure before 4.1 (see the header comment).
+  const legacy = Number(input.details.version ?? '99') < 4.1;
 
   const id = c.text(root, 'InvoiceNumber');
   const issueDate = c.date(root, 'InvoiceDate', 'BT-2');
@@ -134,6 +146,8 @@ export function parseEbinterface(input: ParseInput): CanonicalInvoice[] {
     if (rid) precedingInvoices.push({ id: rid, issueDate: c.date(r, 'InvoiceDate', 'BG-3') });
   }
   const cancelComment = c.text(cancelled, 'Comment');
+  const cancelledAttr = attrOf(root, 'CancelledOriginalDocument');
+  if (cancelledAttr) precedingInvoices.push({ id: cancelledAttr });
 
   // Delivery
   const deliveryEl = c.el(root, 'Delivery');
@@ -156,12 +170,13 @@ export function parseEbinterface(input: ParseInput): CanonicalInvoice[] {
 
   // Lines, document reductions and surcharges, VAT, totals
   const lines = lineEls.map((l, i) => line(c, l, i + 1));
-  const rsEl = c.el(root, 'ReductionAndSurchargeDetails');
+  const rsEl = c.el(root, 'ReductionAndSurchargeDetails') ?? c.el(root, 'ReductionDetails');
   const allowances = reductionsAndSurcharges(c, rsEl, 'Reduction');
   const charges = reductionsAndSurcharges(c, rsEl, 'Surcharge');
   const otherTaxes = otherTaxList(c, root, rsEl);
-  const { vatBreakdown } = vat(c, root);
-  const totals = totalsOf(c, root, lines, allowances, charges, vatBreakdown);
+  const { vatBreakdown, exemption } = vat(c, root);
+  if (exemption !== undefined) exemptAll(c, exemption, lines, allowances, charges, vatBreakdown);
+  const totals = totalsOf(c, root, lines, allowances, charges, vatBreakdown, legacy);
   if (lines.length === 0) c.warn('NO_LINES', 'The invoice has no lines');
   for (const b of c.all(root, 'Details/BelowTheLineItem')) {
     const v = c.dec(b, 'LineItemAmount');
@@ -274,7 +289,7 @@ function contact(c: Ctx, p: Element, a: Element | undefined): Contact | undefine
   return { name, phone: phones[0], email: emails[0] };
 }
 
-/** TaxItem (5.0+), or 4.3's VATRate / TaxExemption pair, as VAT category data. */
+/** TaxItem (5.0+), 4.1-4.3's VATRate / TaxExemption pair, or 3.x-4.0's TaxRate, as VAT category data. */
 function vatOf(c: Ctx, holder: Element | undefined): VatInfo | undefined {
   if (!holder) return undefined;
   const item = c.el(holder, 'TaxItem') ?? holder;
@@ -285,15 +300,15 @@ function vatOf(c: Ctx, holder: Element | undefined): VatInfo | undefined {
     const comment = c.text(item, 'Comment');
     return { categoryCode: code, rate: c.dec(percent), exemptionReason: code === 'S' ? undefined : comment };
   }
-  const rateEl = c.el(item, 'VATRate');
+  const rateEl = c.el(item, 'VATRate') ?? c.el(item, 'TaxRate');
   const exemption = c.el(item, 'TaxExemption');
   if (exemption) {
     c.derive('/vat/categoryCode', 'ebInterface 4.x TaxExemption without a category code; mapped to E with the stated reason');
     return { categoryCode: 'E', rate: '0' as VatInfo['rate'], exemptionReason: c.text(exemption) };
   }
   if (rateEl) {
-    const rate = need(c.dec(rateEl), 'VATRate');
-    c.derive('/vat/categoryCode', 'ebInterface 4.x VATRate carries no category; S for a rate above 0, Z otherwise');
+    const rate = need(c.dec(rateEl), rateEl.localName ?? 'VATRate');
+    c.derive('/vat/categoryCode', 'ebInterface 3.x-4.x VATRate / TaxRate carries no category; S for a rate above 0, Z otherwise');
     return { categoryCode: cmp(rate, '0') > 0 ? 'S' : 'Z', rate, nationalCode: attrOf(rateEl, 'TaxCode') };
   }
   return undefined;
@@ -302,20 +317,34 @@ function vatOf(c: Ctx, holder: Element | undefined): VatInfo | undefined {
 function reductionsAndSurcharges(c: Ctx, parent: Element | undefined, tag: 'Reduction' | 'Surcharge'): AllowanceCharge[] {
   const out: AllowanceCharge[] = [];
   for (const e of c.all(parent, tag)) {
-    const amount = c.dec(e, 'Amount');
-    if (amount === undefined) {
-      c.warn('EB-NO-AMOUNT', `${tag} without Amount (only a base and a percentage); skipped, not recomputed`);
-      continue;
-    }
-    out.push({
-      amount,
-      baseAmount: c.dec(e, 'BaseAmount'),
-      percentage: c.dec(e, 'Percentage'),
-      reason: c.text(e, 'Comment'),
-      vat: vatOf(c, e),
-    });
+    const a = amounts(c, e, tag, `/${tag === 'Reduction' ? 'allowances' : 'charges'}/${out.length}/amount`);
+    if (a) out.push({ ...a, reason: c.text(e, 'Comment'), vat: vatOf(c, e) });
   }
   return out;
+}
+
+/**
+ * Amount, BaseAmount and Percentage of a reduction or surcharge. Amount is optional in the schemas; without it,
+ * BaseAmount and Percentage are all there is and the amount follows from them (recorded as derived).
+ */
+function amounts(
+  c: Ctx,
+  e: Element,
+  tag: string,
+  field: string,
+): Pick<AllowanceCharge, 'amount' | 'baseAmount' | 'percentage'> | undefined {
+  const baseAmount = c.dec(e, 'BaseAmount');
+  const percentage = c.dec(e, 'Percentage');
+  let amount = c.dec(e, 'Amount');
+  if (amount === undefined && baseAmount !== undefined && percentage !== undefined) {
+    amount = round(percentOf(baseAmount, percentage));
+    c.derive(field, `${tag} without Amount: BaseAmount * Percentage / 100`);
+  }
+  if (amount === undefined) {
+    c.warn('EB-NO-AMOUNT', `${tag} without Amount and without a base and percentage to compute it from; skipped`);
+    return undefined;
+  }
+  return { amount, baseAmount, percentage };
 }
 
 function otherTaxList(c: Ctx, root: Element, rs: Element | undefined): OtherTax[] {
@@ -341,9 +370,12 @@ function otherTaxList(c: Ctx, root: Element, rs: Element | undefined): OtherTax[
   return out;
 }
 
-function vat(c: Ctx, root: Element): { vatBreakdown: VatBreakdown[] } {
+function vat(c: Ctx, root: Element): { vatBreakdown: VatBreakdown[]; exemption?: string } {
   const tax = c.el(root, 'Tax');
-  const items = [...c.all(tax, 'TaxItem'), ...c.all(tax, 'VAT/VATItem')];
+  const items = [...c.all(tax, 'TaxItem'), ...c.all(tax, 'VAT/VATItem'), ...c.all(tax, 'VAT/Item')];
+  // 3.x-4.0: VAT is a choice between rate items and one TaxExemption text for the whole invoice.
+  const exemptionEl = c.el(tax, 'VAT/TaxExemption');
+  if (exemptionEl && !items.length) return { vatBreakdown: [], exemption: c.text(exemptionEl) ?? '' };
   const vatBreakdown = items.map((t): VatBreakdown => {
     const info = vatOf(c, t);
     if (!info) throw new ParseError('Tax item without a rate or exemption');
@@ -369,6 +401,33 @@ function vat(c: Ctx, root: Element): { vatBreakdown: VatBreakdown[] } {
   return { vatBreakdown };
 }
 
+/**
+ * 3.x-4.0 Tax/VAT/TaxExemption: the whole invoice is VAT exempt. The lines still carry a (mandatory) TaxRate;
+ * the exemption overrides it, so every line, reduction and surcharge becomes category E at 0 % and one E
+ * breakdown covers the net total.
+ */
+function exemptAll(
+  c: Ctx,
+  reason: string,
+  lines: Line[],
+  allowances: AllowanceCharge[],
+  charges: AllowanceCharge[],
+  breakdown: VatBreakdown[],
+) {
+  const vat: VatInfo = { categoryCode: 'E', rate: '0' as VatInfo['rate'], exemptionReason: reason || undefined };
+  for (const x of [...lines, ...allowances, ...charges]) x.vat = { ...vat };
+  const net = sub(add(sum(lines.map((l) => l.netAmount)), sum(charges.map((a) => a.amount))), sum(allowances.map((a) => a.amount)));
+  breakdown.push({
+    taxableAmount: net,
+    taxAmount: '0.00' as VatBreakdown['taxAmount'],
+    categoryCode: 'E',
+    rate: vat.rate,
+    exemptionReason: vat.exemptionReason,
+  });
+  c.derive('/vatBreakdown/0', 'Tax/VAT/TaxExemption (whole invoice exempt): one category E breakdown over BT-106 - BT-107 + BT-108');
+  c.derive('/lines/*/vat', 'Tax/VAT/TaxExemption overrides the line TaxRate: category E, 0 %');
+}
+
 function totalsOf(
   c: Ctx,
   root: Element,
@@ -376,6 +435,7 @@ function totalsOf(
   allowances: AllowanceCharge[],
   charges: AllowanceCharge[],
   breakdown: VatBreakdown[],
+  legacy: boolean,
 ): Totals {
   const gross = c.dec(root, 'TotalGrossAmount');
   if (gross === undefined) throw new ParseError('TotalGrossAmount missing');
@@ -383,10 +443,10 @@ function totalsOf(
   const rounding = c.dec(root, 'RoundingAmount');
   let payable = c.dec(root, 'PayableAmount');
   if (payable === undefined) {
-    // PayableAmount is optional up to ebInterface 4.x; real invoices omit it. BT-115 = BT-112 - BT-113 + BT-114.
+    // PayableAmount only exists from 4.1, and real 4.1+ invoices still omit it. BT-115 = BT-112 - BT-113 + BT-114.
     payable = add(sub(gross, prepaid ?? '0'), rounding ?? '0');
     c.derive('/totals/payable', 'PayableAmount absent: TotalGrossAmount - PrepaidAmount + RoundingAmount');
-    c.warn('EB-NO-PAYABLE', 'PayableAmount is absent; the amount due was derived from TotalGrossAmount');
+    if (!legacy) c.warn('EB-NO-PAYABLE', 'PayableAmount is absent; the amount due was derived from TotalGrossAmount');
   }
   const lineNetTotal = sum(lines.map((l) => l.netAmount));
   c.derive('/totals/lineNetTotal', 'ebInterface has no net total; sum of the LineItemAmount values');
@@ -433,6 +493,9 @@ function line(c: Ctx, l: Element, n: number): Line {
     else if (type === 'PZN') attributes.push({ name: 'PZN', value: v });
     else sellerId = sellerId ?? v;
   }
+  // 3.x
+  sellerId = sellerId ?? c.text(l, 'BillersArticleNumber');
+  buyerId = buyerId ?? c.text(l, 'InvoiceRecipientsArticleNumber');
   for (const a of c.all(l, 'AdditionalInformation')) {
     const v = c.text(a);
     if (v) attributes.push({ name: attrOf(a, 'Key') ?? 'AdditionalInformation', value: v });
@@ -445,8 +508,10 @@ function line(c: Ctx, l: Element, n: number): Line {
 
   const priceEl = c.el(l, 'UnitPrice');
   const rs = c.el(l, 'ReductionAndSurchargeListLineItemDetails');
-  const lineAllowances = lineRs(c, rs, 'ReductionListLineItem');
-  const lineCharges = lineRs(c, rs, 'SurchargeListLineItem');
+  const lineAllowances = lineRs(c, rs, 'ReductionListLineItem', n);
+  const lineCharges = lineRs(c, rs, 'SurchargeListLineItem', n);
+  const reductionRate = reductionRateAllowance(c, l, n, netAmount);
+  if (reductionRate) lineAllowances.push(reductionRate);
   if (c.el(rs, 'OtherVATableTaxListLineItem'))
     c.unmapped[`/Invoice/Details/ItemList/ListLineItem[${n}]/OtherVATableTaxListLineItem`] = 'present';
 
@@ -480,6 +545,25 @@ function line(c: Ctx, l: Element, n: number): Line {
   };
 }
 
+/**
+ * 3.x ReductionRate: a line discount in percent, already applied to LineItemAmount (Quantity x UnitPrice less
+ * the rate, as in the corpus samples). It becomes a line allowance only when the amounts confirm that reading.
+ */
+function reductionRateAllowance(c: Ctx, l: Element, n: number, netAmount: string): AllowanceCharge | undefined {
+  const rate = c.dec(l, 'ReductionRate');
+  if (rate === undefined || isZero(rate)) return undefined;
+  const qty = c.dec(l, 'Quantity');
+  const price = c.dec(l, 'UnitPrice');
+  const base = qty !== undefined && price !== undefined ? round(mul(qty, price)) : undefined;
+  if (base !== undefined && cmp(round(percentOf(base, rate)), sub(base, netAmount)) === 0) {
+    if (isZero(base)) return undefined; // a free line: nothing was reduced
+    c.derive(`/lines/${n - 1}/allowances`, 'ReductionRate: allowance of Quantity x UnitPrice - LineItemAmount at that percentage');
+    return { amount: sub(base, netAmount), baseAmount: base, percentage: rate, reason: 'ReductionRate' };
+  }
+  c.unmapped[`/Invoice/Details/ItemList/ListLineItem[${n}]/ReductionRate`] = rate;
+  return undefined;
+}
+
 function numAttr(e: Element, name: string) {
   const v = attrOf(e, name);
   if (v === undefined) return undefined;
@@ -490,15 +574,12 @@ function numAttr(e: Element, name: string) {
   }
 }
 
-function lineRs(c: Ctx, parent: Element | undefined, tag: string): AllowanceCharge[] {
+function lineRs(c: Ctx, parent: Element | undefined, tag: string, n: number): AllowanceCharge[] {
   const out: AllowanceCharge[] = [];
+  const kind = tag === 'ReductionListLineItem' ? 'allowances' : 'charges';
   for (const e of c.all(parent, tag)) {
-    const amount = c.dec(e, 'Amount');
-    if (amount === undefined) {
-      c.warn('EB-NO-AMOUNT', `${tag} without Amount (only a base and a percentage); skipped, not recomputed`);
-      continue;
-    }
-    out.push({ amount, baseAmount: c.dec(e, 'BaseAmount'), percentage: c.dec(e, 'Percentage'), reason: c.text(e, 'Comment') });
+    const a = amounts(c, e, tag, `/lines/${n - 1}/${kind}/${out.length}/amount`);
+    if (a) out.push({ ...a, reason: c.text(e, 'Comment') });
   }
   return out;
 }
@@ -509,7 +590,10 @@ function paymentMethod(c: Ctx, root: Element): { payments: PaymentInstructions[]
   const meansText = c.text(pm, 'Comment');
   const payments: PaymentInstructions[] = [];
 
-  const ubt = c.el(pm, 'UniversalBankTransaction');
+  // Up to 4.0 the method is the xsi:type of PaymentMethod itself, not a child element.
+  const xsiType = attrOf(pm, 'type')?.replace(/^.*:/, '');
+  const self = (type: string) => (xsiType === `${type}Type` ? pm : undefined);
+  const ubt = c.el(pm, 'UniversalBankTransaction') ?? self('UniversalBankTransaction');
   if (ubt) {
     const accounts = c.all(ubt, 'BeneficiaryAccount');
     const transfers = accounts
@@ -564,8 +648,13 @@ function paymentMethod(c: Ctx, root: Element): { payments: PaymentInstructions[]
       card: { primaryAccountNumber: c.text(card, 'PrimaryAccountNumber') ?? '', holderName: c.text(card, 'CardHolderName') },
     });
   }
+  if (c.el(pm, 'DirectDebit') || self('DirectDebit')) {
+    // 3.0-4.2 DirectDebit is an empty marker: the buyer's account is not in the invoice.
+    c.derive(`/payments/${payments.length}/meansCode`, 'ebInterface DirectDebit -> 49 (direct debit)');
+    payments.push({ meansCode: '49', meansText, creditTransfers: [] });
+  }
   if (c.el(pm, 'OtherPayment')) payments.push({ meansCode: 'ZZZ', meansText, creditTransfers: [] });
-  if (c.el(pm, 'NoPayment')) c.unmapped['/Invoice/PaymentMethod/NoPayment'] = meansText ?? 'true';
+  if (c.el(pm, 'NoPayment') || self('NoPayment')) c.unmapped['/Invoice/PaymentMethod/NoPayment'] = meansText ?? 'true';
   return { payments, meansText };
 }
 

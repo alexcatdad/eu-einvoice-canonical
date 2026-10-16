@@ -197,13 +197,48 @@ function joinTexts(c: Ctx, els: (Element | undefined)[], bind: string): string |
   return used.map((e) => c.text(e)).join('\n') || undefined;
 }
 
-/** CII dates sit in a udt:DateTimeString / udt:DateString / qdt:DateTimeString child, usually format 102 (YYYYMMDD). */
-export function dateOf(c: Ctx, el: Element | undefined, field: string, bind?: string): IsoDate | undefined {
+/**
+ * CII dates sit in a udt:DateTimeString / udt:DateString / qdt:DateTimeString child, usually format 102 (YYYYMMDD).
+ * UN/EDIFACT 2379 formats 610 (CCYYMM, a month) and 616 (CCYYWW, an ISO week) name a span, not a day; they are
+ * read as its first day, or its last day for the end of a period (`end`), and recorded as derived.
+ */
+export function dateOf(c: Ctx, el: Element | undefined, field: string, bind?: string, end = false): IsoDate | undefined {
   const inner = c.el(el, '*:DateTimeString') ?? c.el(el, '*:DateString');
   if (!inner) return undefined;
   const fmt = c.attr(inner, undefined, 'format');
+  const raw = c.text(inner);
+  if ((fmt === '610' || fmt === '616') && raw && /^\d{6}$/.test(raw)) {
+    c.text(inner, undefined, bind); // provenance
+    const day = spanDay(fmt, raw, end);
+    if (!day) throw new ParseError(`${field}: not a valid format ${fmt} value: "${raw}"`);
+    c.derive(bind ?? field, `Date format ${fmt} (${fmt === '610' ? 'month' : 'week'}) ${raw} read as its ${end ? 'last' : 'first'} day`);
+    return day;
+  }
   if (fmt && fmt !== '102') c.warn('DATE_FORMAT', `${field}: date format ${fmt} is not 102 (YYYYMMDD); read as ISO`);
   return c.date(inner, undefined, field, bind);
+}
+
+/** First (or last) day of a CCYYMM month (610) or a CCYYWW ISO 8601 week (616); undefined when out of range. */
+function spanDay(fmt: '610' | '616', raw: string, end: boolean): IsoDate | undefined {
+  const year = Number(raw.slice(0, 4));
+  const n = Number(raw.slice(4));
+  const d = new Date(0);
+  if (fmt === '610') {
+    if (n < 1 || n > 12) return undefined;
+    d.setUTCFullYear(year, end ? n : n - 1, end ? 0 : 1);
+  } else {
+    // ISO week 1 holds 4 January; weeks start on Monday.
+    d.setUTCFullYear(year, 0, 4);
+    const monday = 4 - ((d.getUTCDay() + 6) % 7);
+    const weeks = new Date(0);
+    weeks.setUTCFullYear(year, 11, 28); // 28 December is always in the last week
+    const first = new Date(0);
+    first.setUTCFullYear(year, 0, monday);
+    const last = Math.floor((weeks.getTime() - first.getTime()) / 604_800_000) + 1;
+    if (n < 1 || n > last) return undefined;
+    d.setUTCFullYear(year, 0, monday + (n - 1) * 7 + (end ? 6 : 0));
+  }
+  return d.toISOString().slice(0, 10) as IsoDate;
 }
 
 /** `path(i)` gives the canonical path of the i-th identifier, or undefined where it is not wanted. */
@@ -253,7 +288,7 @@ function contact(e: Element, s: Scope): Contact {
 export function period(c: Ctx, p: Element | undefined, s: Scope): Period | undefined {
   if (!p) return undefined;
   const start = dateOf(c, c.el(p, 'ram:StartDateTime'), 'period start', s.path('start'));
-  const end = dateOf(c, c.el(p, 'ram:EndDateTime'), 'period end', s.path('end'));
+  const end = dateOf(c, c.el(p, 'ram:EndDateTime'), 'period end', s.path('end'), true);
   return start || end ? { start, end } : undefined;
 }
 

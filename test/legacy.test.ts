@@ -478,3 +478,58 @@ describe('ZUGFeRD 1 text-only line', () => {
     assert.ok(warningCodes(inv).includes('TEXT_LINE'));
   });
 });
+
+describe('ZUGFeRD 1 BASIC without DuePayableAmount', () => {
+  const src = text('zugferd1-comfort.xml');
+  const due = '<ram:DuePayableAmount currencyID="EUR">1002.04</ram:DuePayableAmount>';
+
+  test('BASIC has no DuePayableAmount: the amount due is GrandTotalAmount - TotalPrepaidAmount, recorded as derived', async () => {
+    assert.ok(src.includes(due) && src.includes('1p0:comfort'));
+    const inv = await parseOne(utf8(src.replace('1p0:comfort', '1p0:basic').replace(due, '')), 'x.xml');
+    assert.equal(inv.source.profileId, 'BASIC');
+    assert.equal(inv.totals.payable, '1002.04');
+    assert.ok(inv.source.derived.some((d) => d.field === '/totals/payable'));
+  });
+
+  test('COMFORT requires it', async () => {
+    const r = await convert(utf8(src.replace(due, '')), 'x.xml');
+    assert.equal(r.outcomes[0].status, 'error');
+  });
+});
+
+describe('CII dates in format 610 (month) and 616 (ISO week)', () => {
+  const src = text('zugferd1-comfort.xml');
+  const period = (start: string, end: string) =>
+    utf8(
+      src
+        .replace('<udt:DateTimeString format="102">20260901</udt:DateTimeString>', start)
+        .replace('<udt:DateTimeString format="102">20260930</udt:DateTimeString>', end),
+    );
+
+  test('a week runs Monday to Sunday', async () => {
+    const week = '<udt:DateTimeString format="616">201338</udt:DateTimeString>';
+    const inv = await parseOne(period(week, week), 'x.xml');
+    assert.deepEqual(inv.invoicePeriod, { start: '2013-09-16', end: '2013-09-22' });
+    assert.ok(inv.source.derived.some((d) => /616/.test(d.rule)));
+  });
+
+  test('a month runs from its first to its last day', async () => {
+    const month = '<udt:DateTimeString format="610">202402</udt:DateTimeString>';
+    const inv = await parseOne(period(month, month), 'x.xml');
+    assert.deepEqual(inv.invoicePeriod, { start: '2024-02-01', end: '2024-02-29' });
+  });
+
+  for (const value of ['202153', '201353']) {
+    test(`week 53 of a year with 52 weeks is an error (${value})`, async () => {
+      const week = `<udt:DateTimeString format="616">${value}</udt:DateTimeString>`;
+      const r = await convert(period(week, week), 'x.xml');
+      assert.equal(r.outcomes[0].status, 'error');
+    });
+  }
+
+  test('week 53 of a year that has one is accepted', async () => {
+    const week = '<udt:DateTimeString format="616">202053</udt:DateTimeString>';
+    const inv = await parseOne(period(week, week), 'x.xml');
+    assert.deepEqual(inv.invoicePeriod, { start: '2020-12-28', end: '2021-01-03' });
+  });
+});

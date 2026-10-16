@@ -26,6 +26,12 @@
   "real/ebinterface-4.3-sample.xml": [
     "ebinterface"
   ],
+  "real/ebinterface-3.0-invoice.xml": [
+    "ebinterface"
+  ],
+  "real/ebinterface-4.0-invoice.xml": [
+    "ebinterface"
+  ],
   "real/oioubl-2.01-invoice.xml": [
     "oioubl-2"
   ],
@@ -39,6 +45,9 @@
     "gr-mydata"
   ],
   "real/zugferd1-comfort-einfach.pdf": [
+    "zugferd-1"
+  ],
+  "real/zugferd1-basic.xml": [
     "zugferd-1"
   ],
   "real/xrechnung-ubl-01.01a.xml": [
@@ -322,5 +331,11 @@
   ],
   "cfdi-40-pago.xml": [
     "other"
+  ],
+  "real/cfdi-40-unstamped-min.xml": [
+    "mx-cfdi"
+  ],
+  "real/ubl-2.1-trivial.xml": [
+    "ubl-unknown"
   ]
 }

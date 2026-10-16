@@ -12,6 +12,7 @@ import type {
   CanonicalInvoice,
   Contact,
   CountryExtensions,
+  Decimal,
   Item,
   Line,
   Party,
@@ -21,6 +22,7 @@ import type {
   Totals,
   VatBreakdown,
 } from '../canonical.js';
+import { add, sub, sum } from '../values.js';
 import { Ctx, finish, need, ParseError, parseXml, type Scope, SELF_BILLED_TYPE_CODES, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 import { applyPint, isPint, PINT_VAT_SCHEMES } from './pint.js';
@@ -52,7 +54,14 @@ export function parseUbl(input: ParseInput): CanonicalInvoice[] {
     typeCode = isCn ? '381' : '380';
     c.derive('/typeCode', `No type code in the document; defaulted to ${typeCode} from the root element`);
   }
-  const currency = s.text(root, 'cbc:DocumentCurrencyCode', 'currency');
+  // A UBL document outside the EN 16931 CIUSes (ubl-unknown: plain UBL 2.0/2.1, Peru, Jordan, EHF payment
+  // requests...) is not bound by their mandatory fields, so what can be derived is derived instead of rejected.
+  const lenient = format === 'ubl-unknown';
+  let currency = s.text(root, 'cbc:DocumentCurrencyCode', 'currency');
+  if (!currency && lenient) {
+    currency = c.attr(root, 'cac:LegalMonetaryTotal/cbc:PayableAmount', 'currencyID');
+    if (currency) c.derive('/currency', 'No DocumentCurrencyCode (optional in UBL); the currencyID of PayableAmount');
+  }
   if (!currency) throw new ParseError('Document currency (BT-5) missing');
   const taxCurrency = s.text(root, 'cbc:TaxCurrencyCode', 'taxCurrency');
 
@@ -86,7 +95,9 @@ export function parseUbl(input: ParseInput): CanonicalInvoice[] {
   const creditorEl = payeeIds.find(isSepa(c)) ?? c.nonEmpty(c.all(sellerEl, 'cac:PartyIdentification/cbc:ID')).find(isSepa(c));
 
   const lines = c.all(root, isCn ? 'cac:CreditNoteLine' : 'cac:InvoiceLine').map((l, i) => line(c, l, isCn, s.in('lines').in(i)));
-  const { totals, vatBreakdown } = totalsAndVat(c, root, currency, taxCurrency, s);
+  const allowances = allowanceCharges(c, root, false, true, s.in('allowances'));
+  const charges = allowanceCharges(c, root, true, true, s.in('charges'));
+  const { totals, vatBreakdown } = totalsAndVat(c, root, currency, taxCurrency, s, lenient ? { lines, allowances, charges } : undefined);
 
   const extensions: CountryExtensions = {};
   if (format === 'xrechnung-ubl') extensions.de = { xrechnungVersion: input.details.version };
@@ -145,8 +156,8 @@ export function parseUbl(input: ParseInput): CanonicalInvoice[] {
     delivery: delivery(c, c.el(root, 'cac:Delivery'), s.in('delivery')),
     payments: c.all(root, 'cac:PaymentMeans').map((pm, i) => payment(c, pm, creditorEl, s.in('payments').in(i))),
     paymentSchedule: [],
-    allowances: allowanceCharges(c, root, false, true, s.in('allowances')),
-    charges: allowanceCharges(c, root, true, true, s.in('charges')),
+    allowances,
+    charges,
     totals,
     vatBreakdown,
     otherTaxes: [],
@@ -330,6 +341,8 @@ function totalsAndVat(
   currency: string,
   taxCurrency: string | undefined,
   s: Scope,
+  /** Given for ubl-unknown only: missing LegalMonetaryTotal amounts are then derived from them. */
+  derivableFrom?: { lines: Line[]; allowances: AllowanceCharge[]; charges: AllowanceCharge[] },
 ): { totals: Totals; vatBreakdown: VatBreakdown[] } {
   const taxTotals = c.all(root, 'cac:TaxTotal');
   const inCur = (t: Element, cur: string) => c.attr(t, 'cbc:TaxAmount', 'currencyID') === cur;
@@ -343,22 +356,58 @@ function totalsAndVat(
   const m = c.el(root, 'cac:LegalMonetaryTotal');
   if (!m) throw new ParseError('LegalMonetaryTotal (BG-22) missing');
   const ts = s.in('totals');
-  const req = (name: string, bt: string, key: string) => {
+  const req = (name: string, bt: string, key: string, derive?: () => Decimal, rule?: string) => {
     const v = ts.dec(m, `cbc:${name}`, key);
-    if (v === undefined) throw new ParseError(`${bt} (LegalMonetaryTotal/${name}) missing`);
-    return v;
+    if (v !== undefined) return v;
+    if (!derivableFrom || !derive) throw new ParseError(`${bt} (LegalMonetaryTotal/${name}) missing`);
+    c.derive(`/totals/${key}`, `${name} absent (not mandatory outside EN 16931): ${rule}`);
+    c.warn('UBL-TOTAL-DERIVED', `${bt} (LegalMonetaryTotal/${name}) is absent; derived as ${rule}`);
+    return derive();
   };
+  // Optional totals of the document-level allowances and charges; when only the entries are given, they are summed.
+  const docTotal = (name: string, key: string, list: AllowanceCharge[] | undefined) => {
+    const v = ts.dec(m, `cbc:${name}`, key);
+    if (v !== undefined || !list?.length) return v;
+    c.derive(`/totals/${key}`, `${name} absent: sum of the document-level AllowanceCharge amounts`);
+    return sum(list.map((a) => a.amount));
+  };
+  const allowanceTotal = docTotal('AllowanceTotalAmount', 'allowanceTotal', derivableFrom?.allowances);
+  const chargeTotal = docTotal('ChargeTotalAmount', 'chargeTotal', derivableFrom?.charges);
+  const vatTotal = ts.dec(main, 'cbc:TaxAmount', 'vatTotal');
+  const prepaid = ts.dec(m, 'cbc:PrepaidAmount', 'prepaid');
+  const rounding = ts.dec(m, 'cbc:PayableRoundingAmount', 'rounding');
+  const lineNetTotal = req(
+    'LineExtensionAmount',
+    'BT-106',
+    'lineNetTotal',
+    () => sum((derivableFrom?.lines ?? []).map((l) => l.netAmount)),
+    'the sum of the line amounts',
+  );
+  const taxExclusive = req(
+    'TaxExclusiveAmount',
+    'BT-109',
+    'taxExclusive',
+    () => add(sub(lineNetTotal, allowanceTotal ?? '0'), chargeTotal ?? '0'),
+    'BT-106 - BT-107 + BT-108',
+  );
+  const taxInclusive = req('TaxInclusiveAmount', 'BT-112', 'taxInclusive', () => add(taxExclusive, vatTotal ?? '0'), 'BT-109 + BT-110');
   const totals: Totals = {
-    lineNetTotal: req('LineExtensionAmount', 'BT-106', 'lineNetTotal'),
-    allowanceTotal: ts.dec(m, 'cbc:AllowanceTotalAmount', 'allowanceTotal'),
-    chargeTotal: ts.dec(m, 'cbc:ChargeTotalAmount', 'chargeTotal'),
-    taxExclusive: req('TaxExclusiveAmount', 'BT-109', 'taxExclusive'),
-    vatTotal: ts.dec(main, 'cbc:TaxAmount', 'vatTotal'),
+    lineNetTotal,
+    allowanceTotal,
+    chargeTotal,
+    taxExclusive,
+    vatTotal,
     vatTotalInTaxCurrency: ts.dec(inTaxCur, 'cbc:TaxAmount', 'vatTotalInTaxCurrency'),
-    taxInclusive: req('TaxInclusiveAmount', 'BT-112', 'taxInclusive'),
-    prepaid: ts.dec(m, 'cbc:PrepaidAmount', 'prepaid'),
-    rounding: ts.dec(m, 'cbc:PayableRoundingAmount', 'rounding'),
-    payable: req('PayableAmount', 'BT-115', 'payable'),
+    taxInclusive,
+    prepaid,
+    rounding,
+    payable: req(
+      'PayableAmount',
+      'BT-115',
+      'payable',
+      () => add(sub(taxInclusive, prepaid ?? '0'), rounding ?? '0'),
+      'BT-112 - BT-113 + BT-114',
+    ),
   };
   const vatBreakdown = c.all(main, 'cac:TaxSubtotal').map((sub, i): VatBreakdown => {
     const v = s.in('vatBreakdown').in(i);

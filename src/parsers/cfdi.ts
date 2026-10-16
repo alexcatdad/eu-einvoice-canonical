@@ -18,6 +18,11 @@
  * Percentages: TasaOCuota 0.160000 is stated as a fraction; it becomes the percentage 16.
  * An egreso (credit note) carries positive amounts, as `effectiveSign()` expects.
  *
+ * Invoice number (BT-1): Serie + Folio; without both, the SAT UUID. An unstamped draft with none of the three
+ * gets the placeholder `UNSTAMPED:<Emisor/@Rfc>:<@Fecha>:<sha12>` and the warning MX-NO-ID instead of an error:
+ * the issuer and the issuance timestamp are the only stable key such a document has, and the start of the
+ * document's SHA-256 keeps two drafts from the same second apart.
+ *
  * Not mapped: local taxes (Impuestos Locales) and other complements, which are reported as warnings.
  */
 import type { Element } from '@xmldom/xmldom';
@@ -148,7 +153,18 @@ export function parseCfdi(input: ParseInput): CanonicalInvoice[] {
     id = uuid;
     c.derive('/id', 'Serie and Folio absent (both optional in a CFDI); the SAT UUID is used');
   } else {
-    throw new ParseError('Comprobante has no Serie/Folio and no TimbreFiscalDigital UUID to identify it');
+    // An unstamped draft with neither Serie nor Folio (both optional) has no number at all; the SAT UUID only
+    // exists after stamping. Rather than reject it, give it a placeholder built from what does identify the
+    // issuance, the issuer's RFC and the Fecha timestamp (to the second), so two drafts never share an id by
+    // accident; the start of the document's SHA-256 separates drafts issued in the same second. It is flagged
+    // as a warning and a derivation: it is not a document number.
+    const rfc = att(c.el(root, 'cfdi:Emisor'), 'Rfc') ?? '';
+    id = `UNSTAMPED:${rfc}:${fecha}:${input.payload.sha256.slice(0, 12)}`;
+    c.derive(
+      '/id',
+      'No Serie, Folio or TimbreFiscalDigital UUID: placeholder UNSTAMPED:<Emisor/@Rfc>:<@Fecha>:<first 12 hex of the SHA-256>',
+    );
+    c.warn('MX-NO-ID', `The CFDI has no Serie, Folio or SAT UUID; it is identified by the placeholder '${id}'`);
   }
 
   // --- parties ---------------------------------------------------------------

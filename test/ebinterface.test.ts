@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
-import { effectiveSign } from '../src/index.js';
+import { convert, effectiveSign } from '../src/index.js';
 import { fixture, parseOne, utf8, warningCodes } from './helpers.js';
 
 const text = (name: string) => new TextDecoder().decode(fixture(name));
@@ -249,5 +249,108 @@ describe('ebInterface without PayableAmount (optional before 5.0, common in the 
   test('without TotalGrossAmount it is still an error', async () => {
     const src = text('ebinterface-4.3-creditmemo.xml').replace('<TotalGrossAmount>-270.00</TotalGrossAmount>', '');
     await assert.rejects(parseOne(utf8(src), 'x.xml'), /TotalGrossAmount missing/);
+  });
+});
+
+describe('ebInterface 3.0 (real sample): the structure before 4.1', async () => {
+  const inv = await parseOne('real/ebinterface-3.0-invoice.xml');
+
+  test('header: no PayableAmount in 3.0, so the amount due is derived without a warning', () => {
+    assert.equal(inv.specificationId, 'ebinterface:3.0');
+    assert.equal(inv.totals.taxInclusive, '6981.88');
+    assert.equal(inv.totals.payable, '6981.88');
+    assert.ok(inv.source.derived.some((d) => d.field === '/totals/payable'));
+    assert.deepEqual(warningCodes(inv), []);
+  });
+
+  test('VAT from Tax/VAT/Item (TaxedAmount, TaxRate, Amount)', () => {
+    assert.deepEqual(inv.vatBreakdown, [{ taxableAmount: '5818.23', taxAmount: '1163.65', categoryCode: 'S', rate: '20.00' }]);
+    assert.equal(inv.totals.vatTotal, '1163.65');
+    assert.equal(inv.totals.lineNetTotal, '5818.23');
+  });
+
+  test('lines: TaxRate, BillersArticleNumber and a ReductionRate already applied to LineItemAmount', () => {
+    const l = inv.lines[0];
+    assert.equal(l.netAmount, '3682.80');
+    assert.deepEqual(l.vat, { categoryCode: 'S', rate: '20.00' });
+    assert.equal(l.item.sellerId, 'Z185');
+    // 3 x 1240.00 = 3720.00, less 1 % = 3682.80
+    assert.deepEqual(l.allowances, [{ amount: '37.20', baseAmount: '3720.00', percentage: '1.00', reason: 'ReductionRate' }]);
+  });
+
+  test('the payment method is the xsi:type of PaymentMethod', () => {
+    assert.equal(inv.payments.length, 1);
+    assert.equal(inv.payments[0].meansCode, '58');
+    assert.equal(inv.payments[0].creditTransfers[0].accountId, 'AT941100009686348500');
+    assert.equal(inv.payments[0].creditTransfers.length, 5);
+  });
+
+  test('CancelledOriginalDocument is an attribute naming the cancelled invoice', async () => {
+    const v = await variant(
+      'real/ebinterface-3.0-invoice.xml',
+      ' d1p1:GeneratingSystem=',
+      ' d1p1:CancelledOriginalDocument="AO/4020" d1p1:GeneratingSystem=',
+    );
+    assert.deepEqual(v.precedingInvoices, [{ id: 'AO/4020' }]);
+  });
+
+  test('Tax/VAT/TaxExemption exempts the whole invoice: one E breakdown, lines overridden to E', async () => {
+    const src = text('real/ebinterface-3.0-invoice.xml').replace(
+      /<d1p1:VAT>[\s\S]*<\/d1p1:VAT>/,
+      '<d1p1:VAT><d1p1:TaxExemption>Steuerfrei gem. § 6 UStG</d1p1:TaxExemption></d1p1:VAT>',
+    );
+    const v = await parseOne(utf8(src), 'x.xml');
+    assert.deepEqual(v.vatBreakdown, [
+      { taxableAmount: '5818.23', taxAmount: '0.00', categoryCode: 'E', rate: '0', exemptionReason: 'Steuerfrei gem. § 6 UStG' },
+    ]);
+    assert.ok(v.lines.every((l) => l.vat?.categoryCode === 'E'));
+  });
+
+  test('3.x ReductionDetails/Reduction without Amount: BaseAmount x Percentage', async () => {
+    const v = await variant(
+      'real/ebinterface-3.0-invoice.xml',
+      '  <d1p1:Tax>',
+      '  <d1p1:ReductionDetails><d1p1:Reduction><d1p1:BaseAmount>100.00</d1p1:BaseAmount><d1p1:TaxRate>20.00</d1p1:TaxRate><d1p1:Percentage>2.5</d1p1:Percentage></d1p1:Reduction></d1p1:ReductionDetails>\n  <d1p1:Tax>',
+    );
+    assert.equal(v.allowances.length, 1);
+    assert.equal(v.allowances[0].amount, '2.50');
+    assert.deepEqual(v.allowances[0].vat, { categoryCode: 'S', rate: '20.00' });
+    assert.ok(v.source.derived.some((d) => d.field === '/allowances/0/amount'));
+  });
+});
+
+describe('ebInterface 4.0 (real sample)', async () => {
+  const inv = await parseOne('real/ebinterface-4.0-invoice.xml');
+
+  test('VAT, totals and payment', () => {
+    assert.equal(inv.specificationId, 'ebinterface:4.0');
+    assert.deepEqual(inv.vatBreakdown, [{ taxableAmount: '250.00', taxAmount: '50.00', categoryCode: 'S', rate: '20.00' }]);
+    assert.equal(inv.totals.payable, '300.00');
+    assert.equal(inv.payments[0].meansCode, '30');
+    assert.equal(inv.payments[0].creditTransfers[0].accountId, '123123456');
+    assert.deepEqual(warningCodes(inv), []);
+  });
+
+  test('a DirectDebit xsi:type is direct debit (49)', async () => {
+    const src = text('real/ebinterface-4.0-invoice.xml').replace(
+      /<eb:PaymentMethod [\s\S]*<\/eb:PaymentMethod>/,
+      '<eb:PaymentMethod xsi:type="eb:DirectDebitType" />',
+    );
+    const v = await parseOne(utf8(src), 'x.xml');
+    assert.deepEqual(
+      v.payments.map((p) => p.meansCode),
+      ['49'],
+    );
+  });
+});
+
+describe('ebInterface before 3.0', () => {
+  test('is detected as its own format and reported as unsupported, not as an error', async () => {
+    const xml = '<Invoice xmlns="http://www.ebinterface.at/schema/2p2/"><InvoiceNumber>1</InvoiceNumber></Invoice>';
+    const r = await convert(utf8(xml), 'x.xml');
+    const o = r.outcomes[0];
+    assert.equal(o.detection.kind === 'invoice' && o.detection.format.id, 'ebinterface-2');
+    assert.equal(o.status, 'unsupported');
+    if (o.status === 'unsupported') assert.match(o.reason, /ebInterface 2\.2 is not mapped/);
   });
 });
