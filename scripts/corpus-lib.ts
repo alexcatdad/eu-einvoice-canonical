@@ -302,7 +302,7 @@ const layerLine = (m: Partial<Record<CheckStatus, number>>) => {
     rate: pct(m.passed ?? 0, ran),
   };
 };
-const mdCell = (s: string) => s.replace(/\|/g, '\\|').replace(/\n/g, ' ');
+const mdCell = (s: string) => s.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\n/g, ' ');
 const countsRow = (name: string, c: Counts) =>
   `| ${name} | ${c.files} | ${c.documents} | ${c.ok} | ${c.unsupported} | ${c.error} | ${c.notAnInvoice} |`;
 
