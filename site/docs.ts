@@ -323,6 +323,16 @@ function splitReadme(tokens: Token[]): { blocks: Block[]; headings: DocSite['hea
   return { blocks, headings };
 }
 
+/**
+ * A paragraph of nothing but linked images: the README's status badges. The site makes no outside requests,
+ * so they would show as a row of bare alt-text links; the docs pages leave them out.
+ */
+function isBadgeRow(t: Token): boolean {
+  if (t.type !== 'paragraph') return false;
+  const inline = (t as Tokens.Paragraph).tokens.filter((i) => !(i.type === 'text' && i.raw.trim() === '') && i.type !== 'br');
+  return inline.length > 0 && inline.every((i) => i.type === 'link' && (i as Tokens.Link).tokens.every((c) => c.type === 'image'));
+}
+
 /** The markdown of one block with headings moved so the page's own title is the only h1. */
 function shiftedTokens(block: Block, first: boolean): Token[] {
   const shift = first ? block.depth - 1 : block.depth - 2;
@@ -503,7 +513,7 @@ function shell(
     breadcrumbs(extra.crumbs),
   ];
   return page({
-    title: `${p.title} · eu-einvoice-canonical docs`,
+    title: p.title.includes('eu-einvoice-canonical') ? p.title : `${p.title} · eu-einvoice-canonical`,
     description: p.description,
     path: p.path,
     body,
@@ -660,7 +670,7 @@ export function buildDocs(src: DocSources): DocSite {
     mine.forEach((b, n) => {
       const body = shiftedTokens(b, n === 0);
       if (n > 0) tokens.push({ type: 'heading', raw: '', depth: 2, text: b.heading, tokens: Lexer.lexInline(b.heading) } as Tokens.Heading);
-      tokens.push(...body);
+      tokens.push(...body.filter((t) => !isBadgeRow(t)));
     });
     const slugCtx = { from: undefined as string | undefined, anchors, extras, self: def.slug };
     for (const t of tokens) md.push(t.type === 'heading' ? headingRaw(t as Tokens.Heading) : t.raw);

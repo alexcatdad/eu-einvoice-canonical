@@ -2567,3 +2567,49 @@ fieldset.samples {
   text-transform: none;
   letter-spacing: 0;
 }
+
+/* Phone header: the language select keeps its place at the end of the wordmark row, drawn as a globe and
+   a two-letter code. The native select still takes the taps and the focus, laid transparently on top. */
+.lang-code {
+  display: none;
+}
+@media (max-width: 700px) {
+  .site-header .lang {
+    position: relative;
+    flex: none;
+  }
+  .site-header .lang-code {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 2.5rem;
+    padding: 0 0.6rem;
+    border: 1px solid var(--edge);
+    border-radius: var(--r);
+    background: var(--paper);
+    color: var(--ink);
+    font: 600 0.9375rem / 1 var(--sans);
+    letter-spacing: 0.04em;
+  }
+  .site-header .lang-code::before {
+    content: "";
+    width: 1rem;
+    height: 1rem;
+    background: currentColor;
+    mask:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z'/%3E%3C/svg%3E")
+      center / contain no-repeat;
+  }
+  .site-header .lang select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    min-height: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .site-header .lang:focus-within .lang-code {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+}

@@ -33,7 +33,7 @@ describe('<Invoice>', () => {
 
   test('renders the whole invoice as one labelled article', () => {
     expect(out.startsWith('<article class="einvoice" lang="de" aria-labelledby="t-title">')).toBe(true);
-    expect(out).toContain('<h1 class="einvoice-title" id="t-title">Rechnung INV-2026-1042</h1>');
+    expect(out).toContain('<h1 class="einvoice-title" id="t-title">Rechnung <span class="einvoice-number">INV-2026-1042</span></h1>');
     const headings = [...out.matchAll(/<h2 class="einvoice-h2" id="[^"]+">(.*?)<\/h2>/g)].map((m) => m[1]);
     expect(headings).toEqual([
       'Verkäufer',

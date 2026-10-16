@@ -174,11 +174,18 @@ export function initSwitcher() {
     option.lang = l.code;
     select.add(option);
   }
+  // On phones the select is drawn as a short code (EN, DE...) so it fits on the wordmark row.
+  const code = select.parentElement?.querySelector('.lang-code');
+  const showCode = () => {
+    if (code) code.textContent = current.toUpperCase();
+  };
+  showCode();
   select.addEventListener('change', () => {
     const lang = normalizeLang(select.value);
     if (lang) void setLanguage(lang);
   });
   onLanguageChange(() => {
     select.value = current;
+    showCode();
   });
 }

@@ -65,6 +65,10 @@ export const INVOICE_CSS = `.einvoice-shadcn {
   line-height: 1.2;
   font-weight: 700;
 }
+.einvoice-number {
+  display: inline-block;
+  max-width: 100%;
+}
 .einvoice-meta {
   display: flex;
   flex-wrap: wrap;
@@ -204,6 +208,9 @@ export const INVOICE_CSS = `.einvoice-shadcn {
   border-bottom: 1px solid var(--einvoice-rule, #d5d5dc);
   text-align: left;
   vertical-align: top;
+}
+.einvoice-lines .einvoice-table th:first-child {
+  white-space: nowrap;
 }
 .einvoice-table th {
   background: var(--einvoice-subtle, #f4f4f7);

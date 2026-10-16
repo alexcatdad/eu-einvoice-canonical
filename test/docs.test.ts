@@ -120,6 +120,10 @@ describe('docs pages from the README', () => {
     expect(site.pages.every((p) => !p.html.includes('securityscorecards'))).toBe(true);
   });
 
+  test('the README badge row is left out, not shown as bare alt-text links', () => {
+    expect(site.pages.every((p) => !p.html.includes('code-scanning') && !p.markdown.includes('img.shields.io'))).toBe(true);
+  });
+
   test('slugs follow the GitHub rule, so README anchors keep working', () => {
     expect(slugify('Mexico: CFDI (`mx-cfdi`)')).toBe('mexico-cfdi-mx-cfdi');
     expect(slugify('Conversion API (HTTP)')).toBe('conversion-api-http');

@@ -61,7 +61,7 @@ export function header(opts: {
   });
   items.push(`<li><a class="external" href="${REPO_URL}"${i18nAttr(i18n, 'nav.github')}>${esc(text('nav.github'))}</a></li>`);
   const lang = i18n
-    ? `<div class="lang"><label for="lang-select" data-i18n="lang.label">${esc(text('lang.label'))}</label><select id="lang-select"></select></div>`
+    ? `<div class="lang"><label for="lang-select" data-i18n="lang.label">${esc(text('lang.label'))}</label><span class="lang-code" aria-hidden="true">EN</span><select id="lang-select"></select></div>`
     : '';
   return `<a class="skip" href="${skip.href}"${i18nAttr(i18n, skip.key)}>${esc(text(skip.key))}</a>
 <header class="site-header${opts.sticky ? ' sticky' : ''}">
