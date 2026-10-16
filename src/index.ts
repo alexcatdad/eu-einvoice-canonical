@@ -1,3 +1,9 @@
+/**
+ * The library: `inspect`, `convert`, the canonical model, validation, rendering, writers, matching and export.
+ * (The module name is what the TypeScript API reference on the site calls this entry point.)
+ *
+ * @module eu-einvoice-canonical
+ */
 import type { CanonicalInvoice } from './canonical.js';
 import { checkTotals } from './checks.js';
 import { type Detection, detectXml } from './detect.js';

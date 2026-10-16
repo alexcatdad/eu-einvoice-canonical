@@ -1,3 +1,4 @@
+import { ALL, INITIAL } from './bundle.js';
 import type { Results } from './run.js';
 
 /** A case fails when it is more than this many times slower (relative to calibration) than the baseline. */
@@ -133,8 +134,9 @@ export function renderPerformanceHtml(r: Results): string {
         ]
       : [];
   });
-  const total = r.bundles.reduce((n, b) => n + b.bytes, 0);
-  const initial = r.bundles.find((b) => b.name === 'app.js');
+  const chunks = r.bundles.filter((b) => b.name.startsWith('_astro/'));
+  const total = r.bundles.find((b) => b.name === ALL)?.bytes ?? chunks.reduce((n, b) => n + b.bytes, 0);
+  const initial = r.bundles.find((b) => b.name === INITIAL);
   return `<section class="performance">
   <h2>Performance</h2>
   <p class="wrappers">Documents converted per second by <code>convert()</code> on ${esc(r.runtime)} (${esc(r.platform)}), measured ${esc(r.generatedAt.slice(0, 10))}; peak memory is the resident set of a fresh process that converts the file once. Numbers depend on the machine; the CI gate compares ratios to a calibration loop, not these figures.</p>
@@ -144,6 +146,6 @@ export function renderPerformanceHtml(r: Results): string {
     <tbody>${rows.join('')}</tbody>
   </table>
   </div>
-  <p class="wrappers">Browser bundle: ${kb(initial?.bytes)} loaded up front, ${kb(total)} in ${r.bundles.length} chunks in total (the PDF and CMS chunks load only when a file needs them). Full results: <code>bench/results.md</code>.</p>
+  <p class="wrappers">Browser converter: ${kb(initial?.bytes)} of JavaScript loaded up front, ${kb(total)} with everything it can load later (the PDF and CMS chunks load only when a file needs them, the other languages when chosen). Full results: <code>bench/results.md</code>.</p>
 </section>`;
 }

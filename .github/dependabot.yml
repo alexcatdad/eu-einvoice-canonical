@@ -15,12 +15,13 @@ updates:
     groups:
       npm-minor-and-patch:
         update-types: [minor, patch]
+  # The site (Astro, Starlight, TypeDoc, React) is its own package with its own bun.lock.
   - package-ecosystem: npm
-    directory: /typedoc
+    directory: /site
     schedule:
       interval: weekly
     groups:
-      typedoc:
+      site:
         patterns: ['*']
   - package-ecosystem: docker
     directory: /

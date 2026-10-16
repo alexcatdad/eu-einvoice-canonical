@@ -85,9 +85,13 @@ const listeners: (() => void)[] = [];
 
 export const currentLang = (): Lang => current;
 
-/** Registers a callback that runs after the language changes (to redraw dynamic content). */
-export function onLanguageChange(fn: () => void) {
+/** Registers a callback that runs after the language changes (to redraw dynamic content); returns a function that removes it. */
+export function onLanguageChange(fn: () => void): () => void {
   listeners.push(fn);
+  return () => {
+    const i = listeners.indexOf(fn);
+    if (i >= 0) listeners.splice(i, 1);
+  };
 }
 
 /** Looks a message up in the current language, then in English, then returns the key. Placeholders without a value are left as written. */
@@ -168,7 +172,8 @@ export function initLanguage() {
 /** Fills the language <select> (id lang-select) and wires it up. The labels are the language names in their own language. */
 export function initSwitcher() {
   const select = document.getElementById('lang-select') as HTMLSelectElement | null;
-  if (!select) return;
+  if (!select || select.dataset.wired) return;
+  select.dataset.wired = 'true';
   for (const l of LANGUAGES) {
     const option = new Option(l.name, l.code, false, l.code === current);
     option.lang = l.code;

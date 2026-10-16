@@ -7,7 +7,7 @@
  * content into the report: it holds counts, normalised messages and repository-relative paths.
  */
 
-import { page } from '../site/chrome.js';
+import { BASE } from '../site/site.js';
 import type { CheckStatus, ConvertResult } from '../src/index.js';
 
 export const LAYERS = ['parse', 'schema', 'semantic', 'profile', 'signature'] as const;
@@ -389,7 +389,7 @@ export function renderMarkdown(r: CorpusReport): string {
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] as string);
 
-/** The "Real-world results" page, in the site's style (same shell as the conformance checklist). */
+/** The body of the "Real-world results" page; site/src/pages/corpus.astro puts it in the site frame. */
 export function renderHtml(r: CorpusReport): string {
   const t = r.totals;
   const date = r.generatedAt.slice(0, 10);
@@ -423,18 +423,7 @@ export function renderHtml(r: CorpusReport): string {
         `<tr><th scope="row">${esc(type)}</th><td class="num good">${s.valid}</td><td class="num ${s.invalid ? 'gap' : ''}">${s.invalid}</td><td class="num">${s.unchecked}</td></tr>`,
     )
     .join('');
-  return page({
-    title: 'Real-world results · E-invoice to JSON',
-    description: `The converter run over ${t.files} files from public e-invoice sample collections: how many convert, how fast, which warnings and errors are most common.`,
-    path: 'corpus.html',
-    current: 'realworld',
-    body: `<div class="masthead">
-  <div class="masthead-text">
-    <h1>Real-world results</h1>
-    <p class="lede">What the converter does with ${t.files} files from public sample collections. Report of ${esc(date)}${r.commit ? `, commit <code>${esc(r.commit.slice(0, 7))}</code>` : ''}.</p>
-  </div>
-  <p class="privacy"><a href="./">Back to the converter</a></p>
-</div>
+  return `<p class="lede">What the converter does with ${t.files} files from public sample collections. Report of ${esc(date)}${r.commit ? `, commit <code>${esc(r.commit.slice(0, 7))}</code>` : ''}. <a href="${BASE}">Back to the converter</a>.</p>
 <div class="checklist">
   <ul class="checklist-summary">
     <li>${t.documents} documents (${t.invoices} invoices) from ${Object.keys(r.corpora).length} corpora; ${t.ok} converted, ${t.unsupported} unsupported, ${t.error} errors, ${t.notAnInvoice} not invoices.</li>
@@ -458,12 +447,15 @@ export function renderHtml(r: CorpusReport): string {
   <h2>Most common errors</h2>
   ${clusters(r.errors)}
   <p class="wrappers">Report generated ${esc(r.generatedAt)} by the weekly <code>Public corpora</code> workflow, from sample collections cloned at pinned commits (see <code>test/corpus/SOURCES.md</code> for the licences). The files themselves are never published.</p>
-</div>`,
-  });
+</div>`;
 }
+
+/** The page description, which names the number of files. */
+export const describeReport = (r: CorpusReport) =>
+  `The converter run over ${r.totals.files} files from public e-invoice sample collections: how many convert, how fast, which warnings and errors are most common.`;
 
 /** The coverage-section paragraph that links the page and shows the report date. */
 export function linkHtml(r: CorpusReport): string {
   const t = r.totals;
-  return `<p class="wrappers"><a href="corpus.html">See the real-world results</a>: ${t.files} files from public sample collections (report of ${esc(r.generatedAt.slice(0, 10))}).</p>`;
+  return `<p class="wrappers"><a href="${BASE}corpus/">See the real-world results</a>: ${t.files} files from public sample collections (report of ${esc(r.generatedAt.slice(0, 10))}).</p>`;
 }

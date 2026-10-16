@@ -1,0 +1,69 @@
+---
+/**
+ * The browser converter. The desk (input, perforation, result sheets) is a React island; the text around it is static,
+ * marked with catalogue keys so the browser swaps in the reader's language (site/i18n.ts).
+ */
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import pkg from '../../../package.json' with { type: 'json' };
+import { FORMATS } from '../../../src/formats.ts';
+import { shortName } from '../../coverage';
+import { homeJsonLd } from '../../docs';
+import en from '../../i18n/en.json' with { type: 'json' };
+import Converter from '../converter/Converter';
+import { generatedJson } from '../lib/generated';
+import { href } from '../lib/nav';
+import '../styles/converter.css';
+
+const description = en['meta.description'];
+const STRIP = ['peppol-bis3', 'xrechnung-ubl', 'xrechnung-cii', 'facturx', 'fatturapa', 'ksef', 'facturae', 'hr-cius'];
+const strip = STRIP.map((id) => FORMATS.find((f) => f.id === id)).filter((f) => f !== undefined);
+const count = FORMATS.filter((f) => !f.id.endsWith('-unknown')).length;
+const corpus = generatedJson<{ link: string }>('corpus.json');
+const ld = (o: object) => JSON.stringify(o).replace(/</g, '\\u003c');
+---
+
+<StarlightPage
+  frontmatter={{
+    title: en['hero.title'],
+    description,
+    template: 'splash',
+    tableOfContents: false,
+    head: homeJsonLd(pkg.version, description).map((o) => ({ tag: 'script', attrs: { type: 'application/ld+json' }, content: ld(o) })),
+  }}
+>
+  <div class="converter-page not-content">
+    <p class="privacy" data-i18n-html="masthead.privacy" set:html={en['masthead.privacy']} />
+
+    <Converter client:load />
+
+    <section class="relations" aria-labelledby="relations-title">
+      <h2 id="relations-title" data-i18n="relations.title">{en['relations.title']}</h2>
+      <p data-i18n="relations.body">{en['relations.body']}</p>
+      <ul class="links">
+        <li><a href={href('docs/line-roles-and-relations/')} data-i18n="relations.docs">{en['relations.docs']}</a></li>
+        <li><a href={href('eval/')} data-i18n="relations.eval">{en['relations.eval']}</a></li>
+      </ul>
+    </section>
+
+    <section class="strip" aria-labelledby="strip-title">
+      <h2 id="strip-title" data-i18n="strip.title">{en['strip.title']}</h2>
+      <p data-i18n="strip.body">{en['strip.body']}</p>
+      <ul class="chip-row">
+        {
+          strip.map((f) => (
+            <li class="fmt converts">
+              <a href={href(`docs/formats/${f.id}/`)}>{shortName(f)}</a>
+            </li>
+          ))
+        }
+        <li class="fmt more">
+          <a href={href('conformance/')} data-i18n="strip.all" data-i18n-params={JSON.stringify({ count })}>
+            {en['strip.all'].replace('{count}', String(count))}
+          </a>
+        </li>
+      </ul>
+      {/* Rendered by scripts/corpus-lib.ts (linkHtml), which escapes the report's values. */}
+      {corpus && <Fragment set:html={corpus.link} />}
+    </section>
+  </div>
+</StarlightPage>

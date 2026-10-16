@@ -1,0 +1,20 @@
+---
+/** Starlight's page title; on the translated pages it carries the catalogue key, so the browser can swap the language in. */
+import { routeOf } from '../lib/nav';
+
+/** Starlight's id for the title (its skip link and the table of contents point at it). */
+const PAGE_TITLE_ID = '_top';
+const KEYS: Record<string, string> = { '': 'hero.title', 'deliverables/': 'deliv.title' };
+const key = KEYS[routeOf(Astro.url.pathname)];
+---
+
+<h1 id={PAGE_TITLE_ID} {...(key ? { 'data-i18n': key } : {})}>{Astro.locals.starlightRoute.entry.data.title}</h1>
+
+<style>
+  h1 {
+    margin-top: var(--space-4);
+    color: var(--ink);
+    font-size: clamp(2rem, 3vw + 1rem, 2.75rem);
+    line-height: 1.08;
+  }
+</style>

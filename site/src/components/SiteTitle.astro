@@ -1,0 +1,40 @@
+---
+/** The wordmark: a yellow duplicate sheet and the site name. */
+import { href, isTranslated, routeOf, text } from '../lib/nav';
+
+const translated = isTranslated(routeOf(Astro.url.pathname));
+---
+
+<a href={href('')} class="site-title" {...(translated ? { 'data-i18n': 'nav.home' } : {})}>{text('nav.home')}</a>
+
+<style>
+  .site-title {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--control-h);
+    color: var(--ink);
+    font-size: 1.15rem;
+    font-weight: 800;
+    font-variation-settings: 'wdth' 125;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .site-title::before {
+    content: '';
+    flex: none;
+    width: 0.8rem;
+    height: 1.05rem;
+    border: 2px solid var(--ink);
+    border-radius: 2px;
+    background: #fbf1b8;
+  }
+  @media (max-width: 24rem) {
+    .site-title {
+      gap: var(--space-1);
+      font-size: 0.9375rem;
+      font-variation-settings: 'wdth' 100;
+    }
+  }
+</style>

@@ -7,7 +7,6 @@ coverage
 test
 site
 scripts
-typedoc
 conformance
 openapi
 *.md

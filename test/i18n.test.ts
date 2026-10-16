@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join, relative } from 'node:path';
 import { LANGUAGES, normalizeLang, pickLanguage } from '../site/i18n.js';
 
 const siteDir = join(import.meta.dir, '..', 'site');
@@ -53,7 +53,17 @@ describe('message catalogues', () => {
 });
 
 describe('message keys used by the site', () => {
-  const files = readdirSync(siteDir).filter((f) => /\.(ts|html)$/.test(f));
+  /** The site's own code: the shared modules in site/ and the Astro project in site/src (generated content excluded). */
+  const files: string[] = [];
+  const scan = (dir: string) => {
+    for (const name of readdirSync(dir)) {
+      const path = join(dir, name);
+      if (statSync(path).isDirectory()) {
+        if (!['node_modules', 'content', 'i18n', 'public'].includes(name) && !name.startsWith('.')) scan(path);
+      } else if (/\.(ts|tsx|astro)$/.test(name)) files.push(relative(siteDir, path));
+    }
+  };
+  scan(siteDir);
   const namespaces = [...new Set(Object.keys(en).map((k) => k.split('.')[0]))];
   const literal = new RegExp(`(['"\`])((?:${namespaces.join('|')})\\.[A-Za-z0-9.-]+)\\1`, 'g');
 
@@ -63,14 +73,18 @@ describe('message keys used by the site', () => {
     const keys: string[] = [];
     for (const m of src.matchAll(/\bt\(\s*(['"`])([^'"`$]+)\1/g)) keys.push(m[2]);
     for (const m of src.matchAll(/data-i18n(?:-html)?="([^"$]+)"/g)) keys.push(m[1]);
-    for (const m of src.matchAll(/data-i18n-attr="([^"]+)"/g)) for (const pair of m[1].split(';')) keys.push(pair.split(':')[1].trim());
+    for (const m of src.matchAll(/data-i18n-attr[=:]\s*['"]([^'"]+)['"]/g))
+      for (const pair of m[1].split(';')) keys.push(pair.split(':')[1].trim());
+    for (const m of src.matchAll(/\bk="([^"]+)"/g)) keys.push(m[1]);
+    for (const m of src.matchAll(/\ben\[['"]([^'"]+)['"]\]/g)) keys.push(m[1]);
     for (const m of src.matchAll(literal)) keys.push(m[2]);
     return keys;
   }
 
   test('the site has code to scan', () => {
-    expect(files).toContain('app.ts');
-    expect(files).toContain('index.html');
+    expect(files).toContain('src/converter/Converter.tsx');
+    expect(files).toContain('src/pages/index.astro');
+    expect(files).toContain('deliverables.ts');
   });
 
   test.each(files)('every key used in %s exists in en.json', (name) => {

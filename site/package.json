@@ -1,0 +1,40 @@
+{
+  "name": "eu-einvoice-canonical-site",
+  "private": true,
+  "description": "The GitHub Pages site: Astro with Starlight for the docs, a React island for the converter. Its own package, because TypeDoc (starlight-typedoc) needs the JavaScript TypeScript compiler (5.x), not the native 7.x the library uses.",
+  "type": "module",
+  "scripts": {
+    "build": "bun prepare.ts && ASTRO_TELEMETRY_DISABLED=1 bun --bun ./node_modules/astro/bin/astro.mjs build && bun check.ts",
+    "dev": "bun prepare.ts && ASTRO_TELEMETRY_DISABLED=1 bun --bun ./node_modules/astro/bin/astro.mjs dev",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "a11y": "bun a11y.ts"
+  },
+  "dependencies": {
+    "@astrojs/react": "7.0.1",
+    "@astrojs/starlight": "0.42.6",
+    "@scalar/api-reference": "1.74.0",
+    "@scalar/astro": "0.4.29",
+    "@tailwindcss/vite": "4.3.3",
+    "astro": "7.3.8",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "radix-ui": "1.7.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-dropzone": "20.1.2",
+    "sonner": "2.0.8",
+    "starlight-typedoc": "0.23.1",
+    "tailwind-merge": "3.6.0",
+    "tailwindcss": "4.3.3",
+    "typedoc": "0.28.20",
+    "typedoc-plugin-markdown": "4.13.1",
+    "typescript": "5.9.3"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@types/bun": "1.4.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "playwright": "1.63.0"
+  }
+}
