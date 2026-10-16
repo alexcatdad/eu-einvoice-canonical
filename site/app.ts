@@ -905,7 +905,7 @@ function renderStrip() {
     .map((f) => `<li class="fmt converts"><a href="docs/formats/${esc(f.id)}.html">${esc(shortName(f))}</a></li>`)
     .join('');
   const count = (FORMATS as readonly FormatDef[]).filter((f) => !f.id.endsWith('-unknown')).length;
-  $('#format-strip').innerHTML = `${chips}<li class="fmt more"><a href="conformance.html">${esc(t('formats.all', { count }))}</a></li>`;
+  $('#format-strip').innerHTML = `${chips}<li class="fmt more"><a href="conformance.html">${esc(t('strip.all', { count }))}</a></li>`;
 }
 
 function fillChips() {
