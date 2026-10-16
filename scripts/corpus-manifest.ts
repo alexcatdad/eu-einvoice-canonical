@@ -30,6 +30,17 @@ interface Group {
   max: number;
 }
 
+/** Removes the XML declaration and comments, repeating until stable so a removal cannot leave a new '<!--' behind. */
+function stripPrologAndComments(text: string): string {
+  let prev: string;
+  let s = text;
+  do {
+    prev = s;
+    s = s.replace(/<\?xml[^>]*\?>/g, '').replace(/<!--[\s\S]*?-->/g, '');
+  } while (s !== prev);
+  return s;
+}
+
 const R = 'phive-rules';
 const GROUPS: Group[] = [
   // OpenPEPPOL BIS 3 examples: every invoice or credit note in the folder is Peppol BIS 3.
@@ -206,12 +217,7 @@ for (const g of GROUPS) {
     const head = readFileSync(f, 'utf8').slice(0, 200_000);
     const id = identifier(head);
     // Only invoices: skip other UBL/CII document types that happen to sit in the same folder.
-    if (
-      !/<(?:\w+:)?(Invoice|CreditNote|CrossIndustryInvoice|CrossIndustryDocument|Faktura)\b/.test(
-        head.replace(/<\?xml[^>]*\?>|<!--[\s\S]*?-->/g, ''),
-      )
-    )
-      continue;
+    if (!/<(?:\w+:)?(Invoice|CreditNote|CrossIndustryInvoice|CrossIndustryDocument|Faktura)\b/.test(stripPrologAndComments(head))) continue;
     if (g.id && !g.id.test(id ?? '')) {
       console.log(`skip ${relative(root, f)}: identifier ${JSON.stringify(id)} does not look like ${g.expect}`);
       continue;

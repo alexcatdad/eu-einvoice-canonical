@@ -130,7 +130,7 @@ function findPercentMatches(target: Line, rates: string[], earlier: Line[]): Mat
 }
 
 const NOTE_LINE =
-  /\b(?:line|row|rad|rader|position|pos\.?|zeile|ligne|riga|rivi|rida|linia|pozycja|řádek|riadok)\s*(?:no\.?|nr\.?|n°|#)?\s*(\d+)\b/gi;
+  /\b(?:line|row|rad|rader|position|pos\.?|zeile|ligne|riga|rivi|rida|linia|pozycja|řádek|riadok)\s*(?:(?:no\.?|nr\.?|n°|#)\s*)?(\d+)\b/gi;
 
 export function analyseLines(inv: Pick<CanonicalInvoice, 'lines'>): LineAnalysis {
   const lineRoles: Record<string, LineRole> = {};
