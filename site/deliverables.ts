@@ -1,5 +1,8 @@
 /** Fills the CLI download list from the latest GitHub release, and falls back gracefully when a link is not published yet. */
+import { initLanguage, initSwitcher, onLanguageChange, t } from './i18n.js';
+
 const REPO = 'alexcatdad/eu-einvoice-canonical';
+let releaseTag: string | undefined;
 
 interface Release {
   tag_name: string;
@@ -15,7 +18,9 @@ async function showRelease(): Promise<void> {
     const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers: { Accept: 'application/vnd.github+json' } });
     if (!res.ok) return;
     const release = (await res.json()) as Release;
-    version.textContent = `release ${release.tag_name}`;
+    releaseTag = release.tag_name;
+    version.removeAttribute('data-i18n');
+    version.textContent = t('deliv.cliRelease', { tag: releaseTag });
     list.replaceChildren(
       ...release.assets.map((a) => {
         const li = document.createElement('li');
@@ -43,5 +48,11 @@ async function checkCorpusPage(): Promise<void> {
   }
 }
 
+initLanguage();
+initSwitcher();
+onLanguageChange(() => {
+  const version = document.getElementById('release-version');
+  if (releaseTag && version) version.textContent = t('deliv.cliRelease', { tag: releaseTag });
+});
 void showRelease();
 void checkCorpusPage();

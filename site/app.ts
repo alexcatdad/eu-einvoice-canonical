@@ -21,83 +21,64 @@ import {
   type TrustSnapshot,
   toSie4,
 } from '../src/index.js';
+import { currentLang, esc, initLanguage, initSwitcher, onLanguageChange, t } from './i18n.js';
 import { ENGINES, loadEngine } from './model.js';
 
 const SAMPLES: { file: string; label: string }[] = [
-  { file: 'peppol-bis3-invoice.xml', label: 'Peppol BIS 3 invoice (Sweden, Bankgiro)' },
-  { file: 'peppol-bis3-creditnote.xml', label: 'Peppol BIS 3 credit note' },
-  { file: 'xrechnung-ubl.xml', label: 'XRechnung 3.0, UBL (Germany)' },
-  { file: 'xrechnung-cii.xml', label: 'XRechnung 3.0, CII (Germany)' },
-  { file: 'facturx-en16931.pdf', label: 'Factur-X PDF with embedded XML' },
-  { file: 'facturx-basic-creditnote.xml', label: 'Factur-X BASIC credit note (France)' },
-  { file: 'svefaktura-1.0.xml', label: 'Svefaktura 1.0, ISO-8859-1 (Sweden)' },
-  { file: 'anaf-download.zip', label: 'RO e-Factura ZIP from ANAF (Romania)' },
-  { file: 'hr-cius.xml', label: 'HR-CIUS (Croatia)' },
-  { file: 'IT01234567890_FPR12.xml.p7m', label: 'FatturaPA, signed .p7m (Italy)' },
-  { file: 'ksef-fa3.xml', label: 'KSeF FA(3) (Poland)' },
-  { file: 'svefaktura-1.0-descriptors.xml', label: 'Svefaktura 1.0 with headings and a 10 % markup (Sweden)' },
-  { file: 'pint-sg-invoice.xml', label: 'Peppol PINT SG, GST invoice (Singapore)' },
-  { file: 'pint-jp-invoice.xml', label: 'Peppol PINT JP, qualified invoice (Japan)' },
-  { file: 'zatca-simplified-signed.xml', label: 'ZATCA simplified tax invoice, signed (Saudi Arabia)' },
+  { file: 'peppol-bis3-invoice.xml', label: 'sample.peppolInvoice' },
+  { file: 'peppol-bis3-creditnote.xml', label: 'sample.peppolCredit' },
+  { file: 'xrechnung-ubl.xml', label: 'sample.xrechnungUbl' },
+  { file: 'xrechnung-cii.xml', label: 'sample.xrechnungCii' },
+  { file: 'facturx-en16931.pdf', label: 'sample.facturxPdf' },
+  { file: 'facturx-basic-creditnote.xml', label: 'sample.facturxCredit' },
+  { file: 'svefaktura-1.0.xml', label: 'sample.svefaktura' },
+  { file: 'anaf-download.zip', label: 'sample.anaf' },
+  { file: 'hr-cius.xml', label: 'sample.hrCius' },
+  { file: 'IT01234567890_FPR12.xml.p7m', label: 'sample.fatturapa' },
+  { file: 'ksef-fa3.xml', label: 'sample.ksef' },
+  { file: 'svefaktura-1.0-descriptors.xml', label: 'sample.svefakturaDescriptors' },
+  { file: 'pint-sg-invoice.xml', label: 'sample.pintSg' },
+  { file: 'pint-jp-invoice.xml', label: 'sample.pintJp' },
+  { file: 'zatca-simplified-signed.xml', label: 'sample.zatca' },
 ];
 const EXAMPLE = SAMPLES[0];
 
-const COUNTRY_NAMES: Record<string, string> = {
-  AT: 'Austria',
-  BE: 'Belgium',
-  BG: 'Bulgaria',
-  HR: 'Croatia',
-  CY: 'Cyprus',
-  CZ: 'Czechia',
-  DK: 'Denmark',
-  EE: 'Estonia',
-  FI: 'Finland',
-  FR: 'France',
-  DE: 'Germany',
-  GR: 'Greece',
-  HU: 'Hungary',
-  IE: 'Ireland',
-  IT: 'Italy',
-  LV: 'Latvia',
-  LT: 'Lithuania',
-  LU: 'Luxembourg',
-  MT: 'Malta',
-  NL: 'Netherlands',
-  PL: 'Poland',
-  PT: 'Portugal',
-  RO: 'Romania',
-  SK: 'Slovakia',
-  SI: 'Slovenia',
-  ES: 'Spain',
-  SE: 'Sweden',
-};
+/** Country names come from the browser's own locale data, in the reader's language. */
+function regionName(cc: string): string {
+  try {
+    return new Intl.DisplayNames([currentLang()], { type: 'region' }).of(cc) ?? cc;
+  } catch {
+    return cc;
+  }
+}
 
+/** Message keys for UNCL 4461 payment means codes; an unlisted code is shown as "Code n". */
 const MEANS: Record<string, string> = {
-  '1': 'Not defined',
-  '10': 'Cash',
-  '20': 'Cheque',
-  '30': 'Credit transfer',
-  '31': 'Debit transfer',
-  '42': 'Payment to bank account',
-  '48': 'Bank card',
-  '49': 'Direct debit',
-  '54': 'Credit card',
-  '55': 'Debit card',
-  '57': 'Standing agreement',
-  '58': 'SEPA credit transfer',
-  '59': 'SEPA direct debit',
-  '68': 'Online payment service',
-  '97': 'Clearing between partners',
-  ZZZ: 'Mutually defined',
+  '1': 'means.1',
+  '10': 'means.10',
+  '20': 'means.20',
+  '30': 'means.30',
+  '31': 'means.31',
+  '42': 'means.42',
+  '48': 'means.48',
+  '49': 'means.49',
+  '54': 'means.54',
+  '55': 'means.55',
+  '57': 'means.57',
+  '58': 'means.58',
+  '59': 'means.59',
+  '68': 'means.68',
+  '97': 'means.97',
+  ZZZ: 'means.ZZZ',
 };
 
 const ENVELOPE_LABEL: Record<string, string> = {
-  'pdf-attachment': 'PDF attachment',
-  'cms-p7m': 'CAdES signature (.p7m)',
-  base64: 'base64 text',
-  zip: 'ZIP archive',
-  sbdh: 'Peppol SBDH',
-  soap: 'SOAP envelope',
+  'pdf-attachment': 'env.pdf-attachment',
+  'cms-p7m': 'env.cms-p7m',
+  base64: 'env.base64',
+  zip: 'env.zip',
+  sbdh: 'env.sbdh',
+  soap: 'env.soap',
   xml: '',
 };
 
@@ -155,7 +136,7 @@ async function loadSample(name: string, isExample: boolean) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     await run(new Uint8Array(await res.arrayBuffer()), name, isExample);
   } catch (e) {
-    if (!isExample) showNotice('The sample could not be loaded.', `${name}: ${(e as Error).message}. Reload the page and try again.`);
+    if (!isExample) showNotice(t('notice.sampleFailedTitle'), t('notice.sampleFailedDetail', { name, reason: (e as Error).message }));
   }
 }
 
@@ -174,23 +155,36 @@ let current: { result: ConvertResult; filename: string; items: Item[]; isExample
 // EU trusted lists: opt-in, loaded the first time the box is ticked.
 let euTrust: TrustSnapshot | undefined;
 let lastInput: { bytes: Uint8Array; filename: string; isExample: boolean } | undefined;
+/** What the trust status line shows once the box has been ticked, so a language change can redraw it. */
+let trustStatus: (() => string) | undefined;
 const euBox = $<HTMLInputElement>('#eu-trust');
 const euStatus = $<HTMLElement>('#eu-trust-status');
 euBox.addEventListener('change', async () => {
   if (!euBox.checked) {
     euTrust = undefined;
-    euStatus.textContent = 'Off. Fetches the lists when switched on; the file is still never uploaded.';
+    trustStatus = undefined;
+    euStatus.setAttribute('data-i18n', 'trust.off');
+    euStatus.textContent = t('trust.off');
   } else {
     euBox.disabled = true;
-    euStatus.textContent = 'Loading the EU trusted lists…';
+    euStatus.removeAttribute('data-i18n');
+    euStatus.textContent = t('trust.loading');
     try {
       const { loadSiteTrust } = await import('./trust.js');
-      const t = await loadSiteTrust();
-      euTrust = t.snapshot;
-      const ok = t.snapshot.lists.filter((l) => l.status === 'loaded').length;
-      euStatus.textContent = `${t.source === 'live' ? 'Live lists' : 'Snapshot published with this site'}, fetched ${t.snapshot.fetchedAt.slice(0, 10)} (${ok} of ${t.snapshot.lists.length} national lists).${t.note ? ` ${t.note}.` : ''}`;
+      const site = await loadSiteTrust();
+      euTrust = site.snapshot;
+      const ok = site.snapshot.lists.filter((l) => l.status === 'loaded').length;
+      trustStatus = () =>
+        t('trust.status', {
+          source: t(site.source === 'live' ? 'trust.live' : 'trust.published'),
+          date: site.snapshot.fetchedAt.slice(0, 10),
+          ok,
+          total: site.snapshot.lists.length,
+        }) + (site.note ? ` ${site.note}.` : '');
+      euStatus.textContent = trustStatus();
     } catch (e) {
       euBox.checked = false;
+      euStatus.setAttribute('data-i18n', 'trust.off');
       euStatus.textContent = (e as Error).message;
     }
     euBox.disabled = false;
@@ -200,20 +194,24 @@ euBox.addEventListener('change', async () => {
 
 async function run(bytes: Uint8Array, filename: string, isExample = false) {
   lastInput = { bytes, filename, isExample };
-  if (!isExample) resultEl.innerHTML = `<p class="file-meta">Reading ${esc(filename)}…</p>`;
+  if (!isExample) resultEl.innerHTML = `<p class="file-meta">${esc(t('result.reading', { name: filename }))}</p>`;
   try {
     const result = await convert(bytes, filename, undefined, { relations: true, euTrust });
     const items = result.outcomes.flatMap((o, i): Item[] =>
       o.status === 'ok'
-        ? o.invoices.map((inv) => ({ tab: `${inv.kind === 'creditNote' ? 'Credit note' : 'Invoice'} ${inv.id}`, outcome: o, invoice: inv }))
-        : [{ tab: `Document ${i + 1}`, outcome: o }],
+        ? o.invoices.map((inv) => ({
+            tab: t(inv.kind === 'creditNote' ? 'tab.creditNote' : 'tab.invoice', { id: inv.id }),
+            outcome: o,
+            invoice: inv,
+          }))
+        : [{ tab: t('tab.document', { n: i + 1 }), outcome: o }],
     );
     current = { result, filename, items, isExample };
     render(0);
     if (!isExample)
       resultEl.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
   } catch (e) {
-    showNotice('This file could not be read.', (e as Error).message);
+    showNotice(t('notice.readFailedTitle'), (e as Error).message);
   }
 }
 
@@ -225,14 +223,14 @@ function render(index: number) {
   if (!current) return;
   shownIndex = index;
   const { result, filename, items, isExample } = current;
-  const head = `<div class="result-head"><h2>${esc(filename)}${isExample ? ' <span class="example">(example: drop your own file above)</span>' : ''}</h2>
-    <span class="file-meta">SHA-256 ${result.fileSha256.slice(0, 12)}…, ${items.length} document${items.length === 1 ? '' : 's'}</span></div>`;
+  const head = `<div class="result-head"><h2>${esc(filename)}${isExample ? ` <span class="example">${esc(t('result.example'))}</span>` : ''}</h2>
+    <span class="file-meta">${esc(t('result.meta', { hash: result.fileSha256.slice(0, 12), count: items.length }))}</span></div>`;
 
   if (items.length === 0) {
     const reasons =
       result.skipped.map((s) => `<p>${s.name ? `${esc(s.name)}: ` : ''}${esc(s.reason)}</p>`).join('') ||
-      '<p>The file holds no XML document.</p>';
-    resultEl.innerHTML = `${head}<div class="notice"><p><strong>No invoice found in this file.</strong></p>${reasons}</div>`;
+      `<p>${esc(t('result.noXml'))}</p>`;
+    resultEl.innerHTML = `${head}<div class="notice"><p><strong>${esc(t('result.noInvoice'))}</strong></p>${reasons}</div>`;
     return;
   }
   const tabs =
@@ -253,13 +251,22 @@ function render(index: number) {
 // ---------------------------------------------------------------------------
 
 const ROLE_LABEL: Partial<Record<LineRole, string>> = {
-  surcharge: 'markup',
-  discount: 'discount',
-  freight: 'freight',
-  labour: 'labour',
-  other: 'other',
+  surcharge: 'role.surcharge',
+  discount: 'role.discount',
+  freight: 'role.freight',
+  labour: 'role.labour',
+  other: 'role.other',
 };
-const REVIEW = '<span class="review" title="Not proven by the invoice: check it by hand">review</span>';
+/** Message keys for relations seen from the line that holds them ("on line 3"). Percentage types also have a variant with the rate. */
+const RELATION_ON: Record<string, [plain: string, withRate?: string]> = {
+  markup: ['rel.markupOn', 'rel.markupRateOn'],
+  discount: ['rel.discountOn', 'rel.discountRateOn'],
+  'allowance-base': ['rel.allowanceBaseOn'],
+  'note-reference': ['rel.noteReferenceOn'],
+  'same-item': ['rel.sameItemOn'],
+  'same-order-line': ['rel.sameOrderLineOn'],
+};
+const review = () => `<span class="review" title="${esc(t('rel.reviewTitle'))}">${esc(t('rel.review'))}</span>`;
 
 /** Table rows for the lines: descriptors indented under their heading, adjustments shown beside the lines they apply to. */
 function lineRows(inv: CanonicalInvoice, lines: Line[]): string {
@@ -268,7 +275,6 @@ function lineRows(inv: CanonicalInvoice, lines: Line[]): string {
   const under = new Set(rels.filter((r) => r.type === 'heading').flatMap((r) => r.to));
   // Structural rules (no confidence) are certain; everything else short of 'proven' is a hint.
   const needsReview = (r: LineRelation) => r.method === 'model' || (r.confidence !== undefined && r.confidence !== 'proven');
-  const rate = (r: LineRelation) => (r.rate !== undefined ? `${esc(r.rate)} % ` : '');
   return lines
     .map((l) => {
       const role = roles[l.id];
@@ -276,17 +282,19 @@ function lineRows(inv: CanonicalInvoice, lines: Line[]): string {
       const notes: string[] = [];
       for (const r of rels) {
         if (r.type === 'heading') continue;
-        const flag = needsReview(r) ? ` ${REVIEW}` : '';
+        const flag = needsReview(r) ? ` ${review()}` : '';
         if (r.from === l.id) {
-          const what = r.type === 'markup' ? `${rate(r)}markup` : r.type === 'discount' ? `${rate(r)}discount` : r.type.replace(/-/g, ' ');
-          notes.push(`${esc(what)} on line ${r.to.map(esc).join(', ')}${flag}`);
+          const [plain, withRate] = RELATION_ON[r.type] ?? ['rel.sameItemOn'];
+          const key = r.rate !== undefined && withRate ? withRate : plain;
+          notes.push(`${esc(t(key, { rate: r.rate ?? '', to: r.to.join(', ') }))}${flag}`);
         } else if (r.to.includes(l.id) && (r.type === 'markup' || r.type === 'discount')) {
-          notes.push(`+ ${rate(r)}${r.type} in line ${esc(r.from)}${flag}`);
+          const key = `rel.${r.type}${r.rate !== undefined ? 'Rate' : ''}In`;
+          notes.push(`${esc(t(key, { rate: r.rate ?? '', from: r.from }))}${flag}`);
         }
       }
       const tag =
         role && ROLE_LABEL[role] && !notes.length
-          ? `<span class="sub">${ROLE_LABEL[role]}${inv.source.derived.some((d) => d.field === `/lineRoles/${l.id}`) ? ` ${REVIEW}` : ''}</span>`
+          ? `<span class="sub">${esc(t(ROLE_LABEL[role]))}${inv.source.derived.some((d) => d.field === `/lineRoles/${l.id}`) ? ` ${review()}` : ''}</span>`
           : '';
       const cls = [
         descriptor ? 'descriptor' : '',
@@ -296,23 +304,23 @@ function lineRows(inv: CanonicalInvoice, lines: Line[]): string {
         .filter(Boolean)
         .join(' ');
       const vat = l.vat
-        ? `<span class="sub">VAT ${esc(l.vat.categoryCode)}${l.vat.rate !== undefined ? ` ${esc(l.vat.rate)} %` : ''}</span>`
+        ? `<span class="sub">${esc(l.vat.rate !== undefined ? t('line.vatRate', { code: l.vat.categoryCode, rate: l.vat.rate }) : t('line.vat', { code: l.vat.categoryCode }))}</span>`
         : '';
       return `<tr class="${cls}">
         <td class="hide-narrow">${esc(l.id)}</td>
-        <td class="item">${esc(l.item.name || l.item.description || '(no name)')}${descriptor ? '' : vat}${notes.map((n) => `<span class="sub relation">${n}</span>`).join('')}${tag}</td>
-        <td class="num">${descriptor ? '' : l.quantity !== undefined ? `${esc(l.quantity)} ${esc(l.unitText ?? l.unitCode ?? '')}` : '<span class="sub">not stated</span>'}</td>
-        <td class="num hide-narrow">${!descriptor && l.price ? `${esc(l.price.net)}${l.price.baseQuantity && l.price.baseQuantity !== '1' ? `<span class="sub">per ${esc(l.price.baseQuantity)}</span>` : ''}` : ''}</td>
+        <td class="item">${esc(l.item.name || l.item.description || t('line.noName'))}${descriptor ? '' : vat}${notes.map((n) => `<span class="sub relation">${n}</span>`).join('')}${tag}</td>
+        <td class="num">${descriptor ? '' : l.quantity !== undefined ? `${esc(l.quantity)} ${esc(l.unitText ?? l.unitCode ?? '')}` : `<span class="sub">${esc(t('line.notStated'))}</span>`}</td>
+        <td class="num hide-narrow">${!descriptor && l.price ? `${esc(l.price.net)}${l.price.baseQuantity && l.price.baseQuantity !== '1' ? `<span class="sub">${esc(t('line.per', { qty: l.price.baseQuantity }))}</span>` : ''}` : ''}</td>
         <td class="num">${descriptor ? '' : esc(l.netAmount)}</td></tr>`;
     })
     .join('');
 }
 
 function labelControl(): string {
-  return `<details class="model"><summary>Label lines with a language model (experimental)</summary>
-    <p>Optional. A small model that runs in this tab names the kind of each line (freight, labour, discount) and may link headings to items. Its answers are always marked <em>review</em>. The model is downloaded on first use (about 1 GB for Qwen3 1.7B) and nothing is sent anywhere.</p>
-    <label class="field"><span>Model</span><select id="model-engine">${ENGINES.map((e) => `<option value="${e.id}">${esc(e.label)}</option>`).join('')}</select></label>
-    <button type="button" class="btn" id="model-run">Label lines</button> <span class="model-status" id="model-status" role="status"></span>
+  return `<details class="model"><summary>${esc(t('model.summary'))}</summary>
+    <p>${t('model.intro')}</p>
+    <label class="field"><span>${esc(t('model.engine'))}</span><select id="model-engine">${ENGINES.map((e) => `<option value="${e.id}">${esc(e.label)}</option>`).join('')}</select></label>
+    <button type="button" class="btn" id="model-run">${esc(t('model.run'))}</button> <span class="model-status" id="model-status" role="status"></span>
   </details>`;
 }
 
@@ -329,7 +337,7 @@ function wireModel() {
       const engine = await loadEngine(spec, (text) => {
         status.textContent = text;
       });
-      status.textContent = 'Labelling…';
+      status.textContent = t('model.labelling');
       await applyModelLabels(inv, engine.labeller);
       await engine.dispose();
       render(shownIndex);
@@ -343,15 +351,14 @@ function wireModel() {
 function stampFor(item: Item): { cls: string; title: string; note: string } {
   const o = item.outcome;
   const det = o.detection;
-  const title = det.kind === 'invoice' ? det.format.name : det.kind === 'other-document' ? 'Not an invoice' : 'Unknown format';
+  const title = det.kind === 'invoice' ? det.format.name : t(det.kind === 'other-document' ? 'stamp.notInvoice' : 'stamp.unknown');
   if (o.status === 'ok') {
     const n = item.invoice!.source.warnings.length;
-    return { cls: n ? 'warn' : '', title, note: n ? `Converted, ${n} warning${n === 1 ? '' : 's'}` : 'Converted' };
+    return { cls: n ? 'warn' : '', title, note: n ? t('stamp.convertedWarnings', { count: n }) : t('stamp.converted') };
   }
-  if (o.status === 'unsupported')
-    return { cls: 'warn', title, note: det.kind === 'invoice' ? 'Identified, no parser yet' : 'Not recognised' };
+  if (o.status === 'unsupported') return { cls: 'warn', title, note: t(det.kind === 'invoice' ? 'stamp.noParser' : 'stamp.notRecognised') };
   if (o.status === 'not-an-invoice') return { cls: 'warn', title, note: det.kind === 'other-document' ? det.label.split(':')[0] : '' };
-  return { cls: 'bad', title, note: 'Could not convert' };
+  return { cls: 'bad', title, note: t('stamp.failed') };
 }
 
 function sheet(item: Item, result: ConvertResult): string {
@@ -370,7 +377,7 @@ function sheet(item: Item, result: ConvertResult): string {
             ? o.detection.label
             : '';
     return `<article class="sheet">
-      <div class="sheet-top"><div><h3 class="doc-title">${o.status === 'error' ? 'Not converted' : o.status === 'unsupported' ? 'Identified' : 'Not an invoice'}</h3></div>${stamp}</div>
+      <div class="sheet-top"><div><h3 class="doc-title">${esc(t(o.status === 'error' ? 'doc.notConverted' : o.status === 'unsupported' ? 'doc.identified' : 'doc.notInvoice'))}</h3></div>${stamp}</div>
       ${reason ? `<p class="reason">${esc(reason)}</p>` : ''}
       ${provenance(item)}
       ${penNotes(item, result)}
@@ -379,27 +386,32 @@ function sheet(item: Item, result: ConvertResult): string {
 
   const cur = inv.currency;
   const dates: [string, string | undefined][] = [
-    ['Issued', inv.issueDate],
-    ['Due', inv.dueDate],
-    ['Period', inv.invoicePeriod ? `${inv.invoicePeriod.start ?? '…'} to ${inv.invoicePeriod.end ?? '…'}` : undefined],
-    ['Delivered', inv.delivery?.actualDate],
-    ['Buyer reference', inv.buyerReference],
-    ['Order', inv.purchaseOrderRef],
+    [t('date.issued'), inv.issueDate],
+    [t('date.due'), inv.dueDate],
+    [
+      t('date.period'),
+      inv.invoicePeriod ? t('date.periodRange', { start: inv.invoicePeriod.start ?? '…', end: inv.invoicePeriod.end ?? '…' }) : undefined,
+    ],
+    [t('date.delivered'), inv.delivery?.actualDate],
+    [t('date.buyerReference'), inv.buyerReference],
+    [t('date.order'), inv.purchaseOrderRef],
   ];
-  const t = inv.totals;
+  const tot = inv.totals;
   const totals: [string, string | undefined, string?][] = [
-    ['Lines', t.lineNetTotal],
-    ['Allowances', t.allowanceTotal && `−${t.allowanceTotal}`],
-    ['Charges', t.chargeTotal],
-    ['Without VAT', t.taxExclusive],
+    [t('total.lines'), tot.lineNetTotal],
+    [t('total.allowances'), tot.allowanceTotal && `−${tot.allowanceTotal}`],
+    [t('total.charges'), tot.chargeTotal],
+    [t('total.withoutVat'), tot.taxExclusive],
     ...inv.vatBreakdown.map((v): [string, string] => [
-      `VAT ${v.categoryCode}${v.rate !== undefined ? ` ${v.rate} %` : ''} on ${v.taxableAmount}`,
+      v.rate !== undefined
+        ? t('total.vatRate', { code: v.categoryCode, rate: v.rate, amount: v.taxableAmount })
+        : t('total.vat', { code: v.categoryCode, amount: v.taxableAmount }),
       v.taxAmount,
     ]),
-    ['With VAT', t.taxInclusive],
-    ['Withheld', t.withholdingTotal && `−${t.withholdingTotal}`],
-    ['Prepaid', t.prepaid && `−${t.prepaid}`],
-    ['Rounding', t.rounding],
+    [t('total.withVat'), tot.taxInclusive],
+    [t('total.withheld'), tot.withholdingTotal && `−${tot.withholdingTotal}`],
+    [t('total.prepaid'), tot.prepaid && `−${tot.prepaid}`],
+    [t('total.rounding'), tot.rounding],
   ];
   const shown = inv.lines.slice(0, MAX_LINES);
   const pay = inv.payments[0];
@@ -407,8 +419,8 @@ function sheet(item: Item, result: ConvertResult): string {
   return `<article class="sheet">
     <div class="sheet-top">
       <div>
-        <h3 class="doc-title">${inv.kind === 'creditNote' ? 'Credit note' : 'Invoice'}</h3>
-        <p class="doc-number">${esc(inv.id)} <span class="label">type ${esc(inv.typeCode)}${inv.selfBilled ? ', self-billed' : ''}</span></p>
+        <h3 class="doc-title">${esc(t(inv.kind === 'creditNote' ? 'doc.creditNote' : 'doc.invoice'))}</h3>
+        <p class="doc-number">${esc(inv.id)} <span class="label">${esc(t('doc.type', { code: inv.typeCode }))}${inv.selfBilled ? esc(t('doc.selfBilled')) : ''}</span></p>
       </div>
       ${stamp}
     </div>
@@ -416,33 +428,33 @@ function sheet(item: Item, result: ConvertResult): string {
       .filter(([, v]) => v)
       .map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v!)}</dd></div>`)
       .join('')}</dl>
-    <div class="parties">${party('From', inv.seller)}${party('To', inv.buyer)}</div>
+    <div class="parties">${party(t('party.from'), inv.seller)}${party(t('party.to'), inv.buyer)}</div>
     ${
       shown.length
         ? `<table class="lines">
-      <thead><tr><th scope="col" class="hide-narrow">#</th><th scope="col">Item</th><th scope="col" class="num">Qty</th><th scope="col" class="num hide-narrow">Price</th><th scope="col" class="num">Net</th></tr></thead>
+      <thead><tr><th scope="col" class="hide-narrow">#</th><th scope="col">${esc(t('line.item'))}</th><th scope="col" class="num">${esc(t('line.qty'))}</th><th scope="col" class="num hide-narrow">${esc(t('line.price'))}</th><th scope="col" class="num">${esc(t('line.net'))}</th></tr></thead>
       <tbody>${lineRows(inv, shown)}</tbody>
-    </table>${inv.lines.length > MAX_LINES ? `<p class="more-lines">${inv.lines.length - MAX_LINES} more lines are in the JSON.</p>` : ''}`
-        : '<p class="more-lines">This document has no lines.</p>'
+    </table>${inv.lines.length > MAX_LINES ? `<p class="more-lines">${esc(t('line.more', { count: inv.lines.length - MAX_LINES }))}</p>` : ''}`
+        : `<p class="more-lines">${esc(t('line.none'))}</p>`
     }
     ${inv.lines.length ? labelControl() : ''}
     <div class="sums">
       <div class="payment">${
         pay
-          ? `<span class="label">Payment</span>
-        <p>${esc(MEANS[pay.meansCode] ?? `Code ${pay.meansCode}`)}${pay.meansText ? ` (${esc(pay.meansText)})` : ''}</p>
+          ? `<span class="label">${esc(t('pay.label'))}</span>
+        <p>${esc(MEANS[pay.meansCode] ? t(MEANS[pay.meansCode]) : t('pay.code', { code: pay.meansCode }))}${pay.meansText ? ` (${esc(pay.meansText)})` : ''}</p>
         ${pay.creditTransfers.map((c) => `<p>${esc(c.accountId)}${c.serviceProviderId ? `, ${esc(c.serviceProviderId)}` : ''}</p>`).join('')}
-        ${pay.remittanceInformation ? `<p>Reference ${esc(pay.remittanceInformation)}</p>` : ''}`
+        ${pay.remittanceInformation ? `<p>${esc(t('pay.reference', { ref: pay.remittanceInformation }))}</p>` : ''}`
           : ''
       }
-        ${inv.paymentTerms ? `<span class="label" style="margin-top:.5rem">Terms</span><p>${esc(inv.paymentTerms)}</p>` : ''}
+        ${inv.paymentTerms ? `<span class="label" style="margin-top:.5rem">${esc(t('pay.terms'))}</span><p>${esc(inv.paymentTerms)}</p>` : ''}
       </div>
       <dl class="totals">
         ${totals
           .filter(([, v]) => v !== undefined)
           .map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v!)}</dd></div>`)
           .join('')}
-        <div class="grand"><dt>Amount due</dt><dd>${esc(t.payable)} ${esc(cur)}</dd></div>
+        <div class="grand"><dt>${esc(t('total.due'))}</dt><dd>${esc(tot.payable)} ${esc(cur)}</dd></div>
       </dl>
     </div>
     ${provenance(item)}
@@ -454,12 +466,12 @@ function party(label: string, p: Party): string {
   const a = p.address;
   const place = a ? [[a.postalCode, a.city].filter(Boolean).join(' '), a.countryCode].filter(Boolean).join(', ') : '';
   const ids = [
-    p.vatId && `VAT ${p.vatId}`,
-    p.legalRegistrationId && `Reg. ${p.legalRegistrationId.value}`,
-    p.endpoint && `Address ${p.endpoint.value}`,
+    p.vatId && t('party.vat', { id: p.vatId }),
+    p.legalRegistrationId && t('party.reg', { id: p.legalRegistrationId.value }),
+    p.endpoint && t('party.address', { id: p.endpoint.value }),
   ].filter(Boolean);
   return `<div class="party"><span class="label">${label}</span>
-    <p class="name">${esc(p.name ?? p.tradingName ?? 'Name not stated')}</p>
+    <p class="name">${esc(p.name ?? p.tradingName ?? t('party.noName'))}</p>
     ${a?.line1 ? `<p>${esc(a.line1)}</p>` : ''}${a?.line2 ? `<p>${esc(a.line2)}</p>` : ''}${place ? `<p>${esc(place)}</p>` : ''}
     ${ids.length ? `<p class="ids">${ids.map((i) => esc(i!)).join('<br>')}</p>` : ''}
   </div>`;
@@ -468,9 +480,9 @@ function party(label: string, p: Party): string {
 function euNote(s: SignatureInfo): string {
   const e = s.euTrust;
   if (!e) return '';
-  const stale = e.snapshot.stale ? `; trusted lists older than their next update (${e.snapshot.nextUpdate?.slice(0, 10)})` : '';
-  if (e.qualified) return `, signer chains to a qualified service (${e.service?.name}, ${e.service?.territory})${stale}`;
-  return `, ${e.reason ?? 'not a qualified signer'}${stale}`;
+  const stale = e.snapshot.stale ? t('sig.euStale', { date: e.snapshot.nextUpdate?.slice(0, 10) ?? '' }) : '';
+  if (e.qualified) return t('sig.euQualified', { name: e.service?.name ?? '', territory: e.service?.territory ?? '', stale });
+  return (e.reason ? t('sig.euReason', { reason: e.reason }) : t('sig.euNotQualified')) + stale;
 }
 
 function provenance(item: Item): string {
@@ -478,19 +490,21 @@ function provenance(item: Item): string {
   const rows: [string, string][] = [];
   if (o.detection.kind === 'invoice') {
     const d = o.detection.details;
-    const v = [d.version && `version ${d.version}`, d.profile && `profile ${d.profile}`].filter(Boolean).join(', ');
-    rows.push(['Format', `${o.detection.format.name}${v ? `, ${v}` : ''}`]);
+    const v = [d.version && t('prov.version', { version: d.version }), d.profile && t('prov.profile', { profile: d.profile })]
+      .filter(Boolean)
+      .join(', ');
+    rows.push([t('prov.format'), `${o.detection.format.name}${v ? `, ${v}` : ''}`]);
   }
-  const env = o.payload.envelope.map((s) => ENVELOPE_LABEL[s.kind]).filter(Boolean);
-  if (env.length) rows.push(['Unwrapped from', env.join(', then ')]);
-  rows.push(['Encoding', o.payload.encoding]);
+  const env = o.payload.envelope.map((s) => (ENVELOPE_LABEL[s.kind] ? t(ENVELOPE_LABEL[s.kind]) : '')).filter(Boolean);
+  if (env.length) rows.push([t('prov.unwrapped'), env.join(' → ')]);
+  rows.push([t('prov.encoding'), o.payload.encoding]);
   if (o.payload.signatures.length)
     rows.push([
-      'Signatures',
+      t('prov.signatures'),
       o.payload.signatures
         .map(
           (s) =>
-            `${s.type}${s.signer ? ` (${s.signer})` : ''}${s.verified === undefined ? ', not verified' : s.verified ? ', verified' : ', INVALID'}${euNote(s)}`,
+            `${s.type}${s.signer ? ` (${s.signer})` : ''}${s.verified === undefined ? t('sig.notVerified') : s.verified ? t('sig.verified') : t('sig.invalid')}${euNote(s)}`,
         )
         .join('; '),
     ]);
@@ -505,14 +519,14 @@ function penNotes(item: Item, result: ConvertResult): string {
   if (inv?.source.warnings.length)
     blocks.push(
       block(
-        'Check these',
+        t('pen.check'),
         inv.source.warnings.map((w) => ({ code: w.code, message: w.message })),
       ),
     );
   if (inv?.source.derived.length)
     blocks.push(
       block(
-        'Filled in by the converter',
+        t('pen.derived'),
         inv.source.derived.map((d) => ({ code: d.field, message: d.rule })),
         true,
       ),
@@ -520,7 +534,7 @@ function penNotes(item: Item, result: ConvertResult): string {
   if (result.skipped.length)
     blocks.push(
       block(
-        'Skipped in this file',
+        t('pen.skipped'),
         result.skipped.map((s) => ({ code: s.name, message: s.reason })),
         true,
       ),
@@ -530,13 +544,13 @@ function penNotes(item: Item, result: ConvertResult): string {
 
 function jsonPanel(item: Item): string {
   const views = item.invoice
-    ? `<button type="button" data-view="invoice" aria-pressed="true">Canonical invoice</button><button type="button" data-view="full" aria-pressed="false">Full result</button>`
-    : `<button type="button" data-view="full" aria-pressed="true">Detection result</button>`;
-  return `<section class="json-panel" aria-label="JSON">
+    ? `<button type="button" data-view="invoice" aria-pressed="true">${esc(t('json.viewInvoice'))}</button><button type="button" data-view="full" aria-pressed="false">${esc(t('json.viewFull'))}</button>`
+    : `<button type="button" data-view="full" aria-pressed="true">${esc(t('json.viewDetection'))}</button>`;
+  return `<section class="json-panel" aria-label="${esc(t('json.panel'))}">
     <div class="json-bar"><div class="views">${views}</div>
-      <div class="actions"><button type="button" class="btn quiet" data-act="copy">Copy JSON</button><button type="button" class="btn" data-act="download">Download JSON</button>${item.invoice ? '<button type="button" class="btn quiet" data-act="journal">Download journal entry</button>' : ''}</div></div>
-    ${item.invoice ? '<p class="journal-note">The journal entry is a SIE 4 file (type 4I) booked with an <strong>example</strong> mapping onto the Swedish BAS chart, in the invoice currency. It shows the shape of the export; map your own accounts with the library or the <code>einvoice export</code> command.</p>' : ''}
-    <pre class="json" tabindex="0" aria-label="JSON output"></pre>
+      <div class="actions"><button type="button" class="btn quiet" data-act="copy">${esc(t('json.copy'))}</button><button type="button" class="btn" data-act="download">${esc(t('json.download'))}</button>${item.invoice ? `<button type="button" class="btn quiet" data-act="journal">${esc(t('json.journal'))}</button>` : ''}</div></div>
+    ${item.invoice ? `<p class="journal-note">${t('json.journalNote')}</p>` : ''}
+    <pre class="json" tabindex="0" aria-label="${esc(t('json.output'))}"></pre>
   </section>`;
 }
 
@@ -561,9 +575,9 @@ function wireJson(item: Item, result: ConvertResult) {
   resultEl.querySelector<HTMLButtonElement>('[data-act="copy"]')!.addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(JSON.stringify(data(), null, 2));
-      toast('JSON copied');
+      toast(t('toast.copied'));
     } catch {
-      toast('Copying is blocked here; use Download JSON');
+      toast(t('toast.copyBlocked'));
     }
   });
   resultEl.querySelector<HTMLButtonElement>('[data-act="download"]')!.addEventListener('click', () => {
@@ -573,7 +587,7 @@ function wireJson(item: Item, result: ConvertResult) {
     a.download = `${base}${view === 'full' ? '.result' : ''}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    toast('JSON downloaded');
+    toast(t('toast.downloaded'));
   });
   resultEl.querySelector<HTMLButtonElement>('[data-act="journal"]')?.addEventListener('click', () => {
     const inv = item.invoice;
@@ -585,10 +599,10 @@ function wireJson(item: Item, result: ConvertResult) {
       a.download = `${inv.id.replace(/[^\w.-]+/g, '_')}.se`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-      toast('Journal entry downloaded (example mapping)');
+      toast(t('toast.journal'));
     } catch (e) {
       if (!(e instanceof JournalError)) throw e;
-      showNotice('No journal entry for this invoice.', e.message);
+      showNotice(t('notice.noJournalTitle'), e.message);
     }
   });
 }
@@ -596,7 +610,7 @@ function wireJson(item: Item, result: ConvertResult) {
 /** Long base64 attachments are shortened on screen only; Copy and Download keep them whole. */
 function shortenForDisplay(this: unknown, key: string, value: unknown) {
   if (key === 'base64' && typeof value === 'string' && value.length > 240)
-    return `${value.slice(0, 120)}… (${value.length} characters, kept whole in the download)`;
+    return `${value.slice(0, 120)}${t('json.shortened', { length: value.length })}`;
   return value;
 }
 
@@ -616,41 +630,33 @@ function highlight(json: string) {
 // Coverage grid, generated from the format registry
 // ---------------------------------------------------------------------------
 
-/** Countries outside the EU that the registry covers, with the names the grid shows. */
-const WORLD_COUNTRY_NAMES: Record<string, string> = {
-  AE: 'United Arab Emirates',
-  AU: 'Australia',
-  JP: 'Japan',
-  MY: 'Malaysia',
-  NZ: 'New Zealand',
-  OM: 'Oman',
-  SA: 'Saudi Arabia',
-  SG: 'Singapore',
-};
+/** Countries outside the EU that the registry covers; the names come from the browser's locale data. */
+const WORLD_COUNTRIES = ['AE', 'AU', 'JP', 'MY', 'NZ', 'OM', 'SA', 'SG'];
 
 function renderCoverage() {
   const implemented = new Set<string>(IMPLEMENTED_FAMILIES);
   const chip = (f: FormatDef) => {
     const ok = implemented.has(f.family);
-    return `<li class="fmt ${ok ? 'converts' : 'identifies'}" title="${esc(f.notes)}">${esc(shortName(f))}<span class="visually-hidden">${ok ? ', converted' : ', identified only'}</span></li>`;
+    return `<li class="fmt ${ok ? 'converts' : 'identifies'}" title="${esc(f.notes)}">${esc(shortName(f))}<span class="visually-hidden">${esc(t(ok ? 'coverage.srConverted' : 'coverage.srIdentified'))}</span></li>`;
   };
   const eu = new Set<string>(EU_COUNTRIES);
   const world = (FORMATS as readonly FormatDef[]).filter((f) => f.countries.every((cc) => cc !== 'EU' && !eu.has(cc)));
-  $<HTMLOListElement>('#countries-world').innerHTML = Object.keys(WORLD_COUNTRY_NAMES)
-    .sort((a, b) => WORLD_COUNTRY_NAMES[a].localeCompare(WORLD_COUNTRY_NAMES[b]))
+  const byName = (a: string, b: string) => regionName(a).localeCompare(regionName(b), currentLang());
+  $<HTMLOListElement>('#countries-world').innerHTML = [...WORLD_COUNTRIES]
+    .sort(byName)
     .map((cc) => {
       const formats = world.filter((f) => f.countries.includes(cc));
-      return `<li class="country"><h3><span class="cc">${cc}</span>${esc(WORLD_COUNTRY_NAMES[cc])}</h3><ul>${formats.map(chip).join('')}</ul></li>`;
+      return `<li class="country"><h3><span class="cc">${cc}</span>${esc(regionName(cc))}</h3><ul>${formats.map(chip).join('')}</ul></li>`;
     })
     .join('');
   const national = (FORMATS as readonly FormatDef[]).filter((f) => !f.countries.includes('EU'));
   const list = $<HTMLOListElement>('#countries');
   list.innerHTML = [...EU_COUNTRIES]
-    .sort((a, b) => COUNTRY_NAMES[a].localeCompare(COUNTRY_NAMES[b]))
+    .sort(byName)
     .map((cc) => {
       const formats = national.filter((f) => f.countries.includes(cc));
       const chips = formats.length ? formats.map(chip).join('') : '<li class="fmt converts">Peppol BIS 3</li>';
-      return `<li class="country"><h3><span class="cc">${cc}</span>${esc(COUNTRY_NAMES[cc])}</h3><ul>${chips}</ul></li>`;
+      return `<li class="country"><h3><span class="cc">${cc}</span>${esc(regionName(cc))}</h3><ul>${chips}</ul></li>`;
     })
     .join('');
 }
@@ -711,11 +717,21 @@ function toast(text: string) {
   setTimeout(() => t.remove(), 1800);
 }
 
-function esc(s: string) {
-  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
-}
-
 // Start-up runs last, so every table above is initialised.
-for (const s of SAMPLES) sampleSelect.add(new Option(s.label, s.file));
+function fillSamples() {
+  const chosen = sampleSelect.value;
+  while (sampleSelect.options.length > 1) sampleSelect.remove(1);
+  for (const s of SAMPLES) sampleSelect.add(new Option(t(s.label), s.file));
+  sampleSelect.value = chosen;
+}
+initLanguage();
+initSwitcher();
+fillSamples();
 renderCoverage();
+onLanguageChange(() => {
+  fillSamples();
+  renderCoverage();
+  if (trustStatus) euStatus.textContent = trustStatus();
+  if (current) render(shownIndex);
+});
 void loadSample(EXAMPLE.file, true);

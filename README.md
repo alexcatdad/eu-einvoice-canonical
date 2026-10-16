@@ -36,6 +36,12 @@ received file ──► unwrap() ──► XML payload(s) ──► detectXml() 
 | `schemas/` | Generated JSON Schemas (draft 2020-12) for `CanonicalInvoice` and `ConvertResult`. `bun run build:schemas` regenerates them from `src/canonical.ts`; CI fails when they are stale. |
 | `site/` | The browser converter published to GitHub Pages (`bun run build:site` builds it into `dist/`). |
 
+## Site languages
+
+The browser converter and the Deliverables page are available in English, German, French, Italian, Spanish, Dutch, Polish and Romanian. The language is taken from `?lang=`, then the saved choice (`localStorage`), then the browser's language list, then English; the switcher in the page header changes it. Messages live in `site/i18n/<lang>.json`, with `en.json` as the reference. Canonical JSON keys stay in English, and the error pages, API reference, conformance checklist and real-world results are still English only.
+
+**The non-English strings are machine-assisted translations and have not had a native-speaker review.** Corrections are welcome: edit the catalogue and open a pull request, keeping every key and every `{placeholder}`. `test/i18n.test.ts` checks that all catalogues have the same keys as `en.json`, that no placeholder is lost, and that every key the site code uses exists.
+
 Development uses [Bun](https://bun.sh) 1.4+. The library itself has no Bun or Node dependency: it runs in Node 20+, Bun and browsers.
 
 ```bash

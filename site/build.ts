@@ -6,6 +6,7 @@ import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, write
 import { join } from 'node:path';
 import pkg from '../package.json' with { type: 'json' };
 import { PROBLEM_BASE, PROBLEMS } from '../src/problems.js';
+import en from './i18n/en.json' with { type: 'json' };
 
 const root = join(import.meta.dir, '..');
 const out = join(root, 'dist');
@@ -68,20 +69,22 @@ console.log(`Built ${out} (${build.outputs.map((o) => `${o.path.split('/').pop()
 /** The deliverables page: versions and the schema table come from the files, so the page cannot go stale. */
 function writeDeliverables() {
   const spec = JSON.parse(readFileSync(join(root, 'openapi/openapi.json'), 'utf8'));
+  // Message keys in site/i18n/*.json; the English text is written into the page, the browser swaps in the reader's language.
   const described: Record<string, string> = {
-    'canonical-invoice': 'One invoice in the canonical model (<code>CanonicalInvoice</code>).',
-    'convert-result': 'What <code>convert()</code> and <code>POST /v1/convert</code> return.',
-    'inspect-result': 'What <code>inspect()</code> and <code>POST /v1/inspect</code> return.',
+    'canonical-invoice': 'deliv.schemaCanonical',
+    'convert-result': 'deliv.schemaConvert',
+    'inspect-result': 'deliv.schemaInspect',
   };
+  const cell = (key: string | undefined) => (key ? `<td data-i18n-html="${key}">${en[key as keyof typeof en]}</td>` : '<td></td>');
   const rows = readdirSync(join(root, 'schemas'))
     .filter((f) => f.endsWith('.schema.json'))
     .map((f) => {
       const m = /^(.+)\.(v\d+)\.schema\.json$/.exec(f);
       const name = m?.[1] ?? f;
-      return `<tr><td><code>${esc(name)}</code></td><td>${described[name] ?? ''}</td><td><code>${esc(m?.[2] ?? '')}</code></td><td><a href="schemas/${esc(f)}">${esc(f)}</a></td></tr>`;
+      return `<tr><td><code>${esc(name)}</code></td>${cell(described[name])}<td><code>${esc(m?.[2] ?? '')}</code></td><td><a href="schemas/${esc(f)}">${esc(f)}</a></td></tr>`;
     });
   rows.push(
-    '<tr><td><code>formats</code></td><td>The format registry (<code>GET /v1/formats</code>).</td><td><code>v1</code></td><td><a href="schemas/formats.json">formats.json</a></td></tr>',
+    `<tr><td><code>formats</code></td>${cell('deliv.schemaFormats')}<td><code>v1</code></td><td><a href="schemas/formats.json">formats.json</a></td></tr>`,
   );
   const page = readFileSync(join(root, 'site/deliverables.html'), 'utf8')
     .replaceAll('{{PACKAGE_VERSION}}', esc(pkg.version))
