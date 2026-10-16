@@ -81,11 +81,14 @@ einvoice convert <file...> [--out <dir>]   canonical JSON array on stdout, or on
 einvoice sweep   <dir...> [--expect answers.json]   detection coverage / known-answer check
 einvoice trust-lists update [--out <snapshot.json>] [--lotl-signer <cert.pem>]   fetch and verify the EU trusted lists
 einvoice match   --po <order.json|order.xml>... [--receipts r.json] [--tolerance '<json>'] <invoice...>   match to purchase orders
+einvoice duplicates <dir...> [--window days] [--index index.json] [--json]   duplicate and re-sent invoices; exit 9 if found
 ```
 
 `convert --eu-trust[=<snapshot.json>]` checks signers against a trusted-list snapshot (see [EU trusted lists](#eu-trusted-lists)).
 
 Flags: `--pretty` indents JSON; `--quiet` silences notes and warnings (errors are still printed); `--limits '{"maxEntries":10}'` overrides `UnwrapLimits`; `--validate` is accepted by `convert` and is a no-op with a message until the validation module lands.
+`duplicates` converts every file under the directories and groups repeats in four levels: identical payload (same XML in another wrapper), same seller + number + date, same seller + number with a different date or amount, and likely duplicates (same seller and amount, dates within `--window` days, similar lines, different number). Numbers are normalised (case, separators, leading zeros) and the evidence lists every step; credit notes that cite an invoice in BG-3 are paired with it, not flagged. `--index` keeps the index in a JSON file so later runs only add new files. The same logic is exported as `DuplicateIndex`.
+
 JSON goes to stdout only; every error is one line on stderr.
 
 | Exit | Meaning |
@@ -99,6 +102,7 @@ JSON goes to stdout only; every error is one line on stderr.
 | 6 | validator unavailable |
 | 7 | internal error (including unreadable files) |
 | 8 | `match` verdict is `needs-review` |
+| 9 | `duplicates` found at least one duplicate group |
 
 With several failures and no success the code of the first failure is used; with at least one success it is 5.
 

@@ -6,6 +6,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
+import { runDuplicates } from './duplicates/run.js';
 import { type CanonicalInvoice, convert, DEFAULT_LIMITS, type Detection, inspect, type UnwrapLimits } from './index.js';
 import { isOrderXml, MatchInputError, matchInvoice, parseOrder, parsePurchaseOrdersJson, parseReceiptsJson } from './matching/index.js';
 import type { PurchaseOrder, Tolerances } from './matching/types.js';
@@ -23,6 +24,7 @@ export const EXIT = {
   validatorUnavailable: 6,
   internal: 7,
   needsReview: 8,
+  duplicates: 9,
 } as const;
 
 /** Thrown by a validator that cannot run (missing rules, no network...). Maps to exit code 6. */
@@ -60,12 +62,14 @@ convert --eu-trust[=<snapshot.json>] checks signers against a trusted-list snaps
 ~/.einvoice/eu-trust-snapshot.json, or trust/eu-trust-snapshot.json next to the sources).
   einvoice match   --po <order.json|order.xml>... [--receipts r.json] [--tolerance '<json>'] <invoice...>
                                              match invoice lines to purchase orders (two-way; three-way with --receipts)
+  einvoice duplicates <dir...> [--window days] [--index index.json] [--json]
+                                             duplicate and re-sent invoices across files; exit 8 if any
 
 A file argument of "-" reads stdin.
 --tolerance takes e.g. '{"unitPrice":{"percent":"2"},"quantity":{"absolute":"1"}}' (keys: quantity, unitPrice, total, vat).
 Flags: --pretty  --quiet  --limits '<json>'  --validate  --help
 Exit codes: 0 ok, 1 usage, 2 unsafe/malformed input, 3 unsupported format, 4 validation failed,
-            5 partially converted, 6 validator unavailable, 7 internal error, 8 match needs review.`;
+            5 partially converted, 6 validator unavailable, 7 internal error, 8 match needs review, 9 duplicates found.`;
 
 class UsageError extends Error {}
 
@@ -80,6 +84,9 @@ interface Parsed {
   lotlUrl?: string;
   out?: string;
   expect?: string;
+  index?: string;
+  window?: number;
+  json: boolean;
   limits?: Partial<UnwrapLimits>;
   po: string[];
   receipts?: string;
@@ -87,8 +94,19 @@ interface Parsed {
 }
 
 function parseArgs(argv: string[]): Parsed {
-  const p: Parsed = { command: '', files: [], pretty: false, quiet: false, validate: false, po: [] };
-  const takesValue = new Set(['--out', '--expect', '--limits', '--lotl-signer', '--lotl-url', '--po', '--receipts', '--tolerance']);
+  const p: Parsed = { command: '', files: [], pretty: false, quiet: false, validate: false, json: false, po: [] };
+  const takesValue = new Set([
+    '--out',
+    '--expect',
+    '--limits',
+    '--lotl-signer',
+    '--lotl-url',
+    '--po',
+    '--receipts',
+    '--tolerance',
+    '--index',
+    '--window',
+  ]);
   for (let i = 0; i < argv.length; i++) {
     let a = argv[i]!;
     if (a === '-' || !a.startsWith('-')) {
@@ -130,6 +148,18 @@ function parseArgs(argv: string[]): Parsed {
         break;
       case '--expect':
         p.expect = value;
+        break;
+      case '--index':
+        p.index = value;
+        break;
+      case '--window': {
+        const n = Number(value);
+        if (!Number.isInteger(n) || n < 0) throw new UsageError('--window must be a non-negative whole number of days');
+        p.window = n;
+        break;
+      }
+      case '--json':
+        p.json = true;
         break;
       case '--po':
         p.po.push(value!);
@@ -234,7 +264,7 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     io.stdout(`${USAGE}\n`);
     return EXIT.ok;
   }
-  const commands = ['detect', 'inspect', 'convert', 'sweep', 'trust-lists', 'match'];
+  const commands = ['detect', 'inspect', 'convert', 'sweep', 'trust-lists', 'match', 'duplicates'];
   if (!commands.includes(args.command)) {
     io.stderr(`einvoice: unknown command "${args.command}" (try --help)`);
     return EXIT.usage;
@@ -244,7 +274,9 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     return EXIT.usage;
   }
   if (args.files.length === 0) {
-    io.stderr(`einvoice: ${args.command} needs at least one ${args.command === 'sweep' ? 'directory' : 'file'}`);
+    io.stderr(
+      `einvoice: ${args.command} needs at least one ${args.command === 'sweep' || args.command === 'duplicates' ? 'directory' : 'file'}`,
+    );
     return EXIT.usage;
   }
   if (args.command === 'match' && args.po.length === 0) {
@@ -264,6 +296,14 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
       return await runSweep(args.files, { expect: args.expect, limits: args.limits }, (l) => io.stdout(`${l}\n`));
     }
 
+    if (args.command === 'duplicates') {
+      return await runDuplicates(
+        args.files,
+        { windowDays: args.window, indexFile: args.index, json: args.json, pretty: args.pretty, limits: args.limits },
+        (l) => io.stdout(`${l}\n`),
+        note,
+      );
+    }
     if (args.command === 'match') return await runMatch(args, io, json, err);
 
     let validator: Validator | null = null;
