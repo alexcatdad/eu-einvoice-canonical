@@ -10,7 +10,7 @@
  */
 import type { Element } from '@xmldom/xmldom';
 import type { AllowanceCharge, Attachment, CanonicalInvoice, Decimal, Line, Totals, VatBreakdown, VatInfo } from '../canonical.js';
-import { cmp } from '../values.js';
+import { cmp, toDecimal } from '../values.js';
 import { type DirectDebitEls, dateOf, delivery, party, payment, period, withScheme } from './cii.js';
 import { CREDIT_TYPE_CODES, Ctx, finish, ParseError, parseXml, SELF_BILLED_TYPE_CODES, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
@@ -331,7 +331,11 @@ function line(c: Ctx, l: Element, index: number): Line {
   const net = c.el(agreement, 'ram:NetPriceProductTradePrice');
   const tax = c.el(lineSettlement, 'ram:ApplicableTradeTax');
   const lineId = c.text(docLine, 'ram:LineID') ?? '';
-  const netAmount = c.dec(lineSettlement, 'ram:SpecifiedTradeSettlementMonetarySummation/ram:LineTotalAmount');
+  let netAmount = c.dec(lineSettlement, 'ram:SpecifiedTradeSettlementMonetarySummation/ram:LineTotalAmount');
+  if (netAmount === undefined && textOnly(c, l, docLine, qtyEl, net, gross)) {
+    netAmount = toDecimal('0');
+    c.warn('TEXT_LINE', `Line ${lineId || '?'} carries only a note and no amounts; its amount is recorded as 0`);
+  }
   if (netAmount === undefined) throw new ParseError(`Line ${lineId || '?'}: LineTotalAmount (BT-131) missing`);
   const baseQty = c.el(net, 'ram:BasisQuantity') ?? c.el(gross, 'ram:BasisQuantity');
   const at = `/CrossIndustryDocument/.../IncludedSupplyChainTradeLineItem[${lineId}]`;
@@ -421,4 +425,16 @@ function discount(c: Ctx, gross: Element | undefined): Decimal | undefined {
     .all(gross, 'ram:AppliedTradeAllowanceCharge')
     .find((x) => (c.text(x, 'ram:ChargeIndicator/*:Indicator') ?? '').toLowerCase() === 'false');
   return c.dec(a, 'ram:ActualAmount');
+}
+
+/** A line with a note and nothing else (ZUGFeRD/Factur-X Extended text lines): no quantity, price or amount. */
+function textOnly(
+  c: Ctx,
+  l: Element,
+  docLine: Element | undefined,
+  qty: Element | undefined,
+  net: Element | undefined,
+  gross: Element | undefined,
+): boolean {
+  return !qty && !net && !gross && c.all(docLine, 'ram:IncludedNote').length > 0 && !c.el(l, 'ram:SpecifiedTradeProduct');
 }

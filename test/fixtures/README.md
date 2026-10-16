@@ -58,6 +58,22 @@ The eSLOG fixtures follow the segment layout of EDIFACT INVOIC D.01B as eSLOG 2.
 | `fatturapa-lot.xml` | FatturaPA file with two FatturaElettronicaBody; the second has two instalments (TP01) |
 | `fatturapa-fsm10.xml` | FatturaPA semplificata FSM10 (TD07): VAT-inclusive Importo blocks, one with Natura N4 |
 
+## Peppol PINT and Saudi ZATCA
+
+The PINT fixtures are synthetic: fictitious parties, consistent totals, field locations read from the PINT specification pages. OpenPEPPOL's own examples and Schematron are not copied because its copyright statement does not allow redistribution (see `validation/NOTICE`).
+
+| File | What it covers |
+|---|---|
+| `pint-base.xml`, `pint-eu-invoice.xml`, `pint-om-invoice.xml` | PINT base (`urn:peppol:pint:billing-1`, detected as `peppol-pint`), PINT EU and PINT Oman identifiers on a one-line invoice |
+| `pint-sg-invoice.xml` | PINT SG: UEN endpoints (EAS 0195), GST registration in a tax scheme named GST, SR 9 % and ZR categories |
+| `pint-aunz-au-invoice.xml` | PINT A-NZ from Australia: ABN (EAS 0151) as endpoint and legal id, GST scheme, S 10 % |
+| `pint-aunz-nz-selfbilling-creditnote.xml` | PINT A-NZ self-billed credit note (`selfbilling-1@aunz-1`) from New Zealand: NZBN (EAS 0088), IRD number as GST id, S 15 % |
+| `pint-jp-invoice.xml` | PINT JP: qualified invoice issuer numbers (T + 13 digits), 10 % and 8 % categories, JPY, Japanese text |
+| `pint-jp-ntr-invoice.xml` | PINT JP for a business not registered for the qualified invoice system (`nontaxinvoice-1@jp-1`): no seller tax identifier, category O |
+| `pint-my-invoice.xml` | PINT MY: TIN in a GST-named scheme, SST in VAT, MSIC code and activity, FTA / K2 / customs form references, LHDN UUID of the corrected document, SE category |
+| `pint-ae-invoice.xml` | PINT AE: transaction flags 10000010 (free trade zone, e-commerce), UUID, TIN endpoints (EAS 0235), trade-licence registration with authority, USD invoice with AED tax currency and exchange rate, commodity code G |
+| `zatca-simplified-signed.xml`, `zatca-standard-signed.xml`, `zatca-standard-debit-signed.xml` | Signed ZATCA UBL invoices (simplified 388, standard 388, standard debit note 383) with ICV, PIH, QR (TLV tags 1-9) and the XAdES signature. Copied unchanged from `examples/*/output/*_Signed.xml` of github.com/Saleh7/php-zatca-xml (MIT, Copyright (c) 2023 ~/Saleh). The invoice hashes were checked against the signatures' digests |
+
 ## Provenance of the other fixtures
 
 Re-checked against the public corpora (phive-rules `58e8c83`, mustangproject `68520f6`, FNFE France_RFE `97ba0f3`; all three are Apache License 2.0). "Derived" means the file differs from the named source only in the stated way. Where a file is not a copy of anything found, it is a hand-written header-only stub with fictitious values (written for this project, so no third-party licence applies).
@@ -78,3 +94,30 @@ Re-checked against the public corpora (phive-rules `58e8c83`, mustangproject `68
 If you can name the original of a "not verified" file, say so in the table; do not delete the fixture, the tests depend on it.
 
 The known-answer manifest for the public corpora themselves (`test/corpus/expected.json`) is described in `.github/workflows/corpus.yml` and `scripts/corpus-manifest.ts`; those files are fetched at run time and are not stored in this repository.
+
+## Public samples under `real/`
+
+Copied byte for byte (line endings and BOMs included) from public repositories whose own licence permits redistribution. The licence is the one the hosting repository declares; where the repository says the sample comes from somewhere else, that origin is named and its own licence is stated as unverified, because the hosting repository's licence is all that was found. Known answers for each file are in `test/real-samples.test.ts`. A file is listed in `conformance/notes.json` (`publicSamples`) only if it is in this table.
+
+| File | Source (repository @ commit, path) | Licence of the repository | Upstream origin |
+|---|---|---|---|
+| `fatturapa-ade-FPR12-1.xml`, `fatturapa-ade-FPA12-1.xml`, `fatturapa-ade-FPR12-3-lot.xml` | ZUGFeRD/corpus @ `82e886f`, `fatturaPA/official/valid/IT01234567890_FPR01.xml`, `..._FPA01.xml`, `..._FPR03.xml` | Apache-2.0 | The Agenzia delle Entrate specimen invoices (the folder is named `official`); AdE's own licence not verified |
+| `ksef-fa3-pdf-generator.xml` | CIRFMF/ksef-pdf-generator @ `8a18843`, `assets/invoice.xml` | MIT (Ministry of Finance's KSeF programme, CIRF) | Generated demo data, FA (3) |
+| `isdoc-test001.isdoc` | isdoc/isdoc.pdf @ `96f73f6`, `examples/input/test001.isdoc` | Apache-2.0 | isdoc.cz GitHub organisation |
+| `isdoc-priklad.isdoc` | isdoc/dsig-demo @ `c10455d`, `data/priklad.isdoc` | Apache-2.0 | The ISDOC specification's example (every element, internally inconsistent amounts by design) |
+| `ebinterface-4.1-sample.xml`, `ebinterface-4.3-sample.xml` | austriapro/ebinterface-mappings @ `6c90746`, `ebinterface-mappings-zugferd/src/test/resources/ebinterface/rechnung_ebI_4.1_sample_1.xml`, `..._4.3_sample_1.xml` | MIT (austriapro, the ebInterface maintainers) | ebInterface sample instances |
+| `oioubl-2.01-invoice.xml`, `oioubl-2.01-creditnote.xml` | invopop/gobl.dk.oioubl @ `9a1b1d2`, `test/data/parse/happy-path_real.xml`, `credit-note.xml` | Apache-2.0 | OIOUBL 2.01 example documents (invoice A00095678); the Danish authority's licence not verified. The sample's TaxExclusiveAmount equals the VAT amount, as in the source |
+| `mydata-requested-invoice.xml`, `mydata-requested-two-invoices.xml` | firebed/aade-mydata @ `ac43b5f`, `stubs/invoice-with-taxes-on-invoice-level.xml`, `stubs/request-doc-response.xml` | MIT | The library author's reconstruction of AADE retrieval responses (`RequestedDoc`), not files issued by AADE. The second ends with a cancellation marker without a header |
+| `zugferd1-comfort-einfach.pdf` | ZUGFeRD/corpus @ `82e886f`, `ZUGFeRDv1/correct/Intarsys/ZUGFeRD_1p0_COMFORT_Einfach.pdf` | Apache-2.0 | ZUGFeRD 1.0 sample set (Intarsys) |
+| `xrechnung-ubl-01.01a.xml`, `xrechnung-cii-01.01a.xml` | itplr-kosit/xrechnung-testsuite @ `1ce1daf`, `src/test/business-cases/standard/01.01a-INVOICE_ubl.xml`, `..._uncefact.xml` | Apache-2.0 | KoSIT XRechnung test suite |
+| `en16931-ubl-UC1.xml`, `en16931-cii-UC13.xml`, `fr-ctc-ubl-UC12.xml`, `fr-ctc-cii-UC10.xml` | fnfempe/France_RFE @ `97ba0f3`, `FNFE_RFE_INVOICE/Z.example/TEST/{UBL,CII}/{EN16931,EXTENDED-CTC-FR}/UC...` | Apache-2.0 | FNFE-MPE example invoices for the French reform |
+
+### Looked for, not committed
+
+No sample was committed for a format when no licence allowing it could be found. Searched: OpenPEPPOL/peppol-bis-invoice-3 (no licence file), phax/phive-rules (its README limits the Apache licence to the Java code; the test files come from the specification owners), pagero/integration-resources (a large set of Facturae, Finvoice, TEAPPS, Svefaktura, SI-UBL, CIUS-PT and OIOUBL examples, but no licence), VismaSolutionsOy/InvoiceXMLExamples (Finvoice, no licence), austriapro/ebinterface-standards (no licence file), facturae.gob.es (no licence stated), the CIRFMF/ksef-docs repository (MIT, but it holds schemas only; the sample invoices in CIRFMF/ksef-client-java are templates with `#placeholders#` instead of values and were left out).
+
+| Format | Result |
+|---|---|
+| Peppol BIS 3, NLCIUS, CIUS-PT, UBL.BE, Peppol BIS 2, Peppol self-billing, Poland PEF, OIOUBL 3 | not found under a usable licence |
+| Facturae | not found (the only licensed copy is Facturae 3.0, which the parser does not read) |
+| Finvoice, TEAPPSXML, e-arve, eSLOG 2.0, Svefaktura 1.0, FatturaPA semplificata | not found under a usable licence |

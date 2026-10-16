@@ -23,6 +23,10 @@ import type {
 } from '../canonical.js';
 import { Ctx, finish, ParseError, parseXml, type Scope, SELF_BILLED_TYPE_CODES, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
+import { applyPint, isPint, PINT_VAT_SCHEMES } from './pint.js';
+import { applyZatca, isZatcaControlRef } from './zatca.js';
+
+const VAT_ONLY = new Set(['VAT']);
 
 const NS = {
   inv: 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
@@ -36,6 +40,9 @@ export function parseUbl(input: ParseInput): CanonicalInvoice[] {
   const isCn = root.localName === 'CreditNote';
   const c = new Ctx(NS, input.provenance);
   const s = c.in('');
+  const format = input.format.id;
+  // PINT carries GST (and Malaysian SST/TIN) in PartyTaxScheme like VAT.
+  const vatSchemes = isPint(format) ? PINT_VAT_SCHEMES : VAT_ONLY;
 
   const id = s.text(root, 'cbc:ID', 'id');
   const issueDate = s.date(root, 'cbc:IssueDate', 'BT-2', 'issueDate');
@@ -65,10 +72,10 @@ export function parseUbl(input: ParseInput): CanonicalInvoice[] {
     s.text(root, 'cac:ProjectReference/cbc:ID', 'projectRef') ?? (isCn ? s.text(refByType('50'), 'cbc:ID', 'projectRef') : undefined);
 
   const sellerEl = c.el(root, 'cac:AccountingSupplierParty/cac:Party');
-  const seller = party(c, sellerEl, s.in('seller'), true) as Seller;
+  const seller = party(c, sellerEl, s.in('seller'), vatSchemes, true) as Seller;
   const taxRegEl = c
     .all(sellerEl, 'cac:PartyTaxScheme')
-    .filter((t) => c.text(t, 'cac:TaxScheme/cbc:ID') !== 'VAT')
+    .filter((t) => !isVatScheme(c, t, vatSchemes))
     .map((t) => c.el(t, 'cbc:CompanyID'))
     .find((e) => c.text(e));
   seller.taxRegistrationId = s.text(taxRegEl, undefined, 'seller/taxRegistrationId');
@@ -81,7 +88,6 @@ export function parseUbl(input: ParseInput): CanonicalInvoice[] {
   const lines = c.all(root, isCn ? 'cac:CreditNoteLine' : 'cac:InvoiceLine').map((l, i) => line(c, l, isCn, s.in('lines').in(i)));
   const { totals, vatBreakdown } = totalsAndVat(c, root, currency, taxCurrency, s);
 
-  const format = input.format.id;
   const extensions: CountryExtensions = {};
   if (format === 'xrechnung-ubl') extensions.de = { xrechnungVersion: input.details.version };
   if (format === 'fr-ctc-ubl') extensions.fr = { profile: input.details.profile };
@@ -92,7 +98,10 @@ export function parseUbl(input: ParseInput): CanonicalInvoice[] {
     id,
     issueDate,
     issueTime: s.text(root, 'cbc:IssueTime', 'issueTime') as CanonicalInvoice['issueTime'],
-    selfBilled: SELF_BILLED_TYPE_CODES.has(typeCode) || format === 'peppol-bis3-selfbilling',
+    selfBilled:
+      SELF_BILLED_TYPE_CODES.has(typeCode) ||
+      format === 'peppol-bis3-selfbilling' ||
+      /^urn:peppol:pint:selfbilling-/i.test(c.text(root, 'cbc:CustomizationID') ?? ''),
     currency,
     taxCurrency,
     taxPointDate: s.date(root, 'cbc:TaxPointDate', 'BT-7', 'taxPointDate'),
@@ -118,7 +127,7 @@ export function parseUbl(input: ParseInput): CanonicalInvoice[] {
     }),
     invoicePeriod: period(c, c.el(root, 'cac:InvoicePeriod'), s.in('invoicePeriod')),
     seller,
-    buyer: party(c, c.el(root, 'cac:AccountingCustomerParty/cac:Party'), s.in('buyer')),
+    buyer: party(c, c.el(root, 'cac:AccountingCustomerParty/cac:Party'), s.in('buyer'), vatSchemes),
     payee: payeeEl
       ? {
           name: s.text(payeeEl, 'cac:PartyName/cbc:Name', 'payee/name') ?? '',
@@ -143,7 +152,12 @@ export function parseUbl(input: ParseInput): CanonicalInvoice[] {
     otherTaxes: [],
     withholdings: [],
     attachments: docRefs
-      .filter((r) => r !== invoicedObject && !(isCn && c.text(r, 'cbc:DocumentTypeCode') === '50'))
+      .filter(
+        (r) =>
+          r !== invoicedObject &&
+          !(isCn && c.text(r, 'cbc:DocumentTypeCode') === '50') &&
+          !(format === 'zatca-ubl' && isZatcaControlRef(c, r)),
+      )
       .map((r, i) => attachment(c, r, s.in('attachments').in(i))),
     lines,
     clearance: [],
@@ -153,6 +167,8 @@ export function parseUbl(input: ParseInput): CanonicalInvoice[] {
       profileId: c.text(root, 'cbc:ProfileID'),
     }),
   } as CanonicalInvoice;
+  if (isPint(format)) applyPint(c, root, inv, format, isCn);
+  if (format === 'zatca-ubl') applyZatca(c, root, input.payload.xml, inv);
   return [finish(inv)];
 }
 
@@ -168,8 +184,19 @@ function note(c: Ctx, e: Element, s: Scope) {
   return { subjectCode: m[1], text: m[2] };
 }
 
-function party(c: Ctx, p: Element | undefined, s: Scope, isSeller = false): Party {
-  const vatScheme = c.all(p, 'cac:PartyTaxScheme').find((t) => c.text(t, 'cac:TaxScheme/cbc:ID') === 'VAT');
+/**
+ * Whether a PartyTaxScheme is VAT: EN 16931 uses TaxScheme 'VAT'; OIOUBL 2 uses its own code list, where 63 is
+ * 'Moms' (Danish VAT); PINT profiles add VAT-like schemes such as GST and SST (passed in `vatSchemes`).
+ */
+function isVatScheme(c: Ctx, partyTaxScheme: Element, vatSchemes: ReadonlySet<string> = new Set()): boolean {
+  const id = c.text(partyTaxScheme, 'cac:TaxScheme/cbc:ID') ?? '';
+  return id === 'VAT' || vatSchemes.has(id) || (id === '63' && c.text(partyTaxScheme, 'cac:TaxScheme/cbc:Name')?.toLowerCase() === 'moms');
+}
+
+function party(c: Ctx, p: Element | undefined, s: Scope, vatSchemes: ReadonlySet<string>, isSeller = false): Party {
+  const schemes = c.all(p, 'cac:PartyTaxScheme');
+  // The VAT scheme itself wins over the other VAT-like ones (PINT-MY has both: SST as VAT, TIN as GST).
+  const vatScheme = schemes.find((t) => c.text(t, 'cac:TaxScheme/cbc:ID') === 'VAT') ?? schemes.find((t) => isVatScheme(c, t, vatSchemes));
   // The SEPA creditor id (BT-90) rides along as a party identifier in UBL; it belongs to direct debit, not to the seller.
   const ids = c.nonEmpty(c.all(p, 'cac:PartyIdentification/cbc:ID')).filter((e) => !(isSeller && isSepa(c)(e)));
   return {
@@ -306,7 +333,12 @@ function totalsAndVat(
 ): { totals: Totals; vatBreakdown: VatBreakdown[] } {
   const taxTotals = c.all(root, 'cac:TaxTotal');
   const inCur = (t: Element, cur: string) => c.attr(t, 'cbc:TaxAmount', 'currencyID') === cur;
-  const main = taxTotals.find((t) => inCur(t, currency)) ?? taxTotals.find((t) => c.el(t, 'cac:TaxSubtotal')) ?? taxTotals[0];
+  // ZATCA sends two TaxTotal elements in the same currency: one with the amount only, one with the subtotals.
+  const main =
+    taxTotals.find((t) => inCur(t, currency) && c.el(t, 'cac:TaxSubtotal')) ??
+    taxTotals.find((t) => inCur(t, currency)) ??
+    taxTotals.find((t) => c.el(t, 'cac:TaxSubtotal')) ??
+    taxTotals[0];
   const inTaxCur = taxCurrency && taxCurrency !== currency ? taxTotals.find((t) => t !== main && inCur(t, taxCurrency)) : undefined;
   const m = c.el(root, 'cac:LegalMonetaryTotal');
   if (!m) throw new ParseError('LegalMonetaryTotal (BG-22) missing');

@@ -24,6 +24,7 @@ import type {
   Totals,
   VatBreakdown,
 } from '../canonical.js';
+import { toDecimal } from '../values.js';
 import { CREDIT_TYPE_CODES, Ctx, finish, ParseError, parseXml, type Scope, SELF_BILLED_TYPE_CODES, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 
@@ -422,7 +423,11 @@ function line(c: Ctx, l: Element, s: Scope): Line {
   const net = c.el(agreement, 'ram:NetPriceProductTradePrice');
   const tax = c.el(lineSettlement, 'ram:ApplicableTradeTax');
   const lineId = s.text(docLine, 'ram:LineID', 'id') ?? '';
-  const netAmount = s.dec(lineSettlement, 'ram:SpecifiedTradeSettlementLineMonetarySummation/ram:LineTotalAmount', 'netAmount');
+  let netAmount = s.dec(lineSettlement, 'ram:SpecifiedTradeSettlementLineMonetarySummation/ram:LineTotalAmount', 'netAmount');
+  if (netAmount === undefined && textOnly(c, l, docLine, qtyEl, net, gross)) {
+    netAmount = toDecimal('0');
+    c.warn('TEXT_LINE', `Line ${lineId || '?'} carries only a note and no amounts; its amount is recorded as 0`);
+  }
   if (netAmount === undefined) throw new ParseError(`Line ${lineId || '?'}: LineTotalAmount (BT-131) missing`);
   const objectRef = c.all(lineSettlement, 'ram:AdditionalReferencedDocument').find((d) => c.text(d, 'ram:TypeCode') === '130');
   const baseQty = c.el(net, 'ram:BasisQuantity') ?? c.el(gross, 'ram:BasisQuantity');
@@ -485,4 +490,16 @@ function line(c: Ctx, l: Element, s: Scope): Line {
       }),
     },
   };
+}
+
+/** A line with a note and nothing else (ZUGFeRD/Factur-X Extended text lines): no quantity, price or amount. */
+function textOnly(
+  c: Ctx,
+  l: Element,
+  docLine: Element | undefined,
+  qty: Element | undefined,
+  net: Element | undefined,
+  gross: Element | undefined,
+): boolean {
+  return !qty && !net && !gross && c.all(docLine, 'ram:IncludedNote').length > 0 && !c.el(l, 'ram:SpecifiedTradeProduct');
 }

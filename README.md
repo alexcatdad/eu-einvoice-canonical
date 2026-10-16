@@ -82,11 +82,14 @@ einvoice export  <file...> --format sie|journal|csv [--accounts mapping.json] [-
 einvoice sweep   <dir...> [--expect answers.json]   detection coverage / known-answer check
 einvoice trust-lists update [--out <snapshot.json>] [--lotl-signer <cert.pem>]   fetch and verify the EU trusted lists
 einvoice match   --po <order.json|order.xml>... [--receipts r.json] [--tolerance '<json>'] <invoice...>   match to purchase orders
+einvoice duplicates <dir...> [--window days] [--index index.json] [--json]   duplicate and re-sent invoices; exit 9 if found
 ```
 
 `convert --eu-trust[=<snapshot.json>]` checks signers against a trusted-list snapshot (see [EU trusted lists](#eu-trusted-lists)).
 
 Flags: `--pretty` indents JSON; `--quiet` silences notes and warnings (errors are still printed); `--limits '{"maxEntries":10}'` overrides `UnwrapLimits`; `--validate` is accepted by `convert` and is a no-op with a message until the validation module lands.
+`duplicates` converts every file under the directories and groups repeats in four levels: identical payload (same XML in another wrapper), same seller + number + date, same seller + number with a different date or amount, and likely duplicates (same seller and amount, dates within `--window` days, similar lines, different number). Numbers are normalised (case, separators, leading zeros) and the evidence lists every step; credit notes that cite an invoice in BG-3 are paired with it, not flagged. `--index` keeps the index in a JSON file so later runs only add new files. The same logic is exported as `DuplicateIndex`.
+
 JSON goes to stdout only; every error is one line on stderr.
 
 | Exit | Meaning |
@@ -100,8 +103,40 @@ JSON goes to stdout only; every error is one line on stderr.
 | 6 | validator unavailable |
 | 7 | internal error (including unreadable files) |
 | 8 | `match` verdict is `needs-review` |
+| 9 | `duplicates` found at least one duplicate group |
 
 With several failures and no success the code of the first failure is used; with at least one success it is 5.
+
+## MCP server for AI agents
+
+`einvoice mcp` runs a [Model Context Protocol](https://modelcontextprotocol.io) server on stdio, so an AI agent can read and check e-invoices with the same code as the CLI.
+
+| Tool | What it does |
+|---|---|
+| `detect_invoice_format` | Unwraps the file and names the format of each document |
+| `convert_invoice` | Canonical JSON, optionally with validation, line relations and provenance |
+| `validate_invoice` | Parse, schema, EN 16931, profile and signature results with every finding |
+| `explain_finding` | Plain-language explanation of a totals rule (BR-CO-10 to BR-CO-16) |
+| `check_duplicates` | Duplicate and re-sent invoices across files |
+| `match_purchase_order` | Two- or three-way match against purchase orders |
+| `list_formats` | The format registry |
+
+Resources: `einvoice://formats` and the JSON Schemas (`einvoice://schemas/canonical-invoice.v1`, `einvoice://schemas/convert-result.v1`).
+
+Safety: tools read files only inside the directories given with `--allow-dir` (symlinks resolved); without it they accept inline XML or base64 only. The server makes no network calls. Long base64 attachments and oversized results are shortened in what the model sees, and every tool that reads an invoice tells the model that invoice text is untrusted data.
+
+Claude Desktop (`claude_desktop_config.json`) or Claude Code (`.mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "einvoice": {
+      "command": "/path/to/einvoice",
+      "args": ["mcp", "--allow-dir", "/Users/me/Invoices"]
+    }
+  }
+}
+```
 
 ## EU trusted lists
 
@@ -231,6 +266,25 @@ What you will receive from each country, inbound. Format IDs refer to `src/forma
 | ES | `facturae` 3.2.x (`.xsig`), later UBL/CII | B2G via FACe. B2B Royal Decree approved 24 Mar 2026 (Facturae, UBL, CII, EDIFACT); start depends on the ministerial order. |
 | SE | `peppol-bis3`, legacy `svefaktura-1` | |
 
+## Beyond the EU
+
+Peppol PINT and Saudi ZATCA are UBL documents, so they run through the UBL parser; each adds its own fields in `extensions`.
+
+| Format ID | Identifier | What is mapped |
+|---|---|---|
+| `pint-sg` | `urn:peppol:pint:billing-1@sg-1` | GST is a VAT-like scheme (`vatId`), UEN from the endpoint, GST categories used: `extensions.sg` |
+| `pint-aunz` | `urn:peppol:pint:{billing,selfbilling}-1@aunz-1` | ABN or NZBN, GST: `extensions.au` or `extensions.nz` by country; self-billing sets `selfBilled` |
+| `pint-jp` | `urn:peppol:pint:{billing,selfbilling,nontaxinvoice}-1@jp-1` | Qualified invoice issuer number (`T` + 13 digits) in `extensions.jp`; the non-tax-registered variant has none |
+| `pint-my` | `urn:peppol:pint:billing-1@my-1` | TIN (scheme GST) and SST (scheme VAT), MSIC code, FTA / certified exporter / customs references, LHDN UUID: `extensions.my` |
+| `pint-ae` | `urn:peppol:pint:billing-1@ae-1` | The eight transaction-type flags, UUID, TIN, registration type and authority, exchange rate; line commodity and nature codes in `line.national`: `extensions.ae` |
+| `pint-om`, `pint-eu` | `…@om-1`, `…@eu-1` | Detected and parsed as plain UBL |
+| `peppol-pint` | `urn:peppol:pint:billing-1`, other `@xx-n`, older BIS Billing International | Plain UBL mapping |
+| `zatca-ubl` | `ProfileID reporting:1.0` | See below |
+
+Category codes of PINT SG and MY are not UNCL 5305; `categoryCode` keeps them as sent. The PINT Schematron is not bundled (OpenPEPPOL's copyright statement forbids redistribution, see `validation/NOTICE`), so PINT gets the UBL XSD layer only.
+
+**ZATCA (Saudi Arabia).** `InvoiceTypeCode/@name` (NNPNESB) gives the standard/simplified subtype and the third-party, nominal, exports, summary and self-billed flags. UUID, ICV, PIH, the invoice hash, the XAdES signature (the cryptographic stamp) and the QR code go into `clearance[0]` (authority `SA:ZATCA`) and `extensions.sa`; the QR TLV is decoded into fields and compared with the invoice. The invoice hash is recomputed with ZATCA's transforms (drop `UBLExtensions`, `cac:Signature` and the QR reference, canonicalize, SHA-256) and compared with the signature digest and QR tag 6: `extensions.sa.hashCheck` says `match`, `mismatch` or `not-checked`, and a mismatch is a warning, never an error. Credit notes (type 381 on an `Invoice` root) become `kind: 'creditNote'`. Hijri dates in date fields are converted with the tabular calendar (it can be a day off from Umm al-Qura), recorded in `extensions.sa.hijriDates` and `source.derived`.
+
 ## Build order
 
 | Phase | Parser family | Formats it covers | Mapping notes |
@@ -308,7 +362,7 @@ Skipped files and the reason are returned by both `inspect()` and `convert()`, s
 - **Signature trust:** signatures are verified cryptographically; signers are checked only when you pass `trustAnchors` or an `euTrust` snapshot. The snapshot is only as current as its fetch date and drops services the lists identify by name or key id without a certificate, and no revocation check is made on the signer's own certificate.
 - **Validation covers UBL and CII only** (XSD, EN 16931 and Peppol/XRechnung Schematron). National formats get the BR-CO arithmetic checks only; their official schemas are not run yet.
 - **Synthetic fixtures:** most national parsers were built from specifications and tested on synthetic files. Formats without a converted real sample are listed in the conformance checklist; run `sweep --expect` on your own inbound files before relying on them.
-- **Peppol PINT** gets the plain UBL mapping; PINT-specific rules are not applied.
+- **Peppol PINT and ZATCA validation:** the PINT Schematron and ZATCA's rules are not bundled (licence, see `validation/NOTICE`); only the UBL XSD runs. PINT OM and EU are mapped as plain UBL. A Hijri date whose day does not exist in the Gregorian month of the same number (for example `1446-02-30`) is rejected as an invalid date before conversion.
 - **Non-XML formats** (EDIFACT INVOIC, PDFs without embedded XML) are out of scope.
 
 ## License

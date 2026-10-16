@@ -73,6 +73,71 @@
         }
       }
     },
+    "AeExtension": {
+      "type": "object",
+      "properties": {
+        "transactionTypeCode": {
+          "type": "string",
+          "description": "The eight transaction-type flags as sent (ProfileExecutionID), e.g. '00001000'."
+        },
+        "transactionTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Names of the flags that are set: freeTradeZone, deemedSupply, profitMarginScheme, summaryInvoice, continuousSupply, agentBilling, ecommerce, exports."
+        },
+        "uuid": {
+          "type": "string"
+        },
+        "sellerTin": {
+          "type": "string"
+        },
+        "buyerTin": {
+          "type": "string"
+        },
+        "sellerRegistrationType": {
+          "type": "string",
+          "description": "Legal registration identifier type and issuing authority (TL trade licence, EID Emirates ID, PAS passport, CD cabinet decision)."
+        },
+        "sellerRegistrationAuthority": {
+          "type": "string"
+        },
+        "buyerRegistrationType": {
+          "type": "string"
+        },
+        "buyerRegistrationAuthority": {
+          "type": "string"
+        },
+        "taxExchangeRate": {
+          "type": "object",
+          "properties": {
+            "sourceCurrency": {
+              "type": "string"
+            },
+            "targetCurrency": {
+              "type": "string"
+            },
+            "rate": {
+              "$ref": "#/$defs/Decimal"
+            }
+          },
+          "required": [
+            "sourceCurrency",
+            "targetCurrency",
+            "rate"
+          ]
+        },
+        "billingFrequency": {
+          "type": "string",
+          "description": "Frequency of billing (InvoicePeriod description)."
+        }
+      },
+      "required": [
+        "transactionTypes"
+      ],
+      "description": "United Arab Emirates (PINT AE)."
+    },
     "AllowanceCharge": {
       "type": "object",
       "properties": {
@@ -234,6 +299,39 @@
           ]
         }
       ]
+    },
+    "AuNzExtension": {
+      "type": "object",
+      "properties": {
+        "abn": {
+          "type": "string"
+        },
+        "nzbn": {
+          "type": "string"
+        },
+        "gstRegistrationNumber": {
+          "type": "string"
+        },
+        "buyerAbn": {
+          "type": "string"
+        },
+        "buyerNzbn": {
+          "type": "string"
+        },
+        "buyerGstRegistrationNumber": {
+          "type": "string"
+        },
+        "gstCategories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "gstCategories"
+      ],
+      "description": "Australia and New Zealand (PINT A-NZ, one specification for both; stored under `au` or `nz` by seller country)."
     },
     "CanonicalInvoice": {
       "anyOf": [
@@ -801,7 +899,19 @@
         },
         "qrPayload": {
           "type": "string",
-          "description": "QR code payload or URL printed on the visual (PT, GR, PL, ES)."
+          "description": "QR code payload or URL printed on the visual (PT, GR, PL, ES, SA: base64 TLV)."
+        },
+        "counter": {
+          "type": "string",
+          "description": "Invoice counter in the issuer's chain (SA ICV)."
+        },
+        "previousHash": {
+          "type": "string",
+          "description": "Hash of the previous invoice in the issuer's chain (SA PIH), as carried."
+        },
+        "hash": {
+          "type": "string",
+          "description": "Hash of this invoice as carried in the document (SA invoice hash), not recomputed."
         },
         "certificateNumber": {
           "type": "string",
@@ -809,7 +919,7 @@
         },
         "stamp": {
           "type": "string",
-          "description": "The authority's stamp over the document, as written (CFDI SelloSAT). Not verified."
+          "description": "The stamp as written: the authority's stamp over the document (CFDI SelloSAT, not verified) or the signature value on the invoice (SA, base64)."
         },
         "intermediary": {
           "type": "string",
@@ -1211,6 +1321,27 @@
         "ee": {
           "$ref": "#/$defs/EeExtension"
         },
+        "sg": {
+          "$ref": "#/$defs/SgExtension"
+        },
+        "au": {
+          "$ref": "#/$defs/AuNzExtension"
+        },
+        "nz": {
+          "$ref": "#/$defs/AuNzExtension"
+        },
+        "jp": {
+          "$ref": "#/$defs/JpExtension"
+        },
+        "my": {
+          "$ref": "#/$defs/MyExtension"
+        },
+        "ae": {
+          "$ref": "#/$defs/AeExtension"
+        },
+        "sa": {
+          "$ref": "#/$defs/SaExtension"
+        },
         "mx": {
           "$ref": "#/$defs/MxExtension"
         }
@@ -1591,7 +1722,15 @@
         "pl-pef",
         "peppol-bis3",
         "peppol-bis3-selfbilling",
+        "pint-sg",
+        "pint-aunz",
+        "pint-jp",
+        "pint-my",
+        "pint-ae",
+        "pint-om",
+        "pint-eu",
         "peppol-pint",
+        "zatca-ubl",
         "ubl-be",
         "en16931-ubl",
         "peppol-bis2",
@@ -1938,6 +2077,19 @@
       },
       "description": "Italy, FatturaPA. Fields that have no EN or generic equivalent."
     },
+    "JpExtension": {
+      "type": "object",
+      "properties": {
+        "qualifiedInvoiceIssuerNumber": {
+          "type": "string",
+          "description": "Seller's qualified invoice issuer registration number: 'T' + 13 digits."
+        },
+        "buyerRegistrationNumber": {
+          "type": "string"
+        }
+      },
+      "description": "Japan (PINT JP, Peppol e-invoice for the qualified invoice system)."
+    },
     "Line": {
       "type": "object",
       "properties": {
@@ -2220,6 +2372,62 @@
         }
       },
       "description": "Mexico, CFDI 3.3 / 4.0. Fields with no EN or generic equivalent; codes are SAT catalogue keys."
+    },
+    "MyExtension": {
+      "type": "object",
+      "properties": {
+        "tin": {
+          "type": "string"
+        },
+        "buyerTin": {
+          "type": "string"
+        },
+        "sstRegistrationNumber": {
+          "type": "string"
+        },
+        "buyerSstRegistrationNumber": {
+          "type": "string"
+        },
+        "businessRegistrationNumber": {
+          "type": "string"
+        },
+        "msicCode": {
+          "type": "string"
+        },
+        "msicDescription": {
+          "type": "string"
+        },
+        "freeTradeAgreement": {
+          "type": "string"
+        },
+        "certifiedExporterNumber": {
+          "type": "string"
+        },
+        "customsForm2": {
+          "type": "string"
+        },
+        "customsImportForms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "originalDocumentUuid": {
+          "type": "string",
+          "description": "LHDN unique identifier of the document this one corrects."
+        },
+        "taxCategories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "customsImportForms",
+        "taxCategories"
+      ],
+      "description": "Malaysia (PINT MY, MyInvois). TIN travels in a PartyTaxScheme with scheme GST; SST registration in the VAT scheme."
     },
     "NationalTypeCode": {
       "type": "object",
@@ -2600,6 +2808,177 @@
     "Quantity": {
       "$ref": "#/$defs/Decimal"
     },
+    "SaAddress": {
+      "type": "object",
+      "properties": {
+        "buildingNumber": {
+          "type": "string"
+        },
+        "plotIdentification": {
+          "type": "string"
+        },
+        "district": {
+          "type": "string"
+        }
+      }
+    },
+    "SaExtension": {
+      "type": "object",
+      "properties": {
+        "invoiceSubtype": {
+          "type": "string",
+          "enum": [
+            "standard",
+            "simplified"
+          ]
+        },
+        "transactionCode": {
+          "type": "string",
+          "description": "InvoiceTypeCode/@name as sent: NNPNESB."
+        },
+        "thirdParty": {
+          "type": "boolean"
+        },
+        "nominal": {
+          "type": "boolean"
+        },
+        "exports": {
+          "type": "boolean"
+        },
+        "summary": {
+          "type": "boolean"
+        },
+        "selfBilled": {
+          "type": "boolean"
+        },
+        "uuid": {
+          "type": "string"
+        },
+        "counter": {
+          "type": "string"
+        },
+        "previousInvoiceHash": {
+          "type": "string"
+        },
+        "invoiceHash": {
+          "type": "string",
+          "description": "Digest of the signed invoice as carried in the XAdES signature (reference 'invoiceSignedData')."
+        },
+        "stamp": {
+          "type": "object",
+          "properties": {
+            "signatureValue": {
+              "type": "string"
+            },
+            "certificate": {
+              "type": "string"
+            },
+            "signedAt": {
+              "type": "string"
+            }
+          }
+        },
+        "qr": {
+          "$ref": "#/$defs/SaQr"
+        },
+        "hashCheck": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "match",
+                "mismatch",
+                "not-checked"
+              ]
+            },
+            "computed": {
+              "type": "string"
+            },
+            "carried": {
+              "type": "string"
+            },
+            "qr": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "status",
+            "computed"
+          ],
+          "description": "Our own recomputation of the invoice hash against what the document carries. Never fails the conversion."
+        },
+        "sellerAddress": {
+          "$ref": "#/$defs/SaAddress"
+        },
+        "buyerAddress": {
+          "$ref": "#/$defs/SaAddress"
+        },
+        "hijriDates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "string"
+              },
+              "hijri": {
+                "type": "string"
+              },
+              "gregorian": {
+                "$ref": "#/$defs/IsoDate"
+              }
+            },
+            "required": [
+              "field",
+              "hijri",
+              "gregorian"
+            ]
+          },
+          "description": "Dates sent in the Hijri calendar and the Gregorian date they were converted to (tabular calendar, may be off by a day)."
+        }
+      },
+      "required": [
+        "hijriDates"
+      ],
+      "description": "Saudi Arabia, ZATCA (KSA UBL profile, FATOORA)."
+    },
+    "SaQr": {
+      "type": "object",
+      "properties": {
+        "sellerName": {
+          "type": "string"
+        },
+        "vatNumber": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "total": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "vatTotal": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "invoiceHash": {
+          "type": "string"
+        },
+        "signature": {
+          "type": "string"
+        },
+        "publicKey": {
+          "type": "string"
+        },
+        "certificateSignature": {
+          "type": "string"
+        }
+      },
+      "description": "The ZATCA QR code (TLV, tags 1-9). Tags 1-5 are text, 6 is the base64 invoice hash, 7-9 are base64 of binary values."
+    },
     "SchemeId": {
       "type": "string",
       "examples": [
@@ -2705,6 +3084,33 @@
         "identifiers",
         "nationalTaxIds"
       ]
+    },
+    "SgExtension": {
+      "type": "object",
+      "properties": {
+        "sellerUen": {
+          "type": "string"
+        },
+        "buyerUen": {
+          "type": "string"
+        },
+        "gstRegistrationNumber": {
+          "type": "string"
+        },
+        "buyerGstRegistrationNumber": {
+          "type": "string"
+        },
+        "gstCategories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "gstCategories"
+      ],
+      "description": "Peppol PINT (non-EU). GST is carried as a VAT-like scheme: `vatId` of a party holds the GST (or, in Japan, qualified-invoice) registration number, and the extension repeats it under its national name. Category codes in `vatBreakdown` stay as sent; the codes used are listed here for the jurisdictions (SG, MY) whose code lists are not UNCL 5305."
     },
     "SignatureInfo": {
       "type": "object",
@@ -3344,6 +3750,9 @@
             },
             "myDataInvoiceType": {
               "type": "string"
+            },
+            "myDataRequestedInvoiceType": {
+              "type": "string"
             }
           },
           "description": "Header values found, trimmed. First occurrence wins."
@@ -3430,6 +3839,12 @@
               }
             },
             "myDataInvoiceType": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "myDataRequestedInvoiceType": {
               "type": "object",
               "additionalProperties": {
                 "type": "string"
