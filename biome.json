@@ -12,7 +12,9 @@
       "!test/corpus/repos",
       "!bun.lock",
       "!trust",
-      "!schemas"
+      "!schemas",
+      "!openapi",
+      "!typedoc"
     ]
   },
   "formatter": {

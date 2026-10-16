@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deliverables · E-invoice to JSON</title>
+  <meta name="description" content="Everything this project publishes: TypeScript types, JSON Schemas, the OpenAPI spec, CLI binaries, the browser converter, the conformance checklist and the corpus results.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='5' y='3' width='22' height='26' rx='2' fill='%23FBF1B8' stroke='%2326358C' stroke-width='2'/%3E%3Cpath d='M10 10h12M10 15h12M10 20h7' stroke='%2326358C' stroke-width='2'/%3E%3C/svg%3E">
+</head>
+<body class="doc-page">
+  <nav class="sitenav" aria-label="Site">
+    <a class="sitenav-home" href="./">E-invoice to JSON</a>
+    <a href="api.html">API reference</a>
+    <a href="api/">TypeScript API</a>
+    <a href="conformance.html">Conformance</a>
+    <a href="https://github.com/alexcatdad/eu-einvoice-canonical">Source</a>
+  </nav>
+
+  <header class="masthead">
+    <div class="masthead-text">
+      <h1>Deliverables</h1>
+      <p class="lede">The interface is the product: the types, the schemas, the HTTP API, the command line and the evidence behind them. Each one is generated from the same TypeScript sources, so they cannot drift apart.</p>
+    </div>
+    <p class="privacy"><strong>Versions:</strong> package <code>{{PACKAGE_VERSION}}</code>, JSON Schema <code>{{SCHEMA_VERSION}}</code>, HTTP API <code>/{{SCHEMA_VERSION}}</code>. See <a href="https://github.com/alexcatdad/eu-einvoice-canonical#deliverables-and-versioning">Deliverables and versioning</a> for the compatibility promise.</p>
+  </header>
+
+  <main class="doc-main">
+    <ul class="doc-grid">
+      <li class="deliverable">
+        <h3>TypeScript types and library</h3>
+        <p><code>convert()</code>, <code>inspect()</code>, <code>detectXml()</code> and the <code>CanonicalInvoice</code> model, with the BT/BG ids in the comments. ES modules, no native code; runs in Bun, Node 20+ and browsers.</p>
+        <span class="version">package {{PACKAGE_VERSION}}</span>
+        <ul class="links">
+          <li><a href="api/">API reference (TypeDoc)</a></li>
+          <li><a href="https://github.com/alexcatdad/eu-einvoice-canonical/blob/main/src/canonical.ts">canonical.ts</a></li>
+          <li><a href="https://github.com/alexcatdad/eu-einvoice-canonical#readme">README</a></li>
+        </ul>
+      </li>
+      <li class="deliverable">
+        <h3>HTTP API (OpenAPI 3.1)</h3>
+        <p><code>POST /v1/convert</code>, <code>/v1/inspect</code>, <code>/v1/detect</code>, <code>GET /v1/formats</code>, <code>/v1/schemas/{name}</code>. Errors are RFC 9457 problems in the CLI's exit-code categories. Run it with <code>einvoice serve</code> or the Dockerfile.</p>
+        <span class="version">API v1 · spec {{SPEC_VERSION}}</span>
+        <ul class="links">
+          <li><a href="api.html">Reference</a></li>
+          <li><a href="openapi/openapi.yaml">openapi.yaml</a></li>
+          <li><a href="openapi/openapi.json">openapi.json</a></li>
+          <li><a href="problems/">Error types</a></li>
+        </ul>
+      </li>
+      <li class="deliverable">
+        <h3>Command line</h3>
+        <p>Standalone binaries for linux-x64, darwin-arm64 and windows-x64: <code>detect</code>, <code>inspect</code>, <code>convert</code>, <code>match</code>, <code>duplicates</code>, <code>sweep</code> and <code>serve</code>.</p>
+        <span class="version" id="release-version">latest release</span>
+        <ul class="links" id="release-assets">
+          <li><a href="https://github.com/alexcatdad/eu-einvoice-canonical/releases/latest">Latest GitHub release</a></li>
+        </ul>
+      </li>
+      <li class="deliverable">
+        <h3>Browser converter</h3>
+        <p>Drop a file, get the JSON and the rebuilt invoice. Everything runs in the tab; nothing is uploaded.</p>
+        <ul class="links">
+          <li><a href="./">Open the converter</a></li>
+        </ul>
+      </li>
+      <li class="deliverable">
+        <h3>Conformance checklist</h3>
+        <p>Per format: fixtures, parser, real samples, mapping source and validation, generated from the code on every build.</p>
+        <ul class="links">
+          <li><a href="conformance.html">Checklist</a></li>
+        </ul>
+      </li>
+      <li class="deliverable">
+        <h3>Corpus results</h3>
+        <p>Detection and conversion over public sample collections, run weekly and never on a pull request.</p>
+        <ul class="links" id="corpus-links">
+          <li><a href="corpus.html" id="corpus-page">Real-world results</a></li>
+          <li><a href="https://github.com/alexcatdad/eu-einvoice-canonical/actions/workflows/corpus.yml">Corpus workflow runs</a></li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2 id="schemas">JSON Schemas</h2>
+    <p>Draft 2020-12, generated from the types, published at stable URLs. Objects are open, so a payload from a newer minor release still validates against an older schema.</p>
+    <table class="doc-table">
+      <thead><tr><th>Schema</th><th>Describes</th><th>Version</th><th>File</th></tr></thead>
+      <tbody>
+        {{SCHEMA_ROWS}}
+      </tbody>
+    </table>
+
+    <h2 id="run">Run the API</h2>
+    <pre><code>einvoice serve --port 8080 --cors
+docker build -t einvoice-api . &amp;&amp; docker run --rm -p 8080:8080 einvoice-api
+
+curl -X POST --data-binary @invoice.xml -H 'Content-Type: application/xml' \
+  'http://localhost:8080/v1/convert?relations=true'</code></pre>
+  </main>
+
+  <footer class="colophon">
+    <p>Built on the open-source <a href="https://github.com/alexcatdad/eu-einvoice-canonical">eu-einvoice-canonical</a> library. Licensed 0BSD.</p>
+  </footer>
+
+  <script type="module" src="deliverables.js"></script>
+</body>
+</html>

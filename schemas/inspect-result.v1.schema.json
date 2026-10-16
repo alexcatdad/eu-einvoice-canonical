@@ -1,0 +1,640 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://alexcatdad.github.io/eu-einvoice-canonical/schemas/inspect-result.v1.schema.json",
+  "title": "InspectResult",
+  "type": "object",
+  "properties": {
+    "fileSha256": {
+      "type": "string"
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/InspectedDocument"
+      }
+    },
+    "skipped": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Skipped"
+      },
+      "description": "Everything in the file that did not become a document, with the reason (DOCTYPE, size limits, detached signatures...)."
+    }
+  },
+  "required": [
+    "fileSha256",
+    "documents",
+    "skipped"
+  ],
+  "$defs": {
+    "Detection": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "invoice"
+            },
+            "format": {
+              "$ref": "#/$defs/FormatDef"
+            },
+            "details": {
+              "$ref": "#/$defs/MatchDetails"
+            },
+            "probe": {
+              "$ref": "#/$defs/XmlProbe"
+            }
+          },
+          "required": [
+            "kind",
+            "format",
+            "details",
+            "probe"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "other-document"
+            },
+            "label": {
+              "type": "string"
+            },
+            "probe": {
+              "$ref": "#/$defs/XmlProbe"
+            }
+          },
+          "required": [
+            "kind",
+            "label",
+            "probe"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "unknown"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "probe": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/XmlProbe"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "reason",
+            "probe"
+          ]
+        }
+      ]
+    },
+    "EnvelopeStep": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "zip",
+            "pdf-attachment",
+            "cms-p7m",
+            "base64",
+            "sbdh",
+            "soap",
+            "xml"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "description": "Entry name, attachment name or other locator."
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "description": "One unwrapping step between the received file and the parsed XML."
+    },
+    "FormatDef": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "family": {
+          "$ref": "#/$defs/ParserFamily"
+        },
+        "countries": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "ISO country codes, or 'EU' for formats used everywhere."
+        },
+        "status": {
+          "$ref": "#/$defs/FormatStatus"
+        },
+        "phase": {
+          "type": "number",
+          "enum": [
+            1,
+            2,
+            3
+          ],
+          "description": "Suggested build order: 1 = EN 16931 syntaxes, 2 = national formats in active use, 3 = legacy."
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "family",
+        "countries",
+        "status",
+        "phase",
+        "notes"
+      ]
+    },
+    "FormatStatus": {
+      "type": "string",
+      "enum": [
+        "current",
+        "legacy",
+        "unverified"
+      ],
+      "description": "- current: in active use for invoices you will receive.\n- legacy: superseded but still sent by some senders; parse best-effort.\n- unverified: detection rule not confirmed against a real file; check before relying on it."
+    },
+    "InspectedDocument": {
+      "type": "object",
+      "properties": {
+        "payload": {
+          "type": "object",
+          "properties": {
+            "encoding": {
+              "type": "string"
+            },
+            "envelope": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/EnvelopeStep"
+              }
+            },
+            "filename": {
+              "type": "string",
+              "description": "Name of the innermost file (zip entry, PDF attachment, or the received file)."
+            },
+            "signatures": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/SignatureInfo"
+              }
+            },
+            "fromPdf": {
+              "type": "boolean"
+            },
+            "sha256": {
+              "type": "string",
+              "description": "SHA-256 (hex) of the XML payload, UTF-8 encoded."
+            },
+            "byteLength": {
+              "type": "number",
+              "description": "Size of the XML payload in bytes, UTF-8 encoded."
+            },
+            "siblingEntries": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Names of the other files in the ZIP this payload came from (ISDOCX attachments); only set for ZIP members."
+            }
+          },
+          "required": [
+            "encoding",
+            "envelope",
+            "signatures",
+            "fromPdf",
+            "sha256",
+            "byteLength"
+          ]
+        },
+        "detection": {
+          "$ref": "#/$defs/Detection"
+        }
+      },
+      "required": [
+        "payload",
+        "detection"
+      ]
+    },
+    "MatchDetails": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "profile": {
+          "type": "string"
+        }
+      }
+    },
+    "ParserFamily": {
+      "type": "string",
+      "enum": [
+        "ubl",
+        "cii",
+        "zugferd1",
+        "svefaktura",
+        "fatturapa",
+        "ksef",
+        "facturae",
+        "isdoc",
+        "ebinterface",
+        "finvoice",
+        "teappsxml",
+        "e-arve",
+        "eslog",
+        "mydata",
+        "cfdi"
+      ]
+    },
+    "SignatureInfo": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "CAdES",
+            "XAdES",
+            "XMLDSig",
+            "PAdES",
+            "detached"
+          ]
+        },
+        "verified": {
+          "type": "boolean",
+          "description": "Cryptographic validity only: the signature value matches the signed content and the signer certificate's key. true = valid, false = invalid (see `reason`), undefined = could not be checked. This says nothing about who the signer is; see `trust`."
+        },
+        "signer": {
+          "type": "string",
+          "description": "Common name of the signer certificate."
+        },
+        "certificate": {
+          "type": "object",
+          "properties": {
+            "subject": {
+              "type": "string"
+            },
+            "issuer": {
+              "type": "string"
+            },
+            "serial": {
+              "type": "string"
+            },
+            "notBefore": {
+              "type": "string"
+            },
+            "notAfter": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "subject",
+            "issuer",
+            "serial",
+            "notBefore",
+            "notAfter"
+          ],
+          "description": "Signer certificate details, as carried in the signature."
+        },
+        "signedAt": {
+          "type": "string",
+          "description": "Signing time (ISO 8601) from signed attributes / XAdES SigningTime, when the signature protects it."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Why `verified` is false, or why it could not be determined."
+        },
+        "trust": {
+          "type": "string",
+          "enum": [
+            "not-checked",
+            "trusted",
+            "untrusted"
+          ],
+          "description": "'not-checked' unless trust anchors were configured: a valid signature is not a trusted signer."
+        },
+        "trustReason": {
+          "type": "string"
+        },
+        "euTrust": {
+          "type": "object",
+          "properties": {
+            "qualified": {
+              "type": "boolean",
+              "description": "The signer chains to a CA/QC service whose status was granted at the signing time."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "qualified",
+                "not-qualified",
+                "not-listed"
+              ]
+            },
+            "evaluatedAt": {
+              "type": "string",
+              "description": "The instant the service status was evaluated at: the signing time, or now when the signature carries none."
+            },
+            "signingTimeKnown": {
+              "type": "boolean"
+            },
+            "service": {
+              "type": "object",
+              "properties": {
+                "provider": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "territory": {
+                  "type": "string"
+                },
+                "statusAtSigning": {
+                  "type": "string"
+                },
+                "currentStatus": {
+                  "type": "string"
+                },
+                "statusFrom": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "provider",
+                "name",
+                "territory",
+                "statusAtSigning",
+                "currentStatus",
+                "statusFrom"
+              ]
+            },
+            "snapshot": {
+              "type": "object",
+              "properties": {
+                "fetchedAt": {
+                  "type": "string"
+                },
+                "nextUpdate": {
+                  "type": "string"
+                },
+                "stale": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "fetchedAt",
+                "stale"
+              ],
+              "description": "`stale`: the snapshot is past its earliest next-update date, so the lists may have changed since."
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "qualified",
+            "status",
+            "evaluatedAt",
+            "signingTimeKnown",
+            "snapshot"
+          ],
+          "description": "Present when an EU trusted-list snapshot was passed (`euTrust` option): the qualified-service check of the signer."
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "Skipped": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "reason"
+      ]
+    },
+    "XmlProbe": {
+      "type": "object",
+      "properties": {
+        "rootName": {
+          "type": "string"
+        },
+        "rootNs": {
+          "type": "string"
+        },
+        "rootAttrs": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Root attributes by local name (versione, Version, version...)."
+        },
+        "nsDecls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Every namespace URI declared on the root element."
+        },
+        "values": {
+          "type": "object",
+          "properties": {
+            "ublCustomizationId": {
+              "type": "string"
+            },
+            "ublProfileId": {
+              "type": "string"
+            },
+            "ublVersionId": {
+              "type": "string"
+            },
+            "ciiGuidelineId": {
+              "type": "string"
+            },
+            "ciiBusinessProcessId": {
+              "type": "string"
+            },
+            "zf1GuidelineId": {
+              "type": "string"
+            },
+            "ksefFormCode": {
+              "type": "string"
+            },
+            "eArveVersion": {
+              "type": "string"
+            },
+            "facturaeSchemaVersion": {
+              "type": "string"
+            },
+            "facturaeModality": {
+              "type": "string"
+            },
+            "fatturaTipoDocumento": {
+              "type": "string"
+            },
+            "isdocDocumentType": {
+              "type": "string"
+            },
+            "finvoiceTypeCode": {
+              "type": "string"
+            },
+            "myDataInvoiceType": {
+              "type": "string"
+            },
+            "myDataRequestedInvoiceType": {
+              "type": "string"
+            }
+          },
+          "description": "Header values found, trimmed. First occurrence wins."
+        },
+        "valueAttrs": {
+          "type": "object",
+          "properties": {
+            "ublCustomizationId": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "ublProfileId": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "ublVersionId": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "ciiGuidelineId": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "ciiBusinessProcessId": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "zf1GuidelineId": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "ksefFormCode": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "eArveVersion": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "facturaeSchemaVersion": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "facturaeModality": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "fatturaTipoDocumento": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "isdocDocumentType": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "finvoiceTypeCode": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "myDataInvoiceType": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "myDataRequestedInvoiceType": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "description": "Attributes of the elements at the target paths (e.g. KSeF kodSystemowy)."
+        },
+        "hasDoctype": {
+          "type": "boolean",
+          "description": "The document has a DOCTYPE declaration. Inbound e-invoices never need one; treat as hostile."
+        },
+        "error": {
+          "type": "string",
+          "description": "Parse error, if the document is not well-formed up to the point read."
+        }
+      },
+      "required": [
+        "rootName",
+        "rootNs",
+        "rootAttrs",
+        "nsDecls",
+        "values",
+        "valueAttrs",
+        "hasDoctype"
+      ]
+    }
+  }
+}

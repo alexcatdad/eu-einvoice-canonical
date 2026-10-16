@@ -1,0 +1,501 @@
+{
+  "formats": [
+    {
+      "id": "xrechnung-ubl",
+      "name": "XRechnung (UBL)",
+      "family": "ubl",
+      "countries": [
+        "DE"
+      ],
+      "status": "current",
+      "phase": 1,
+      "notes": "German CIUS. B2G mandatory; B2B receiving obligation since 1 Jan 2025. BT-10 carries the Leitweg-ID."
+    },
+    {
+      "id": "nlcius-ubl",
+      "name": "NLCIUS (UBL)",
+      "family": "ubl",
+      "countries": [
+        "NL"
+      ],
+      "status": "current",
+      "phase": 1,
+      "notes": "Dutch CIUS (SI-UBL 2.0). Also sent with the G-account extension."
+    },
+    {
+      "id": "cius-ro",
+      "name": "RO e-Factura (CIUS-RO)",
+      "family": "ubl",
+      "countries": [
+        "RO"
+      ],
+      "status": "current",
+      "phase": 1,
+      "notes": "Downloaded from ANAF SPV as a ZIP holding the invoice and a detached XMLDSig signature file."
+    },
+    {
+      "id": "cius-pt",
+      "name": "CIUS-PT",
+      "family": "ubl",
+      "countries": [
+        "PT"
+      ],
+      "status": "current",
+      "phase": 1,
+      "notes": "Portuguese CIUS for public procurement. Carries ATCUD."
+    },
+    {
+      "id": "hr-cius",
+      "name": "HR-CIUS (Fiskalizacija 2.0)",
+      "family": "ubl",
+      "countries": [
+        "HR"
+      ],
+      "status": "current",
+      "phase": 1,
+      "notes": "Croatian CIUS + HR extensions, mandatory B2B and B2G since 1 Jan 2026. OIB uses EAS 9934. The official spec spells the identifier inconsistently, so the rule only looks for urn:mfin.gov."
+    },
+    {
+      "id": "fr-ctc-ubl",
+      "name": "France CTC (UBL)",
+      "family": "ubl",
+      "countries": [
+        "FR"
+      ],
+      "status": "current",
+      "phase": 1,
+      "notes": "French reform (XP Z12-012), receiving obligation from 1 Sep 2026. EXTENDED-CTC-FR identifier is urn.cpro.gouv.fr:1p0:extended-ctc-fr; plain EN16931 French invoices fall through to en16931-ubl."
+    },
+    {
+      "id": "oioubl-3",
+      "name": "OIOUBL 3.0",
+      "family": "ubl",
+      "countries": [
+        "DK"
+      ],
+      "status": "current",
+      "phase": 1,
+      "notes": "Danish UBL 2.1 profile aligned with Peppol BIS 3."
+    },
+    {
+      "id": "pl-pef",
+      "name": "Poland PEF (Peppol BIS 3 + PL extension)",
+      "family": "ubl",
+      "countries": [
+        "PL"
+      ],
+      "status": "current",
+      "phase": 1,
+      "notes": "Public-procurement invoices via PEF (efaktura.gov.pl). Detected by the efaktura.gov.pl extension in the CustomizationID."
+    },
+    {
+      "id": "peppol-bis3",
+      "name": "Peppol BIS Billing 3.0",
+      "family": "ubl",
+      "countries": [
+        "EU"
+      ],
+      "status": "current",
+      "phase": 1,
+      "notes": "Default for BE (B2B since 1 Jan 2026), SK (2027), LV, LU, MT, IE, SE, FI, NL, DK, AT/DE/FR B2G and cross-border. Profile shows national extensions (e.g. Italy AGID)."
+    },
+    {
+      "id": "peppol-bis3-selfbilling",
+      "name": "Peppol BIS Self-Billing 3.0",
+      "family": "ubl",
+      "countries": [
+        "EU"
+      ],
+      "status": "current",
+      "phase": 1,
+      "notes": "Self-billed invoices; seller and buyer roles stay as in EN 16931."
+    },
+    {
+      "id": "pint-sg",
+      "name": "Peppol PINT Singapore (InvoiceNow)",
+      "family": "ubl",
+      "countries": [
+        "SG"
+      ],
+      "status": "current",
+      "phase": 2,
+      "notes": "InvoiceNow (IMDA). GST is carried as a VAT-like tax scheme; seller and buyer UEN in the endpoint (EAS 0195)."
+    },
+    {
+      "id": "pint-aunz",
+      "name": "Peppol PINT Australia and New Zealand",
+      "family": "ubl",
+      "countries": [
+        "AU",
+        "NZ"
+      ],
+      "status": "current",
+      "phase": 2,
+      "notes": "One specification for both countries; billing and self-billing. ABN (EAS 0151) or NZBN (EAS 0088) as party identifier, GST as a VAT-like scheme. The older Peppol BIS Billing International A-NZ identifier is detected as peppol-pint."
+    },
+    {
+      "id": "pint-jp",
+      "name": "Peppol PINT Japan",
+      "family": "ubl",
+      "countries": [
+        "JP"
+      ],
+      "status": "current",
+      "phase": 2,
+      "notes": "Japanese qualified invoice (Peppol e-invoice, from Oct 2023). The seller T-number registration is the tax identifier (scheme VAT). The variant for businesses not registered for the qualified invoice system (nontaxinvoice-1@jp-1) is detected as profile non-tax-registered."
+    },
+    {
+      "id": "pint-my",
+      "name": "Peppol PINT Malaysia (MyInvois)",
+      "family": "ubl",
+      "countries": [
+        "MY"
+      ],
+      "status": "current",
+      "phase": 2,
+      "notes": "Aligned with LHDN MyInvois. TIN travels in a tax scheme named GST, SST registration in VAT; MSIC code on the seller."
+    },
+    {
+      "id": "pint-ae",
+      "name": "Peppol PINT United Arab Emirates",
+      "family": "ubl",
+      "countries": [
+        "AE"
+      ],
+      "status": "current",
+      "phase": 2,
+      "notes": "UAE e-invoicing (five-corner model). Eight transaction-type flags in ProfileExecutionID; TIN as endpoint (EAS 0235)."
+    },
+    {
+      "id": "pint-om",
+      "name": "Peppol PINT Oman",
+      "family": "ubl",
+      "countries": [
+        "OM"
+      ],
+      "status": "current",
+      "phase": 3,
+      "notes": "Oman e-invoicing (Peppol PINT OM). Detected and parsed as plain UBL; no Oman-specific fields are mapped."
+    },
+    {
+      "id": "pint-eu",
+      "name": "Peppol PINT EU",
+      "family": "ubl",
+      "countries": [
+        "EU"
+      ],
+      "status": "current",
+      "phase": 3,
+      "notes": "PINT EU (urn:peppol:pint:billing-1@eu-1), the PINT specialisation for the European Union."
+    },
+    {
+      "id": "peppol-pint",
+      "name": "Peppol PINT (base and other jurisdictions)",
+      "family": "ubl",
+      "countries": [
+        "EU"
+      ],
+      "status": "current",
+      "phase": 1,
+      "notes": "Peppol International model: the PINT base (urn:peppol:pint:billing-1), PINT jurisdictions without their own rule, and the older BIS Billing International identifiers. Accept for cross-border senders."
+    },
+    {
+      "id": "zatca-ubl",
+      "name": "Saudi ZATCA e-invoice (UBL, KSA profile)",
+      "family": "ubl",
+      "countries": [
+        "SA"
+      ],
+      "status": "current",
+      "phase": 2,
+      "notes": "FATOORA phase 2: standard (B2B/B2G, cleared) and simplified (B2C, reported) tax invoices, signed with XAdES in UBLExtensions. Detected by ProfileID reporting:1.0 (or clearance:1.0)."
+    },
+    {
+      "id": "ubl-be",
+      "name": "UBL.BE",
+      "family": "ubl",
+      "countries": [
+        "BE"
+      ],
+      "status": "legacy",
+      "phase": 3,
+      "notes": "Belgian EN 16931 extension used before the Peppol BIS 3 B2B mandate."
+    },
+    {
+      "id": "en16931-ubl",
+      "name": "EN 16931 (UBL), no CIUS",
+      "family": "ubl",
+      "countries": [
+        "EU"
+      ],
+      "status": "current",
+      "phase": 1,
+      "notes": "Bare EN 16931 or an unknown CIUS of it. Accepts the 2017 and 2026 specification identifiers."
+    },
+    {
+      "id": "peppol-bis2",
+      "name": "Peppol BIS 2 / CEN BII (incl. Svefaktura BIS 5A, EHF 2)",
+      "family": "ubl",
+      "countries": [
+        "EU"
+      ],
+      "status": "legacy",
+      "phase": 3,
+      "notes": "Pre-EN 16931 Peppol profiles, withdrawn 2019. Same UBL 2.1 syntax; parse best-effort and warn."
+    },
+    {
+      "id": "oioubl-2",
+      "name": "OIOUBL 2.x",
+      "family": "ubl",
+      "countries": [
+        "DK"
+      ],
+      "status": "legacy",
+      "phase": 3,
+      "notes": "Danish profile on UBL 2.0 (same namespaces as UBL 2.1). Still widely sent via NemHandel."
+    },
+    {
+      "id": "ubl-unknown",
+      "name": "UBL 2.x invoice, unknown profile",
+      "family": "ubl",
+      "countries": [
+        "EU"
+      ],
+      "status": "unverified",
+      "phase": 3,
+      "notes": "UBL Invoice/CreditNote with a missing or unrecognised CustomizationID. Parse best-effort and warn."
+    },
+    {
+      "id": "xrechnung-cii",
+      "name": "XRechnung (CII)",
+      "family": "cii",
+      "countries": [
+        "DE"
+      ],
+      "status": "current",
+      "phase": 1,
+      "notes": "German CIUS in CII syntax."
+    },
+    {
+      "id": "nlcius-cii",
+      "name": "NLCIUS (CII)",
+      "family": "cii",
+      "countries": [
+        "NL"
+      ],
+      "status": "current",
+      "phase": 1,
+      "notes": "Dutch CIUS in CII syntax."
+    },
+    {
+      "id": "fr-ctc-cii",
+      "name": "France CTC (CII / Factur-X EXTENDED-CTC-FR)",
+      "family": "cii",
+      "countries": [
+        "FR"
+      ],
+      "status": "current",
+      "phase": 1,
+      "notes": "French reform uses CII D22B. Guideline ID is urn.cpro.gouv.fr:1p0:extended-ctc-fr."
+    },
+    {
+      "id": "facturx",
+      "name": "Factur-X / ZUGFeRD 2.x",
+      "family": "cii",
+      "countries": [
+        "DE",
+        "FR"
+      ],
+      "status": "current",
+      "phase": 1,
+      "notes": "Hybrid PDF/A-3 + CII. MINIMUM and BASIC WL carry no lines and are not valid e-invoices in DE; France accepts BASIC WL until Sep 2027. The EN 16931 profile uses the plain EN identifier."
+    },
+    {
+      "id": "en16931-cii",
+      "name": "EN 16931 (CII), no CIUS",
+      "family": "cii",
+      "countries": [
+        "EU"
+      ],
+      "status": "current",
+      "phase": 1,
+      "notes": "Bare EN 16931 CII, or an unknown CIUS of it."
+    },
+    {
+      "id": "cii-unknown",
+      "name": "CII invoice, unknown profile",
+      "family": "cii",
+      "countries": [
+        "EU"
+      ],
+      "status": "unverified",
+      "phase": 3,
+      "notes": "CrossIndustryInvoice with an unrecognised guideline ID (includes ZUGFeRD 1 IDs placed in CII D16B files)."
+    },
+    {
+      "id": "zugferd-1",
+      "name": "ZUGFeRD 1.0",
+      "family": "zugferd1",
+      "countries": [
+        "DE"
+      ],
+      "status": "legacy",
+      "phase": 3,
+      "notes": "CII D13B-era CrossIndustryDocument, usually inside a PDF (ZUGFeRD-invoice.xml)."
+    },
+    {
+      "id": "fatturapa",
+      "name": "FatturaPA",
+      "family": "fatturapa",
+      "countries": [
+        "IT"
+      ],
+      "status": "current",
+      "phase": 2,
+      "notes": "All Italian domestic B2B/B2G invoices go through SdI. Often a CAdES .p7m; one file can hold several invoices (lotto). IdentificativoSdI comes from the SdI metadata file, not the invoice. Child elements are unqualified (no namespace), so match them by local name."
+    },
+    {
+      "id": "fatturapa-semplificata",
+      "name": "FatturaPA semplificata",
+      "family": "fatturapa",
+      "countries": [
+        "IT"
+      ],
+      "status": "current",
+      "phase": 3,
+      "notes": "Simplified invoice (FSM10) for small amounts."
+    },
+    {
+      "id": "ksef",
+      "name": "KSeF FA(2)/FA(3)/FA_RR",
+      "family": "ksef",
+      "countries": [
+        "PL"
+      ],
+      "status": "current",
+      "phase": 2,
+      "notes": "Mandatory structured invoice in Poland (large taxpayers from 1 Feb 2026, others from 1 Apr 2026). The KSeF number is assigned by KSeF and comes from the download metadata, not the XML."
+    },
+    {
+      "id": "facturae",
+      "name": "Facturae",
+      "family": "facturae",
+      "countries": [
+        "ES"
+      ],
+      "status": "current",
+      "phase": 2,
+      "notes": "Spanish format, mandatory for B2G via FACe; one of the formats allowed under the approved B2B decree. XAdES-signed (.xsig). A file can be a batch (Modality L)."
+    },
+    {
+      "id": "isdoc",
+      "name": "ISDOC",
+      "family": "isdoc",
+      "countries": [
+        "CZ"
+      ],
+      "status": "current",
+      "phase": 2,
+      "notes": "Czech format. .isdoc is XML; .isdocx is a ZIP with the XML and attachments."
+    },
+    {
+      "id": "ebinterface",
+      "name": "ebInterface",
+      "family": "ebinterface",
+      "countries": [
+        "AT"
+      ],
+      "status": "current",
+      "phase": 2,
+      "notes": "Austrian format. 4.3-6.1 accepted; 4.0-4.2 no longer supported since 2022; 7.0 announced for Q4 2026."
+    },
+    {
+      "id": "finvoice",
+      "name": "Finvoice",
+      "family": "finvoice",
+      "countries": [
+        "FI"
+      ],
+      "status": "current",
+      "phase": 2,
+      "notes": "Finnish bank-network format. No namespace. Usually shipped after a SOAP envelope in the same file; often ISO-8859-15."
+    },
+    {
+      "id": "teappsxml",
+      "name": "TEAPPSXML",
+      "family": "teappsxml",
+      "countries": [
+        "FI"
+      ],
+      "status": "current",
+      "phase": 3,
+      "notes": "Finnish operator format (TietoEVRY)."
+    },
+    {
+      "id": "e-arve",
+      "name": "Estonian e-invoice (e-arve)",
+      "family": "e-arve",
+      "countries": [
+        "EE"
+      ],
+      "status": "current",
+      "phase": 2,
+      "notes": "No namespace. One file can hold several invoices. Header/Version is \"1.2\" even for 1.2.EN."
+    },
+    {
+      "id": "eslog-2",
+      "name": "eSLOG 2.0",
+      "family": "eslog",
+      "countries": [
+        "SI"
+      ],
+      "status": "current",
+      "phase": 2,
+      "notes": "Slovenian EN 16931-aligned format with EDIFACT-style segment names. B2B mandatory from 1 Jan 2028."
+    },
+    {
+      "id": "eslog-1",
+      "name": "eSLOG 1.6",
+      "family": "eslog",
+      "countries": [
+        "SI"
+      ],
+      "status": "current",
+      "phase": 3,
+      "notes": "Pre-EN Slovenian format (simple invoice, root IzdaniRacunEnostavni, no namespace)."
+    },
+    {
+      "id": "svefaktura-1",
+      "name": "Svefaktura 1.0",
+      "family": "svefaktura",
+      "countries": [
+        "SE"
+      ],
+      "status": "legacy",
+      "phase": 3,
+      "notes": "Withdrawn by SFTI in 2021 but still used B2B via operators."
+    },
+    {
+      "id": "gr-mydata",
+      "name": "Greece myDATA invoice XML",
+      "family": "mydata",
+      "countries": [
+        "GR"
+      ],
+      "status": "current",
+      "phase": 3,
+      "notes": "AADE myDATA document (InvoicesDoc, or the RequestedDoc wrapper that the AADE retrieval services return; namespace http://www.aade.gr/myDATA/invoice/v1.0 in the AADE XSD; checked against AADE's published InvoicesDoc schema and sample XML). One file can hold several invoices. Greek B2B mandate phases from Feb 2026 (large) and Oct 2026 (others). Greek EN 16931 invoices are detected by the UBL/CII rules; this rule is for raw myDATA files."
+    },
+    {
+      "id": "mx-cfdi",
+      "name": "Mexico CFDI 3.3 / 4.0",
+      "family": "cfdi",
+      "countries": [
+        "MX"
+      ],
+      "status": "current",
+      "phase": 3,
+      "notes": "Mexican tax-authority invoice (cfdi:Comprobante), stamped by an authorised provider (PAC) with a SAT TimbreFiscalDigital. Only types I (ingreso, invoice) and E (egreso, credit note) are invoices; T (traslado), P (pago, Pagos 2.0) and N (nómina) are detected as other documents. CFDI 4.0 has been mandatory since 1 Apr 2023; 3.3 only appears in older files."
+    }
+  ]
+}
