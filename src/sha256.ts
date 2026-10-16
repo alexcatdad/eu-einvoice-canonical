@@ -58,7 +58,11 @@ export function sha256(data: Uint8Array): Uint8Array {
 }
 
 export function base64(bytes: Uint8Array): string {
-  let s = '';
-  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  return btoa(s);
+  // Built in where the runtime has it (Bun, Node 25+, current browsers); the fallback builds the binary string in
+  // chunks and joins them once, which is much cheaper than concatenating onto one growing string.
+  const native = (bytes as Uint8Array & { toBase64?: () => string }).toBase64;
+  if (native) return native.call(bytes);
+  const chunks: string[] = [];
+  for (let i = 0; i < bytes.length; i += 0x8000) chunks.push(String.fromCharCode(...bytes.subarray(i, i + 0x8000)));
+  return btoa(chunks.join(''));
 }

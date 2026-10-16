@@ -14,8 +14,10 @@
  *
  * It reports gaps; it does not fail the build.
  */
-import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { renderPerformanceHtml } from '../bench/report.js';
+import type { Results } from '../bench/run.js';
 import type { Detection } from '../src/detect.js';
 import { convert, FORMATS, type FormatDef, IMPLEMENTED_FAMILIES } from '../src/index.js';
 import { type Layer, planFor } from '../src/validation/plan.js';
@@ -142,6 +144,12 @@ if (jsonOut) writeFileSync(jsonOut, JSON.stringify({ generatedAt: new Date().toI
 const htmlOut = argValue('--html');
 if (htmlOut) writeFileSync(htmlOut, html());
 
+/** The latest benchmark summary, when bench/results.json is committed. */
+function performanceSection() {
+  const path = join(root, 'bench', 'results.json');
+  return existsSync(path) ? renderPerformanceHtml(JSON.parse(readFileSync(path, 'utf8')) as Results) : '';
+}
+
 function html() {
   const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
   const cell = (n: number, good: boolean) => `<td class="num ${good ? 'good' : 'gap'}">${n}</td>`;
@@ -187,6 +195,7 @@ function html() {
   </table>
   </div>
   <p class="wrappers">Generated ${new Date().toISOString().slice(0, 10)} by <code>scripts/conformance.ts</code>. Hand-maintained facts (which fixtures are real public samples, mapping sources) live in <code>conformance/notes.json</code>.</p>
+  ${performanceSection()}
 </main>
 </body>
 </html>`;

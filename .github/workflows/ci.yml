@@ -49,6 +49,15 @@ jobs:
         working-directory: typedoc
       - name: Build the site (browser converter, API reference, TypeDoc)
         run: bun run build:site
+      - name: Performance gate (quick subset against bench/baseline.json)
+        run: bun run bench:check
+      - name: Upload the quick benchmark run
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: bench-quick
+          path: bench/last-quick.json
+          if-no-files-found: ignore
       - name: Conformance checklist (job summary and site page)
         run: bun scripts/conformance.ts --html dist/conformance.html --json dist/conformance.json
       - name: Real-world results page (latest corpus report, when there is one)

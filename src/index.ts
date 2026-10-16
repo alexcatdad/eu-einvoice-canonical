@@ -3,6 +3,7 @@ import { checkTotals } from './checks.js';
 import { type Detection, detectXml } from './detect.js';
 import { type Skipped, type UnwrapLimits, type UnwrapOptions, unwrap, type XmlPayload } from './envelope.js';
 import { NotImplementedError, PARSERS, ParseError } from './parsers/index.js';
+import { clearProbeCache } from './probe.js';
 import { applyRelations } from './relations/rules.js';
 import { signatureFindings, signatureStatus } from './signature/index.js';
 import type { ValidateOptions } from './validation/index.js';
@@ -81,6 +82,7 @@ export async function inspect(
 ): Promise<InspectResult> {
   const { fileSha256, payloads, skipped } = await unwrap(bytes, filename, limits, options);
   const documents = payloads.map(({ xml, ...payload }) => ({ payload, detection: detectXml(xml, { fromPdf: payload.fromPdf }) }));
+  clearProbeCache();
   return { fileSha256, documents, skipped };
 }
 
@@ -123,6 +125,30 @@ export interface ConvertOptions extends UnwrapOptions {
 async function loadValidation(): Promise<typeof import('./validation/index.js')> {
   const specifier = ['.', 'validation', 'index.js'].join('/');
   return import(/* @vite-ignore */ specifier);
+}
+
+/** The smallest document that is detected as Peppol BIS 3 UBL, so every validator layer has something to run on. */
+const WARM_UP_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+<cbc:CustomizationID>urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0</cbc:CustomizationID>
+<cbc:ProfileID>urn:fdc:peppol.eu:2017:poacc:billing:01:1.0</cbc:ProfileID>
+<cbc:ID>WARM-UP</cbc:ID>
+</Invoice>`;
+
+/**
+ * Loads and compiles the validators (SaxonJS, xmllint-wasm, the UBL rule sets) ahead of the first document, by
+ * validating a tiny invoice and discarding the result. The first `convert(..., { validate: true })` otherwise pays
+ * this once (about 300 ms on a laptop). Resolves to false when the validators cannot be loaded; never throws.
+ */
+export async function warmUpValidation(options?: ValidateOptions): Promise<boolean> {
+  try {
+    const validation = await loadValidation();
+    const detection = detectXml(WARM_UP_XML);
+    const summary = await validation.validate({ xml: WARM_UP_XML }, detection, options);
+    return summary.schema !== 'unavailable' && summary.semantic !== 'unavailable' && summary.profile !== 'unavailable';
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -179,6 +205,7 @@ export async function convert(
       return { status: 'error', detection, payload: meta, error: `Internal error: ${(e as Error).message}` };
     }
   });
+  clearProbeCache();
   if (options.validate) {
     let validation: typeof import('./validation/index.js') | undefined;
     let loadError = '';

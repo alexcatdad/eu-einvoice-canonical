@@ -1,0 +1,152 @@
+{
+  "generatedAt": "2026-10-16T00:44:15.590Z",
+  "runtime": "bun 1.4.2",
+  "platform": "darwin-arm64",
+  "calibrationMs": 5.626125000000002,
+  "quick": true,
+  "cases": [
+    {
+      "id": "format/facturae-322-iva-irpf.xml",
+      "group": "format",
+      "bytes": 8620,
+      "docsPerSec": 1470.9494831818329,
+      "medianMs": 0.6798330000000306,
+      "ratio": 0.12083503299340671
+    },
+    {
+      "id": "format/fatturapa-b2b.xml",
+      "group": "format",
+      "bytes": 5351,
+      "docsPerSec": 2210.555402044677,
+      "medianMs": 0.45237500000001774,
+      "ratio": 0.08040614099402654
+    },
+    {
+      "id": "format/ksef-fa3.xml",
+      "group": "format",
+      "bytes": 1054,
+      "docsPerSec": 5475.701574263303,
+      "medianMs": 0.18262500000003,
+      "ratio": 0.03246017463174564
+    },
+    {
+      "id": "format/peppol-bis3-invoice.xml",
+      "group": "format",
+      "bytes": 11921,
+      "docsPerSec": 1023.628414696244,
+      "medianMs": 0.976917000000185,
+      "ratio": 0.1736394054522757
+    },
+    {
+      "id": "format/xrechnung-cii.xml",
+      "group": "format",
+      "bytes": 8725,
+      "docsPerSec": 1717.354381228133,
+      "medianMs": 0.5822910000001684,
+      "ratio": 0.10349770045993792
+    },
+    {
+      "id": "wrapper/pdf-a3",
+      "group": "wrapper",
+      "bytes": 37897,
+      "docsPerSec": 879.894412670426,
+      "medianMs": 1.1365000000000691,
+      "ratio": 0.20200404363572952
+    },
+    {
+      "id": "wrapper/cades-p7m",
+      "group": "wrapper",
+      "bytes": 5316,
+      "docsPerSec": 522.1705795518786,
+      "medianMs": 1.9150830000000951,
+      "ratio": 0.34039112177566166
+    },
+    {
+      "id": "wrapper/zip",
+      "group": "wrapper",
+      "bytes": 24436,
+      "docsPerSec": 626.7957698806634,
+      "medianMs": 1.5954160000001139,
+      "ratio": 0.2835727965518209
+    },
+    {
+      "id": "options/ubl-provenance",
+      "group": "options",
+      "bytes": 11921,
+      "docsPerSec": 999.4173396909542,
+      "medianMs": 1.000583000000006,
+      "ratio": 0.1778458530516129
+    },
+    {
+      "id": "options/ubl-relations+provenance",
+      "group": "options",
+      "bytes": 11921,
+      "docsPerSec": 1026.8690557118623,
+      "medianMs": 0.9738339999998971,
+      "ratio": 0.17309142615919426
+    },
+    {
+      "id": "large/1000-lines-plain",
+      "group": "large",
+      "bytes": 741634,
+      "docsPerSec": 16.84006091521555,
+      "medianMs": 59.38220799999999,
+      "ratio": 10.554726032571258
+    },
+    {
+      "id": "large/1000-lines-relations+provenance",
+      "group": "large",
+      "bytes": 741634,
+      "docsPerSec": 3.441857983776801,
+      "medianMs": 290.5407500000001,
+      "ratio": 51.64136061676554
+    }
+  ],
+  "bundles": [
+    {
+      "name": "app.js",
+      "bytes": 20919,
+      "gzipBytes": 8621
+    },
+    {
+      "name": "chunks/app.js",
+      "bytes": 825060,
+      "gzipBytes": 231566
+    },
+    {
+      "name": "chunks/cades.js",
+      "bytes": 1852,
+      "gzipBytes": 1003
+    },
+    {
+      "name": "chunks/envelope-cms.js",
+      "bytes": 780,
+      "gzipBytes": 489
+    },
+    {
+      "name": "chunks/envelope-pdf.js",
+      "bytes": 440815,
+      "gzipBytes": 180613
+    },
+    {
+      "name": "chunks/trust.js",
+      "bytes": 1070,
+      "gzipBytes": 569
+    },
+    {
+      "name": "chunks/tsl-load.js",
+      "bytes": 3110,
+      "gzipBytes": 1614
+    },
+    {
+      "name": "chunks/xmldsig.js",
+      "bytes": 210,
+      "gzipBytes": 184
+    },
+    {
+      "name": "eval.js",
+      "bytes": 7434,
+      "gzipBytes": 3099
+    }
+  ]
+}

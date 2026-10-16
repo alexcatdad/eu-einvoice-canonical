@@ -39,6 +39,25 @@ export function parseXml(xml: string): Element {
 type Step = [ns: string | null, local: string];
 
 const xpathCache = new WeakMap<Element, string>();
+/** Per parent: how many element children carry each name, and each child's position among those that share its name. */
+const siblingIndex = new WeakMap<Element, { counts: Map<string, number>; positions: Map<Element, number> }>();
+
+function siblingsOf(parent: Element) {
+  let hit = siblingIndex.get(parent);
+  if (!hit) {
+    const counts = new Map<string, number>();
+    const positions = new Map<Element, number>();
+    for (let s = parent.firstChild; s; s = s.nextSibling) {
+      if (s.nodeType !== 1) continue;
+      const n = (counts.get(s.nodeName) ?? 0) + 1;
+      counts.set(s.nodeName, n);
+      positions.set(s as Element, n);
+    }
+    hit = { counts, positions };
+    siblingIndex.set(parent, hit);
+  }
+  return hit;
+}
 
 /**
  * Absolute XPath of an element, written with the qualified names found in the document
@@ -52,15 +71,9 @@ export function xpathOf(el: Element): string {
   const parent = el.parentNode as Element | null;
   let path: string;
   if (parent && parent.nodeType === 1) {
-    let count = 0;
-    let index = 0;
-    for (let s = parent.firstChild; s; s = s.nextSibling) {
-      if (s.nodeType === 1 && s.nodeName === el.nodeName) {
-        count++;
-        if (s === el) index = count;
-      }
-    }
-    if (count > 1) step += `[${index}]`;
+    // One scan of the siblings per parent instead of one per element: 10,000 lines were a quadratic walk.
+    const { counts, positions } = siblingsOf(parent);
+    if ((counts.get(el.nodeName) ?? 0) > 1) step += `[${positions.get(el)}]`;
     path = `${xpathOf(parent)}/${step}`;
   } else {
     path = `/${step}`;
@@ -143,6 +156,17 @@ export class Ctx {
   }
 
   el(node: Element | undefined, path: string): Element | undefined {
+    if (!node) return undefined;
+    const steps = this.steps(path);
+    // Most reads are one step deep: stop at the first match instead of collecting every sibling of that name.
+    if (steps.length === 1) {
+      const [uri, local] = steps[0];
+      for (let c = node.firstChild; c; c = c.nextSibling) {
+        if (c.nodeType === 1 && (c as Element).localName === local && (uri === null || (c as Element).namespaceURI === uri))
+          return c as Element;
+      }
+      return undefined;
+    }
     return this.all(node, path)[0];
   }
 
