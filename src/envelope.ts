@@ -66,6 +66,8 @@ export interface UnwrapLimits {
   maxPayloads: number;
   /** Nested envelopes (zip in p7m in base64...). */
   maxDepth: number;
+  /** Element nesting inside one XML document. Real invoices stay below 30; deeper documents cost time and stack. */
+  maxXmlDepth: number;
 }
 
 /** Signature verification settings (trust anchors, opt-out). */
@@ -78,6 +80,7 @@ export const DEFAULT_LIMITS: UnwrapLimits = {
   maxEntries: 1000,
   maxPayloads: 500,
   maxDepth: 6,
+  maxXmlDepth: 256,
 };
 
 interface Ctx {
@@ -258,6 +261,10 @@ async function walkXml(
     out.skipped.push({ name, reason: `More than ${limits.maxPayloads} XML documents in one file` });
     return;
   }
+  if (!withinXmlDepth(text, limits.maxXmlDepth)) {
+    out.skipped.push({ name, reason: `XML nested deeper than ${limits.maxXmlDepth} elements` });
+    return;
+  }
   const probe = probeXml(text);
   if (!probe) {
     out.skipped.push({ name, reason: 'Not XML, PDF, ZIP or CMS' });
@@ -312,6 +319,42 @@ async function walkXml(
     sha256: await sha256Hex(utf8),
     byteLength: utf8.length,
   });
+}
+
+/**
+ * Linear scan that counts element nesting without building anything. Comments, CDATA and processing instructions are
+ * skipped and attribute values are quote-aware, so every real start tag is counted; a malformed tail just ends the scan.
+ */
+export function withinXmlDepth(text: string, max: number): boolean {
+  let depth = 0;
+  let i = text.indexOf('<');
+  while (i !== -1) {
+    let next: number;
+    if (text.startsWith('<!--', i)) next = text.indexOf('-->', i + 4);
+    else if (text.startsWith('<![CDATA[', i)) next = text.indexOf(']]>', i + 9);
+    else if (text.startsWith('<?', i)) next = text.indexOf('?>', i + 2);
+    else if (text.startsWith('<!', i)) next = text.indexOf('>', i + 2);
+    else if (text.startsWith('</', i)) {
+      depth--;
+      next = text.indexOf('>', i + 2);
+    } else {
+      let j = i + 1;
+      let quote = '';
+      for (; j < text.length; j++) {
+        const c = text[j];
+        if (quote) {
+          if (c === quote) quote = '';
+        } else if (c === '"' || c === "'") quote = c;
+        else if (c === '>') break;
+      }
+      if (j >= text.length) return true;
+      if (text[j - 1] !== '/' && ++depth > max) return false;
+      next = j;
+    }
+    if (next === -1) return true;
+    i = text.indexOf('<', next + 1);
+  }
+  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -397,7 +440,12 @@ function isDetachedSignature(bytes: Uint8Array): boolean {
 
 /** Serialises the first element child (optionally of a named descendant) that passes the filter, keeping in-scope namespaces. */
 function firstPayloadElement(xml: string, accept: (el: XElement) => boolean, container?: string): string | null {
-  const doc = new DOMParser({ onError: () => {} }).parseFromString(xml, 'text/xml');
+  let doc: ReturnType<DOMParser['parseFromString']>;
+  try {
+    doc = new DOMParser({ onError: () => {} }).parseFromString(xml, 'text/xml');
+  } catch {
+    return null; // xmldom throws on fatal errors such as mismatched tags
+  }
   let parent: XElement | null = doc.documentElement;
   if (container && parent) parent = parent.getElementsByTagNameNS('*', container).item(0);
   if (!parent) return null;

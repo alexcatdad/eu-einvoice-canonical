@@ -71,7 +71,13 @@ const WITHHOLDING_SCHEME: Record<string, string> = { '001': 'MX:ISR', '002': 'MX
 
 /** 0.160000 -> 16, 0.106667 -> 10.6667: moves the decimal point two places, trims trailing zeros. */
 export function fractionToPercent(fraction: string): Decimal {
-  const d = toDecimal(fraction);
+  let d: Decimal;
+  try {
+    d = toDecimal(fraction);
+  } catch (e) {
+    if (e instanceof ValueError) throw new ParseError(`tax rate: ${e.message}`);
+    throw e;
+  }
   const negative = d.startsWith('-');
   const [int, frac = ''] = (negative ? d.slice(1) : d).split('.');
   const padded = frac.padEnd(2, '0');

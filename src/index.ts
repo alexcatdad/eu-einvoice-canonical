@@ -7,6 +7,7 @@ import { applyRelations } from './relations/rules.js';
 import { signatureFindings, signatureStatus } from './signature/index.js';
 import type { ValidateOptions } from './validation/index.js';
 import { unavailableSummary } from './validation/plan.js';
+import { ValueError } from './values.js';
 
 export * from './canonical.js';
 export { checkTotals, type Finding } from './checks.js';
@@ -174,7 +175,7 @@ export async function convert(
       return { status: 'ok', invoices, detection, payload: meta };
     } catch (e) {
       if (e instanceof NotImplementedError) return { status: 'unsupported', detection, payload: meta, reason: e.message };
-      if (e instanceof ParseError) return { status: 'error', detection, payload: meta, error: e.message };
+      if (e instanceof ParseError || e instanceof ValueError) return { status: 'error', detection, payload: meta, error: e.message };
       return { status: 'error', detection, payload: meta, error: `Internal error: ${(e as Error).message}` };
     }
   });
