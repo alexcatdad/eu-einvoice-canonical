@@ -265,7 +265,7 @@ export async function renderPdf(invoice: CanonicalInvoice, options: RenderPdfOpt
   const lang = safeLang(options.lang);
   const t = labelsFor(lang);
   const model = buildModel(invoice, lang);
-  lib = await import('pdf-lib');
+  lib = (await import('../envelope-pdf.js')).pdfLib;
   const doc = await lib.PDFDocument.create();
   const font = await doc.embedFont(lib.StandardFonts.Helvetica);
   const bold = await doc.embedFont(lib.StandardFonts.HelveticaBold);
