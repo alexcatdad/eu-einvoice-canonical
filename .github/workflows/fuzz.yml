@@ -1,15 +1,13 @@
 name: Fuzz
 
 on:
-  push:
-    branches: [claude/fuzzing-a46479] # TEMPORARY: remove before merge
   schedule:
     - cron: '17 3 * * *'
   workflow_dispatch:
     inputs:
       runs:
         description: Cases per strategy
-        default: '1500'
+        default: '3000'
       seed:
         description: Seed (empty for a random one)
         default: ''
@@ -37,7 +35,7 @@ jobs:
       - name: Fuzz with a random seed
         id: fuzz
         env:
-          FUZZ_RUNS: ${{ inputs.runs || '1500' }}
+          FUZZ_RUNS: ${{ inputs.runs || '3000' }}
           FUZZ_TIME_LIMIT_MS: '1200000'
           FUZZ_BUDGET_MS: '10000'
           INPUT_SEED: ${{ inputs.seed }}
@@ -55,7 +53,7 @@ jobs:
           path: fuzz-failures
           if-no-files-found: ignore
       - name: Open an issue with the seed and the minimal reproduction
-        if: failure() && github.event_name != 'push'
+        if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
           SEED: ${{ steps.fuzz.outputs.seed }}
