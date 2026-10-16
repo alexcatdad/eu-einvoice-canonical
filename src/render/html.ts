@@ -11,7 +11,7 @@ import {
   type TotalKind,
   type Value,
 } from './model.js';
-import { INVOICE_CSS } from './style.js';
+import { INVOICE_CSS, PAGE_CSS } from './style.js';
 
 export interface RenderHtmlOptions {
   /**
@@ -317,7 +317,7 @@ export function articleHtml(v: InvoiceView, id = 'einvoice'): string {
   );
 }
 
-const minifiedCss = INVOICE_CSS.replace(/\n\s*/g, '').replace(/\s*([{}:;,>])\s*/g, '$1');
+const minifiedCss = INVOICE_CSS.replace(/\n\s*/g, '').replace(/\s*([{}:;,>])\s*/g, '$1') + PAGE_CSS;
 
 /**
  * Renders an invoice as a self-contained, print-friendly HTML page: inline CSS, no scripts, no external

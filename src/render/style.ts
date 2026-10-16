@@ -331,6 +331,12 @@ export const INVOICE_CSS = `.einvoice-shadcn {
 }
 `;
 
+/**
+ * Page geometry for printing the HTML rendering. Kept out of the React stylesheet, where a page rule would
+ * apply to the whole host application.
+ */
+export const PAGE_CSS = '@media print{@page{size:A4;margin:15mm}}';
+
 /** The contents of src/react/invoice.css. */
 export function reactCss(): string {
   return `/* eu-einvoice-canonical/react: generated from src/render/style.ts by \`bun run build:react-css\`. Do not edit. */\n${INVOICE_CSS}`;
