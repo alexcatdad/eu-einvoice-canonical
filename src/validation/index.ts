@@ -23,6 +23,25 @@ export { emptySummary, planFor, unavailableSummary } from './plan.js';
 export interface ValidateOptions {
   /** Where the bundles come from. Default: validation/bundles next to this package (a file read in Node and Bun, a fetch in browsers). */
   bundles?: BundleSource;
+  /**
+   * The Schematron layers (semantic, profile) are skipped, as 'not-run' with an info finding, for documents with more invoice
+   * lines than this. The official rule sets run through SaxonJS take minutes on very large invoices (about 80 s for the EN 16931
+   * rules on 26,813 lines, longer for Peppol); the schema layer always runs. Default 2000; `Infinity` never skips.
+   */
+  maxSchematronLines?: number;
+}
+
+export const DEFAULT_MAX_SCHEMATRON_LINES = 2000;
+
+/** Invoice and credit note lines in UBL (InvoiceLine, CreditNoteLine) and CII (IncludedSupplyChainTradeLineItem), by tag. */
+const LINE_TAG = /<(?:[\w.-]+:)?(?:InvoiceLine|CreditNoteLine|IncludedSupplyChainTradeLineItem)[\s>]/g;
+
+/** Counts line elements, stopping once `limit` is passed. */
+export function countLines(xml: string, limit = Number.POSITIVE_INFINITY): number {
+  let n = 0;
+  LINE_TAG.lastIndex = 0;
+  while (LINE_TAG.exec(xml) && n <= limit) n++;
+  return n;
 }
 
 let scopes = 0;
@@ -60,6 +79,10 @@ export async function validate(payload: { xml: string }, detection: Detection, o
   const rootName = detection.probe?.rootName ?? '';
   const { bundles, scope } = readerFor(options.bundles);
 
+  const maxLines = options.maxSchematronLines ?? DEFAULT_MAX_SCHEMATRON_LINES;
+  const lines = Number.isFinite(maxLines) ? countLines(payload.xml, maxLines) : 0;
+  const tooLarge = lines > maxLines;
+
   const runners: Record<Layer, (id: string) => Promise<Finding[]>> = {
     schema: (id) => runSchema(bundles, id, payload.xml, rootName),
     semantic: (id) => runSchematron(bundles, id, 'semantic', payload.xml, scope),
@@ -68,6 +91,18 @@ export async function validate(payload: { xml: string }, detection: Detection, o
   const layers = Object.keys(plan) as Layer[];
   const results = await Promise.all(
     layers.map(async (layer): Promise<{ layer: Layer; status: CheckStatus; findings: Finding[] }> => {
+      if (tooLarge && layer !== 'schema')
+        return {
+          layer,
+          status: 'not-run',
+          findings: [
+            {
+              layer,
+              severity: 'info',
+              message: `Skipped: more than ${maxLines} invoice lines (maxSchematronLines). The Schematron rules would take minutes here; validate with a native Schematron processor or raise the limit.`,
+            },
+          ],
+        };
       try {
         const findings = await runners[layer](plan[layer]!);
         return { layer, status: findings.some((f) => f.severity === 'fatal') ? 'failed' : 'passed', findings };
