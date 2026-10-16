@@ -116,7 +116,7 @@ describe('renderHtml structure', () => {
     const out = plain(renderHtml(w as unknown as CanonicalInvoice));
     expect(out).toContain('Withholding deducted</dt><dd>SEK 12.00');
     expect(out).toContain('(split payment)</dt><dd>SEK 34.00');
-    expect(out.indexOf('SEK 12.00')).toBeLessThan(out.indexOf('einvoice-total--due'));
+    expect(out.indexOf('SEK 12.00')).toBeLessThan(out.indexOf('<div class="einvoice-total einvoice-total--due">'));
   });
 
   test('shows allowances and charges', () => {
@@ -451,14 +451,14 @@ describe('einvoice render', () => {
   test('html goes to stdout', async () => {
     const t = io();
     expect(await main(['render', '--as', 'html', file], t.sink)).toBe(EXIT.ok);
-    expect(t.out.join('')).toContain('<h1>Invoice INV-2026-1042</h1>');
+    expect(t.out.join('')).toContain('>Invoice INV-2026-1042</h1>');
   });
 
   test('--lang and --out write a file', async () => {
     const t = io();
     const out = join(dir, 'one.html');
     expect(await main(['render', '--as', 'html', '--lang', 'de', '--out', out, file], t.sink)).toBe(EXIT.ok);
-    expect(readFileSync(out, 'utf8')).toContain('<h1>Rechnung INV-2026-1042</h1>');
+    expect(readFileSync(out, 'utf8')).toContain('>Rechnung INV-2026-1042</h1>');
     expect(t.out).toEqual([]);
   });
 

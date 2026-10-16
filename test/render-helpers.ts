@@ -108,13 +108,12 @@ const ALLOWED_ATTRS = new Set([
 export function expectOnlyOwnMarkup(html: string): void {
   for (const m of html.matchAll(/<\/?([a-zA-Z][a-zA-Z0-9]*)([^>]*)>/g)) {
     expect(ALLOWED_TAGS.has(m[1]!.toLowerCase())).toBe(true);
-    for (const a of m[2]!.matchAll(/\s([a-zA-Z-]+)=/g)) expect(ALLOWED_ATTRS.has(a[1]!)).toBe(true);
-    // Attribute values are quoted with " and contain no quote of their own; `<br/>` closes itself.
-    expect(
-      m[2]!
-        .replace(/\s[a-zA-Z-]+="[^"]*"/g, '')
-        .replace(/\/$/, '')
-        .trim(),
-    ).toBe('');
+    // Every attribute is one of ours with a value quoted in "; nothing else is left (escaped text inside a
+    // value, such as a hostile title, is not an attribute). `<br/>` closes itself.
+    const rest = m[2]!.replace(/\s([a-zA-Z-]+)="[^"]*"/g, (_, name: string) => {
+      expect(ALLOWED_ATTRS.has(name)).toBe(true);
+      return '';
+    });
+    expect(rest.replace(/\/$/, '').trim()).toBe('');
   }
 }
