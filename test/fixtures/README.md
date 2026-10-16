@@ -27,10 +27,17 @@ Synthetic documents with fictitious parties. Their numbers are consistent (the E
 | `nlcius-cii.xml`, `fr-ctc-cii.xml`, `en16931-cii.xml`, `cii-unknown.xml` | One-line CII invoices of the same shape for NLCIUS, EXTENDED-CTC-FR, bare EN 16931 and an unrecognised guideline ID |
 | `eslog-1.xml` | Header-only stub with the eSLOG 1.6 root `IzdaniRacunEnostavni`; the eslog parser maps 2.0 only, so it is detected and reported as unsupported |
 
+The CFDI fixtures are synthetic. They use SAT's published test RFCs (EKU9003173C9, URE180429TM6) and made-up UUIDs, seals and certificate numbers; SAT's own sample CFDIs were not copied because their licence is not stated. Amounts follow the CFDI rounding rules, so the EN 16931 BR-CO checks hold.
+
 The eSLOG fixtures follow the segment layout of EDIFACT INVOIC D.01B as eSLOG 2.0 uses it (S_ segments, G_SGn groups). They were written from the published mapping rather than copied from a real file, so group numbers around parties, payment (PAI/FII) and the RFF qualifiers BO (BT-10) and PQ (BT-83) should be checked against a real sender's file when one is available.
 | `zugferd1-comfort.xml` | ZUGFeRD 1.0 COMFORT: two VAT rates, document allowance and charge, line discount, prepayment, GTIN, embedded attachment, BLZ (the test also wraps it in a PDF) |
 | `teappsxml-invoices.xml` | TEAPPSXML 3.0 batch: a sales invoice (row discount, charge, advance payment, an INFO row, Finnish payment reference, e-invoice address) and a credit note with SIGN="-" amounts and no currency element |
 | `mydata-two-invoices.xml` | myDATA InvoicesDoc with a 1.1 sales invoice (MARK, UID, line classifications, two VAT categories) and a 5.1 credit invoice (withholding, correlated MARK, no currency element) |
+| `cfdi-40-ingreso-iva-retenciones.xml` | CFDI 4.0 ingreso: IVA 16 % and 0 % lines, a line discount, ISR 10 % and IVA 10.6667 % retenciones, FormaPago 03, SAT stamp |
+| `cfdi-40-egreso-relacionado.xml` | CFDI 4.0 egreso (credit note) with CfdiRelacionados TipoRelacion 01 pointing at the ingreso above |
+| `cfdi-40-ieps.xml` | CFDI 4.0 ingreso with IEPS as a rate (26.5 %) and as a fixed amount per litre (Cuota), IVA charged on top of IEPS |
+| `cfdi-33-ingreso-usd.xml` | CFDI 3.3 in USD with TipoCambio, foreign buyer (XEXX010101000, ResidenciaFiscal, NumRegIdTrib), MetodoPago PPD, no Base at document level |
+| `cfdi-40-pago.xml` | CFDI 4.0 tipo P with the Pagos 2.0 complement: detected as another document, not converted |
 | `isdoc-6.0.2-invoice.isdoc` | ISDOC 6.0.2 invoice in CZK: IČO/DIČ, two VAT rates, taxed and untaxed deposits, rounding, variable/constant/specific symbols, alternate account, supplement |
 | `isdoc-6.0.2-credit-eur.isdoc` | ISDOC DocumentType 2 with negative amounts in EUR (ForeignCurrencyCode, CurrRate), ParentDocumentID |
 | `ebinterface-6.1-invoice.xml` | ebInterface 6.1 invoice: line and document reductions/surcharges, two VAT rates, GTIN, prepayment, bank transfer, early-payment discount |

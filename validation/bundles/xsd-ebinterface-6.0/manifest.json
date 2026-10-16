@@ -1,0 +1,30 @@
+{
+  "id": "xsd-ebinterface-6.0",
+  "title": "ebInterface 6.0 XSD",
+  "layer": "schema",
+  "syntax": "ebinterface",
+  "version": "6.0",
+  "releaseDate": "2026-10-16",
+  "effectiveFrom": "2026-10-16",
+  "effectiveUntil": null,
+  "license": "No licence text in the files; published by the issuing authority for implementers to validate against (see validation/NOTICE)",
+  "upstream": "https://www.ebinterface.at/",
+  "note": "AUSTRIAPRO development repository, pinned commit; releaseDate is the vendoring date.",
+  "format": "xsd",
+  "entries": {
+    "Invoice": "Invoice.xsd"
+  },
+  "source": [
+    {
+      "url": "https://raw.githubusercontent.com/austriapro/ebinterface-standards/f7e4e4ec8778b7da2bc3468ed976a396fa8b6b29/schemas/ebInterface6p0/Invoice.xsd",
+      "sha256": "cb66860e9ffba3bfa9e6a5001c3a87010504fe1d3ea9387d7cbfac806486cc49"
+    }
+  ],
+  "files": [
+    {
+      "path": "Invoice.xsd",
+      "sha256": "cb66860e9ffba3bfa9e6a5001c3a87010504fe1d3ea9387d7cbfac806486cc49",
+      "bytes": 26068
+    }
+  ]
+}

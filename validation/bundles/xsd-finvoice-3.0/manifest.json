@@ -1,0 +1,30 @@
+{
+  "id": "xsd-finvoice-3.0",
+  "title": "Finvoice 3.0 XSD",
+  "layer": "schema",
+  "syntax": "finvoice",
+  "version": "3.0",
+  "releaseDate": "2020-12-17",
+  "effectiveFrom": "2020-12-17",
+  "effectiveUntil": null,
+  "license": "No licence text in the files; published by the issuing authority for implementers to validate against (see validation/NOTICE)",
+  "upstream": "https://www.finanssiala.fi/en/topics/finvoice-standard",
+  "note": "Finance Finland; releaseDate is the modification date in the file header.",
+  "format": "xsd",
+  "entries": {
+    "Finvoice": "Finvoice3.0.xsd"
+  },
+  "source": [
+    {
+      "url": "https://file.finanssiala.fi/finvoice/Finvoice3.0.xsd",
+      "sha256": "03ba971b4eeb002e06e7d503a89ed58b67cf0516284b206bf25f664799d3b4c8"
+    }
+  ],
+  "files": [
+    {
+      "path": "Finvoice3.0.xsd",
+      "sha256": "03ba971b4eeb002e06e7d503a89ed58b67cf0516284b206bf25f664799d3b4c8",
+      "bytes": 97429
+    }
+  ]
+}

@@ -34,6 +34,10 @@
           <option value="">Choose a sample invoice</option>
         </select>
       </label>
+      <div class="field eu-trust">
+        <label><input type="checkbox" id="eu-trust"> Check signers against the EU trusted lists</label>
+        <span class="trust-status" id="eu-trust-status" aria-live="polite">Off. Fetches the lists when switched on; the file is still never uploaded.</span>
+      </div>
       <details class="paste">
         <summary>Paste XML instead</summary>
         <textarea id="pasted" spellcheck="false" aria-label="XML to convert" placeholder="&lt;Invoice xmlns=&quot;urn:oasis:names:specification:ubl:schema:xsd:Invoice-2&quot;&gt;…"></textarea>
