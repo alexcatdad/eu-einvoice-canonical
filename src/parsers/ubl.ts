@@ -21,7 +21,7 @@ import type {
   Totals,
   VatBreakdown,
 } from '../canonical.js';
-import { Ctx, finish, ParseError, parseXml, type Scope, SELF_BILLED_TYPE_CODES, sourceMeta } from './context.js';
+import { Ctx, finish, need, ParseError, parseXml, type Scope, SELF_BILLED_TYPE_CODES, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 import { applyPint, isPint, PINT_VAT_SCHEMES } from './pint.js';
 import { applyZatca, isZatcaControlRef } from './zatca.js';
@@ -176,7 +176,7 @@ const isSepa = (c: Ctx) => (e: Element) => c.attr(e, undefined, 'schemeID') === 
 
 /** Peppol encodes the BT-21 subject code as "#AAI#text"; both parts are bound to the same node. */
 function note(c: Ctx, e: Element, s: Scope) {
-  const text = c.text(e)!;
+  const text = c.text(e) ?? '';
   const m = /^#([A-Z]{3})#([\s\S]*)$/.exec(text);
   c.mark(s.path('text'), e);
   if (!m) return { text };
@@ -202,7 +202,7 @@ function party(c: Ctx, p: Element | undefined, s: Scope, vatSchemes: ReadonlySet
   return {
     name: s.text(p, 'cac:PartyLegalEntity/cbc:RegistrationName', 'name'),
     tradingName: s.text(p, 'cac:PartyName/cbc:Name', 'tradingName'),
-    identifiers: ids.map((e, i) => s.id(e, undefined, `identifiers/${i}`)!),
+    identifiers: ids.flatMap((e, i) => s.id(e, undefined, `identifiers/${i}`) ?? []),
     legalRegistrationId: s.id(p, 'cac:PartyLegalEntity/cbc:CompanyID', 'legalRegistrationId'),
     vatId: s.text(vatScheme, 'cbc:CompanyID', 'vatId'),
     nationalTaxIds: [],
@@ -308,7 +308,7 @@ function allowanceCharges(c: Ctx, parent: Element, charge: boolean, docLevel: bo
     .map((a, i) => {
       const t = s.in(i);
       return {
-        amount: t.dec(a, 'cbc:Amount', 'amount')!,
+        amount: need(t.dec(a, 'cbc:Amount', 'amount'), 'AllowanceCharge/Amount'),
         baseAmount: t.dec(a, 'cbc:BaseAmount', 'baseAmount'),
         percentage: t.dec(a, 'cbc:MultiplierFactorNumeric', 'percentage'),
         reason: t.text(a, 'cbc:AllowanceChargeReason', 'reason'),
@@ -363,8 +363,8 @@ function totalsAndVat(
   const vatBreakdown = c.all(main, 'cac:TaxSubtotal').map((sub, i): VatBreakdown => {
     const v = s.in('vatBreakdown').in(i);
     return {
-      taxableAmount: v.dec(sub, 'cbc:TaxableAmount', 'taxableAmount')!,
-      taxAmount: v.dec(sub, 'cbc:TaxAmount', 'taxAmount')!,
+      taxableAmount: need(v.dec(sub, 'cbc:TaxableAmount', 'taxableAmount'), 'TaxSubtotal/TaxableAmount'),
+      taxAmount: need(v.dec(sub, 'cbc:TaxAmount', 'taxAmount'), 'TaxSubtotal/TaxAmount'),
       categoryCode: v.text(sub, 'cac:TaxCategory/cbc:ID', 'categoryCode') ?? '',
       rate: v.dec(sub, 'cac:TaxCategory/cbc:Percent', 'rate'),
       exemptionReason: v.text(sub, 'cac:TaxCategory/cbc:TaxExemptionReason', 'exemptionReason'),
@@ -413,6 +413,7 @@ function line(c: Ctx, l: Element, isCn: boolean, s: Scope, sub = false): Line {
   if (netAmount === undefined) throw new ParseError(`Line ${c.text(l, 'cbc:ID') ?? '?'}: LineExtensionAmount (BT-131) missing`);
   const subLines = c.all(l, 'cac:SubInvoiceLine').map((e, i) => line(c, e, isCn, s.in('subLines').in(i), true));
   const p = s.in('price');
+  const priceNet = p.dec(price, 'cbc:PriceAmount', 'net');
   return {
     id: s.text(l, 'cbc:ID', 'id') ?? '',
     note: s.texts(l, 'cbc:Note', 'note').join('\n') || undefined,
@@ -425,15 +426,16 @@ function line(c: Ctx, l: Element, isCn: boolean, s: Scope, sub = false): Line {
     period: period(c, c.el(l, 'cac:InvoicePeriod'), s.in('period')),
     allowances: allowanceCharges(c, l, false, false, s.in('allowances')),
     charges: allowanceCharges(c, l, true, false, s.in('charges')),
-    price: price
-      ? {
-          net: p.dec(price, 'cbc:PriceAmount', 'net')!,
-          discount: p.dec(priceAc, 'cbc:Amount', 'discount'),
-          gross: p.dec(priceAc, 'cbc:BaseAmount', 'gross'),
-          baseQuantity: p.dec(price, 'cbc:BaseQuantity', 'baseQuantity'),
-          baseQuantityUnit: p.attr(price, 'cbc:BaseQuantity', 'unitCode', 'baseQuantityUnit'),
-        }
-      : undefined,
+    price:
+      price && priceNet !== undefined
+        ? {
+            net: priceNet,
+            discount: p.dec(priceAc, 'cbc:Amount', 'discount'),
+            gross: p.dec(priceAc, 'cbc:BaseAmount', 'gross'),
+            baseQuantity: p.dec(price, 'cbc:BaseQuantity', 'baseQuantity'),
+            baseQuantityUnit: p.attr(price, 'cbc:BaseQuantity', 'unitCode', 'baseQuantityUnit'),
+          }
+        : undefined,
     vat: tax ? { categoryCode: s.text(tax, 'cbc:ID', 'vat/categoryCode') ?? '', rate: s.dec(tax, 'cbc:Percent', 'vat/rate') } : undefined,
     item: item(c, c.el(l, 'cac:Item'), s.in('item')),
     subLines: subLines.length ? subLines : undefined,

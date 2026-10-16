@@ -13,6 +13,12 @@ import type { ParseInput } from './index.js';
 
 export class ParseError extends Error {}
 
+/** A value the canonical model cannot do without: a missing one is a parse error, never a placeholder. */
+export function need<T>(value: T | undefined, what: string): T {
+  if (value === undefined) throw new ParseError(`${what} missing`);
+  return value;
+}
+
 export function parseXml(xml: string): Element {
   const errors: string[] = [];
   let doc: ReturnType<DOMParser['parseFromString']>;

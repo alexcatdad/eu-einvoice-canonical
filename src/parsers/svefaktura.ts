@@ -29,7 +29,7 @@ import type {
   VatInfo,
 } from '../canonical.js';
 import { add, isZero, sub, sum } from '../values.js';
-import { CREDIT_TYPE_CODES, Ctx, finish, ParseError, parseXml, type Scope, sourceMeta } from './context.js';
+import { CREDIT_TYPE_CODES, Ctx, finish, need, ParseError, parseXml, type Scope, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 
 /** BT-24 is absent in Svefaktura; the canonical model gets the root namespace, and `source.format` keeps the true origin. */
@@ -173,7 +173,7 @@ export function parseSvefaktura(input: ParseInput): CanonicalInvoice[] {
     invoicedObjectId: objectRef ? { value: s.text(objectRef, 'ID', 'invoicedObjectId/value') ?? '' } : undefined,
     accountingRef: s.text(requisitions[1], undefined, 'accountingRef'),
     paymentTerms,
-    notes: c.nonEmpty(c.all(root, 'Note')).map((e, i) => ({ text: s.text(e, undefined, `notes/${i}/text`)! })),
+    notes: c.nonEmpty(c.all(root, 'Note')).map((e, i) => ({ text: s.text(e, undefined, `notes/${i}/text`) ?? '' })),
     specificationId: SPEC_ID,
     precedingInvoices: c
       .all(root, 'InitialInvoiceDocumentReference')
@@ -241,7 +241,7 @@ function party(c: Ctx, p: Element | undefined, s: Scope, isSeller: boolean): Par
   const out: Party & Partial<Seller> = {
     name: s.text(regEl, undefined, 'name') ?? s.text(partyNameEl, undefined, 'name'),
     tradingName: regName && partyName && partyName !== regName ? s.text(partyNameEl, undefined, 'tradingName') : undefined,
-    identifiers: c.nonEmpty(c.all(p, 'PartyIdentification/ID')).map((e, i) => gln(c, e, s.path(`identifiers/${i}`))!),
+    identifiers: c.nonEmpty(c.all(p, 'PartyIdentification/ID')).flatMap((e, i) => gln(c, e, s.path(`identifiers/${i}`)) ?? []),
     legalRegistrationId: orgNr ? { value: orgNr, schemeId: '0007' } : undefined,
     vatId: s.text(vat, 'CompanyID', 'vatId'),
     nationalTaxIds: [],
@@ -344,7 +344,7 @@ function allowanceCharges(c: Ctx, parent: Element, charge: boolean, s: Scope): A
       const code = c.text(reasonEl);
       const taxCat = c.el(a, 'TaxCategory');
       return {
-        amount: t.dec(a, 'Amount', 'amount')!,
+        amount: need(t.dec(a, 'Amount', 'amount'), 'AllowanceCharge/Amount'),
         baseAmount: t.dec(a, 'AllowanceChargeBaseAmount', 'baseAmount'),
         percentage: t.dec(a, 'MultiplierFactorNumeric', 'percentage'),
         // SFTI uses ZZZ + @name ("Fakturaavgift"); the name is the reason and ZZZ carries no information.
@@ -399,8 +399,8 @@ function totalsAndVat(
     const v = s.in('vatBreakdown').in(i);
     const cat = c.el(sub, 'TaxCategory');
     return {
-      taxableAmount: v.dec(sub, 'TaxableAmount', 'taxableAmount')!,
-      taxAmount: v.dec(sub, 'TaxAmount', 'taxAmount')!,
+      taxableAmount: need(v.dec(sub, 'TaxableAmount', 'taxableAmount'), 'TaxSubtotal/TaxableAmount'),
+      taxAmount: need(v.dec(sub, 'TaxAmount', 'taxAmount'), 'TaxSubtotal/TaxAmount'),
       categoryCode: v.text(cat, 'ID', 'categoryCode') ?? '',
       rate: v.dec(cat, 'Percent', 'rate'),
       exemptionReason: v.text(cat, 'ExemptionReason', 'exemptionReason'),

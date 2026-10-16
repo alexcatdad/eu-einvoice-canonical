@@ -30,7 +30,7 @@ import type {
   VatInfo,
 } from '../canonical.js';
 import { add, cmp, isZero, sub, sum, toDecimal } from '../values.js';
-import { Ctx, finish, ParseError, parseXml, sourceMeta } from './context.js';
+import { Ctx, finish, need, ParseError, parseXml, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 
 /** DocumentType -> UNCL 1001 code and direction. */
@@ -292,7 +292,7 @@ function vatOf(c: Ctx, holder: Element | undefined): VatInfo | undefined {
     return { categoryCode: 'E', rate: '0' as VatInfo['rate'], exemptionReason: c.text(exemption) };
   }
   if (rateEl) {
-    const rate = c.dec(rateEl)!;
+    const rate = need(c.dec(rateEl), 'VATRate');
     c.derive('/vat/categoryCode', 'ebInterface 4.x VATRate carries no category; S for a rate above 0, Z otherwise');
     return { categoryCode: cmp(rate, '0') > 0 ? 'S' : 'Z', rate, nationalCode: attrOf(rateEl, 'TaxCode') };
   }

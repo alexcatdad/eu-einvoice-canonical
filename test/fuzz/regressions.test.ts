@@ -58,4 +58,28 @@ describe('fuzz regressions', () => {
     expect(withinXmlDepth('<a x=">"><b y=\'>\'><c/></b></a>', 2)).toBe(true);
     expect(withinXmlDepth('<a><b', 5)).toBe(true);
   });
+
+  const without = (name: string, element: RegExp) => {
+    const xml = text(name).replace(element, '');
+    expect(xml).not.toBe(text(name));
+    return utf8(xml);
+  };
+
+  test('a UBL price without PriceAmount is dropped, an allowance without Amount is an error', async () => {
+    const noPrice = without('peppol-bis3-invoice.xml', /<cbc:PriceAmount[^>]*>[^<]*<\/cbc:PriceAmount>/);
+    await checkCase({ label: 'price without amount', bytes: noPrice });
+    const r = await convert(noPrice, 'x.xml');
+    expect(r.outcomes[0].status).toBe('ok');
+
+    const noAmount = without('peppol-bis3-invoice.xml', /<cbc:Amount[^>]*>[^<]*<\/cbc:Amount>/);
+    await checkCase({ label: 'allowance without amount', bytes: noAmount });
+    const e = (await convert(noAmount, 'x.xml')).outcomes[0];
+    expect(e.status).toBe('error');
+  });
+
+  test('a UBL tax subtotal without TaxableAmount is an error, not an incomplete invoice', async () => {
+    const bytes = without('peppol-bis3-invoice.xml', /<cbc:TaxableAmount[^>]*>[^<]*<\/cbc:TaxableAmount>/);
+    await checkCase({ label: 'subtotal without taxable amount', bytes });
+    expect((await convert(bytes, 'x.xml')).outcomes[0].status).toBe('error');
+  });
 });
