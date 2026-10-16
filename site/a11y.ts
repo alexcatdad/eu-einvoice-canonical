@@ -14,6 +14,9 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { type Browser, type BrowserContextOptions, chromium, type Page } from 'playwright';
 import { BASE } from './site.js';
 
+const jobs = Number(process.env.A11Y_JOBS ?? 2);
+if (!Number.isSafeInteger(jobs) || jobs < 1 || jobs > 4) throw new Error('A11Y_JOBS must be an integer between 1 and 4');
+
 const dist = join(import.meta.dir, '..', 'dist');
 const server = Bun.serve({
   port: 0,
@@ -142,35 +145,72 @@ async function focusVisible(browser: Browser) {
 }
 
 const browser = await chromium.launch();
+const scenarios: { label: string; run: () => Promise<void> }[] = [];
+for (const scheme of ['light', 'dark'] as const) {
+  scenarios.push({ label: `converter (${scheme})`, run: () => converter(browser, scheme) });
+  for (const route of PAGES) {
+    const label = `${route} (${scheme})`;
+    scenarios.push({
+      label,
+      run: async () => {
+        const page = await open(browser, { colorScheme: scheme, viewport: { width: 1440, height: 900 } });
+        try {
+          watchRequests(page, label);
+          await page.goto(at(route));
+          await page.waitForLoadState('networkidle');
+          await axe(page, label);
+        } finally {
+          await page.close();
+        }
+      },
+    });
+  }
+}
+for (const width of [320, 375]) {
+  for (const route of ['', ...PAGES]) {
+    const label = `${route || 'converter'} at ${width}px`;
+    scenarios.push({
+      label,
+      run: async () => {
+        const page = await open(browser, { viewport: { width, height: 800 } });
+        try {
+          watchRequests(page, label);
+          await page.goto(at(route));
+          if (route === '') await page.locator('.stamp').first().waitFor();
+          else await page.waitForLoadState('networkidle');
+          await noSideways(page, label);
+          if (route === '') await axe(page, label);
+        } finally {
+          await page.close();
+        }
+      },
+    });
+  }
+}
+scenarios.push({ label: 'keyboard focus', run: () => focusVisible(browser) });
+const started = performance.now();
+let next = 0;
 try {
-  for (const scheme of ['light', 'dark'] as const) {
-    await converter(browser, scheme);
-    for (const route of PAGES) {
-      const page = await open(browser, { colorScheme: scheme, viewport: { width: 1440, height: 900 } });
-      watchRequests(page, `${route} (${scheme})`);
-      await page.goto(at(route));
-      await page.waitForLoadState('networkidle');
-      await axe(page, `${route} (${scheme})`);
-      await page.close();
-    }
-  }
-  for (const width of [320, 375]) {
-    for (const route of ['', ...PAGES]) {
-      const page = await open(browser, { viewport: { width, height: 800 } });
-      await page.goto(at(route));
-      if (route === '') await page.locator('.stamp').first().waitFor();
-      else await page.waitForLoadState('networkidle');
-      await noSideways(page, `${route || 'converter'} at ${width}px`);
-      if (route === '') await axe(page, `converter at ${width}px`);
-      await page.close();
-    }
-  }
-  await focusVisible(browser);
+  await Promise.all(
+    Array.from({ length: jobs }, async () => {
+      for (let i = next++; i < scenarios.length; i = next++) {
+        const { label, run } = scenarios[i]!;
+        const start = performance.now();
+        try {
+          await run();
+        } catch (error) {
+          problems.push(`${label}: ${error instanceof Error ? error.message : error}`);
+        } finally {
+          console.log(`[a11y] ${label}: ${((performance.now() - start) / 1000).toFixed(2)}s`);
+        }
+      }
+    }),
+  );
 } finally {
   await browser.close();
   server.stop();
 }
-
+console.log(`[a11y] ${scenarios.length} scenarios, ${jobs} workers: ${((performance.now() - started) / 1000).toFixed(2)}s`);
 for (const p of problems) console.error(p);
 console.log(problems.length ? `${problems.length} accessibility or privacy problems.` : 'No accessibility or privacy problems.');
 if (problems.length) process.exit(1);

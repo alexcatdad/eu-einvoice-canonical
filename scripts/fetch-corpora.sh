@@ -8,7 +8,6 @@
 set -euo pipefail
 
 dest="${1:-test/corpus/repos}"
-mkdir -p "$dest"
 
 # name | repository | pinned commit | sparse-checkout patterns (space separated)
 corpora=(
@@ -50,28 +49,56 @@ set -f
 
 fetch_one() {
   local name="$1" repo="$2" sha="$3" patterns="$4" dir="$dest/$1"
-  rm -rf "$dir"
-  git init -q "$dir"
-  git -C "$dir" remote add origin "https://github.com/$repo.git"
-  git -C "$dir" config core.sparseCheckout true
-  git -C "$dir" sparse-checkout init --no-cone
+  local remote="https://github.com/$repo.git"
+  # Only reuse our own clone. Reapply the sparse patterns and discard local changes before every run.
+  if [ ! -d "$dir/.git" ] || [ "$(git -C "$dir" config --get remote.origin.url 2>/dev/null)" != "$remote" ]; then
+    rm -rf "$dir" || return 1
+    git init -q "$dir" || return 1
+    git -C "$dir" remote add origin "$remote" || return 1
+  fi
+  git -C "$dir" sparse-checkout init --no-cone || return 1
   # shellcheck disable=SC2086
-  printf '%s\n' $patterns | git -C "$dir" sparse-checkout set --no-cone --stdin
-  git -C "$dir" fetch -q --depth 1 --filter=blob:none origin "$sha"
-  git -C "$dir" checkout -q FETCH_HEAD
+  printf '%s\n' $patterns | git -C "$dir" sparse-checkout set --no-cone --stdin || return 1
+  if ! git -C "$dir" cat-file -e "$sha^{commit}" 2>/dev/null; then
+    git -C "$dir" -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=30 fetch -q --depth 1 --filter=blob:none origin "$sha" || return 1
+  fi
+  git -C "$dir" reset --hard -q "$sha" || return 1
+  git -C "$dir" clean -ffdx -q || return 1
+  [ "$(git -C "$dir" rev-parse HEAD)" = "$sha" ] || return 1
 }
 
-failed=0
-for entry in "${corpora[@]}"; do
-  IFS='|' read -r name repo sha patterns <<<"$entry"
-  # One unreachable repository must not take the others down: report it and go on.
-  if (fetch_one "$name" "$repo" "$sha" "$patterns"); then
-    dir="$dest/$name"
-    echo "$name $(git -C "$dir" rev-parse HEAD) $(find "$dir" -type f -not -path '*/.git/*' | wc -l) files"
-  else
-    echo "$name $sha FETCH FAILED"
-    rm -rf "$dest/$name"
-    failed=$((failed + 1))
-  fi
-done
-[ "$failed" -eq 0 ] || echo "WARNING: $failed corpora could not be fetched" >&2
+main() {
+  local jobs="${CORPUS_FETCH_JOBS:-4}" logs failed=0 index=0 i name repo sha patterns
+  case "$jobs" in 1|2|3|4|5|6|7|8) ;; *) echo 'CORPUS_FETCH_JOBS must be an integer between 1 and 8' >&2; return 1 ;; esac
+  mkdir -p "$dest"
+  logs="$(mktemp -d)"
+  trap 'rm -rf "$logs"' EXIT
+  local pids=()
+  for entry in "${corpora[@]}"; do
+    IFS='|' read -r name repo sha patterns <<<"$entry"
+    (
+      # A failure remains visible but must not take the other corpora down.
+      if fetch_one "$name" "$repo" "$sha" "$patterns"; then
+        echo "$name $sha $(find "$dest/$name" -type f -not -path '*/.git/*' | wc -l) files"
+      else
+        echo "$name $sha FETCH FAILED"
+        rm -rf "${dest:?}/${name:?}"
+        exit 1
+      fi
+    ) > "$logs/$index.out" 2> "$logs/$index.err" &
+    pids+=("$!")
+    index=$((index + 1))
+    if [ "${#pids[@]}" -ge "$jobs" ]; then
+      for pid in "${pids[@]}"; do wait "$pid" || failed=$((failed + 1)); done
+      pids=()
+    fi
+  done
+  for pid in "${pids[@]}"; do wait "$pid" || failed=$((failed + 1)); done
+  # Keep pin-report ordering stable regardless of completion order.
+  for ((i=0; i<index; i++)); do cat "$logs/$i.out"; cat "$logs/$i.err" >&2; done
+  rm -rf "$logs"
+  trap - EXIT
+  [ "$failed" -eq 0 ] || echo "WARNING: $failed corpora could not be fetched" >&2
+}
+
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then main; fi
