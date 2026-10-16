@@ -177,7 +177,7 @@ describe('loading the trusted lists', () => {
     first.fetched.push('https://first.test/only');
     first.snapshot.lists[0]!.services.length = 0;
     assert.ok((await second.fetch(TSL_URL)).byteLength > 0);
-    assert.ok(!second.fetched.includes('https://first.test/only'));
+    assert.deepEqual(second.fetched, [LOTL_URL, TSL_URL, TSL_URL]);
     assert.ok(second.snapshot.lists[0]!.services.length > 0);
     assert.equal((await check(second, 'valid')).euTrust?.qualified, true);
   });

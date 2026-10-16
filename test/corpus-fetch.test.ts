@@ -6,6 +6,7 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const script = resolve(import.meta.dir, '../scripts/fetch-corpora.sh');
+const harness = resolve(import.meta.dir, 'corpus-fetch.sh');
 const roots: string[] = [];
 afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
@@ -42,8 +43,8 @@ function fixture() {
   git('add', '.');
   git('commit', '-qm', 'Synthetic corpus');
   const sha = git('rev-parse', 'HEAD');
-  const run = (command: string, ...args: string[]) =>
-    spawnSync('bash', ['-c', `source "$1"; dest="$2"; ${command}`, 'corpus-test', script, dest, ...args], {
+  const run = (mode: 'fetch' | 'batch' | 'invalid', ...args: string[]) =>
+    spawnSync('bash', [harness, script, dest, mode, ...args], {
       cwd: root,
       env,
       encoding: 'utf8',
@@ -54,7 +55,7 @@ function fixture() {
 
 test('pinned sparse checkout is restored from the cache without contacting its remote', () => {
   const f = fixture();
-  const fetch = () => f.run('fetch_one sample fixture/corpus "$3" "/samples/"', f.sha);
+  const fetch = () => f.run('fetch', f.sha);
   expect(fetch().status).toBe(0);
   const sample = join(f.dest, 'sample');
   expect(existsSync(join(sample, 'other/excluded.txt'))).toBe(false);
@@ -73,20 +74,17 @@ test('pinned sparse checkout is restored from the cache without contacting its r
 
 test('a changed pin fetches and checks out the requested new commit', () => {
   const f = fixture();
-  expect(f.run('fetch_one sample fixture/corpus "$3" "/samples/"', f.sha).status).toBe(0);
+  expect(f.run('fetch', f.sha).status).toBe(0);
   writeFileSync(join(f.upstream, 'samples/invoice.xml'), '<Invoice>updated</Invoice>');
   f.git('commit', '-qam', 'Update synthetic corpus');
   const sha = f.git('rev-parse', 'HEAD');
-  expect(f.run('fetch_one sample fixture/corpus "$3" "/samples/"', sha).status).toBe(0);
+  expect(f.run('fetch', sha).status).toBe(0);
   expect(readFileSync(join(f.dest, 'sample/samples/invoice.xml'), 'utf8')).toBe('<Invoice>updated</Invoice>');
 });
 
 test('bounded fetching reports failures in pin order and keeps successful corpora', () => {
   const f = fixture();
-  const r = f.run(
-    'corpora=("first|fixture/corpus|$3|/samples/" "missing|fixture/corpus|0000000000000000000000000000000000000000|/samples/" "last|fixture/corpus|$3|/samples/"); CORPUS_FETCH_JOBS=2 main',
-    f.sha,
-  );
+  const r = f.run('batch', f.sha);
   expect(r.status).toBe(0);
   expect(
     r.stdout
@@ -102,7 +100,7 @@ test('bounded fetching reports failures in pin order and keeps successful corpor
 
 test('fetch concurrency rejects invalid values', () => {
   const f = fixture();
-  const r = f.run('CORPUS_FETCH_JOBS=0 main');
+  const r = f.run('invalid');
   expect(r.status).toBe(1);
   expect(r.stderr).toContain('CORPUS_FETCH_JOBS must be an integer between 1 and 8');
 });
