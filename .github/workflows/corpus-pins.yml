@@ -26,6 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Move the pins
+        shell: bash # -eo pipefail: a failing script must fail the step, not hide behind tee
         run: scripts/bump-corpus-pins.sh | tee pin-changes.txt
       - name: Open the pull request
         env:
