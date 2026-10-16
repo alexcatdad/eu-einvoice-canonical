@@ -1,5 +1,6 @@
 /** Minimal inputs for every bug the fuzzer found. Each must give an ordinary outcome, never a throw or an internal error. */
 import { describe, expect, test } from 'bun:test';
+import { withinXmlDepth } from '../../src/envelope.js';
 import { convert } from '../../src/index.js';
 import { fixture, utf8 } from '../helpers.js';
 import { checkCase } from './properties.js';
@@ -36,5 +37,25 @@ describe('fuzz regressions', () => {
       const bytes = utf8(`${open}<a><b></a>${close}`);
       await checkCase({ label: 'wrapped garbage', bytes });
     }
+  });
+
+  test('a document nested 100 000 elements deep is refused quickly instead of taking over a minute', async () => {
+    const n = 100_000;
+    const xml = `<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2">${'<a>'.repeat(n)}${'</a>'.repeat(n)}</Invoice>`;
+    const started = performance.now();
+    const r = await convert(utf8(xml), 'deep.xml');
+    expect(performance.now() - started).toBeLessThan(2000);
+    expect(r.outcomes).toEqual([]);
+    expect(r.skipped[0].reason).toMatch(/nested deeper than 256/);
+  });
+
+  test('the depth scan counts real start tags only', () => {
+    expect(withinXmlDepth('<a><b/><c></c></a>', 2)).toBe(true);
+    expect(withinXmlDepth('<a><b><c/></b></a>', 2)).toBe(true);
+    expect(withinXmlDepth('<a><b><c></c></b></a>', 2)).toBe(false);
+    // Tags in comments, CDATA and attribute values are text.
+    expect(withinXmlDepth('<a x="<b><c><d>"><!-- <b><c><d> --><![CDATA[<b><c><d>]]><?pi <b><c> ?></a>', 1)).toBe(true);
+    expect(withinXmlDepth('<a x=">"><b y=\'>\'><c/></b></a>', 2)).toBe(true);
+    expect(withinXmlDepth('<a><b', 5)).toBe(true);
   });
 });
