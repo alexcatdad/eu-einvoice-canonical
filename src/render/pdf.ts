@@ -93,8 +93,15 @@ class Writer {
         line = '';
         let rest = word;
         while (font.widthOfTextAtSize(rest, size) > width) {
-          let cut = Math.max(1, rest.length - 1);
-          while (cut > 1 && font.widthOfTextAtSize(rest.slice(0, cut), size) > width) cut--;
+          // Longest prefix that fits (at least one character, so a very narrow column still makes progress).
+          let lo = 1;
+          let hi = rest.length - 1;
+          while (lo < hi) {
+            const mid = (lo + hi + 1) >> 1;
+            if (font.widthOfTextAtSize(rest.slice(0, mid), size) <= width) lo = mid;
+            else hi = mid - 1;
+          }
+          const cut = lo;
           lines.push(rest.slice(0, cut));
           rest = rest.slice(cut);
         }
