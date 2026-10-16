@@ -1,0 +1,44 @@
+name: Corpus pin bumps
+
+# Monthly: moves the pinned commits of the public sample corpora (scripts/fetch-corpora.sh) to the
+# current head of each repository and opens one pull request, so corpus updates are reviewed, not silent.
+# Licences must be re-read for a new owner or licence change (test/corpus/SOURCES.md).
+
+on:
+  schedule:
+    - cron: '43 5 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: corpus-pins
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Move the pins
+        run: scripts/bump-corpus-pins.sh | tee pin-changes.txt
+      - name: Open the pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet; then echo 'All pins are current.'; exit 0; fi
+          branch="corpus-pins-$(date -u +%Y%m%d)"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c "$branch"
+          git commit -am 'Bump the public corpus pins'
+          git push -u origin "$branch"
+          {
+            echo 'Moves the pinned commits of the public sample corpora to the current head of each repository.'
+            echo; echo '```'; cat pin-changes.txt; echo '```'
+            echo; echo 'Check test/corpus/SOURCES.md still matches each licence. The `Public corpora` workflow can be dispatched on this branch to compare results.'
+          } > body.md
+          gh pr create --title 'Bump the public corpus pins' --body-file body.md

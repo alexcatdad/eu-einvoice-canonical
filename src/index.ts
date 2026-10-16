@@ -14,6 +14,7 @@ export * from './codes.js';
 export { type Detection, detectXml } from './detect.js';
 export * from './duplicates/index.js';
 export { DEFAULT_LIMITS, decodeXml, type Skipped, type UnwrapLimits, type UnwrapOptions, unwrap, type XmlPayload } from './envelope.js';
+export * from './export/index.js';
 export {
   describeFormats,
   FORMATS,

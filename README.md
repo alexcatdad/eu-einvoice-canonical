@@ -79,6 +79,7 @@ Parsers get this from `Ctx` in `src/parsers/context.ts`: construct it with `new 
 einvoice detect  <file...>                 format id, version and profile per document (tab separated)
 einvoice inspect <file...>                 the unwrap and detect result as JSON
 einvoice convert <file...> [--out <dir>]   canonical JSON array on stdout, or one <invoice-id>.json per invoice in <dir>
+einvoice export  <file...> --format sie|journal|csv [--accounts mapping.json] [--out <file>]   bookkeeping entries
 einvoice sweep   <dir...> [--expect answers.json]   detection coverage / known-answer check
 einvoice trust-lists update [--out <snapshot.json>] [--lotl-signer <cert.pem>]   fetch and verify the EU trusted lists
 einvoice match   --po <order.json|order.xml>... [--receipts r.json] [--tolerance '<json>'] <invoice...>   match to purchase orders
@@ -108,6 +109,37 @@ JSON goes to stdout only; every error is one line on stderr.
 
 With several failures and no success the code of the first failure is used; with at least one success it is 5.
 
+## MCP server for AI agents
+
+`einvoice mcp` runs a [Model Context Protocol](https://modelcontextprotocol.io) server on stdio, so an AI agent can read and check e-invoices with the same code as the CLI.
+
+| Tool | What it does |
+|---|---|
+| `detect_invoice_format` | Unwraps the file and names the format of each document |
+| `convert_invoice` | Canonical JSON, optionally with validation, line relations and provenance |
+| `validate_invoice` | Parse, schema, EN 16931, profile and signature results with every finding |
+| `explain_finding` | Plain-language explanation of a totals rule (BR-CO-10 to BR-CO-16) |
+| `check_duplicates` | Duplicate and re-sent invoices across files |
+| `match_purchase_order` | Two- or three-way match against purchase orders |
+| `list_formats` | The format registry |
+
+Resources: `einvoice://formats` and the JSON Schemas (`einvoice://schemas/canonical-invoice.v1`, `einvoice://schemas/convert-result.v1`).
+
+Safety: tools read files only inside the directories given with `--allow-dir` (symlinks resolved); without it they accept inline XML or base64 only. The server makes no network calls. Long base64 attachments and oversized results are shortened in what the model sees, and every tool that reads an invoice tells the model that invoice text is untrusted data.
+
+Claude Desktop (`claude_desktop_config.json`) or Claude Code (`.mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "einvoice": {
+      "command": "/path/to/einvoice",
+      "args": ["mcp", "--allow-dir", "/Users/me/Invoices"]
+    }
+  }
+}
+```
+
 ## EU trusted lists
 
 Opt-in. `loadTrustLists()` fetches the EU List of Trusted Lists (LOTL) and the national lists (ETSI TS 119 612), accepts a list only if its own XML signature verifies (the LOTL against pinned signer certificates, each national list against the certificates the LOTL publishes for it), and keeps the qualified CA/QC services with their certificates and dated status history. The result is a snapshot with its fetch date; `trust/eu-trust-snapshot.json` is one, refreshed weekly by a workflow that opens a pull request.
@@ -134,6 +166,16 @@ import { convert, matching } from 'eu-einvoice-canonical';
 const r = await convert(bytes, 'inv.xml', undefined, { relations: true });
 const result = matching.matchInvoice(invoice, [matching.parseOrder(orderXml)], { tolerances: { unitPrice: { percent: '2' } } });
 ```
+
+## Bookkeeping export
+
+`src/export/` turns a received invoice into a balanced journal entry (`buildJournalEntry(invoice, mapping)`), and the entry into a SIE 4 file (type 4I, CP437, `#VER`/`#TRANS`), JSON or CSV.
+
+- The caller supplies an `AccountMapping`: accounts payable, input VAT (one account or per rate), expense accounts by rule (line id, VAT category and rate, seller, item classification; first match wins, with a default) and one account each for reverse-charge VAT, withholding (per scheme), split-payment VAT, rounding, prepaid amounts, other taxes and KSeF settlement differences. `--accounts mapping.json` takes the same shape; without it the CLI and the site use `BAS_EXAMPLE_MAPPING`, an **example** onto the Swedish BAS chart (2440 payable, 2641 input VAT, 4010 / 5410 / 6xxx expenses) that is a demonstration and not advice on how to book anything.
+- Accounts payable is credited with `totals.payable`. Credit notes reverse every posting through `effectiveSign()` (a credit note that keeps negative source amounts, like Finvoice INV02, is not reversed twice). Reverse charge (AE) books input and output VAT; the invoice states no VAT, so the rate comes from the invoice if it gives one and otherwise from `reverseCharge.rate` in the mapping, and a note records it. Corrections whose lines are before/after pairs (KSeF KOR) are booked per VAT category from the stated differences.
+- The builder never invents a value and never emits an unbalanced entry: when the invoice's own totals disagree with its lines, or an account the invoice needs is missing from the mapping, it throws a `JournalError` that names the amounts or the missing account. `roundingTolerance` books a stated small residual to the rounding account instead.
+- SIE amounts are in the ledger currency (`--currency`, default SEK); an invoice in another currency is refused, no exchange rate is applied. Exports are byte-compared with `test/export/expected/*.se` in the tests.
+- The demo site has a "Download journal entry" button that exports the shown invoice as SIE with the example mapping.
 
 ## The canonical model
 

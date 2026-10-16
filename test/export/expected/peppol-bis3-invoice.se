@@ -1,0 +1,23 @@
+#FLAGGA 0
+#PROGRAM "einvoice-test" 1.0
+#FORMAT PC8
+#GEN 20261016
+#SIETYP 4
+#FNAMN "Uppsala kommun"
+#ORGNR 212000-0001
+#VALUTA SEK
+#KONTO 1680 "Andra kortfristiga fordringar"
+#KONTO 2440 "Leverant”rsskulder"
+#KONTO 2641 "Debiterad ing†ende moms"
+#KONTO 3740 "™res- och kronutj„mning"
+#KONTO 4010 "Ink”p material och varor"
+#VER "LF" "1" 20261015 "Snickeri Exempel AB invoice INV-2026-1042"
+{
+#TRANS 4010 {} 2960.00 20261015 "Expenses (4)"
+#TRANS 4010 {} -100.00 20261015 "Volymrabatt"
+#TRANS 4010 {} 50.00 20261015 "Frakt"
+#TRANS 2641 {} 680.70 20261015 "Input VAT (2)"
+#TRANS 3740 {} 0.30 20261015 "Rounding"
+#TRANS 1680 {} -500.00 20261015 "Prepaid amount"
+#TRANS 2440 {} -3091.00 20261015 "Snickeri Exempel AB INV-2026-1042"
+}
