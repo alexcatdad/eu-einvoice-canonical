@@ -95,8 +95,7 @@ describe('docs pages from the README', () => {
         const href = (m[1] as string).replace(/&amp;/g, '&');
         if (/^[a-z][a-z0-9+.-]*:/i.test(href)) continue;
         const [file = '', frag] = href.split('#');
-        const target =
-          file === '' ? p.path : normalize(join(dirname(p.path), file === './' || file === '' ? '.' : file));
+        const target = file === '' ? p.path : normalize(join(dirname(p.path), file === './' || file === '' ? '.' : file));
         const asPage = byPath.get(target) ?? byPath.get(`${target}index.html`) ?? byPath.get(`${target}/index.html`);
         if (asPage) {
           if (frag && !asPage.html.includes(`id="${frag}"`)) broken.push(`${p.path}: ${href} (no #${frag})`);
