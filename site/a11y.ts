@@ -50,7 +50,12 @@ async function axe(page: Page, label: string) {
   // Scalar's own reference markup is a third-party component; the page around it is checked.
   const result = await new AxeBuilder({ page }).exclude('[data-scalar-client]').analyze();
   for (const v of result.violations)
-    problems.push(`${label}: ${v.id} (${v.impact}) ${v.help}: ${v.nodes.map((n) => n.target.join(' ')).slice(0, 5).join(', ')}`);
+    problems.push(
+      `${label}: ${v.id} (${v.impact}) ${v.help}: ${v.nodes
+        .map((n) => n.target.join(' '))
+        .slice(0, 5)
+        .join(', ')}`,
+    );
 }
 
 async function noSideways(page: Page, label: string) {
@@ -93,7 +98,10 @@ async function focusVisible(browser: Browser) {
       const shown = el.matches('.slot input') ? getComputedStyle(el.closest('.slot')!) : s;
       const ring = shown.outlineStyle !== 'none' && Number.parseFloat(shown.outlineWidth) > 0;
       const shadow = shown.boxShadow !== 'none';
-      return { name: `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''}.${[...el.classList].join('.')} "${(el.textContent ?? '').trim().slice(0, 30)}"`, ok: ring || shadow };
+      return {
+        name: `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''}.${[...el.classList].join('.')} "${(el.textContent ?? '').trim().slice(0, 30)}"`,
+        ok: ring || shadow,
+      };
     });
     if (!r || seen.has(r.name)) continue;
     seen.add(r.name);
