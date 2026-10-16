@@ -18,6 +18,8 @@ import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs
 import { join } from 'node:path';
 import { renderPerformanceHtml } from '../bench/report.js';
 import type { Results } from '../bench/run.js';
+import { page } from '../site/chrome.js';
+import { coverageHtml } from '../site/coverage.js';
 import type { Detection } from '../src/detect.js';
 import { convert, FORMATS, type FormatDef, IMPLEMENTED_FAMILIES } from '../src/index.js';
 import { type Layer, planFor } from '../src/validation/plan.js';
@@ -153,28 +155,24 @@ function performanceSection() {
 function html() {
   const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
   const cell = (n: number, good: boolean) => `<td class="num ${good ? 'good' : 'gap'}">${n}</td>`;
-  return `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Conformance checklist</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-<header class="masthead">
+  return page({
+    title: 'Conformance checklist · E-invoice to JSON',
+    description:
+      'Where every supported e-invoice format stands: detection rule, fixtures, parser, real samples, mapping source and validation layers, generated from the code on every build.',
+    path: 'conformance.html',
+    current: 'formats',
+    body: `<div class="masthead">
   <div class="masthead-text">
     <h1>Conformance checklist</h1>
     <p class="lede">Where every format in the registry stands, generated from the code and the test fixtures on each build.</p>
   </div>
   <p class="privacy"><a href="./">Back to the converter</a></p>
-</header>
-<main class="checklist">
+</div>
+<div class="checklist">
+  ${coverageHtml('')}
+  <h2 id="checklist-title">Checklist by format</h2>
   <ul class="checklist-summary">${summaryLines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>
-  <div class="table-scroll">
+  <div class="table-scroll" tabindex="0">
   <table class="conformance">
     <thead><tr><th scope="col">Format</th><th scope="col">Countries</th><th scope="col">Detection rule</th><th scope="col" class="num">Fixtures detected</th><th scope="col">Parser</th><th scope="col" class="num">Fixtures converted</th><th scope="col" class="num">Real samples converted</th><th scope="col">Mapping source</th><th scope="col">Validation</th></tr></thead>
     <tbody>${rows
@@ -196,7 +194,6 @@ function html() {
   </div>
   <p class="wrappers">Generated ${new Date().toISOString().slice(0, 10)} by <code>scripts/conformance.ts</code>. Hand-maintained facts (which fixtures are real public samples, mapping sources) live in <code>conformance/notes.json</code>.</p>
   ${performanceSection()}
-</main>
-</body>
-</html>`;
+</div>`,
+  });
 }

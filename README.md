@@ -51,6 +51,8 @@ The browser converter and the Deliverables page are available in English, German
 
 **The non-English strings are machine-assisted translations and have not had a native-speaker review.** Corrections are welcome: edit the catalogue and open a pull request, keeping every key and every `{placeholder}`. `test/i18n.test.ts` checks that all catalogues have the same keys as `en.json`, that no placeholder is lost, and that every key the site code uses exists.
 
+## Getting started
+
 Development uses [Bun](https://bun.sh) 1.4+. The library itself has no Bun or Node dependency: it runs in Node 20+, Bun and browsers.
 
 ```bash
@@ -312,12 +314,12 @@ Other design rules are unchanged from the PEPPOL/Svefaktura version: decimal str
 
 ### Line roles and relations
 
-Many invoices mix real items with lines that only describe or adjust other lines (a heading, "Utförande enligt offert 9633", "10% Materialpåslag"). With `convert(bytes, name, undefined, { relations: true })` every invoice gets two extra fields beside `lines`; the lines and totals are never changed:
+Many invoices mix real items with lines that only describe or adjust other lines (a heading, "Utförande enligt anbud 5150", "8% Materialpåslag"). With `convert(bytes, name, undefined, { relations: true })` every invoice gets two extra fields beside `lines`; the lines and totals are never changed:
 
 ```
 lineRoles: { '1': 'heading', '2': 'description', '3': 'description', '4': 'item', '5': 'surcharge', '6': 'item' }
 relations: [
-  { from: '5', to: ['4'], type: 'markup', rate: '10', method: 'arithmetic', confidence: 'proven' },
+  { from: '5', to: ['4'], type: 'markup', rate: '8', method: 'arithmetic', confidence: 'proven' },
   { from: '1', to: ['4', '5', '6'], type: 'heading', method: 'rule' },
 ]
 ```

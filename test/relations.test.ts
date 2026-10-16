@@ -38,7 +38,7 @@ describe('the Svefaktura example with descriptors, a markup and an uncovered ite
       from: '5',
       to: ['4'],
       type: 'markup',
-      rate: '10',
+      rate: '8',
       method: 'arithmetic',
       confidence: 'proven',
     });
@@ -54,12 +54,12 @@ describe('the Svefaktura example with descriptors, a markup and an uncovered ite
     expect(plain.relations).toBeUndefined();
     expect(rich.lines).toEqual(plain.lines);
     expect(rich.totals).toEqual(plain.totals);
-    expect(String(plain.totals.lineNetTotal)).toBe('372887.00');
+    expect(String(plain.totals.lineNetTotal)).toBe('269840.00');
   });
 
-  test('10 % of line 4 is exactly line 5, 10 % of lines 4 and 6 is not', () => {
-    expect(String(percentOf('337170.00', '10'))).toBe('33717.0000');
-    expect(String(percentOf('339170.00', '10'))).toBe('33917.0000');
+  test('8 % of line 4 is exactly line 5, 8 % of lines 4 and 6 is not', () => {
+    expect(String(percentOf('248000.00', '8'))).toBe('19840.0000');
+    expect(String(percentOf('250000.00', '8'))).toBe('20000.0000');
   });
 
   test('the descriptor lines are zero-valued in the source', async () => {

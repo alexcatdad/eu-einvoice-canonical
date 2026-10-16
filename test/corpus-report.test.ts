@@ -77,7 +77,7 @@ test('aggregate counts per corpus and format, clusters errors and rates BR-CO wa
   expect(md).toContain('### Top 20 error messages');
   expect(md).toContain('Timed out or crashed');
   const html = renderHtml(report);
-  expect(html).toContain('<title>Real-world results</title>');
+  expect(html).toContain('<title>Real-world results');
   expect(html).toContain('Bad value');
   expect(linkHtml(report)).toContain('href="corpus.html"');
 });
