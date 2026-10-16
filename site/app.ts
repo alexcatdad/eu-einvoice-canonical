@@ -14,6 +14,8 @@ import {
   type LineRelation,
   type LineRole,
   type Party,
+  type SignatureInfo,
+  type TrustSnapshot,
 } from '../src/index.js';
 import { ENGINES, loadEngine } from './model.js';
 
@@ -165,10 +167,38 @@ interface Item {
 let shownIndex = 0;
 let current: { result: ConvertResult; filename: string; items: Item[]; isExample: boolean } | undefined;
 
+// EU trusted lists: opt-in, loaded the first time the box is ticked.
+let euTrust: TrustSnapshot | undefined;
+let lastInput: { bytes: Uint8Array; filename: string; isExample: boolean } | undefined;
+const euBox = $<HTMLInputElement>('#eu-trust');
+const euStatus = $<HTMLElement>('#eu-trust-status');
+euBox.addEventListener('change', async () => {
+  if (!euBox.checked) {
+    euTrust = undefined;
+    euStatus.textContent = 'Off. Fetches the lists when switched on; the file is still never uploaded.';
+  } else {
+    euBox.disabled = true;
+    euStatus.textContent = 'Loading the EU trusted lists…';
+    try {
+      const { loadSiteTrust } = await import('./trust.js');
+      const t = await loadSiteTrust();
+      euTrust = t.snapshot;
+      const ok = t.snapshot.lists.filter((l) => l.status === 'loaded').length;
+      euStatus.textContent = `${t.source === 'live' ? 'Live lists' : 'Snapshot published with this site'}, fetched ${t.snapshot.fetchedAt.slice(0, 10)} (${ok} of ${t.snapshot.lists.length} national lists).${t.note ? ` ${t.note}.` : ''}`;
+    } catch (e) {
+      euBox.checked = false;
+      euStatus.textContent = (e as Error).message;
+    }
+    euBox.disabled = false;
+  }
+  if (lastInput) await run(lastInput.bytes, lastInput.filename, lastInput.isExample);
+});
+
 async function run(bytes: Uint8Array, filename: string, isExample = false) {
+  lastInput = { bytes, filename, isExample };
   if (!isExample) resultEl.innerHTML = `<p class="file-meta">Reading ${esc(filename)}…</p>`;
   try {
-    const result = await convert(bytes, filename, undefined, { relations: true });
+    const result = await convert(bytes, filename, undefined, { relations: true, euTrust });
     const items = result.outcomes.flatMap((o, i): Item[] =>
       o.status === 'ok'
         ? o.invoices.map((inv) => ({ tab: `${inv.kind === 'creditNote' ? 'Credit note' : 'Invoice'} ${inv.id}`, outcome: o, invoice: inv }))
@@ -431,6 +461,14 @@ function party(label: string, p: Party): string {
   </div>`;
 }
 
+function euNote(s: SignatureInfo): string {
+  const e = s.euTrust;
+  if (!e) return '';
+  const stale = e.snapshot.stale ? `; trusted lists older than their next update (${e.snapshot.nextUpdate?.slice(0, 10)})` : '';
+  if (e.qualified) return `, signer chains to a qualified service (${e.service?.name}, ${e.service?.territory})${stale}`;
+  return `, ${e.reason ?? 'not a qualified signer'}${stale}`;
+}
+
 function provenance(item: Item): string {
   const o = item.outcome;
   const rows: [string, string][] = [];
@@ -448,7 +486,7 @@ function provenance(item: Item): string {
       o.payload.signatures
         .map(
           (s) =>
-            `${s.type}${s.signer ? ` (${s.signer})` : ''}${s.verified === undefined ? ', not verified' : s.verified ? ', verified' : ', INVALID'}`,
+            `${s.type}${s.signer ? ` (${s.signer})` : ''}${s.verified === undefined ? ', not verified' : s.verified ? ', verified' : ', INVALID'}${euNote(s)}`,
         )
         .join('; '),
     ]);

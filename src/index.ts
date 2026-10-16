@@ -12,6 +12,7 @@ export * from './canonical.js';
 export { checkTotals, type Finding } from './checks.js';
 export * from './codes.js';
 export { type Detection, detectXml } from './detect.js';
+export * from './duplicates/index.js';
 export { DEFAULT_LIMITS, decodeXml, type Skipped, type UnwrapLimits, type UnwrapOptions, unwrap, type XmlPayload } from './envelope.js';
 export { FORMATS, FORMATS_BY_ID, type FormatDef, type FormatId, type ParserFamily } from './formats.js';
 export * as matching from './matching/index.js';
@@ -27,7 +28,18 @@ export {
   parseModelOutput,
 } from './relations/model.js';
 export { analyseLines, applyRelations, isDescriptor, type LineAnalysis, percentagesIn } from './relations/rules.js';
-export { signatureStatus, type TrustAnchor } from './signature/index.js';
+export {
+  LOTL_URL,
+  type LoadOptions,
+  loadTrustLists,
+  parseSnapshot,
+  signatureStatus,
+  type TrustAnchor,
+  type TrustListInfo,
+  type TrustService,
+  type TrustSnapshot,
+  trustAnchorsFromSnapshot,
+} from './signature/index.js';
 export type { ValidateOptions } from './validation/index.js';
 export * as values from './values.js';
 

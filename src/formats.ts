@@ -682,12 +682,12 @@ export const FORMATS = [
     // Source: namespace http://www.aade.gr/myDATA/invoice/v1.0 as used by AADE's InvoicesDoc XSDs and by clients
     // generating them (e.g. github.com/firebed/aade-mydata InvoicesDocWriter, Odoo l10n_gr_edi).
     notes:
-      'AADE myDATA document (InvoicesDoc, namespace http://www.aade.gr/myDATA/invoice/v1.0 in the AADE XSD; checked against ' +
+      'AADE myDATA document (InvoicesDoc, or the RequestedDoc wrapper that the AADE retrieval services return; namespace http://www.aade.gr/myDATA/invoice/v1.0 in the AADE XSD; checked against ' +
       "AADE's published InvoicesDoc schema and sample XML). One file can hold several invoices. Greek B2B mandate phases from " +
       'Feb 2026 (large) and Oct 2026 (others). Greek EN 16931 invoices are detected by the UBL/CII rules; this rule is for raw myDATA files.',
     match: (p) =>
-      p.rootName === 'InvoicesDoc' && /^https?:\/\/www\.aade\.gr\/myDATA\/invoice\/v\d/i.test(p.rootNs)
-        ? { profile: p.values.myDataInvoiceType }
+      (p.rootName === 'InvoicesDoc' || p.rootName === 'RequestedDoc') && /^https?:\/\/www\.aade\.gr\/myDATA\/invoice\/v\d/i.test(p.rootNs)
+        ? { profile: p.values.myDataInvoiceType ?? p.values.myDataRequestedInvoiceType }
         : null,
   },
   {

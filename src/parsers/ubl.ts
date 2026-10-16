@@ -75,7 +75,7 @@ export function parseUbl(input: ParseInput): CanonicalInvoice[] {
   const seller = party(c, sellerEl, s.in('seller'), vatSchemes, true) as Seller;
   const taxRegEl = c
     .all(sellerEl, 'cac:PartyTaxScheme')
-    .filter((t) => !vatSchemes.has(c.text(t, 'cac:TaxScheme/cbc:ID') ?? ''))
+    .filter((t) => !isVatScheme(c, t, vatSchemes))
     .map((t) => c.el(t, 'cbc:CompanyID'))
     .find((e) => c.text(e));
   seller.taxRegistrationId = s.text(taxRegEl, undefined, 'seller/taxRegistrationId');
@@ -184,12 +184,19 @@ function note(c: Ctx, e: Element, s: Scope) {
   return { subjectCode: m[1], text: m[2] };
 }
 
+/**
+ * Whether a PartyTaxScheme is VAT: EN 16931 uses TaxScheme 'VAT'; OIOUBL 2 uses its own code list, where 63 is
+ * 'Moms' (Danish VAT); PINT profiles add VAT-like schemes such as GST and SST (passed in `vatSchemes`).
+ */
+function isVatScheme(c: Ctx, partyTaxScheme: Element, vatSchemes: ReadonlySet<string> = new Set()): boolean {
+  const id = c.text(partyTaxScheme, 'cac:TaxScheme/cbc:ID') ?? '';
+  return id === 'VAT' || vatSchemes.has(id) || (id === '63' && c.text(partyTaxScheme, 'cac:TaxScheme/cbc:Name')?.toLowerCase() === 'moms');
+}
+
 function party(c: Ctx, p: Element | undefined, s: Scope, vatSchemes: ReadonlySet<string>, isSeller = false): Party {
   const schemes = c.all(p, 'cac:PartyTaxScheme');
   // The VAT scheme itself wins over the other VAT-like ones (PINT-MY has both: SST as VAT, TIN as GST).
-  const vatScheme =
-    schemes.find((t) => c.text(t, 'cac:TaxScheme/cbc:ID') === 'VAT') ??
-    schemes.find((t) => vatSchemes.has(c.text(t, 'cac:TaxScheme/cbc:ID') ?? ''));
+  const vatScheme = schemes.find((t) => c.text(t, 'cac:TaxScheme/cbc:ID') === 'VAT') ?? schemes.find((t) => isVatScheme(c, t, vatSchemes));
   // The SEPA creditor id (BT-90) rides along as a party identifier in UBL; it belongs to direct debit, not to the seller.
   const ids = c.nonEmpty(c.all(p, 'cac:PartyIdentification/cbc:ID')).filter((e) => !(isSeller && isSepa(c)(e)));
   return {

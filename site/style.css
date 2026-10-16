@@ -208,6 +208,14 @@ main,
   gap: 0.3rem;
   font-weight: 600;
 }
+.eu-trust input {
+  margin-right: 0.4rem;
+}
+.trust-status {
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: var(--muted, var(--text));
+}
 select,
 textarea {
   width: 100%;
