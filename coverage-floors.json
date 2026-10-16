@@ -1,6 +1,6 @@
 {
-  "totalLines": 90,
-  "totalFunctions": 85,
+  "totalLines": 93,
+  "totalFunctions": 89,
   "perFileLines": 85,
   "exclude": ["src/cli.ts", "src/sweep.ts", "src/signature/c14n.ts"],
   "excludeReasons": {
