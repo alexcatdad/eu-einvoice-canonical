@@ -776,6 +776,18 @@
         "qrPayload": {
           "type": "string",
           "description": "QR code payload or URL printed on the visual (PT, GR, PL, ES)."
+        },
+        "certificateNumber": {
+          "type": "string",
+          "description": "Number of the authority's certificate that stamped the document (CFDI NoCertificadoSAT)."
+        },
+        "stamp": {
+          "type": "string",
+          "description": "The authority's stamp over the document, as written (CFDI SelloSAT). Not verified."
+        },
+        "intermediary": {
+          "type": "string",
+          "description": "Authorised intermediary that submitted the document to the authority (CFDI PAC, RfcProvCertif)."
         }
       },
       "required": [
@@ -885,6 +897,9 @@
         },
         "ee": {
           "$ref": "#/$defs/EeExtension"
+        },
+        "mx": {
+          "$ref": "#/$defs/MxExtension"
         }
       }
     },
@@ -1168,7 +1183,8 @@
         "eslog-2",
         "eslog-1",
         "svefaktura-1",
-        "gr-mydata"
+        "gr-mydata",
+        "mx-cfdi"
       ],
       "description": "Identifier of a detected e-invoice format."
     },
@@ -1667,6 +1683,91 @@
       ],
       "description": "What a line is for. `item` is anything sold; `heading` and `description` carry text only (zero quantity, price and amount); the rest adjust or add to other lines."
     },
+    "MxExtension": {
+      "type": "object",
+      "properties": {
+        "cfdiVersion": {
+          "type": "string"
+        },
+        "series": {
+          "type": "string"
+        },
+        "folio": {
+          "type": "string"
+        },
+        "placeOfIssue": {
+          "type": "string",
+          "description": "Postal code of the place of issue (LugarExpedicion). The issuer's own address is not in a CFDI."
+        },
+        "exportation": {
+          "type": "string"
+        },
+        "confirmation": {
+          "type": "string"
+        },
+        "paymentMethod": {
+          "type": "string",
+          "description": "MetodoPago: 'PUE' paid in one payment, 'PPD' in instalments or deferred."
+        },
+        "paymentForm": {
+          "type": "string"
+        },
+        "issuer": {
+          "type": "object",
+          "properties": {
+            "taxRegime": {
+              "type": "string"
+            },
+            "sealCertificateNumber": {
+              "type": "string"
+            },
+            "seal": {
+              "type": "string"
+            }
+          }
+        },
+        "receiver": {
+          "type": "object",
+          "properties": {
+            "taxRegime": {
+              "type": "string"
+            },
+            "fiscalPostalCode": {
+              "type": "string"
+            },
+            "cfdiUse": {
+              "type": "string"
+            },
+            "taxResidence": {
+              "type": "string"
+            }
+          }
+        },
+        "globalInformation": {
+          "type": "object",
+          "properties": {
+            "periodicity": {
+              "type": "string"
+            },
+            "months": {
+              "type": "string"
+            },
+            "year": {
+              "type": "string"
+            }
+          },
+          "description": "InformacionGlobal: invoice summarising sales to the general public."
+        },
+        "subTotal": {
+          "$ref": "#/$defs/Amount",
+          "description": "Sum of the line discounts and the pre-discount subtotal as the CFDI states them (SubTotal, Descuento)."
+        },
+        "discount": {
+          "$ref": "#/$defs/Amount"
+        }
+      },
+      "description": "Mexico, CFDI 3.3 / 4.0. Fields with no EN or generic equivalent; codes are SAT catalogue keys."
+    },
     "NationalTypeCode": {
       "type": "object",
       "properties": {
@@ -1960,7 +2061,11 @@
         },
         "clearanceId": {
           "type": "string",
-          "description": "Clearance ID of the referenced invoice (KSeF number, SdI ID...)."
+          "description": "Clearance ID of the referenced invoice (KSeF number, SdI ID, CFDI UUID...)."
+        },
+        "relationType": {
+          "type": "string",
+          "description": "How this document relates to the referenced one, in the source code list (CFDI TipoRelacion '01' = credit note of the related document, '04' = substitution...)."
         }
       },
       "required": [
@@ -2196,6 +2301,91 @@
         },
         "trustReason": {
           "type": "string"
+        },
+        "euTrust": {
+          "type": "object",
+          "properties": {
+            "qualified": {
+              "type": "boolean",
+              "description": "The signer chains to a CA/QC service whose status was granted at the signing time."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "qualified",
+                "not-qualified",
+                "not-listed"
+              ]
+            },
+            "evaluatedAt": {
+              "type": "string",
+              "description": "The instant the service status was evaluated at: the signing time, or now when the signature carries none."
+            },
+            "signingTimeKnown": {
+              "type": "boolean"
+            },
+            "service": {
+              "type": "object",
+              "properties": {
+                "provider": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "territory": {
+                  "type": "string"
+                },
+                "statusAtSigning": {
+                  "type": "string"
+                },
+                "currentStatus": {
+                  "type": "string"
+                },
+                "statusFrom": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "provider",
+                "name",
+                "territory",
+                "statusAtSigning",
+                "currentStatus",
+                "statusFrom"
+              ]
+            },
+            "snapshot": {
+              "type": "object",
+              "properties": {
+                "fetchedAt": {
+                  "type": "string"
+                },
+                "nextUpdate": {
+                  "type": "string"
+                },
+                "stale": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "fetchedAt",
+                "stale"
+              ],
+              "description": "`stale`: the snapshot is past its earliest next-update date, so the lists may have changed since."
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "qualified",
+            "status",
+            "evaluatedAt",
+            "signingTimeKnown",
+            "snapshot"
+          ],
+          "description": "Present when an EU trusted-list snapshot was passed (`euTrust` option): the qualified-service check of the signer."
         }
       },
       "required": [
