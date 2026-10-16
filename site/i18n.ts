@@ -101,7 +101,13 @@ export function applyDocument(root: ParentNode = document) {
     }
   };
   for (const el of root.querySelectorAll('[data-i18n]')) el.textContent = t(el.getAttribute('data-i18n')!, paramsOf(el));
-  for (const el of root.querySelectorAll('[data-i18n-html]')) el.innerHTML = t(el.getAttribute('data-i18n-html')!, paramsOf(el));
+  // Markup comes only from the bundled catalogues: an unknown key is ignored, and values from the page are escaped before they are inserted.
+  for (const el of root.querySelectorAll('[data-i18n-html]')) {
+    const key = el.getAttribute('data-i18n-html') ?? '';
+    if (!Object.hasOwn(en, key)) continue;
+    const safe = Object.fromEntries(Object.entries(paramsOf(el) ?? {}).map(([k, v]) => [k, esc(String(v))]));
+    el.innerHTML = t(key, safe);
+  }
   for (const el of root.querySelectorAll('[data-i18n-attr]'))
     for (const pair of el.getAttribute('data-i18n-attr')!.split(';')) {
       const [attr, key] = pair.split(':').map((s) => s.trim());
