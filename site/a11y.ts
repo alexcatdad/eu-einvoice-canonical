@@ -10,7 +10,7 @@
  *   bunx playwright install chromium && bun a11y.ts
  */
 import { join, normalize } from 'node:path';
-import AxeBuilder from '@axe-core/playwright';
+import { AxeBuilder } from '@axe-core/playwright';
 import { type Browser, chromium, type Page } from 'playwright';
 import { BASE } from './site.js';
 
