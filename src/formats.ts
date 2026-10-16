@@ -23,7 +23,11 @@ export const NS = {
   soap11: 'http://schemas.xmlsoap.org/soap/envelope/',
   soap12: 'http://www.w3.org/2003/05/soap-envelope',
   xmldsig: 'http://www.w3.org/2000/09/xmldsig#',
+  cfdi4: 'http://www.sat.gob.mx/cfd/4',
+  cfdi3: 'http://www.sat.gob.mx/cfd/3',
 } as const;
+
+const isCfdi = (p: XmlProbe) => p.rootName === 'Comprobante' && (p.rootNs === NS.cfdi4 || p.rootNs === NS.cfdi3);
 
 /** Known KSeF schema namespaces. FA(3) has been mandatory since 1 February 2026. */
 const KSEF_NS: Record<string, string> = {
@@ -46,7 +50,8 @@ export type ParserFamily =
   | 'teappsxml'
   | 'e-arve'
   | 'eslog'
-  | 'mydata';
+  | 'mydata'
+  | 'cfdi';
 
 /**
  * - current: in active use for invoices you will receive.
@@ -576,6 +581,23 @@ export const FORMATS = [
         ? { profile: p.values.myDataInvoiceType }
         : null,
   },
+  {
+    id: 'mx-cfdi',
+    name: 'Mexico CFDI 3.3 / 4.0',
+    family: 'cfdi',
+    countries: ['MX'],
+    status: 'current',
+    phase: 3,
+    // Source: SAT Anexo 20 (cfdv40.xsd, cfdv33.xsd). TipoDeComprobante is a required attribute of the root.
+    notes:
+      'Mexican tax-authority invoice (cfdi:Comprobante), stamped by an authorised provider (PAC) with a SAT TimbreFiscalDigital. ' +
+      'Only types I (ingreso, invoice) and E (egreso, credit note) are invoices; T (traslado), P (pago, Pagos 2.0) and N (nómina) ' +
+      'are detected as other documents. CFDI 4.0 has been mandatory since 1 Apr 2023; 3.3 only appears in older files.',
+    match: (p) =>
+      isCfdi(p) && (p.rootAttrs.TipoDeComprobante === 'I' || p.rootAttrs.TipoDeComprobante === 'E')
+        ? { version: p.rootAttrs.Version ?? (p.rootNs === NS.cfdi4 ? '4.0' : '3.3'), profile: p.rootAttrs.TipoDeComprobante }
+        : null,
+  },
 ] as const satisfies readonly FormatDef[];
 
 export type FormatId = (typeof FORMATS)[number]['id'];
@@ -602,6 +624,13 @@ export const OTHER_DOCUMENTS: OtherDocumentRule[] = [
     label: 'SdI notification or metadata (holds IdentificativoSdI)',
     test: (p) => /agenziaentrate\.gov\.it\/docs\/xsd\/fatture\/messaggi/i.test(p.rootNs),
   },
+  {
+    label: 'CFDI de pago (Complemento de pagos 2.0 / 1.0): a receipt for payments received, not an invoice',
+    test: (p) => isCfdi(p) && p.rootAttrs.TipoDeComprobante === 'P',
+  },
+  { label: 'CFDI de traslado: a transport document, not an invoice', test: (p) => isCfdi(p) && p.rootAttrs.TipoDeComprobante === 'T' },
+  { label: 'CFDI de nómina: a payroll receipt, not an invoice', test: (p) => isCfdi(p) && p.rootAttrs.TipoDeComprobante === 'N' },
+  { label: 'CFDI of an unrecognised type', test: (p) => isCfdi(p) },
   { label: 'KSeF UPO (official receipt)', test: (p) => /upo\.schematy\.mf\.gov\.pl/i.test(p.rootNs) },
   { label: 'Croatian fiscalisation message', test: (p) => /porezna-uprava\.gov\.hr/i.test(p.rootNs) },
   { label: 'Detached XML signature', test: (p) => p.rootNs === NS.xmldsig },

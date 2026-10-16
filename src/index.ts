@@ -14,6 +14,7 @@ export * from './codes.js';
 export { type Detection, detectXml } from './detect.js';
 export { DEFAULT_LIMITS, decodeXml, type Skipped, type UnwrapLimits, type UnwrapOptions, unwrap, type XmlPayload } from './envelope.js';
 export { FORMATS, FORMATS_BY_ID, type FormatDef, type FormatId, type ParserFamily } from './formats.js';
+export * as matching from './matching/index.js';
 export { IMPLEMENTED_FAMILIES, NotImplementedError, ParseError } from './parsers/index.js';
 export {
   applyModelLabels,
@@ -40,6 +41,12 @@ export {
 } from './signature/index.js';
 export type { ValidateOptions } from './validation/index.js';
 export * as values from './values.js';
+
+/**
+ * Major version of the published JSON Schemas (`schemas/*.v1.schema.json`). Additive changes to the model keep it;
+ * a breaking change to the output shape bumps it and publishes new schema files next to the old ones.
+ */
+export const schemaVersion = 'v1';
 
 export interface InspectedDocument {
   payload: Omit<XmlPayload, 'xml'>;

@@ -11,7 +11,8 @@
       "!test/fixtures",
       "!test/corpus/repos",
       "!bun.lock",
-      "!trust"
+      "!trust",
+      "!schemas"
     ]
   },
   "formatter": {

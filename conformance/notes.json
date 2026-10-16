@@ -35,6 +35,7 @@
     "e-arve": "Estonian e-invoice (e-arve) 1.2 / 1.2.EN; no mapping document cited in the parser",
     "eslog": "e-SLOG 2.0 Electronic Invoice, Part 2: Document Composition (April 2018)",
     "eslog-1": "Not mapped: the eslog parser reads eSLOG 2.0 only",
+    "cfdi": "SAT Anexo 20 and the CFDI schemas cfdv40.xsd / cfdv33.xsd (sat.gob.mx/sitio_internet/cfd), with the TimbreFiscalDigital 1.1 stamp",
     "mydata": "AADE myDATA InvoicesDoc XSD, invoice namespace v1.0 and income/expenses classification v1.0"
   }
 }

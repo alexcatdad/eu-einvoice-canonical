@@ -1,0 +1,2604 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://alexcatdad.github.io/eu-einvoice-canonical/schemas/canonical-invoice.v1.schema.json",
+  "title": "CanonicalInvoice",
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "invoice"
+        },
+        "typeCode": {
+          "$ref": "#/$defs/InvoiceTypeCode"
+        },
+        "id": {
+          "type": "string"
+        },
+        "issueDate": {
+          "$ref": "#/$defs/IsoDate"
+        },
+        "issueTime": {
+          "$ref": "#/$defs/IsoTime"
+        },
+        "nationalType": {
+          "$ref": "#/$defs/NationalTypeCode"
+        },
+        "selfBilled": {
+          "type": "boolean"
+        },
+        "currency": {
+          "$ref": "#/$defs/CurrencyCode"
+        },
+        "taxCurrency": {
+          "$ref": "#/$defs/CurrencyCode"
+        },
+        "exchangeRate": {
+          "type": "object",
+          "properties": {
+            "rate": {
+              "$ref": "#/$defs/Decimal"
+            },
+            "date": {
+              "$ref": "#/$defs/IsoDate"
+            }
+          },
+          "required": [
+            "rate"
+          ],
+          "description": "Not EN as a single term: exchange rate the source used to state VAT in the tax currency."
+        },
+        "taxPointDate": {
+          "$ref": "#/$defs/IsoDate"
+        },
+        "vatPointDateCode": {
+          "type": "string"
+        },
+        "dueDate": {
+          "$ref": "#/$defs/IsoDate"
+        },
+        "buyerReference": {
+          "type": "string"
+        },
+        "projectRef": {
+          "type": "string"
+        },
+        "contractRef": {
+          "type": "string"
+        },
+        "purchaseOrderRef": {
+          "type": "string"
+        },
+        "salesOrderRef": {
+          "type": "string"
+        },
+        "receivingAdviceRef": {
+          "type": "string"
+        },
+        "despatchAdviceRef": {
+          "type": "string"
+        },
+        "tenderRef": {
+          "type": "string"
+        },
+        "invoicedObjectId": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "accountingRef": {
+          "type": "string"
+        },
+        "paymentTerms": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "subjectCode": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "text"
+            ]
+          }
+        },
+        "businessProcess": {
+          "type": "string"
+        },
+        "specificationId": {
+          "type": "string"
+        },
+        "precedingInvoices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PrecedingInvoiceRef"
+          }
+        },
+        "correction": {
+          "$ref": "#/$defs/Correction"
+        },
+        "invoicePeriod": {
+          "$ref": "#/$defs/Period"
+        },
+        "seller": {
+          "$ref": "#/$defs/Seller"
+        },
+        "buyer": {
+          "$ref": "#/$defs/Party"
+        },
+        "payee": {
+          "$ref": "#/$defs/Payee"
+        },
+        "taxRepresentative": {
+          "$ref": "#/$defs/TaxRepresentative"
+        },
+        "additionalParties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AdditionalParty"
+          }
+        },
+        "delivery": {
+          "$ref": "#/$defs/Delivery"
+        },
+        "payments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PaymentInstructions"
+          }
+        },
+        "paymentSchedule": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PaymentInstallment"
+          }
+        },
+        "allowances": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AllowanceCharge"
+          }
+        },
+        "charges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AllowanceCharge"
+          }
+        },
+        "totals": {
+          "$ref": "#/$defs/Totals"
+        },
+        "vatBreakdown": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/VatBreakdown"
+          }
+        },
+        "otherTaxes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OtherTax"
+          }
+        },
+        "withholdings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Withholding"
+          }
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Attachment"
+          }
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Line"
+          }
+        },
+        "lineRoles": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/LineRole"
+          },
+          "description": "Line id -> role. Only with `convert(..., { relations: true })`. Never changes `lines` or `totals`."
+        },
+        "relations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LineRelation"
+          }
+        },
+        "clearance": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ClearanceInfo"
+          }
+        },
+        "extensions": {
+          "$ref": "#/$defs/CountryExtensions"
+        },
+        "source": {
+          "$ref": "#/$defs/SourceMeta"
+        }
+      },
+      "required": [
+        "additionalParties",
+        "allowances",
+        "attachments",
+        "buyer",
+        "charges",
+        "clearance",
+        "currency",
+        "extensions",
+        "id",
+        "issueDate",
+        "kind",
+        "lines",
+        "notes",
+        "otherTaxes",
+        "paymentSchedule",
+        "payments",
+        "precedingInvoices",
+        "selfBilled",
+        "seller",
+        "source",
+        "specificationId",
+        "totals",
+        "typeCode",
+        "vatBreakdown",
+        "withholdings"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "creditNote"
+        },
+        "typeCode": {
+          "$ref": "#/$defs/CreditNoteTypeCode"
+        },
+        "id": {
+          "type": "string"
+        },
+        "issueDate": {
+          "$ref": "#/$defs/IsoDate"
+        },
+        "issueTime": {
+          "$ref": "#/$defs/IsoTime"
+        },
+        "nationalType": {
+          "$ref": "#/$defs/NationalTypeCode"
+        },
+        "selfBilled": {
+          "type": "boolean"
+        },
+        "currency": {
+          "$ref": "#/$defs/CurrencyCode"
+        },
+        "taxCurrency": {
+          "$ref": "#/$defs/CurrencyCode"
+        },
+        "exchangeRate": {
+          "type": "object",
+          "properties": {
+            "rate": {
+              "$ref": "#/$defs/Decimal"
+            },
+            "date": {
+              "$ref": "#/$defs/IsoDate"
+            }
+          },
+          "required": [
+            "rate"
+          ],
+          "description": "Not EN as a single term: exchange rate the source used to state VAT in the tax currency."
+        },
+        "taxPointDate": {
+          "$ref": "#/$defs/IsoDate"
+        },
+        "vatPointDateCode": {
+          "type": "string"
+        },
+        "dueDate": {
+          "$ref": "#/$defs/IsoDate"
+        },
+        "buyerReference": {
+          "type": "string"
+        },
+        "projectRef": {
+          "type": "string"
+        },
+        "contractRef": {
+          "type": "string"
+        },
+        "purchaseOrderRef": {
+          "type": "string"
+        },
+        "salesOrderRef": {
+          "type": "string"
+        },
+        "receivingAdviceRef": {
+          "type": "string"
+        },
+        "despatchAdviceRef": {
+          "type": "string"
+        },
+        "tenderRef": {
+          "type": "string"
+        },
+        "invoicedObjectId": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "accountingRef": {
+          "type": "string"
+        },
+        "paymentTerms": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "subjectCode": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "text"
+            ]
+          }
+        },
+        "businessProcess": {
+          "type": "string"
+        },
+        "specificationId": {
+          "type": "string"
+        },
+        "precedingInvoices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PrecedingInvoiceRef"
+          }
+        },
+        "correction": {
+          "$ref": "#/$defs/Correction"
+        },
+        "invoicePeriod": {
+          "$ref": "#/$defs/Period"
+        },
+        "seller": {
+          "$ref": "#/$defs/Seller"
+        },
+        "buyer": {
+          "$ref": "#/$defs/Party"
+        },
+        "payee": {
+          "$ref": "#/$defs/Payee"
+        },
+        "taxRepresentative": {
+          "$ref": "#/$defs/TaxRepresentative"
+        },
+        "additionalParties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AdditionalParty"
+          }
+        },
+        "delivery": {
+          "$ref": "#/$defs/Delivery"
+        },
+        "payments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PaymentInstructions"
+          }
+        },
+        "paymentSchedule": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PaymentInstallment"
+          }
+        },
+        "allowances": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AllowanceCharge"
+          }
+        },
+        "charges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AllowanceCharge"
+          }
+        },
+        "totals": {
+          "$ref": "#/$defs/Totals"
+        },
+        "vatBreakdown": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/VatBreakdown"
+          }
+        },
+        "otherTaxes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OtherTax"
+          }
+        },
+        "withholdings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Withholding"
+          }
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Attachment"
+          }
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Line"
+          }
+        },
+        "lineRoles": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/LineRole"
+          },
+          "description": "Line id -> role. Only with `convert(..., { relations: true })`. Never changes `lines` or `totals`."
+        },
+        "relations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LineRelation"
+          }
+        },
+        "clearance": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ClearanceInfo"
+          }
+        },
+        "extensions": {
+          "$ref": "#/$defs/CountryExtensions"
+        },
+        "source": {
+          "$ref": "#/$defs/SourceMeta"
+        }
+      },
+      "required": [
+        "additionalParties",
+        "allowances",
+        "attachments",
+        "buyer",
+        "charges",
+        "clearance",
+        "currency",
+        "extensions",
+        "id",
+        "issueDate",
+        "kind",
+        "lines",
+        "notes",
+        "otherTaxes",
+        "paymentSchedule",
+        "payments",
+        "precedingInvoices",
+        "selfBilled",
+        "seller",
+        "source",
+        "specificationId",
+        "totals",
+        "typeCode",
+        "vatBreakdown",
+        "withholdings"
+      ]
+    }
+  ],
+  "$defs": {
+    "AdditionalParty": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string"
+        },
+        "sourceRole": {
+          "type": "string",
+          "description": "Role code as written in the source, e.g. 'PL:Rola:5', 'IT:SoggettoEmittente:TZ'."
+        },
+        "party": {
+          "$ref": "#/$defs/Party"
+        }
+      },
+      "required": [
+        "role",
+        "party"
+      ],
+      "description": "Parties in roles EN 16931 does not model: KSeF Podmiot3 (factor, internal recipient, additional buyer, issuer on behalf of the seller, payer, VAT-group member...), FatturaPA TerzoIntermediarioOSoggettoEmittente, Facturae third party, e-arve FactorParty, eSLOG NAD roles. Payee and tax representative stay in their EN fields."
+    },
+    "Address": {
+      "type": "object",
+      "properties": {
+        "line1": {
+          "type": "string"
+        },
+        "line2": {
+          "type": "string"
+        },
+        "line3": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "postalCode": {
+          "type": "string"
+        },
+        "countrySubdivision": {
+          "type": "string"
+        },
+        "countryCode": {
+          "$ref": "#/$defs/CountryCode"
+        }
+      }
+    },
+    "AllowanceCharge": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "$ref": "#/$defs/Amount"
+        },
+        "baseAmount": {
+          "$ref": "#/$defs/Amount"
+        },
+        "percentage": {
+          "$ref": "#/$defs/Percentage"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "reasonCode": {
+          "$ref": "#/$defs/AllowanceChargeReasonCode"
+        },
+        "vat": {
+          "$ref": "#/$defs/VatInfo"
+        }
+      },
+      "required": [
+        "amount"
+      ]
+    },
+    "AllowanceChargeReasonCode": {
+      "type": "string",
+      "examples": [
+        "41",
+        "42",
+        "60",
+        "62",
+        "63",
+        "64",
+        "65",
+        "66",
+        "67",
+        "68",
+        "70",
+        "71",
+        "88",
+        "95",
+        "100",
+        "102",
+        "103",
+        "104",
+        "105",
+        "AA",
+        "AAA",
+        "ABL",
+        "ADR",
+        "ADT",
+        "FC",
+        "FI",
+        "LA",
+        "ZZZ"
+      ],
+      "description": "UNCL 5189 (allowances) and UNCL 7161 (charges)."
+    },
+    "Amount": {
+      "$ref": "#/$defs/Decimal",
+      "description": "Monetary amount. EN 16931 allows at most 2 decimals at document level; lines may carry more in some national formats."
+    },
+    "AtExtension": {
+      "type": "object",
+      "properties": {
+        "ebInterfaceVersion": {
+          "type": "string"
+        },
+        "documentType": {
+          "type": "string"
+        },
+        "orderReferenceRequiredByFederalGovernment": {
+          "type": "string"
+        }
+      },
+      "description": "Austria, ebInterface."
+    },
+    "Attachment": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "embedded"
+            },
+            "id": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "mimeCode": {
+              "type": "string"
+            },
+            "filename": {
+              "type": "string"
+            },
+            "base64": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id",
+            "mimeCode",
+            "filename",
+            "base64"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "external"
+            },
+            "id": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "uri": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id",
+            "uri"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "reference"
+            },
+            "id": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "typeCode": {
+              "type": "string"
+            },
+            "schemeId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "id"
+          ]
+        }
+      ]
+    },
+    "CheckStatus": {
+      "type": "string",
+      "enum": [
+        "passed",
+        "failed",
+        "not-run",
+        "unavailable"
+      ]
+    },
+    "ClearanceAuthority": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "string",
+          "enum": [
+            "IT:SDI",
+            "PL:KSEF",
+            "RO:SPV",
+            "HR:FISK",
+            "GR:MYDATA",
+            "FR:PPF",
+            "PT:AT",
+            "ES:VERIFACTU",
+            "HU:NAV"
+          ]
+        }
+      ]
+    },
+    "ClearanceInfo": {
+      "type": "object",
+      "properties": {
+        "authority": {
+          "$ref": "#/$defs/ClearanceAuthority"
+        },
+        "documentId": {
+          "type": "string",
+          "description": "Authority-issued ID: SdI IdentificativoSdI, KSeF number, ANAF index, MARK..."
+        },
+        "secondaryId": {
+          "type": "string",
+          "description": "Second ID if the authority issues two (ANAF upload index vs download ID, myDATA UID vs MARK)."
+        },
+        "receivedAt": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "qrPayload": {
+          "type": "string",
+          "description": "QR code payload or URL printed on the visual (PT, GR, PL, ES)."
+        }
+      },
+      "required": [
+        "authority"
+      ]
+    },
+    "Contact": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        }
+      }
+    },
+    "Correction": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string"
+        },
+        "reasonCode": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string"
+        },
+        "period": {
+          "$ref": "#/$defs/Period"
+        }
+      },
+      "description": "Why and how a corrective document corrects (KSeF KOR, Facturae rectificativa, ISDOC 2/3...)."
+    },
+    "CountryCode": {
+      "type": "string",
+      "examples": [
+        "AT",
+        "BE",
+        "BG",
+        "HR",
+        "CY",
+        "CZ",
+        "DK",
+        "EE",
+        "FI",
+        "FR",
+        "DE",
+        "GR",
+        "HU",
+        "IE",
+        "IT",
+        "LV",
+        "LT",
+        "LU",
+        "MT",
+        "NL",
+        "PL",
+        "PT",
+        "RO",
+        "SK",
+        "SI",
+        "ES",
+        "SE"
+      ],
+      "description": "ISO 3166-1 alpha-2. EU member states listed; Greece is 'GR' (EL is the VAT prefix only)."
+    },
+    "CountryExtensions": {
+      "type": "object",
+      "properties": {
+        "it": {
+          "$ref": "#/$defs/ItExtension"
+        },
+        "pl": {
+          "$ref": "#/$defs/PlExtension"
+        },
+        "es": {
+          "$ref": "#/$defs/EsExtension"
+        },
+        "hr": {
+          "$ref": "#/$defs/HrExtension"
+        },
+        "gr": {
+          "$ref": "#/$defs/GrExtension"
+        },
+        "pt": {
+          "$ref": "#/$defs/PtExtension"
+        },
+        "fr": {
+          "$ref": "#/$defs/FrExtension"
+        },
+        "de": {
+          "$ref": "#/$defs/DeExtension"
+        },
+        "cz": {
+          "$ref": "#/$defs/CzExtension"
+        },
+        "at": {
+          "$ref": "#/$defs/AtExtension"
+        },
+        "fi": {
+          "$ref": "#/$defs/FiExtension"
+        },
+        "ee": {
+          "$ref": "#/$defs/EeExtension"
+        }
+      }
+    },
+    "CreditNoteTypeCode": {
+      "type": "string",
+      "examples": [
+        "381",
+        "396",
+        "261",
+        "262",
+        "81",
+        "83",
+        "532"
+      ],
+      "description": "UNCL 1001 document type codes used for credit notes (BT-3)."
+    },
+    "CreditTransfer": {
+      "type": "object",
+      "properties": {
+        "accountId": {
+          "type": "string"
+        },
+        "accountName": {
+          "type": "string"
+        },
+        "serviceProviderId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "accountId"
+      ]
+    },
+    "CurrencyCode": {
+      "type": "string",
+      "examples": [
+        "EUR",
+        "SEK",
+        "DKK",
+        "PLN",
+        "CZK",
+        "HUF",
+        "RON",
+        "BGN",
+        "NOK",
+        "CHF",
+        "GBP",
+        "USD"
+      ],
+      "description": "ISO 4217 currency code."
+    },
+    "CzExtension": {
+      "type": "object",
+      "properties": {
+        "documentType": {
+          "type": "string"
+        },
+        "variableSymbol": {
+          "type": "string"
+        },
+        "constantSymbol": {
+          "type": "string"
+        },
+        "specificSymbol": {
+          "type": "string"
+        }
+      },
+      "description": "Czechia, ISDOC."
+    },
+    "Decimal": {
+      "type": "string",
+      "pattern": "^[+-]?\\d+(\\.\\d+)?$",
+      "description": "Plain decimal string: optional sign, digits, optional fraction. No exponent, no grouping."
+    },
+    "DeExtension": {
+      "type": "object",
+      "properties": {
+        "xrechnungVersion": {
+          "type": "string"
+        },
+        "zugferdProfile": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "MINIMUM",
+                "BASIC WL",
+                "BASIC",
+                "EN 16931",
+                "EXTENDED",
+                "XRECHNUNG"
+              ]
+            }
+          ]
+        }
+      },
+      "description": "Germany: XRechnung / ZUGFeRD. Leitweg-ID itself is BT-10 (`buyerReference`)."
+    },
+    "Delivery": {
+      "type": "object",
+      "properties": {
+        "partyName": {
+          "type": "string"
+        },
+        "locationId": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "actualDate": {
+          "$ref": "#/$defs/IsoDate"
+        },
+        "address": {
+          "$ref": "#/$defs/Address"
+        }
+      }
+    },
+    "EeExtension": {
+      "type": "object",
+      "properties": {
+        "invoiceType": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "DEB",
+                "CRE"
+              ]
+            }
+          ]
+        },
+        "factoring": {
+          "type": "boolean"
+        }
+      },
+      "description": "Estonia, e-arve."
+    },
+    "EnvelopeStep": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "zip",
+            "pdf-attachment",
+            "cms-p7m",
+            "base64",
+            "sbdh",
+            "soap",
+            "xml"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "description": "Entry name, attachment name or other locator."
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "description": "One unwrapping step between the received file and the parsed XML."
+    },
+    "EsExtension": {
+      "type": "object",
+      "properties": {
+        "facturaeVersion": {
+          "type": "string"
+        },
+        "invoiceClass": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "OO",
+                "OR",
+                "OC",
+                "CO",
+                "CR",
+                "CC"
+              ]
+            }
+          ]
+        },
+        "invoiceDocumentType": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "FC",
+                "FA",
+                "AF"
+              ]
+            }
+          ]
+        },
+        "batchId": {
+          "type": "string"
+        },
+        "administrativeCentres": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "roleCode": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "roleCode",
+              "code"
+            ]
+          },
+          "description": "DIR3 administrative centres (public sector routing): role 01 oficina contable, 02 órgano gestor, 03 unidad tramitadora."
+        }
+      },
+      "description": "Spain, Facturae."
+    },
+    "FiExtension": {
+      "type": "object",
+      "properties": {
+        "invoiceTypeCode": {
+          "type": "string"
+        },
+        "epiReference": {
+          "type": "string"
+        }
+      },
+      "description": "Finland, Finvoice / TEAPPSXML."
+    },
+    "FormatId": {
+      "type": "string",
+      "enum": [
+        "xrechnung-ubl",
+        "nlcius-ubl",
+        "cius-ro",
+        "cius-pt",
+        "hr-cius",
+        "fr-ctc-ubl",
+        "oioubl-3",
+        "pl-pef",
+        "peppol-bis3",
+        "peppol-bis3-selfbilling",
+        "peppol-pint",
+        "ubl-be",
+        "en16931-ubl",
+        "peppol-bis2",
+        "oioubl-2",
+        "ubl-unknown",
+        "xrechnung-cii",
+        "nlcius-cii",
+        "fr-ctc-cii",
+        "facturx",
+        "en16931-cii",
+        "cii-unknown",
+        "zugferd-1",
+        "fatturapa",
+        "fatturapa-semplificata",
+        "ksef",
+        "facturae",
+        "isdoc",
+        "ebinterface",
+        "finvoice",
+        "teappsxml",
+        "e-arve",
+        "eslog-2",
+        "eslog-1",
+        "svefaktura-1",
+        "gr-mydata"
+      ],
+      "description": "Identifier of a detected e-invoice format."
+    },
+    "FrExtension": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "EN16931",
+                "EXTENDED-CTC-FR",
+                "BASICWL",
+                "EXTENDED"
+              ]
+            }
+          ]
+        },
+        "billingFramework": {
+          "type": "string"
+        },
+        "operationCategory": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "goods",
+                "services",
+                "mixed"
+              ]
+            }
+          ]
+        }
+      },
+      "description": "France, 2026 reform (XP Z12-012)."
+    },
+    "GrExtension": {
+      "type": "object",
+      "properties": {
+        "invoiceType": {
+          "type": "string"
+        },
+        "classifications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "category": {
+                "type": "string"
+              },
+              "amount": {
+                "$ref": "#/$defs/Amount"
+              }
+            },
+            "required": [
+              "type",
+              "category",
+              "amount"
+            ]
+          }
+        }
+      },
+      "description": "Greece, myDATA."
+    },
+    "HrExtension": {
+      "type": "object",
+      "properties": {
+        "issueTime": {
+          "$ref": "#/$defs/IsoTime"
+        },
+        "copyIndicator": {
+          "type": "boolean"
+        },
+        "operatorName": {
+          "type": "string"
+        },
+        "operatorOib": {
+          "type": "string"
+        }
+      },
+      "description": "Croatia, HR-CIUS with HR extensions."
+    },
+    "Identifier": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "schemeId": {
+          "$ref": "#/$defs/SchemeId",
+          "description": "ICD / EAS code, or a national label such as 'PL:NIP'."
+        }
+      },
+      "required": [
+        "value"
+      ]
+    },
+    "InvoiceTypeCode": {
+      "type": "string",
+      "examples": [
+        "380",
+        "383",
+        "384",
+        "386",
+        "389",
+        "326",
+        "388",
+        "393",
+        "875",
+        "876",
+        "877"
+      ],
+      "description": "UNCL 1001 document type codes used for invoices (BT-3)."
+    },
+    "IsoDate": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "YYYY-MM-DD, no time zone."
+    },
+    "IsoTime": {
+      "type": "string",
+      "pattern": "^\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?(Z|[+-]\\d{2}:\\d{2})?$",
+      "description": "hh:mm:ss, optionally with a UTC offset."
+    },
+    "Item": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "sellerId": {
+          "type": "string"
+        },
+        "buyerId": {
+          "type": "string"
+        },
+        "standardId": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "classifications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "listId": {
+                "type": "string"
+              },
+              "listVersion": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "listId"
+            ]
+          }
+        },
+        "originCountry": {
+          "$ref": "#/$defs/CountryCode"
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "value"
+            ]
+          }
+        }
+      },
+      "required": [
+        "name",
+        "classifications",
+        "attributes"
+      ]
+    },
+    "ItExtension": {
+      "type": "object",
+      "properties": {
+        "transmissionFormat": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "FPA12",
+                "FPR12",
+                "FSM10"
+              ]
+            }
+          ]
+        },
+        "recipientCode": {
+          "type": "string"
+        },
+        "recipientPec": {
+          "type": "string"
+        },
+        "transmissionSequence": {
+          "type": "string"
+        },
+        "taxRegime": {
+          "type": "string"
+        },
+        "vatChargeability": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "I",
+                "D",
+                "S"
+              ]
+            }
+          ]
+        },
+        "stampDuty": {
+          "type": "object",
+          "properties": {
+            "virtual": {
+              "type": "boolean"
+            },
+            "amount": {
+              "$ref": "#/$defs/Amount"
+            }
+          },
+          "required": [
+            "virtual"
+          ]
+        },
+        "pensionFunds": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "rate": {
+                "$ref": "#/$defs/Percentage"
+              },
+              "amount": {
+                "$ref": "#/$defs/Amount"
+              },
+              "taxableAmount": {
+                "$ref": "#/$defs/Amount"
+              },
+              "vatRate": {
+                "$ref": "#/$defs/Percentage"
+              },
+              "subjectToWithholding": {
+                "type": "boolean"
+              },
+              "nature": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "amount"
+            ]
+          }
+        },
+        "cup": {
+          "type": "string"
+        },
+        "cig": {
+          "type": "string"
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "art73": {
+          "type": "boolean"
+        }
+      },
+      "description": "Italy, FatturaPA. Fields that have no EN or generic equivalent."
+    },
+    "Line": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "objectId": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "quantity": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "unitCode": {
+          "$ref": "#/$defs/UnitCode"
+        },
+        "unitText": {
+          "type": "string",
+          "description": "Unit as written in the source when it was free text ('st', 'kpl', 'szt.', 'ks')."
+        },
+        "netAmount": {
+          "$ref": "#/$defs/Amount"
+        },
+        "orderLineRef": {
+          "type": "string"
+        },
+        "accountingRef": {
+          "type": "string"
+        },
+        "period": {
+          "$ref": "#/$defs/Period"
+        },
+        "allowances": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AllowanceCharge"
+          }
+        },
+        "charges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AllowanceCharge"
+          }
+        },
+        "price": {
+          "$ref": "#/$defs/Price"
+        },
+        "vat": {
+          "$ref": "#/$defs/VatInfo"
+        },
+        "item": {
+          "$ref": "#/$defs/Item"
+        },
+        "subjectToWithholding": {
+          "type": "boolean",
+          "description": "Not EN: line is subject to withholding (FatturaPA Ritenuta = SI)."
+        },
+        "otherTaxes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OtherTax"
+          },
+          "description": "Non-VAT taxes stated per line (Facturae lines can carry IVA + recargo de equivalencia)."
+        },
+        "withholdings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Withholding"
+          },
+          "description": "Withholdings stated per line (Facturae TaxesWithheld on InvoiceLine)."
+        },
+        "correctionState": {
+          "type": "string",
+          "enum": [
+            "delta",
+            "before",
+            "after"
+          ],
+          "description": "How a corrective document expresses this line. KSeF corrections either list differences, or list each line twice: the state before (StanPrzed = 1) and after. Undefined for ordinary invoices."
+        },
+        "subLines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Line"
+          },
+          "description": "Sub-lines (XRechnung extension, Factur-X EXTENDED, France EXTENDED-CTC-FR, ISDOC). Totals come from the parent."
+        },
+        "national": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "description": "Line-level national data (PL GTU codes and procedure, IT AltriDatiGestionali...)."
+        }
+      },
+      "required": [
+        "id",
+        "netAmount",
+        "allowances",
+        "charges",
+        "item"
+      ]
+    },
+    "LineRelation": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "Line id (BT-126) of the line that heads, adjusts or refers to the others."
+        },
+        "to": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "type": {
+          "$ref": "#/$defs/LineRelationType"
+        },
+        "rate": {
+          "$ref": "#/$defs/Percentage",
+          "description": "Percentage stated in the line text, for `markup` and `discount`."
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "rule",
+            "arithmetic",
+            "model"
+          ],
+          "description": "How it was found. Only `model` is a guess by a language model; `rule` and `arithmetic` are deterministic."
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "proven",
+            "likely",
+            "review"
+          ],
+          "description": "`proven`: the arithmetic matches exactly and uniquely. `likely`: stated in the text or structure of the invoice. `review`: only a hint (shared ids, model output); do not act on it without a human. Absent for structural rules that cannot be wrong, such as a heading over the lines that follow it."
+        }
+      },
+      "required": [
+        "from",
+        "to",
+        "type",
+        "method"
+      ]
+    },
+    "LineRelationType": {
+      "type": "string",
+      "enum": [
+        "heading",
+        "markup",
+        "discount",
+        "allowance-base",
+        "note-reference",
+        "same-item",
+        "same-order-line"
+      ]
+    },
+    "LineRole": {
+      "type": "string",
+      "enum": [
+        "item",
+        "heading",
+        "description",
+        "surcharge",
+        "discount",
+        "freight",
+        "labour",
+        "other"
+      ],
+      "description": "What a line is for. `item` is anything sold; `heading` and `description` carry text only (zero quantity, price and amount); the rest adjust or add to other lines."
+    },
+    "NationalTypeCode": {
+      "type": "object",
+      "properties": {
+        "scheme": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "scheme",
+        "code"
+      ],
+      "description": "A document type in the source format's own code list, kept next to the mapped UNCL 1001 code."
+    },
+    "OtherTax": {
+      "type": "object",
+      "properties": {
+        "scheme": {
+          "type": "string"
+        },
+        "taxableAmount": {
+          "$ref": "#/$defs/Amount"
+        },
+        "rate": {
+          "$ref": "#/$defs/Percentage"
+        },
+        "amount": {
+          "$ref": "#/$defs/Amount"
+        },
+        "includedInTotal": {
+          "type": "boolean",
+          "description": "True if the amount is already included in `totals.taxInclusive`."
+        },
+        "inTaxExclusive": {
+          "type": "boolean",
+          "description": "True if the amount is also already inside `totals.taxExclusive`, because the source charges it as a line or a charge (IT stamp duty as an N1 line). When false or absent, an `includedInTotal` amount sits on top of BT-109 + BT-110 (ES recargo de equivalencia)."
+        }
+      },
+      "required": [
+        "scheme",
+        "amount",
+        "includedInTotal"
+      ],
+      "description": "Taxes that are not VAT and not withholding, and that EN 16931 cannot express: ES recargo de equivalencia, IT stamp duty (bollo), excise or environmental fees stated as taxes, IGIC/IPSI when a source keeps them apart from VAT."
+    },
+    "Party": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "tradingName": {
+          "type": "string"
+        },
+        "identifiers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          }
+        },
+        "legalRegistrationId": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "vatId": {
+          "type": "string"
+        },
+        "nationalTaxIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          },
+          "description": "National tax ID that is not the VAT number and not the company register ID: IT codice fiscale, PL NIP (when no VAT prefix), ES NIF, HR OIB, GR AFM, CZ IČO. Several national formats identify parties only by this."
+        },
+        "endpoint": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "address": {
+          "$ref": "#/$defs/Address"
+        },
+        "contact": {
+          "$ref": "#/$defs/Contact"
+        }
+      },
+      "required": [
+        "identifiers",
+        "nationalTaxIds"
+      ]
+    },
+    "Payee": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "identifier": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "legalRegistrationId": {
+          "$ref": "#/$defs/Identifier"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "PaymentInstallment": {
+      "type": "object",
+      "properties": {
+        "dueDate": {
+          "$ref": "#/$defs/IsoDate"
+        },
+        "amount": {
+          "$ref": "#/$defs/Amount"
+        },
+        "description": {
+          "type": "string"
+        },
+        "paymentIndex": {
+          "type": "number",
+          "description": "Index into `payments` when the installment names its own means/account."
+        }
+      },
+      "description": "One due date in a payment schedule. EN 16931 has a single due date (BT-9); FatturaPA (DettaglioPagamento), Facturae (Installment) and KSeF (TerminPlatnosci) can list several, with or without amounts and with or without their own account."
+    },
+    "PaymentInstructions": {
+      "type": "object",
+      "properties": {
+        "meansCode": {
+          "$ref": "#/$defs/PaymentMeansCode"
+        },
+        "meansText": {
+          "type": "string"
+        },
+        "nationalMeansCode": {
+          "type": "string",
+          "description": "Means code in the source code list (FatturaPA 'MP05', Facturae '04', KSeF '6'...)."
+        },
+        "remittanceInformation": {
+          "type": "string"
+        },
+        "creditTransfers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CreditTransfer"
+          }
+        },
+        "card": {
+          "type": "object",
+          "properties": {
+            "primaryAccountNumber": {
+              "type": "string"
+            },
+            "holderName": {
+              "type": "string"
+            },
+            "network": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "primaryAccountNumber"
+          ]
+        },
+        "directDebit": {
+          "type": "object",
+          "properties": {
+            "mandateId": {
+              "type": "string"
+            },
+            "creditorId": {
+              "type": "string"
+            },
+            "debitedAccountId": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "required": [
+        "meansCode",
+        "creditTransfers"
+      ]
+    },
+    "PaymentMeansCode": {
+      "type": "string",
+      "examples": [
+        "1",
+        "10",
+        "20",
+        "30",
+        "31",
+        "42",
+        "48",
+        "49",
+        "54",
+        "55",
+        "57",
+        "58",
+        "59",
+        "68",
+        "97",
+        "ZZZ"
+      ],
+      "description": "UNCL 4461 payment means (BT-81)."
+    },
+    "Percentage": {
+      "$ref": "#/$defs/Decimal"
+    },
+    "Period": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "$ref": "#/$defs/IsoDate"
+        },
+        "end": {
+          "$ref": "#/$defs/IsoDate"
+        }
+      }
+    },
+    "PlExtension": {
+      "type": "object",
+      "properties": {
+        "invoiceKind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "VAT",
+                "KOR",
+                "ZAL",
+                "ROZ",
+                "UPR",
+                "KOR_ZAL",
+                "KOR_ROZ"
+              ]
+            }
+          ]
+        },
+        "schemaVariant": {
+          "type": "string"
+        },
+        "splitPayment": {
+          "type": "boolean"
+        },
+        "cashAccounting": {
+          "type": "boolean"
+        },
+        "selfBilling": {
+          "type": "boolean"
+        },
+        "reverseCharge": {
+          "type": "boolean"
+        },
+        "exemptionBasis": {
+          "type": "string"
+        },
+        "marginScheme": {
+          "type": "string"
+        },
+        "buyerIsLocalGovernmentUnit": {
+          "type": "boolean"
+        },
+        "buyerIsVatGroupMember": {
+          "type": "boolean"
+        },
+        "paid": {
+          "type": "boolean"
+        },
+        "paidDate": {
+          "$ref": "#/$defs/IsoDate"
+        }
+      },
+      "description": "Poland, KSeF FA(2)/FA(3)."
+    },
+    "PrecedingInvoiceRef": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "issueDate": {
+          "$ref": "#/$defs/IsoDate"
+        },
+        "clearanceId": {
+          "type": "string",
+          "description": "Clearance ID of the referenced invoice (KSeF number, SdI ID...)."
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "Price": {
+      "type": "object",
+      "properties": {
+        "net": {
+          "$ref": "#/$defs/UnitPrice"
+        },
+        "discount": {
+          "$ref": "#/$defs/UnitPrice"
+        },
+        "gross": {
+          "$ref": "#/$defs/UnitPrice"
+        },
+        "baseQuantity": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "baseQuantityUnit": {
+          "$ref": "#/$defs/UnitCode"
+        }
+      },
+      "required": [
+        "net"
+      ]
+    },
+    "PtExtension": {
+      "type": "object",
+      "properties": {
+        "atcud": {
+          "type": "string"
+        },
+        "documentHash": {
+          "type": "string"
+        },
+        "invoiceType": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "FT",
+                "FS",
+                "FR",
+                "NC",
+                "ND"
+              ]
+            }
+          ]
+        }
+      },
+      "description": "Portugal."
+    },
+    "Quantity": {
+      "$ref": "#/$defs/Decimal"
+    },
+    "SchemeId": {
+      "type": "string",
+      "examples": [
+        "0002",
+        "0007",
+        "0009",
+        "0060",
+        "0088",
+        "0096",
+        "0106",
+        "0160",
+        "0184",
+        "0190",
+        "0192",
+        "0201",
+        "0204",
+        "0208",
+        "0210",
+        "0211",
+        "0216",
+        "9914",
+        "9920",
+        "9925",
+        "9926",
+        "9928",
+        "9929",
+        "9930",
+        "9931",
+        "9933",
+        "9934",
+        "9935",
+        "9937",
+        "9938",
+        "9939",
+        "9943",
+        "9944",
+        "9945",
+        "9946",
+        "9947",
+        "9949",
+        "9950",
+        "9957",
+        "EM",
+        "PL:NIP",
+        "IT:CF",
+        "ES:NIF",
+        "CZ:ICO",
+        "HR:OIB",
+        "GR:AFM",
+        "PT:NIF",
+        "RO:CIF",
+        "HU:ADOSZAM",
+        "EE:REGCODE",
+        "SI:DAVCNA"
+      ],
+      "description": "Identifier schemes: ISO/IEC 6523 ICD codes (party, item and location IDs) and Peppol EAS codes (electronic addresses, BT-34/BT-49). Only codes whose meaning is certain are listed. Check the current EAS list before relying on a code: Peppol BIS 3.0.21 removed 14 EAS codes."
+    },
+    "Seller": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "tradingName": {
+          "type": "string"
+        },
+        "identifiers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          }
+        },
+        "legalRegistrationId": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "vatId": {
+          "type": "string"
+        },
+        "nationalTaxIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          },
+          "description": "National tax ID that is not the VAT number and not the company register ID: IT codice fiscale, PL NIP (when no VAT prefix), ES NIF, HR OIB, GR AFM, CZ IČO. Several national formats identify parties only by this."
+        },
+        "endpoint": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "address": {
+          "$ref": "#/$defs/Address"
+        },
+        "contact": {
+          "$ref": "#/$defs/Contact"
+        },
+        "taxRegistrationId": {
+          "type": "string"
+        },
+        "additionalLegalInfo": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "identifiers",
+        "nationalTaxIds"
+      ]
+    },
+    "SignatureInfo": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "CAdES",
+            "XAdES",
+            "XMLDSig",
+            "PAdES",
+            "detached"
+          ]
+        },
+        "verified": {
+          "type": "boolean",
+          "description": "Cryptographic validity only: the signature value matches the signed content and the signer certificate's key. true = valid, false = invalid (see `reason`), undefined = could not be checked. This says nothing about who the signer is; see `trust`."
+        },
+        "signer": {
+          "type": "string",
+          "description": "Common name of the signer certificate."
+        },
+        "certificate": {
+          "type": "object",
+          "properties": {
+            "subject": {
+              "type": "string"
+            },
+            "issuer": {
+              "type": "string"
+            },
+            "serial": {
+              "type": "string"
+            },
+            "notBefore": {
+              "type": "string"
+            },
+            "notAfter": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "subject",
+            "issuer",
+            "serial",
+            "notBefore",
+            "notAfter"
+          ],
+          "description": "Signer certificate details, as carried in the signature."
+        },
+        "signedAt": {
+          "type": "string",
+          "description": "Signing time (ISO 8601) from signed attributes / XAdES SigningTime, when the signature protects it."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Why `verified` is false, or why it could not be determined."
+        },
+        "trust": {
+          "type": "string",
+          "enum": [
+            "not-checked",
+            "trusted",
+            "untrusted"
+          ],
+          "description": "'not-checked' unless trust anchors were configured: a valid signature is not a trusted signer."
+        },
+        "trustReason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "SourceMeta": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "$ref": "#/$defs/FormatId"
+        },
+        "formatVersion": {
+          "type": "string"
+        },
+        "syntaxDocumentType": {
+          "type": "string"
+        },
+        "rootNamespace": {
+          "type": "string"
+        },
+        "specificationId": {
+          "type": "string"
+        },
+        "profileId": {
+          "type": "string"
+        },
+        "envelope": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EnvelopeStep"
+          },
+          "description": "Path from the received file to this XML, e.g. [{kind:'zip'}, {kind:'cms-p7m'}]."
+        },
+        "fileSha256": {
+          "type": "string",
+          "description": "SHA-256 of the file as received, and of the XML payload this invoice came from."
+        },
+        "payloadSha256": {
+          "type": "string"
+        },
+        "indexInFile": {
+          "type": "number",
+          "description": "Position and path inside a multi-invoice file (FatturaPA lot, Facturae batch, e-arve)."
+        },
+        "fragmentPath": {
+          "type": "string"
+        },
+        "encoding": {
+          "type": "string"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "signatures": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SignatureInfo"
+          }
+        },
+        "unmapped": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "derived": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "string"
+              },
+              "rule": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "field",
+              "rule"
+            ]
+          }
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Optional field-level provenance: canonical path -> source XPath (e.g. '/totals/payable' -> '/Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount')."
+        },
+        "validation": {
+          "$ref": "#/$defs/ValidationSummary"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        }
+      },
+      "required": [
+        "format",
+        "syntaxDocumentType",
+        "rootNamespace",
+        "envelope",
+        "fileSha256",
+        "payloadSha256",
+        "signatures",
+        "unmapped",
+        "derived",
+        "warnings"
+      ]
+    },
+    "TaxRepresentative": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "vatId": {
+          "type": "string"
+        },
+        "address": {
+          "$ref": "#/$defs/Address"
+        }
+      },
+      "required": [
+        "name",
+        "vatId",
+        "address"
+      ]
+    },
+    "Totals": {
+      "type": "object",
+      "properties": {
+        "lineNetTotal": {
+          "$ref": "#/$defs/Amount"
+        },
+        "allowanceTotal": {
+          "$ref": "#/$defs/Amount"
+        },
+        "chargeTotal": {
+          "$ref": "#/$defs/Amount"
+        },
+        "taxExclusive": {
+          "$ref": "#/$defs/Amount"
+        },
+        "vatTotal": {
+          "$ref": "#/$defs/Amount"
+        },
+        "vatTotalInTaxCurrency": {
+          "$ref": "#/$defs/Amount"
+        },
+        "taxInclusive": {
+          "$ref": "#/$defs/Amount"
+        },
+        "prepaid": {
+          "$ref": "#/$defs/Amount"
+        },
+        "rounding": {
+          "$ref": "#/$defs/Amount"
+        },
+        "withholdingTotal": {
+          "$ref": "#/$defs/Amount",
+          "description": "Not EN: sum of `withholdings`."
+        },
+        "splitPaymentVat": {
+          "$ref": "#/$defs/Amount",
+          "description": "Not EN: VAT the buyer pays to the tax authority instead of the seller (IT split payment, EsigibilitaIVA = S). The VAT stays in `vatTotal`."
+        },
+        "payable": {
+          "$ref": "#/$defs/Amount",
+          "description": "BT-115: amount the buyer has to pay. payable = taxInclusive - prepaid + rounding - withholdingTotal - splitPaymentVat (the last two are 0 for every EN-based source)."
+        }
+      },
+      "required": [
+        "lineNetTotal",
+        "taxExclusive",
+        "taxInclusive",
+        "payable"
+      ]
+    },
+    "UnitCode": {
+      "type": "string",
+      "examples": [
+        "C62",
+        "H87",
+        "EA",
+        "XPP",
+        "HUR",
+        "DAY",
+        "MON",
+        "ANN",
+        "KGM",
+        "TNE",
+        "LTR",
+        "MTR",
+        "MTK",
+        "MTQ",
+        "KWH",
+        "KMT",
+        "SET",
+        "LS"
+      ],
+      "description": "UN/ECE Recommendation 20 / 21 unit codes (BT-130)."
+    },
+    "UnitPrice": {
+      "$ref": "#/$defs/Decimal"
+    },
+    "ValidationSummary": {
+      "type": "object",
+      "properties": {
+        "parse": {
+          "$ref": "#/$defs/CheckStatus"
+        },
+        "schema": {
+          "$ref": "#/$defs/CheckStatus"
+        },
+        "semantic": {
+          "$ref": "#/$defs/CheckStatus"
+        },
+        "profile": {
+          "$ref": "#/$defs/CheckStatus"
+        },
+        "signature": {
+          "$ref": "#/$defs/CheckStatus"
+        },
+        "clearance": {
+          "$ref": "#/$defs/CheckStatus"
+        },
+        "bundles": {
+          "type": "object",
+          "properties": {
+            "schema": {
+              "type": "string"
+            },
+            "semantic": {
+              "type": "string"
+            },
+            "profile": {
+              "type": "string"
+            }
+          },
+          "description": "Validator bundle used per layer, e.g. { profile: 'peppol-billing-3.0.21' }."
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "layer": {
+                "type": "string"
+              },
+              "ruleId": {
+                "type": "string"
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "fatal",
+                  "warning",
+                  "info"
+                ]
+              },
+              "message": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "layer",
+              "severity",
+              "message"
+            ]
+          }
+        }
+      },
+      "required": [
+        "parse",
+        "schema",
+        "semantic",
+        "profile",
+        "signature",
+        "clearance",
+        "bundles",
+        "findings"
+      ],
+      "description": "Validation results, kept per layer so a failure in one never reads as a pass in another (a valid signature says nothing about the schema, and the reverse). 'unavailable' means the validator could not run, which is not the same as the document failing."
+    },
+    "VatBreakdown": {
+      "type": "object",
+      "properties": {
+        "taxableAmount": {
+          "$ref": "#/$defs/Amount"
+        },
+        "taxAmount": {
+          "$ref": "#/$defs/Amount"
+        },
+        "categoryCode": {
+          "$ref": "#/$defs/VatCategoryCode"
+        },
+        "rate": {
+          "$ref": "#/$defs/Percentage"
+        },
+        "exemptionReason": {
+          "type": "string"
+        },
+        "exemptionReasonCode": {
+          "type": "string"
+        },
+        "taxAmountInTaxCurrency": {
+          "$ref": "#/$defs/Amount",
+          "description": "Not EN: per-rate VAT in the tax currency (KSeF P_14_xW, Facturae TaxAmount/EquivalentInEuros)."
+        },
+        "nationalCode": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "taxableAmount",
+        "taxAmount",
+        "categoryCode"
+      ]
+    },
+    "VatCategoryCode": {
+      "type": "string",
+      "examples": [
+        "S",
+        "Z",
+        "E",
+        "AE",
+        "K",
+        "G",
+        "O",
+        "L",
+        "M",
+        "B"
+      ],
+      "description": "UNCL 5305 VAT category (BT-118, BT-151)."
+    },
+    "VatInfo": {
+      "type": "object",
+      "properties": {
+        "categoryCode": {
+          "$ref": "#/$defs/VatCategoryCode"
+        },
+        "rate": {
+          "$ref": "#/$defs/Percentage"
+        },
+        "nationalCode": {
+          "type": "string",
+          "description": "Source code that drove the category: 'IT:N6.2', 'PL:P_12:oo', 'ES:E2'..."
+        },
+        "exemptionReason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "categoryCode"
+      ]
+    },
+    "Withholding": {
+      "type": "object",
+      "properties": {
+        "scheme": {
+          "type": "string"
+        },
+        "taxableAmount": {
+          "$ref": "#/$defs/Amount"
+        },
+        "rate": {
+          "$ref": "#/$defs/Percentage"
+        },
+        "amount": {
+          "$ref": "#/$defs/Amount"
+        },
+        "reasonCode": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "scheme",
+        "amount"
+      ],
+      "description": "Withholding taxes deducted by the buyer: IT ritenuta d'acconto / previdenziale, ES retención IRPF, PT retenção na fonte. EN 16931 has no term for these."
+    }
+  }
+}
