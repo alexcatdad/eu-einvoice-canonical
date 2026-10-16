@@ -705,7 +705,7 @@ describe('a hand-built invoice that uses every part of the mapping', () => {
   });
 
   test('CII element order follows the schema', () => {
-    const xml = toCii(rich());
+    const xml = toCii(rich(), { profile: 'xrechnung' }); // a profile with a business process, which the Peppol identifier of rich() would not keep in CII
     const order = [
       '<rsm:ExchangedDocumentContext>',
       '<ram:BusinessProcessSpecifiedDocumentContextParameter>',
