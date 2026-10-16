@@ -43,7 +43,7 @@ jobs:
           if-no-files-found: ignore
       - name: Known-answer detection sweep over the fixtures
         run: bun run sweep:fixtures
-      - name: Install TypeDoc (own package: it needs the JavaScript TypeScript compiler)
+      - name: Install TypeDoc (its own package, because it needs the JavaScript TypeScript compiler)
         run: bun install --frozen-lockfile
         working-directory: typedoc
       - name: Build the site (browser converter, API reference, TypeDoc)
