@@ -9,9 +9,7 @@ on:
     - cron: '43 5 1 * *'
   workflow_dispatch:
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 concurrency:
   group: corpus-pins
@@ -21,8 +19,11 @@ jobs:
   bump:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
       - name: Move the pins
         run: scripts/bump-corpus-pins.sh | tee pin-changes.txt
       - name: Open the pull request

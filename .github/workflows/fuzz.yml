@@ -12,8 +12,7 @@ on:
         description: Seed (empty for a random one)
         default: ''
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: fuzz-${{ github.ref }}
@@ -27,8 +26,10 @@ jobs:
       contents: read
       issues: write
     steps:
-      - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2.2.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: 1.4.2
       - run: bun install --frozen-lockfile
@@ -49,7 +50,7 @@ jobs:
           bun test test/fuzz --timeout 1200000
       - name: Upload the shrunk counterexamples
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: fuzz-counterexamples-${{ steps.fuzz.outputs.seed }}
           path: fuzz-failures
