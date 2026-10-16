@@ -431,6 +431,19 @@ export interface SignatureInfo {
   /** 'not-checked' unless trust anchors were configured: a valid signature is not a trusted signer. */
   trust?: 'not-checked' | 'trusted' | 'untrusted';
   trustReason?: string;
+  /** Present when an EU trusted-list snapshot was passed (`euTrust` option): the qualified-service check of the signer. */
+  euTrust?: {
+    /** The signer chains to a CA/QC service whose status was granted at the signing time. */
+    qualified: boolean;
+    status: 'qualified' | 'not-qualified' | 'not-listed';
+    /** The instant the service status was evaluated at: the signing time, or now when the signature carries none. */
+    evaluatedAt: string;
+    signingTimeKnown: boolean;
+    service?: { provider: string; name: string; territory: string; statusAtSigning: string; currentStatus: string; statusFrom: string };
+    /** `stale`: the snapshot is past its earliest next-update date, so the lists may have changed since. */
+    snapshot: { fetchedAt: string; nextUpdate?: string; stale: boolean };
+    reason?: string;
+  };
 }
 
 // ---------------------------------------------------------------------------
