@@ -20,6 +20,7 @@ export const WORLD_COUNTRIES = ['AE', 'AU', 'JP', 'MY', 'NZ', 'OM', 'SA', 'SG'];
 
 /** Short chip labels; anything not listed falls back to the registry name without its parenthesis. */
 export const SHORT_NAMES: Record<string, string> = {
+  'peppol-bis3': 'Peppol BIS 3',
   'xrechnung-ubl': 'XRechnung UBL',
   'xrechnung-cii': 'XRechnung CII',
   'nlcius-ubl': 'NLCIUS UBL',

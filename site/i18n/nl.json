@@ -298,5 +298,6 @@
   "val.not-run": "Niet uitgevoerd",
   "val.unavailable": "Niet beschikbaar",
   "deliv.cliLookup": "Laatste release opzoeken",
-  "deliv.cliLookupNote": "Vraagt api.github.com om de bestandslijst. Er wordt niets opgevraagd voordat je op de knop drukt."
+  "deliv.cliLookupNote": "Vraagt api.github.com om de bestandslijst. Er wordt niets opgevraagd voordat je op de knop drukt.",
+  "hero.title": "Zet een e-factuur om naar JSON"
 }

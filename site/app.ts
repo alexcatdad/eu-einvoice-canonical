@@ -14,7 +14,6 @@ import {
   type Line,
   type LineRelation,
   type LineRole,
-  type Party,
   type SignatureInfo,
   type TrustSnapshot,
   toCii,
@@ -44,26 +43,6 @@ const SAMPLES: { file: string; label: string }[] = [
   { file: 'zatca-simplified-signed.xml', label: 'sample.zatca' },
 ];
 const EXAMPLE = SAMPLES[0];
-
-/** Message keys for UNCL 4461 payment means codes; an unlisted code is shown as "Code n". */
-const MEANS: Record<string, string> = {
-  '1': 'means.1',
-  '10': 'means.10',
-  '20': 'means.20',
-  '30': 'means.30',
-  '31': 'means.31',
-  '42': 'means.42',
-  '48': 'means.48',
-  '49': 'means.49',
-  '54': 'means.54',
-  '55': 'means.55',
-  '57': 'means.57',
-  '58': 'means.58',
-  '59': 'means.59',
-  '68': 'means.68',
-  '97': 'means.97',
-  ZZZ: 'means.ZZZ',
-};
 
 const ENVELOPE_LABEL: Record<string, string> = {
   'pdf-attachment': 'env.pdf-attachment',
@@ -327,6 +306,7 @@ function render(index: number) {
   wireViewTabs();
   wireJson(item, result);
   wireModel();
+  if (item.invoice) void fillInvoice(item.invoice);
   if (!isExample) resultEl.querySelector('.stamp')?.classList.add('fresh');
 }
 
@@ -578,7 +558,7 @@ function wireModel() {
 function stampFor(item: Item): { cls: string; title: string; note: string } {
   const o = item.outcome;
   const det = o.detection;
-  const title = det.kind === 'invoice' ? det.format.name : t(det.kind === 'other-document' ? 'stamp.notInvoice' : 'stamp.unknown');
+  const title = det.kind === 'invoice' ? shortName(det.format) : t(det.kind === 'other-document' ? 'stamp.notInvoice' : 'stamp.unknown');
   if (o.status === 'ok') {
     const n = item.invoice!.source.warnings.length;
     return { cls: n ? 'warn' : '', title, note: n ? t('stamp.convertedWarnings', { count: n }) : t('stamp.converted') };
@@ -609,71 +589,30 @@ function sheet(item: Item): string {
     </article>`;
   }
 
-  const cur = inv.currency;
-  const dates: [string, string | undefined][] = [
-    [t('date.issued'), inv.issueDate],
-    [t('date.due'), inv.dueDate],
-    [
-      t('date.period'),
-      inv.invoicePeriod ? t('date.periodRange', { start: inv.invoicePeriod.start ?? '…', end: inv.invoicePeriod.end ?? '…' }) : undefined,
-    ],
-    [t('date.delivered'), inv.delivery?.actualDate],
-    [t('date.buyerReference'), inv.buyerReference],
-    [t('date.order'), inv.purchaseOrderRef],
-  ];
-  const tot = inv.totals;
-  const totals: [string, string | undefined, string?][] = [
-    [t('total.lines'), tot.lineNetTotal],
-    [t('total.allowances'), tot.allowanceTotal && `−${tot.allowanceTotal}`],
-    [t('total.charges'), tot.chargeTotal],
-    [t('total.withoutVat'), tot.taxExclusive],
-    ...inv.vatBreakdown.map((v): [string, string] => [
-      v.rate !== undefined
-        ? t('total.vatRate', { code: v.categoryCode, rate: v.rate, amount: v.taxableAmount })
-        : t('total.vat', { code: v.categoryCode, amount: v.taxableAmount }),
-      v.taxAmount,
-    ]),
-    [t('total.withVat'), tot.taxInclusive],
-    [t('total.withheld'), tot.withholdingTotal && `−${tot.withholdingTotal}`],
-    [t('total.prepaid'), tot.prepaid && `−${tot.prepaid}`],
-    [t('total.rounding'), tot.rounding],
-  ];
-  const pay = inv.payments[0];
-
   return `<article class="sheet">
-    <div class="sheet-top">
-      <div>
-        <h3 class="doc-title">${esc(t(inv.kind === 'creditNote' ? 'doc.creditNote' : 'doc.invoice'))}</h3>
-        <p class="doc-number">${esc(inv.id)} <span class="label">${esc(t('doc.type', { code: inv.typeCode }))}${inv.selfBilled ? esc(t('doc.selfBilled')) : ''}</span></p>
-      </div>
-      ${stamp}
-    </div>
-    <dl class="dates">${dates
-      .filter(([, v]) => v)
-      .map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v!)}</dd></div>`)
-      .join('')}</dl>
-    <div class="parties">${party(t('party.from'), inv.seller)}${party(t('party.to'), inv.buyer)}</div>
-    ${linesTable(inv, MAX_LINES)}
-    <div class="sums">
-      <div class="payment">${
-        pay
-          ? `<span class="label">${esc(t('pay.label'))}</span>
-        <p>${esc(MEANS[pay.meansCode] ? t(MEANS[pay.meansCode]) : t('pay.code', { code: pay.meansCode }))}${pay.meansText ? ` (${esc(pay.meansText)})` : ''}</p>
-        ${pay.creditTransfers.map((c) => `<p>${esc(c.accountId)}${c.serviceProviderId ? `, ${esc(c.serviceProviderId)}` : ''}</p>`).join('')}
-        ${pay.remittanceInformation ? `<p>${esc(t('pay.reference', { ref: pay.remittanceInformation }))}</p>` : ''}`
-          : ''
-      }
-        ${inv.paymentTerms ? `<span class="label" style="margin-top:.5rem">${esc(t('pay.terms'))}</span><p>${esc(inv.paymentTerms)}</p>` : ''}
-      </div>
-      <dl class="totals">
-        ${totals
-          .filter(([, v]) => v !== undefined)
-          .map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v!)}</dd></div>`)
-          .join('')}
-        <div class="grand"><dt>${esc(t('total.due'))}</dt><dd>${esc(tot.payable)} ${esc(cur)}</dd></div>
-      </dl>
-    </div>
+    <div class="stamp-row">${stamp}</div>
+    <div class="invoice-host" id="invoice-host"></div>
   </article>`;
+}
+
+/** Fills the Invoice tab with the shared renderer (the same markup as renderHtml and the React component), in the site language. */
+async function fillInvoice(inv: CanonicalInvoice) {
+  const host = document.querySelector<HTMLElement>('#invoice-host');
+  if (!host) return;
+  try {
+    const { renderHtml } = await import('../src/render/html.js');
+    if (host.isConnected) host.innerHTML = renderHtml(inv, { lang: currentLang(), standalone: false });
+    // Wide tables scroll inside their own box instead of widening the page.
+    for (const table of host.querySelectorAll('table')) {
+      const box = document.createElement('div');
+      box.className = 'table-scroll';
+      box.tabIndex = 0;
+      table.replaceWith(box);
+      box.append(table);
+    }
+  } catch (e) {
+    if (host.isConnected) host.textContent = (e as Error).message;
+  }
 }
 
 function linesTable(inv: CanonicalInvoice, limit: number): string {
@@ -698,21 +637,6 @@ function checksPanel(item: Item, result: ConvertResult): string {
     ? `<section class="layers"><h3>${esc(t('val.title'))}</h3><ul>${LAYERS.map((l) => `<li class="${v[l]}"><span>${esc(t(`val.${l}`))}</span><strong>${esc(t(`val.${v[l]}`))}</strong></li>`).join('')}</ul></section>`
     : '';
   return `<div class="checks">${layers}${provenance(item)}${penNotes(item, result)}</div>`;
-}
-
-function party(label: string, p: Party): string {
-  const a = p.address;
-  const place = a ? [[a.postalCode, a.city].filter(Boolean).join(' '), a.countryCode].filter(Boolean).join(', ') : '';
-  const ids = [
-    p.vatId && t('party.vat', { id: p.vatId }),
-    p.legalRegistrationId && t('party.reg', { id: p.legalRegistrationId.value }),
-    p.endpoint && t('party.address', { id: p.endpoint.value }),
-  ].filter(Boolean);
-  return `<div class="party"><span class="label">${label}</span>
-    <p class="name">${esc(p.name ?? p.tradingName ?? t('party.noName'))}</p>
-    ${a?.line1 ? `<p>${esc(a.line1)}</p>` : ''}${a?.line2 ? `<p>${esc(a.line2)}</p>` : ''}${place ? `<p>${esc(place)}</p>` : ''}
-    ${ids.length ? `<p class="ids">${ids.map((i) => esc(i!)).join('<br>')}</p>` : ''}
-  </div>`;
 }
 
 function euNote(s: SignatureInfo): string {

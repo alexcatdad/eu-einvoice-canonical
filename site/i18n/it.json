@@ -298,5 +298,6 @@
   "val.not-run": "Non eseguito",
   "val.unavailable": "Non disponibile",
   "deliv.cliLookup": "Cerca l’ultima versione",
-  "deliv.cliLookupNote": "Interroga api.github.com per l’elenco dei file. Nulla viene richiesto finché non premi il pulsante."
+  "deliv.cliLookupNote": "Interroga api.github.com per l’elenco dei file. Nulla viene richiesto finché non premi il pulsante.",
+  "hero.title": "Converti una fattura elettronica in JSON"
 }
