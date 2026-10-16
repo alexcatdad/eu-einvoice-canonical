@@ -1,4 +1,16 @@
 /* eu-einvoice-canonical/react: generated from src/render/style.ts by `bun run build:react-css`. Do not edit. */
+.einvoice-shadcn {
+  --einvoice-font: var(--font-sans, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+  --einvoice-mono: var(--font-mono, ui-monospace, "SF Mono", Menlo, Consolas, monospace);
+  --einvoice-ink: var(--foreground, #1b1b1f);
+  --einvoice-muted: var(--muted-foreground, #5b5b66);
+  --einvoice-rule: var(--border, #d5d5dc);
+  --einvoice-surface: var(--background, #fff);
+  --einvoice-subtle: var(--muted, #f4f4f7);
+  --einvoice-accent: var(--primary, #1f4fd1);
+  --einvoice-credit: var(--destructive, #b42318);
+  --einvoice-radius: var(--radius, 6px);
+}
 .einvoice {
   font: var(--einvoice-size, 14px) / 1.5 var(--einvoice-font, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
   color: var(--einvoice-ink, #1b1b1f);

@@ -245,6 +245,11 @@ The result is an A4-like sheet: the title and document number on the left with t
   ```
 
 - **Styling.** `invoice.css` is plain CSS with one class per rule and no dependencies. Theme it with custom properties on any ancestor: `--einvoice-font`, `--einvoice-mono`, `--einvoice-size`, `--einvoice-ink`, `--einvoice-muted`, `--einvoice-rule`, `--einvoice-surface`, `--einvoice-subtle`, `--einvoice-accent`, `--einvoice-credit`, `--einvoice-radius`. `className` is added to the outermost element; `unstyled` leaves out every built-in class so the stylesheet does not apply and you can style the semantic markup yourself. The stylesheet is generated from the one `renderHtml` inlines (`bun run build:react-css`).
+- **shadcn/ui.** Add the class `einvoice-shadcn` to the invoice (or any ancestor) and the variables come from your shadcn theme: `--foreground`, `--muted-foreground`, `--border`, `--background`, `--muted`, `--primary`, `--destructive`, `--radius`, `--font-sans`, `--font-mono`, so it follows your colours and dark mode. Neither shadcn nor Tailwind is a dependency. The mapping expects complete colour tokens (shadcn on Tailwind v4); with the older HSL-triplet tokens, set the `--einvoice-*` variables yourself, e.g. `--einvoice-ink: hsl(var(--foreground))`.
+
+  ```tsx
+  <Invoice invoice={invoice} lang="de" className="einvoice-shadcn" />
+  ```
 - **Safe by construction.** Text reaches the DOM only as React children and attribute values, which React escapes; the components never use `dangerouslySetInnerHTML`, and `test/react.test.tsx` renders an invoice with `<script>` and attribute-breaking strings in every field. No effects and no browser globals, so it renders on the server (`renderToString`, React Server Components) as well as in the browser. Element ids come from `useId`, or from `idPrefix` when you need stable ones.
 - **Dependencies.** `react` and `react-dom` (18 or later) are optional peer dependencies; there are no others. Only the `/react` entry imports React: the main entry, the HTTP server and the site bundle never do, which a test checks by walking their import graphs.
 - **Demo.** `bun examples/react/render.tsx invoice.xml de > invoice.html` server-renders any supported file with the component into a standalone page.

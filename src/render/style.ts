@@ -7,8 +7,25 @@
  *
  *   --einvoice-font, --einvoice-mono, --einvoice-size, --einvoice-ink, --einvoice-muted, --einvoice-rule,
  *   --einvoice-surface, --einvoice-subtle, --einvoice-accent, --einvoice-credit, --einvoice-radius
+ *
+ * In a shadcn/ui app, add the class `einvoice-shadcn` (to the invoice or any ancestor) to take these from the
+ * shadcn theme tokens (--foreground, --muted-foreground, --border, --background, --muted, --primary,
+ * --destructive, --radius, --font-sans, --font-mono), dark mode included. It is opt-in because the tokens must
+ * be complete colours (shadcn with Tailwind v4); with the older HSL-triplet tokens set --einvoice-* yourself.
  */
-export const INVOICE_CSS = `.einvoice {
+export const INVOICE_CSS = `.einvoice-shadcn {
+  --einvoice-font: var(--font-sans, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+  --einvoice-mono: var(--font-mono, ui-monospace, "SF Mono", Menlo, Consolas, monospace);
+  --einvoice-ink: var(--foreground, #1b1b1f);
+  --einvoice-muted: var(--muted-foreground, #5b5b66);
+  --einvoice-rule: var(--border, #d5d5dc);
+  --einvoice-surface: var(--background, #fff);
+  --einvoice-subtle: var(--muted, #f4f4f7);
+  --einvoice-accent: var(--primary, #1f4fd1);
+  --einvoice-credit: var(--destructive, #b42318);
+  --einvoice-radius: var(--radius, 6px);
+}
+.einvoice {
   font: var(--einvoice-size, 14px) / 1.5 var(--einvoice-font, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
   color: var(--einvoice-ink, #1b1b1f);
   background: var(--einvoice-surface, #fff);

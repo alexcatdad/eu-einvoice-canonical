@@ -224,6 +224,21 @@ describe('packaging', () => {
     expect(readFileSync(join(root, 'src/react/invoice.css'), 'utf8')).toBe(reactCss());
   });
 
+  test('the opt-in shadcn mapping takes the theme tokens', () => {
+    const css = reactCss();
+    for (const [ours, theirs] of [
+      ['--einvoice-ink', '--foreground'],
+      ['--einvoice-rule', '--border'],
+      ['--einvoice-surface', '--background'],
+      ['--einvoice-accent', '--primary'],
+      ['--einvoice-credit', '--destructive'],
+      ['--einvoice-radius', '--radius'],
+    ]) {
+      expect(css).toContain(`${ours}: var(${theirs},`);
+    }
+    expect(html(<Invoice invoice={peppol} className="einvoice-shadcn" />)).toContain('<article class="einvoice einvoice-shadcn"');
+  });
+
   test('package.json exposes the subpath and keeps React an optional peer', () => {
     const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
     expect(pkg.exports['./react']).toBe('./src/react/index.ts');
