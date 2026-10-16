@@ -2,7 +2,7 @@
 #   docker build -t einvoice-api .
 #   docker run --rm -p 8080:8080 einvoice-api
 # Stateless: nothing is written to disk, so the container can run with --read-only.
-FROM oven/bun:1.4.2-slim
+FROM oven/bun:1.4.3-slim
 
 WORKDIR /app
 COPY package.json bun.lock ./
