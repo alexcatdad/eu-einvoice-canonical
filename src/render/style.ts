@@ -332,10 +332,11 @@ export const INVOICE_CSS = `.einvoice-shadcn {
 `;
 
 /**
- * Page geometry for printing the standalone HTML page. Kept out of the embeddable fragment and the React
- * stylesheet, where a page rule would apply to the whole host document.
+ * Page geometry for printing the standalone HTML page: A4 with 15 mm margins, and no extra user-agent body
+ * margin on top. Kept out of the embeddable fragment and the React stylesheet, where these rules would apply
+ * to the whole host document.
  */
-export const PAGE_CSS = '@media print{@page{size:A4;margin:15mm}}';
+export const PAGE_CSS = '@media print{@page{size:A4;margin:15mm}body{margin:0}}';
 
 /** The contents of src/react/invoice.css. */
 export function reactCss(): string {

@@ -374,7 +374,7 @@ describe('review fixes', () => {
   });
 
   test('the standalone page prints on A4 with 15 mm margins; the fragment and the React stylesheet set no page rule', () => {
-    expect(renderHtml(peppol)).toContain('<style>@media print{@page{size:A4;margin:15mm}}</style>');
+    expect(renderHtml(peppol)).toContain('<style>@media print{@page{size:A4;margin:15mm}body{margin:0}}</style>');
     expect(renderHtml(peppol, { standalone: false })).not.toContain('@page');
     expect(reactCss()).not.toContain('@page');
   });
