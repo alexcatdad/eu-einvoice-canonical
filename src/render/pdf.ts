@@ -1,11 +1,82 @@
 import type { PDFDocument, PDFFont, PDFPage } from 'pdf-lib';
 import type { CanonicalInvoice } from '../canonical.js';
-import { labelsFor, safeLang } from './labels.js';
-import { type Block, buildModel } from './model.js';
+import { labelsFor, type RenderLanguage } from './labels.js';
+import { buildInvoiceView, type Column, type Field, type InvoiceView, parasText, valueText } from './model.js';
 
 export interface RenderPdfOptions {
-  /** Language for the labels: `en`, `de` or `fr`. Other languages use English labels. */
-  lang?: 'en' | 'de' | 'fr' | (string & {});
+  /** Language for labels, numbers and dates: `en`, `de`, `fr`, `it`, `es`, `nl`, `pl`, `ro`. Other languages use English labels. */
+  lang?: RenderLanguage | (string & {});
+}
+
+type Block =
+  | { kind: 'kv'; heading: string; rows: [label: string, value: string][] }
+  | { kind: 'totals'; heading: string; rows: [label: string, value: string][] }
+  | { kind: 'table'; heading: string; columns: Column[]; rows: string[][] }
+  | { kind: 'list'; heading: string; items: string[] };
+
+const kv = (fs: Field[]): [string, string][] => fs.map((f) => [f.label, valueText(f.value)]);
+
+/** The view as the simple blocks the PDF writer draws: key/value lists, tables and bullet lists. */
+function blocks(v: InvoiceView, addressLabel: string): Block[] {
+  const out: Block[] = [];
+  for (const p of v.parties) {
+    const head: [string, string][] = [];
+    if (p.name) head.push([p.name, '']);
+    const body = [p.tradingName, ...p.address].filter((s): s is string => !!s).join('\n');
+    if (body) head.push([addressLabel, body]);
+    out.push({ kind: 'kv', heading: p.heading, rows: head.concat(kv(p.fields)) });
+  }
+  if (v.references.length) out.push({ kind: 'kv', heading: v.headings.references, rows: kv(v.references) });
+  if (v.lines.empty) out.push({ kind: 'list', heading: v.headings.lines, items: [v.lines.empty] });
+  else
+    out.push({
+      kind: 'table',
+      heading: v.headings.lines,
+      columns: v.lines.columns,
+      rows: v.lines.rows.map((l) => [
+        l.id,
+        [l.name, parasText(l.description), l.details.join(' · '), ...l.adjustments].filter(Boolean).join('\n'),
+        l.quantity.text,
+        l.priceBasis ? `${l.unitPrice}\n${l.priceBasis}` : l.unitPrice,
+        l.vat.text,
+        l.net,
+      ]),
+    });
+  for (const key of ['allowances', 'charges'] as const) {
+    if (v[key].length) {
+      out.push({
+        kind: 'table',
+        heading: v.headings[key],
+        columns: v.adjustmentColumns,
+        rows: v[key].map((a) => [a.reason, a.vat.text, a.amount]),
+      });
+    }
+  }
+  if (v.vat.rows.length) {
+    out.push({
+      kind: 'table',
+      heading: v.headings.vat,
+      columns: v.vat.columns,
+      rows: v.vat.rows.map((r) =>
+        [`${r.category.text} (${r.category.title})`, r.rate, r.taxable, r.tax, r.exemption].slice(0, v.vat.columns.length),
+      ),
+    });
+  }
+  out.push({ kind: 'totals', heading: v.headings.totals, rows: v.totals.map((r) => [r.label, r.value]) });
+  const pay: [string, string][] = [];
+  for (const m of v.payment.methods) pay.push([m.heading, ''], ...kv(m.fields));
+  if (v.payment.terms.length) pay.push([v.headings.terms, parasText(v.payment.terms)]);
+  for (const s of v.schedule.rows)
+    pay.push([v.headings.schedule, [s.due.text, s.amount && `${s.amount} ${v.currency}`, s.description].filter(Boolean).join(' – ')]);
+  if (pay.length) out.push({ kind: 'kv', heading: v.headings.payment, rows: pay });
+  if (v.notes.length)
+    out.push({
+      kind: 'list',
+      heading: v.headings.notes,
+      items: v.notes.map((n) => (n.subject ? `${n.subject}: ` : '') + parasText(n.paras)),
+    });
+  if (v.attachments.length) out.push({ kind: 'list', heading: v.headings.attachments, items: v.attachments });
+  return out;
 }
 
 /** A4 in PDF points. */
@@ -19,6 +90,8 @@ const GREY: Rgb = [0.29, 0.29, 0.33];
 const INK: Rgb = [0.1, 0.1, 0.12];
 const RULE: Rgb = [0.78, 0.78, 0.82];
 const HEAD_FILL: Rgb = [0.94, 0.94, 0.96];
+const ACCENT: Rgb = [0.12, 0.31, 0.82];
+const CREDIT: Rgb = [0.71, 0.14, 0.09];
 let lib: typeof import('pdf-lib');
 const rgb = (c: Rgb) => lib.rgb(c[0], c[1], c[2]);
 const FOOTER_Y = 22;
@@ -41,11 +114,20 @@ function makeSanitizer(font: PDFFont): (text: string) => string {
     for (const ch of String(text)) {
       const cp = ch.codePointAt(0)!;
       if (ch === '\n') out += ch;
-      else if (cp < 0x20 || cp === 0x7f || cp === 0xa0 || cp === 0xad) out += ' ';
-      else out += supported.has(cp) ? ch : '?';
+      else if (cp < 0x20 || cp === 0x7f || cp === 0xa0 || cp === 0xad || cp === 0x202f || cp === 0x2009) out += ' ';
+      else if (supported.has(cp)) out += ch;
+      else out += fallback(ch, supported);
     }
     return out;
   };
+}
+
+const NEAREST: Record<string, string> = { ł: 'l', Ł: 'L', đ: 'd', Đ: 'D', ı: 'i', '\u2212': '-', '\u2010': '-', '\u2011': '-' };
+
+/** A drawable stand-in for a character the font lacks: the letter without its accent (ș as s, ł as l), else "?". */
+function fallback(ch: string, supported: Set<number>): string {
+  const near = NEAREST[ch] ?? ch.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return near && near !== ch && [...near].every((c) => supported.has(c.codePointAt(0)!)) ? near : '?';
 }
 
 class Writer {
@@ -151,12 +233,12 @@ class Writer {
     rows.forEach(([label, value], i) => {
       const last = emphasiseLast && i === rows.length - 1;
       const f = last ? this.bold : this.font;
-      const labelLines = this.wrap(label, this.font, BODY, LABEL_WIDTH - 8);
+      const labelLines = this.wrap(label, value ? this.font : this.bold, BODY, LABEL_WIDTH - 8);
       const valueLines = this.wrap(value, f, BODY, valueWidth);
       const n = Math.max(labelLines.length, valueLines.length);
       for (let k = 0; k < n; k++) {
         this.ensure(LEAD);
-        this.text(labelLines[k] ?? '', PAGE.margin, this.y - BODY, this.font, BODY, GREY);
+        this.text(labelLines[k] ?? '', PAGE.margin, this.y - BODY, value ? this.font : this.bold, BODY, value ? GREY : INK);
         this.text(valueLines[k] ?? '', valueX, this.y - BODY, f, BODY);
         this.y -= LEAD;
       }
@@ -271,9 +353,9 @@ class Writer {
  * and every page carries "Page x of y".
  */
 export async function renderPdf(invoice: CanonicalInvoice, options: RenderPdfOptions = {}): Promise<Uint8Array> {
-  const lang = safeLang(options.lang);
+  const view = buildInvoiceView(invoice, options.lang, { currencyDisplay: 'code' });
+  const lang = view.lang;
   const t = labelsFor(lang);
-  const model = buildModel(invoice, lang);
   lib = (await import('../envelope-pdf.js')).pdfLib;
   const doc = await lib.PDFDocument.create();
   const font = await doc.embedFont(lib.StandardFonts.Helvetica);
@@ -282,27 +364,38 @@ export async function renderPdf(invoice: CanonicalInvoice, options: RenderPdfOpt
 
   const created = new Date(`${invoice.issueDate}T00:00:00Z`);
   const stamp = Number.isNaN(created.getTime()) ? new Date(0) : created;
-  doc.setTitle(w.clean(model.title).replace(/\n/g, ' '));
+  doc.setTitle(w.clean(view.title).replace(/\n/g, ' '));
   doc.setProducer('eu-einvoice-canonical');
   doc.setCreator('eu-einvoice-canonical');
   doc.setCreationDate(stamp);
   doc.setModificationDate(stamp);
   doc.setLanguage(lang);
 
-  for (const l of w.wrap(model.title, bold, 18, PAGE.width - 2 * PAGE.margin)) {
+  const full = PAGE.width - 2 * PAGE.margin;
+  if (view.credit) {
+    w.text(w.clean(view.docLabel.toUpperCase()), PAGE.margin, w.y - BODY, bold, BODY, CREDIT);
+    w.y -= LEAD + 2;
+  }
+  for (const l of w.wrap(view.title, bold, 18, full)) {
     w.ensure(24);
     w.text(l, PAGE.margin, w.y - 18, bold, 18);
     w.y -= 24;
   }
-  for (const l of w.wrap(model.subtitle, font, BODY, PAGE.width - 2 * PAGE.margin)) {
+  for (const l of w.wrap(view.meta.map((f) => `${f.label}: ${f.value.text}`).join('   '), font, BODY, full)) {
     w.ensure(LEAD);
     w.text(l, PAGE.margin, w.y - BODY, font, BODY, GREY);
     w.y -= LEAD;
   }
-  for (const b of model.blocks) w.block(b);
+  w.y -= 6;
+  w.keyValues(view.facts.map((f) => [f.label, f.value.text]));
+  w.ensure(22);
+  w.text(w.clean(view.due.label), PAGE.margin, w.y - 13, bold, 11);
+  w.text(w.clean(view.due.value.text), PAGE.margin + LABEL_WIDTH, w.y - 14, bold, 14, view.credit ? CREDIT : ACCENT);
+  w.y -= 22;
+  for (const b of blocks(view, t('address'))) w.block(b);
 
   const count = w.pages.length;
-  const footerTitle = w.wrap(model.title, font, 8, PAGE.width - 2 * PAGE.margin - 100)[0] ?? '';
+  const footerTitle = w.wrap(view.title, font, 8, PAGE.width - 2 * PAGE.margin - 100)[0] ?? '';
   w.pages.forEach((page, i) => {
     page.drawText(footerTitle, { x: PAGE.margin, y: FOOTER_Y, size: 8, font, color: rgb(GREY) });
     const label = `${t('page')} ${i + 1} ${t('of')} ${count}`;

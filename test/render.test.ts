@@ -6,55 +6,11 @@ import { PDFDocument } from 'pdf-lib';
 import { EXIT, type IO, main } from '../src/cli.js';
 import { type CanonicalInvoice, escapeHtml, renderHtml, renderPdf } from '../src/index.js';
 import { fixturePath, parseOne } from './helpers.js';
+import { enrich, expectOnlyOwnMarkup, PAYLOAD, poison } from './render-helpers.js';
 
 const peppol = await parseOne('peppol-bis3-invoice.xml');
 const creditNote = await parseOne('peppol-bis3-creditnote.xml');
 const xrechnung = await parseOne('xrechnung-ubl.xml');
-
-/** Adds every optional part the renderers know about to a parsed invoice. */
-function enrich(inv: CanonicalInvoice): CanonicalInvoice {
-  const copy = structuredClone(inv) as unknown as Record<string, unknown>;
-  const lines = copy.lines as Record<string, unknown>[];
-  Object.assign(lines[0]!, {
-    allowances: [{ amount: '1.00', reason: 'Line discount' }],
-    charges: [{ amount: '2.00', reason: 'Line surcharge' }],
-    item: {
-      name: 'Shelf',
-      description: 'Oak, 40 cm',
-      sellerId: 'S-1',
-      classifications: [],
-      attributes: [{ name: 'Colour', value: 'Oak' }],
-    },
-    period: { start: '2026-09-01' },
-    unitText: 'pieces',
-  });
-  Object.assign(copy, {
-    issueTime: '10:30:00',
-    payee: { name: 'Payee Ltd', identifier: { value: 'P-1', schemeId: '0088' }, legalRegistrationId: { value: 'R-1' } },
-    taxRepresentative: { name: 'Rep AB', vatId: 'SE111', address: { city: 'Malmö', line1: 'Gatan 1' } },
-    allowances: [{ amount: '5.00', reason: 'Early payment', reasonCode: '95', percentage: '2', vat: { categoryCode: 'S', rate: '25' } }],
-    charges: [{ amount: '3.00', vat: { categoryCode: 'E' } }],
-    vatBreakdown: [
-      { taxableAmount: '10.00', taxAmount: '0.00', categoryCode: 'E', exemptionReason: 'Exempt', exemptionReasonCode: 'VATEX-EU-132' },
-      { taxableAmount: '10.00', taxAmount: '2.50', categoryCode: 'S' },
-    ],
-    payments: [
-      {
-        meansCode: '30',
-        creditTransfers: [{ accountId: 'SE45 5000' }],
-        card: { primaryAccountNumber: '1234', holderName: 'A. Holder', network: 'VISA' },
-        directDebit: { mandateId: 'M-1', creditorId: 'C-1', debitedAccountId: 'D-1' },
-      },
-    ],
-    paymentSchedule: [{ dueDate: '2026-12-01', amount: '10.00', description: 'First half' }],
-    attachments: [
-      { kind: 'embedded', id: '1', description: 'Time sheet', mimeCode: 'text/plain', filename: 'timesheet.txt', base64: 'AAAA' },
-      { kind: 'external', id: '2', description: 'Specification', uri: 'https://example.com/spec.pdf' },
-      { kind: 'reference', id: '3', typeCode: 'ZZZ' },
-    ],
-  });
-  return copy as unknown as CanonicalInvoice;
-}
 
 const rich = enrich(peppol);
 
@@ -74,20 +30,22 @@ function manyLines(inv: CanonicalInvoice, n: number): CanonicalInvoice {
   return copy as unknown as CanonicalInvoice;
 }
 
-const headings = (html: string) => [...html.matchAll(/<h2 id="h\d+">(.*?)<\/h2>/g)].map((m) => m[1]);
+const headings = (html: string) => [...html.matchAll(/<h2 class="einvoice-h2" id="[^"]+">(.*?)<\/h2>/g)].map((m) => m[1]);
+/** Intl puts no-break and narrow no-break spaces in amounts; the assertions use plain spaces. */
+const plain = (s: string) => s.replace(/[\u00a0\u202f]/g, ' ');
 
 describe('renderHtml structure', () => {
-  const html = renderHtml(peppol);
+  const html = plain(renderHtml(peppol));
 
   test('is a complete document with a language, a title and a heading', () => {
     expect(html.startsWith('<!doctype html><html lang="en">')).toBe(true);
     expect(html).toContain('<title>Invoice INV-2026-1042</title>');
-    expect(html).toContain('<h1>Invoice INV-2026-1042</h1>');
+    expect(html).toContain('<h1 class="einvoice-title" id="einvoice-title">Invoice INV-2026-1042</h1>');
     expect(html).toContain('<main>');
     expect(html.trimEnd().endsWith('</html>')).toBe(true);
   });
 
-  test('has a heading for each section', () => {
+  test('has a heading for each section, in reading order', () => {
     expect(headings(html)).toEqual([
       'Seller',
       'Buyer',
@@ -104,76 +62,93 @@ describe('renderHtml structure', () => {
     ]);
   });
 
-  test('shows seller and buyer with their identifiers', () => {
-    expect(html).toContain('Snickeri Exempel AB');
-    expect(html).toContain('7300010000002 (0088)');
-    expect(html).toContain('SE556000000101');
-    expect(html).toContain('Storgatan 1, Box 12, 11122 Stockholm, SE');
+  test('the header carries the key dates and the amount due, emphasised', () => {
+    const header = html.slice(html.indexOf('<header'), html.indexOf('</header>'));
+    expect(header).toContain('<dt>Issue date</dt><dd><time dateTime="2026-10-15" title="2026-10-15">Oct 15, 2026</time></dd>');
+    expect(header).toContain('<dt>Due date</dt><dd><time dateTime="2026-11-14" title="2026-11-14">Nov 14, 2026</time></dd>');
+    expect(header).toContain('<div class="einvoice-due"><dt>Amount due</dt><dd>SEK 3,091.00</dd></div>');
+    expect(header).not.toContain('einvoice-badge');
+  });
+
+  test('parties: name, address on separate lines with the country spelled out, labelled identifiers', () => {
+    expect(html).toContain('<p class="einvoice-party-name">Snickeri Exempel AB</p>');
+    expect(html).toContain('<address class="einvoice-address">Storgatan 1<br/>Box 12<br/>11122 Stockholm<br/>Sweden</address>');
+    expect(html).toContain('<dt>VAT ID</dt><dd>SE556000000101</dd>');
+    expect(html).toContain('<dt>Identifier (GLN)</dt><dd><span title="0088">7300010000002</span></dd>');
+    expect(html).toContain('<dt>Company registration (Organisationsnummer)</dt><dd><span title="0007">5560000001</span></dd>');
+    expect(html).toContain('<dt>Email</dt><dd>faktura@snickeri.example</dd>');
     expect(html).toContain('Uppsala kommun');
     expect(html).toContain('SE212000000101');
   });
 
   test('shows references and dates', () => {
     for (const s of [
-      '2026-10-15',
-      '2026-11-14',
-      '2026-09-01 - 2026-09-30',
-      '4025:ANNA',
-      'PO-1001',
-      'K-2026-1',
-      'INV-2026-0999 (2026-09-30)',
+      '<dt>Buyer reference</dt><dd>4025:ANNA</dd>',
+      '<dt>Purchase order</dt><dd>PO-1001</dd>',
+      '<dt>Contract</dt><dd>K-2026-1</dd>',
+      '<span title="2026-09-01/2026-09-30">Sep 1, 2026 – Sep 30, 2026</span>',
+      'INV-2026-0999 (Sep 30, 2026)',
     ]) {
       expect(html).toContain(s);
     }
   });
 
-  test('shows every line, with quantity, price and net amount', () => {
-    expect(html).toContain('Hyllkonsol');
+  test('shows every line, with quantity and unit name, price and net amount', () => {
+    expect(html).toContain('<p class="einvoice-item">Hyllkonsol</p><p>Monterade på plats</p>');
     expect(html).toContain('Skruv 4x40');
-    expect(html).toContain('<td class="num">10 H87</td><td class="num">25.00</td><td>S 25%</td><td class="num">250.00</td>');
-    expect((html.match(/<tbody>/g) ?? []).length).toBeGreaterThanOrEqual(3);
+    expect(html).toContain(
+      '<td class="einvoice-num"><span title="H87">10 pcs</span></td><td class="einvoice-num">25.00</td><td class="einvoice-num"><span title="S – Standard rate">25%</span></td><td class="einvoice-num">250.00</td>',
+    );
+    expect(html).toContain('<span title="HUR">2 hr</span>');
+    expect(html).toContain('<td class="einvoice-num">1,900.00</td>');
+    expect(html).toContain('<th class="einvoice-num" scope="col">Unit price (SEK)</th>');
   });
 
   test('keeps the price basis next to the unit price', () => {
-    expect(html).toContain('<td class="num">45.00 / 100 C62</td>');
-    expect(html).toContain('<td class="num">25.00</td>');
+    expect(html).toContain('<td class="einvoice-num">45.00<br/><span class="einvoice-basis">per 100 pcs</span></td>');
+    expect(html).toContain('<span title="C62">1,000 pcs</span>');
   });
 
   test('shows withholding and split-payment deductions before the amount due', () => {
     const w = structuredClone(peppol) as unknown as { totals: Record<string, string> };
     w.totals.withholdingTotal = '12.00';
     w.totals.splitPaymentVat = '34.00';
-    const out = renderHtml(w as unknown as CanonicalInvoice);
-    expect(out).toContain('Withholding deducted</dt><dd>12.00 SEK');
-    expect(out).toContain('(split payment)</dt><dd>34.00 SEK');
-    expect(out.indexOf('12.00 SEK')).toBeLessThan(out.indexOf('Amount due'));
+    const out = plain(renderHtml(w as unknown as CanonicalInvoice));
+    expect(out).toContain('Withholding deducted</dt><dd>SEK 12.00');
+    expect(out).toContain('(split payment)</dt><dd>SEK 34.00');
+    expect(out.indexOf('SEK 12.00')).toBeLessThan(out.indexOf('einvoice-total--due'));
   });
 
   test('shows allowances and charges', () => {
-    expect(html).toContain('Volymrabatt - 95');
-    expect(html).toContain('<td class="num">100.00</td>');
-    expect(html).toContain('Frakt - FC');
-    expect(html).toContain('<td class="num">50.00</td>');
+    expect(html).toContain('<td>Volymrabatt (95)</td>');
+    expect(html).toContain('<td class="einvoice-num">100.00</td>');
+    expect(html).toContain('<td>Frakt (FC)</td>');
+    expect(html).toContain('<td class="einvoice-num">50.00</td>');
   });
 
-  test('has one VAT row per breakdown entry', () => {
-    expect(html).toContain('<td>S</td><td class="num">25%</td><td class="num">2550.00</td><td class="num">637.50</td>');
-    expect(html).toContain('<td>S</td><td class="num">12%</td><td class="num">360.00</td><td class="num">43.20</td>');
+  test('has one VAT row per breakdown entry, and no exemption column when nothing is exempt', () => {
+    expect(html).toContain(
+      '<tr><td><span title="S">Standard rate</span></td><td class="einvoice-num">25%</td><td class="einvoice-num">2,550.00</td><td class="einvoice-num">637.50</td></tr>',
+    );
+    expect(html).toContain(
+      '<tr><td><span title="S">Standard rate</span></td><td class="einvoice-num">12%</td><td class="einvoice-num">360.00</td><td class="einvoice-num">43.20</td></tr>',
+    );
+    expect(html).not.toContain('Exemption reason');
   });
 
-  test('shows the totals and the amount due', () => {
-    for (const s of ['2960.00 SEK', '2910.00 SEK', '680.70 SEK', '3590.70 SEK', '500.00 SEK']) expect(html).toContain(s);
-    expect(html).toContain('<dd class="due">3091.00 SEK</dd>');
+  test('shows the totals with subtotals and the amount due emphasised', () => {
+    for (const s of ['SEK 2,960.00', 'SEK 2,910.00', 'SEK 680.70', 'SEK 3,590.70', 'SEK 500.00']) expect(html).toContain(s);
+    expect(html).toContain('<div class="einvoice-total einvoice-total--subtotal"><dt>Total without VAT</dt><dd>SEK 2,910.00</dd></div>');
+    expect(html).toContain('<div class="einvoice-total einvoice-total--due"><dt>Amount due</dt><dd>SEK 3,091.00</dd></div>');
   });
 
   test('shows payment details, notes and attachment names', () => {
-    expect(html).toContain('30 dagar netto');
-    expect(html).toContain('Bankgiro / 30');
-    expect(html).toContain('4711000123');
-    expect(html).toContain('1234567');
-    expect(html).toContain('Leverans enligt avtal K-2026-1');
-    expect(html).toContain('AAI: Leverans');
-    expect(html).toContain('tidrapport.txt (text/plain) Tidrapport september');
+    expect(html).toContain('<h3 class="einvoice-h3">Credit transfer (Bankgiro)</h3>');
+    expect(html).toContain('<dt>Account</dt><dd><span class="einvoice-code">1234567</span></dd>');
+    expect(html).toContain('<dt>Payment reference</dt><dd><span class="einvoice-code">4711000123</span></dd>');
+    expect(html).toContain('<h3 class="einvoice-h3">Payment terms</h3><p>30 dagar netto</p>');
+    expect(html).toContain('<p class="einvoice-note-subject">AAI</p><p>Leverans enligt avtal K-2026-1</p>');
+    expect(html).toContain('<li>tidrapport.txt (text/plain) Tidrapport september</li>');
     expect(html).not.toContain('SGVsbG8');
   });
 
@@ -185,36 +160,60 @@ describe('renderHtml structure', () => {
   });
 
   test('is accessible: labelled sections, column headers with scope', () => {
-    expect(html).toContain('<section aria-labelledby="h');
+    expect(html).toContain('<article class="einvoice" lang="en" aria-labelledby="einvoice-title">');
+    expect(html).toContain('<section class="einvoice-section einvoice-lines" aria-labelledby="einvoice-lines">');
     expect(html).toContain('<th scope="col"');
     expect(html).toContain('<meta name="viewport"');
   });
 
-  test('a credit note says so', () => {
-    const cn = renderHtml(creditNote);
-    expect(cn).toContain(`<h1>Credit note ${creditNote.id}</h1>`);
+  test('a credit note says so: badge, title, class and "amount credited"', () => {
+    const cn = plain(renderHtml(creditNote));
+    expect(cn).toContain('<article class="einvoice einvoice--credit"');
+    expect(cn).toContain('<p class="einvoice-badge">Credit note</p>');
+    expect(cn).toContain(`<h1 class="einvoice-title" id="einvoice-title">Credit note ${creditNote.id}</h1>`);
+    expect(cn).toContain('<div class="einvoice-due"><dt>Amount credited</dt><dd>SEK 250.00</dd></div>');
   });
 
   test('renders another syntax too', () => {
-    const x = renderHtml(xrechnung);
-    expect(x).toContain(`<h1>Invoice ${escapeHtml(xrechnung.id)}</h1>`);
-    expect(x).toContain(escapeHtml(xrechnung.totals.payable));
+    const x = plain(renderHtml(xrechnung));
+    expect(x).toContain(`Invoice ${escapeHtml(xrechnung.id)}</h1>`);
+    expect(x).toContain('€1,190.00');
     expect(headings(x)).toContain('VAT breakdown');
     expect(headings(x)).toContain('Totals');
   });
 });
 
 describe('renderHtml options', () => {
-  test('German and French labels, language attribute', () => {
-    const de = renderHtml(peppol, { lang: 'de' });
+  test('German and French labels, number and date formats, language attribute', () => {
+    const de = plain(renderHtml(peppol, { lang: 'de' }));
     expect(de).toContain('<html lang="de">');
-    expect(de).toContain('<h1>Rechnung INV-2026-1042</h1>');
+    expect(de).toContain('>Rechnung INV-2026-1042</h1>');
     expect(headings(de)).toContain('Umsatzsteuer-Aufschlüsselung');
-    expect(de).toContain('Zahlbetrag');
-    const fr = renderHtml(creditNote, { lang: 'fr-CH' });
+    expect(de).toContain('<dt>Zahlbetrag</dt><dd>3.091,00 SEK</dd>');
+    expect(de).toContain('<time dateTime="2026-10-15" title="2026-10-15">15.10.2026</time>');
+    expect(de).toContain('<td class="einvoice-num">1.900,00</td>');
+    expect(de).toContain('<span title="S – Regelsatz">25 %</span>');
+    expect(de).toContain('Schweden');
+    const fr = plain(renderHtml(creditNote, { lang: 'fr-CH' }));
     expect(fr).toContain('<html lang="fr-CH">');
     expect(fr).toContain('Avoir');
     expect(headings(fr)).toContain('Ventilation de la TVA');
+  });
+
+  test('every site language has its own labels', () => {
+    const due: Record<string, string> = {
+      en: 'Amount due',
+      de: 'Zahlbetrag',
+      fr: 'Net à payer',
+      it: 'Importo da pagare',
+      es: 'Importe a pagar',
+      nl: 'Te betalen bedrag',
+      pl: 'Do zapłaty',
+      ro: 'De plată',
+    };
+    for (const [lang, label] of Object.entries(due)) {
+      expect(renderHtml(peppol, { lang })).toContain(`<div class="einvoice-due"><dt>${label}</dt>`);
+    }
   });
 
   test('an unknown language keeps English labels; a hostile one cannot reach the attribute', () => {
@@ -223,12 +222,14 @@ describe('renderHtml options', () => {
     const bad = renderHtml(peppol, { lang: '"><script>alert(1)</script>' });
     expect(bad).toContain('<html lang="en">');
     expect(bad).not.toContain('<script');
+    // Well-formed but not a locale Intl accepts: labels and formats fall back to English.
+    expect(renderHtml(peppol, { lang: 'en-12' })).toContain('<html lang="en-12">');
   });
 
   test('standalone: false returns an embeddable fragment', () => {
     const frag = renderHtml(peppol, { standalone: false });
     expect(frag.startsWith('<style>')).toBe(true);
-    expect(frag).toContain('<article class="einvoice" lang="en">');
+    expect(frag).toContain('<article class="einvoice" lang="en"');
     expect(frag).not.toContain('<html');
     expect(frag).not.toContain('<!doctype');
   });
@@ -238,82 +239,62 @@ describe('renderHtml options', () => {
     none.lines = [];
     none.vatBreakdown = [];
     const html = renderHtml(none as unknown as CanonicalInvoice);
-    expect(html).toContain('This document carries no invoice lines.');
+    expect(html).toContain('<p class="einvoice-empty">This document carries no invoice lines.</p>');
+    expect(headings(html)).not.toContain('VAT breakdown');
   });
 });
 
 describe('renderHtml with every optional part', () => {
-  const html = renderHtml(rich);
+  const html = plain(renderHtml(rich));
   test('parties, delivery, payee, tax representative', () => {
     for (const h of ['Payee', 'Tax representative', 'Delivery']) expect(headings(html)).toContain(h);
-    expect(html).toContain('Payee Ltd');
-    expect(html).toContain('Rep AB');
-    expect(html).toContain('2026-10-15 10:30:00');
+    expect(html).toContain('<p class="einvoice-party-name">Payee Ltd</p>');
+    expect(html).toContain('<address class="einvoice-address">Gatan 1<br/>Malmö</address>');
+    expect(html).toContain('<time dateTime="2026-10-15" title="2026-10-15T10:30:00">Oct 15, 2026, 10:30</time>');
   });
   test('line details', () => {
-    expect(html).toContain('Oak, 40 cm');
-    expect(html).toContain('Colour: Oak');
-    expect(html).toContain('Allowances: Line discount -1.00');
-    expect(html).toContain('Charges: Line surcharge +2.00');
+    expect(html).toContain('<p>Oak, 40 cm</p>');
+    expect(html).toContain('Seller&#x27;s item no.: S-1 · Colour: Oak · Sep 1, 2026 – …');
+    expect(html).toContain(
+      '<p class="einvoice-adjustments">Allowance (Line discount): −SEK 1.00<br/>Charge (Line surcharge): +SEK 2.00</p>',
+    );
+    expect(html).toContain('<span title="H87">10 pieces</span>');
   });
   test('document allowances with percentage, exemptions, payments', () => {
-    expect(html).toContain('Early payment - 95 (2%)');
-    expect(html).toContain('VATEX-EU-132 - Exempt');
-    expect(html).toContain('VISA 1234 A. Holder');
-    expect(html).toContain('M-1 / C-1 / D-1');
-    expect(html).toContain('2026-12-01 - 10.00 SEK - First half');
+    expect(html).toContain('<td>Early payment (95) · 2%</td>');
+    expect(html).toContain('<td>Exempt (VATEX-EU-132)</td>');
+    expect(html).toContain('<th scope="col">Exemption reason</th>');
+    expect(html).toContain('<dt>Card</dt><dd>VISA …1234</dd>');
+    expect(html).toContain('<dt>Mandate reference</dt><dd><span class="einvoice-code">M-1</span></dd>');
+    expect(html).toContain('<dt>Debited account</dt><dd><span class="einvoice-code">D-1</span></dd>');
+    expect(html).toContain(
+      '<tr><td><time dateTime="2026-12-01" title="2026-12-01">Dec 1, 2026</time></td><td class="einvoice-num">10.00</td><td>First half</td></tr>',
+    );
+  });
+  test('an IBAN is grouped in fours and labelled as one', () => {
+    const iban = structuredClone(rich) as unknown as { payments: { creditTransfers: { accountId: string }[] }[] };
+    iban.payments[0]!.creditTransfers[0]!.accountId = 'DE89370400440532013000';
+    expect(renderHtml(iban as unknown as CanonicalInvoice)).toContain(
+      '<dt>IBAN</dt><dd><span class="einvoice-code">DE89 3704 0044 0532 0130 00</span></dd>',
+    );
+  });
+  test('notes with line breaks and "-" items become paragraphs and lists', () => {
+    const n = structuredClone(rich) as unknown as { notes: { text: string }[] };
+    n.notes = [{ text: 'Delivery terms:\n- packed on pallets\n- signed on receipt\n\nThank you' }];
+    expect(renderHtml(n as unknown as CanonicalInvoice)).toContain(
+      '<div class="einvoice-note"><p>Delivery terms:</p><ul><li>packed on pallets</li><li>signed on receipt</li></ul><p>Thank you</p></div>',
+    );
   });
   test('attachments are listed by name and never linked', () => {
-    expect(html).toContain('timesheet.txt (text/plain) Time sheet');
-    expect(html).toContain('2 - Specification - https://example.com/spec.pdf');
-    expect(html).toContain('<li>3 - ZZZ</li>');
+    expect(html).toContain('<li>timesheet.txt (text/plain) Time sheet</li>');
+    expect(html).toContain('<li>2 – Specification – https://example.com/spec.pdf</li>');
+    expect(html).toContain('<li>3 – ZZZ</li>');
     expect(html).not.toMatch(/href=/);
   });
 });
 
 describe('renderHtml escapes untrusted input', () => {
-  const PAYLOAD = `<script>alert(1)</script>"><img src=x onerror=alert(1)>' onmouseover='alert(1)\` autofocus onfocus=alert(1) <!-- --> &amp; &#x3C;`;
-
-  /** Every string in the invoice becomes a hostile string that names the field it sits in. */
-  function poison(value: unknown, path: string): unknown {
-    if (typeof value === 'string') return `${PAYLOAD}[${path}]`;
-    if (Array.isArray(value)) return value.map((v, i) => poison(v, `${path}.${i}`));
-    if (value && typeof value === 'object') {
-      return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, k === 'kind' ? v : poison(v, `${path}.${k}`)]));
-    }
-    return value;
-  }
-
   const hostile = poison(rich, 'inv') as CanonicalInvoice;
-  const ALLOWED_TAGS = new Set([
-    'html',
-    'head',
-    'meta',
-    'title',
-    'body',
-    'main',
-    'style',
-    'article',
-    'header',
-    'h1',
-    'h2',
-    'p',
-    'div',
-    'section',
-    'dl',
-    'dt',
-    'dd',
-    'table',
-    'thead',
-    'tbody',
-    'tr',
-    'th',
-    'td',
-    'ul',
-    'li',
-    'br',
-  ]);
-  const ALLOWED_ATTRS = new Set(['lang', 'id', 'class', 'scope', 'charset', 'name', 'content', 'http-equiv', 'aria-labelledby']);
 
   for (const [name, html] of [
     ['standalone', renderHtml(hostile)],
@@ -329,15 +310,7 @@ describe('renderHtml escapes untrusted input', () => {
       expect(html).not.toMatch(/<script|<\/script/i);
     });
 
-    test(`${name}: only our own tags and attributes appear`, () => {
-      const body = html.replace(/<style>.*?<\/style>/s, '');
-      for (const m of body.matchAll(/<\/?([a-zA-Z][a-zA-Z0-9]*)([^>]*)>/g)) {
-        expect(ALLOWED_TAGS.has(m[1]!.toLowerCase())).toBe(true);
-        for (const a of m[2]!.matchAll(/\s([a-zA-Z-]+)=/g)) expect(ALLOWED_ATTRS.has(a[1]!)).toBe(true);
-        // Attribute values are quoted with " and contain no quote of their own.
-        expect(m[2]!.replace(/\s[a-zA-Z-]+="[^"]*"/g, '').trim()).toBe('');
-      }
-    });
+    test(`${name}: only our own tags and attributes appear`, () => expectOnlyOwnMarkup(html.replace(/<style>.*?<\/style>/s, '')));
   }
 
   test('every field shows up escaped, so nothing is silently dropped', () => {
@@ -362,7 +335,7 @@ describe('renderHtml escapes untrusted input', () => {
   });
 
   test('escapeHtml covers the five dangerous characters plus backtick and drops control characters', () => {
-    expect(escapeHtml(`<>&"'\``)).toBe('&lt;&gt;&amp;&quot;&#39;&#96;');
+    expect(escapeHtml(`<>&"'\``)).toBe('&lt;&gt;&amp;&quot;&#x27;&#96;');
     expect(escapeHtml('a\u0000b\u0007c\u001fd\u007fe\tf\ng')).toBe('abcde\tf\ng');
   });
 
@@ -390,7 +363,7 @@ describe('renderPdf', () => {
     const two = await PDFDocument.load(await renderPdf(manyLines(peppol, 200)));
     // About 46 single-line rows fit on a page and the header blocks take most of the first one.
     expect(two.getPageCount()).toBeGreaterThanOrEqual(5);
-    expect(two.getPageCount()).toBeLessThanOrEqual(7);
+    expect(two.getPageCount()).toBeLessThanOrEqual(8);
     const four = await PDFDocument.load(await renderPdf(manyLines(peppol, 400)));
     expect(four.getPageCount()).toBeGreaterThan(two.getPageCount() + 3);
     const one = await PDFDocument.load(await renderPdf(manyLines(peppol, 5)));

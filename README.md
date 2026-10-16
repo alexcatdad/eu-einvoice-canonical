@@ -89,7 +89,7 @@ einvoice detect  <file...>                 format id, version and profile per do
 einvoice inspect <file...>                 the unwrap and detect result as JSON
 einvoice convert <file...> [--out <dir>]   canonical JSON array on stdout, or one <invoice-id>.json per invoice in <dir>
 einvoice export  <file...> --format sie|journal|csv [--accounts mapping.json] [--out <file>]   bookkeeping entries
-einvoice render  --as html|pdf <file...> [--lang en|de|fr] [--out <file|dir>]   human-readable invoice
+einvoice render  --as html|pdf <file...> [--lang en|de|fr|it|es|nl|pl|ro] [--out <file|dir>]   human-readable invoice
 einvoice write   <file...> --to ubl|cii [--profile peppol-bis3|xrechnung|en16931] [--out <dir>]   write canonical JSON (or any invoice file) as UBL 2.1 or CII D16B
 einvoice sweep   <dir...> [--expect answers.json]   detection coverage / known-answer check
 einvoice trust-lists update [--out <snapshot.json>] [--lotl-signer <cert.pem>]   fetch and verify the EU trusted lists
@@ -190,7 +190,7 @@ const result = matching.matchInvoice(invoice, [matching.parseOrder(orderXml)], {
 
 ## Human-readable rendering
 
-`renderHtml(invoice, { lang?, standalone? })` and `renderPdf(invoice, { lang? })` turn a canonical invoice into something a person can read, print or archive. Both draw from one content model (`src/render/model.ts`), so they show the same things: seller and buyer with identifiers, references and dates, lines, allowances and charges, the VAT breakdown, totals, payment details, notes, and attachments listed by name.
+`renderHtml(invoice, { lang?, standalone? })`, `renderPdf(invoice, { lang? })` and the React component `<Invoice>` turn a canonical invoice into something a person can read, print or archive. All three draw from one view model (`buildInvoiceView` in `src/render/model.ts`), so they show the same things: a header with the document type, number, key dates and the amount due; seller and buyer with postal addresses and labelled identifiers; references; the lines; allowances and charges; the VAT breakdown; the totals; payment instructions; notes; and attachments listed by name.
 
 ```ts
 import { convert, renderHtml, renderPdf } from 'eu-einvoice-canonical';
@@ -202,14 +202,52 @@ const pdf = await renderPdf(invoice, { lang: 'fr' }); // Uint8Array, A4
 
 ```
 einvoice render --as html invoice.xml > invoice.html
-einvoice render --as pdf  invoice.xml --out invoice.pdf
+einvoice render --as pdf  invoice.xml --out invoice.pdf --lang pl
 einvoice render --as pdf  a.xml b.xml --out out/        # one <invoice-id>.pdf per invoice
 ```
 
+**Formatting.** Everything is formatted for the reader's language, but no value is ever changed:
+
+- Amounts, quantities and percentages use the locale's separators and patterns (`€1,234.50`, `1.234,50 €`, `12,5 %`). Intl supplies only the symbols and the pattern; the digits are copied from the invoice's exact decimal string, so there is no floating-point rounding and extra decimals are kept (`€0.125`). Amounts are padded to the currency's minor unit, never cut.
+- Dates are shown in the locale (`15.10.2026`, `Oct 15, 2026`) inside `<time datetime>`, with the ISO date as a tooltip.
+- Postal addresses are laid out on separate lines, with the country spelled out in the reader's language.
+- IBANs (with a valid check sum) are grouped in fours; VAT IDs, company registrations, GLNs, Leitweg-IDs and other identifiers carry a label naming their scheme.
+- Quantities show their unit (UN/ECE Rec 20: `10 pcs`, `2 hr`, `10 Std.`, `2,5 m²`), with the code as a tooltip; a price for more than one unit says so (`per 100 pcs`).
+- VAT categories and payment means are named (`Standard rate`, `Reverse charge`, `SEPA credit transfer`), with the code as a tooltip.
+- Notes, descriptions and payment terms are split into paragraphs at blank lines, and runs of lines starting with `-`, `*`, `•` or `1.` become bullet lists.
+- Credit notes carry a "Credit note" badge, a red accent and "Amount credited" in place of "Amount due".
+- **Languages:** labels exist for `en`, `de`, `fr`, `it`, `es`, `nl`, `pl` and `ro`; any other tag keeps English labels but still gets its own number and date formats (`en-GB`, `de-CH`) and is used for the `lang` attribute.
+
 - **HTML** is self-contained: inline CSS, print styles for A4, no scripts, no links, no images and no external resources, and the standalone page carries a Content-Security-Policy (`default-src 'none'`) on top. It uses landmarks, labelled sections and `<th scope>` so screen readers can navigate it. Invoices are untrusted input: every value is escaped (ampersand, angle brackets, both quote characters and backtick; control characters dropped), attachments are listed by name only (never decoded or linked) and external URIs appear as plain text. `test/render.test.ts` injects `<script>` and attribute-breaking strings into every text field and checks that only the renderer's own tags and attributes come out.
-- **PDF** is built with pdf-lib and the standard Helvetica fonts (nothing embedded). Text wraps, long line lists continue on further pages with the table header repeated, and each page says "Page x of y". Output is deterministic (the PDF dates come from the invoice issue date). The standard fonts only cover the WinAnsi (Western European) character set: other characters, such as Cyrillic, Greek or CJK, are drawn as `?` in the PDF but are intact in the HTML.
-- **Languages:** labels exist for `en`, `de` and `fr`; any other tag keeps English labels and is still used for the `lang` attribute. Values are shown as the invoice states them (decimal strings, ISO dates, code values); nothing is recalculated or reformatted.
+- **PDF** is built with pdf-lib and the standard Helvetica fonts (nothing embedded), with amounts written with the currency code. Text wraps, long line lists continue on further pages with the table header repeated, and each page says "Page x of y". Output is deterministic (the PDF dates come from the invoice issue date). The standard fonts only cover the WinAnsi (Western European) character set: accented letters outside it lose the accent (`ș` as `s`, `ł` as `l`), and other characters, such as Cyrillic, Greek or CJK, are drawn as `?` in the PDF but are intact in the HTML.
 - The demo site still builds its own sheet; it does not use these renderers.
+
+### React component
+
+`eu-einvoice-canonical/react` exports `<Invoice>`, which renders the same markup as `renderHtml` (a test compares the two, element for element, across several formats and languages):
+
+```tsx
+import { Invoice } from 'eu-einvoice-canonical/react';
+import 'eu-einvoice-canonical/react/invoice.css';
+
+export function InvoicePage({ invoice }) {
+  return <Invoice invoice={invoice} lang="de" className="my-invoice" />;
+}
+```
+
+The result is an A4-like sheet: the title and document number on the left with the issue date, due date and a large amount due on the right, under a coloured rule; seller, buyer and delivery side by side; then references, the lines table, allowances and charges, the VAT breakdown, the totals with subtotals ruled off and the amount due emphasised, and the payment instructions with the IBAN in a monospace face.
+
+- **Parts.** Build your own layout from `InvoiceHeader`, `InvoiceParties`, `InvoiceReferences`, `InvoiceLines`, `InvoiceAdjustments`, `VatBreakdown`, `InvoiceTotals`, `PaymentDetails` and `InvoiceNotes`. Each takes `invoice` and `lang`, or a `view` from `buildInvoiceView(invoice, lang)` to format once and share:
+
+  ```tsx
+  const view = buildInvoiceView(invoice, 'fr');
+  <><InvoiceHeader view={view} /><InvoiceLines view={view} /><InvoiceTotals view={view} className="right" /></>
+  ```
+
+- **Styling.** `invoice.css` is plain CSS with one class per rule and no dependencies. Theme it with custom properties on any ancestor: `--einvoice-font`, `--einvoice-mono`, `--einvoice-size`, `--einvoice-ink`, `--einvoice-muted`, `--einvoice-rule`, `--einvoice-surface`, `--einvoice-subtle`, `--einvoice-accent`, `--einvoice-credit`, `--einvoice-radius`. `className` is added to the outermost element; `unstyled` leaves out every built-in class so the stylesheet does not apply and you can style the semantic markup yourself. The stylesheet is generated from the one `renderHtml` inlines (`bun run build:react-css`).
+- **Safe by construction.** Text reaches the DOM only as React children and attribute values, which React escapes; the components never use `dangerouslySetInnerHTML`, and `test/react.test.tsx` renders an invoice with `<script>` and attribute-breaking strings in every field. No effects and no browser globals, so it renders on the server (`renderToString`, React Server Components) as well as in the browser. Element ids come from `useId`, or from `idPrefix` when you need stable ones.
+- **Dependencies.** `react` and `react-dom` (18 or later) are optional peer dependencies; there are no others. Only the `/react` entry imports React: the main entry, the HTTP server and the site bundle never do, which a test checks by walking their import graphs.
+- **Demo.** `bun examples/react/render.tsx invoice.xml de > invoice.html` server-renders any supported file with the component into a standalone page.
 
 ## Writing UBL and CII
 
