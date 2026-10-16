@@ -50,15 +50,15 @@ jobs:
       - name: Install the site's dependencies (Astro, Starlight, TypeDoc, React; its own package)
         run: bun install --frozen-lockfile
         working-directory: site
-      - name: Typecheck the site (Astro pages, the converter island, the accessibility gate)
-        run: bun run typecheck
-        working-directory: site
       - name: Latest corpus report for the Real-world results page (when there is one)
         env:
           GH_TOKEN: ${{ github.token }}
         run: scripts/fetch-corpus-report.sh
       - name: Build the site (docs from the README, converter, conformance checklist in the job summary) and check its links
         run: bun run build:site
+      - name: Typecheck the site (Astro pages, the converter island, the accessibility gate; after the build, which writes Astro's types)
+        run: bun run typecheck
+        working-directory: site
       - name: Performance gate (quick subset against bench/baseline.json)
         run: bun run bench:check
       - name: Upload the quick benchmark run
