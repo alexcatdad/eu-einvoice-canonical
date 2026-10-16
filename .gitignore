@@ -4,3 +4,4 @@ dist/
 *.bak
 coverage/
 test/corpus/repos/
+fuzz-failures/
