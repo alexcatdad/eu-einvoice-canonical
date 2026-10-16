@@ -4,7 +4,7 @@
  * escaped; escaping is the job of the output format.
  */
 
-import type { Address, AllowanceCharge, CanonicalInvoice, Identifier, Line, Party, Period } from '../canonical.js';
+import type { Address, AllowanceCharge, CanonicalInvoice, Identifier, Line, Party, Period, Price } from '../canonical.js';
 import { type LabelKey, labelsFor } from './labels.js';
 
 export type Align = 'left' | 'right';
@@ -70,6 +70,13 @@ function lineDescription(t: (k: LabelKey) => string, l: Line): string {
   for (const a of l.allowances) out.push(`${t('allowances')}: ${a.reason ?? ''} -${a.amount}`);
   for (const c of l.charges) out.push(`${t('charges')}: ${c.reason ?? ''} +${c.amount}`);
   return out.join('\n');
+}
+
+function priceText(p: Price | undefined): string {
+  if (!p) return '';
+  const base =
+    p.baseQuantity !== undefined && p.baseQuantity !== '1' ? ` / ${[p.baseQuantity, p.baseQuantityUnit].filter(present).join(' ')}` : '';
+  return `${p.net}${base}`;
 }
 
 function vatText(v: { categoryCode: string; rate?: string } | undefined): string {
@@ -190,7 +197,7 @@ export function buildModel(inv: CanonicalInvoice, lang?: string): RenderModel {
         l.id,
         lineDescription(t, l),
         [l.quantity, l.unitCode ?? l.unitText].filter(present).join(' '),
-        l.price?.net ?? '',
+        priceText(l.price),
         vatText(l.vat),
         l.netAmount,
       ]),
@@ -234,6 +241,8 @@ export function buildModel(inv: CanonicalInvoice, lang?: string): RenderModel {
       [t('taxInclusive'), tot.taxInclusive],
       [t('prepaid'), tot.prepaid],
       [t('rounding'), tot.rounding],
+      [t('withholdingTotal'), tot.withholdingTotal],
+      [t('splitPaymentVat'), tot.splitPaymentVat],
       [t('payable'), tot.payable],
     ]).map(([l, v]) => [l, `${v} ${cur}`]),
   });

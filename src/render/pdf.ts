@@ -26,6 +26,8 @@ const LABEL_WIDTH = 140;
 const CELL_PAD = 3;
 /** Rows shorter than this many lines are never split across pages. */
 const KEEP_TOGETHER = 40;
+/** Characters measured at once when breaking an over-long word. */
+const WINDOW = 600;
 
 /**
  * Only the characters of the standard fonts' WinAnsi encoding can be drawn. Anything else (Cyrillic,
@@ -91,21 +93,28 @@ class Writer {
         }
         if (line) lines.push(line);
         line = '';
-        let rest = word;
-        while (font.widthOfTextAtSize(rest, size) > width) {
+        // Break a word wider than the line. Measure only a bounded window per line (no glyph is narrower than
+        // about a fifth of an em, so a line holds well under WINDOW of them) and walk forward by index, so
+        // a multi-megabyte unbroken string costs time linear in its length.
+        let pos = 0;
+        for (;;) {
+          const end = Math.min(word.length, pos + WINDOW);
+          const head = word.slice(pos, end);
+          if (end === word.length && font.widthOfTextAtSize(head, size) <= width) {
+            line = head;
+            break;
+          }
           // Longest prefix that fits (at least one character, so a very narrow column still makes progress).
           let lo = 1;
-          let hi = rest.length - 1;
+          let hi = head.length;
           while (lo < hi) {
             const mid = (lo + hi + 1) >> 1;
-            if (font.widthOfTextAtSize(rest.slice(0, mid), size) <= width) lo = mid;
+            if (font.widthOfTextAtSize(head.slice(0, mid), size) <= width) lo = mid;
             else hi = mid - 1;
           }
-          const cut = lo;
-          lines.push(rest.slice(0, cut));
-          rest = rest.slice(cut);
+          lines.push(head.slice(0, lo));
+          pos += lo;
         }
-        line = rest;
       }
       lines.push(line);
     }
@@ -119,10 +128,10 @@ class Writer {
   }
 
   heading(s: string) {
-    // Keep a heading with at least its first row.
-    this.ensure(40);
-    this.y -= 10;
     const lines = this.wrap(s, this.bold, 11, PAGE.width - 2 * PAGE.margin);
+    // Keep the heading with at least the first two rows (or a table header and a row) that follow it.
+    this.ensure(10 + lines.length * 15 + 5 + 2 * LEAD + 8);
+    this.y -= 10;
     for (const l of lines) {
       this.text(l, PAGE.margin, this.y - 11, this.bold, 11);
       this.y -= 15;
@@ -281,10 +290,12 @@ export async function renderPdf(invoice: CanonicalInvoice, options: RenderPdfOpt
   doc.setLanguage(lang);
 
   for (const l of w.wrap(model.title, bold, 18, PAGE.width - 2 * PAGE.margin)) {
+    w.ensure(24);
     w.text(l, PAGE.margin, w.y - 18, bold, 18);
     w.y -= 24;
   }
   for (const l of w.wrap(model.subtitle, font, BODY, PAGE.width - 2 * PAGE.margin)) {
+    w.ensure(LEAD);
     w.text(l, PAGE.margin, w.y - BODY, font, BODY, GREY);
     w.y -= LEAD;
   }

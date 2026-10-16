@@ -3,7 +3,7 @@
  * einvoice: command-line front end for unwrapping, detecting and converting inbound e-invoices.
  * See the README ("Command line") for commands, flags and exit codes.
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { runDuplicates } from './duplicates/run.js';
@@ -604,7 +604,14 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
           as === 'pdf' ? await renderPdf(inv, { lang: args.lang }) : new TextEncoder().encode(renderHtml(inv, { lang: args.lang })),
         );
       }
-      if (args.out && invoices.length === 1) {
+      // --out is a directory when several inputs were given, when it already is one, or when it ends in a separator.
+      const outIsDir =
+        !!args.out &&
+        (args.files.length > 1 ||
+          invoices.length > 1 ||
+          /[\\/]$/.test(args.out) ||
+          (existsSync(args.out) && statSync(args.out).isDirectory()));
+      if (args.out && !outIsDir) {
         writeFileSync(resolve(args.out), bodies[0]!);
         note(`wrote ${as} to ${args.out}`);
       } else if (args.out) {

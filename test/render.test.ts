@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { PDFDocument } from 'pdf-lib';
@@ -132,6 +132,21 @@ describe('renderHtml structure', () => {
     expect(html).toContain('Skruv 4x40');
     expect(html).toContain('<td class="num">10 H87</td><td class="num">25.00</td><td>S 25%</td><td class="num">250.00</td>');
     expect((html.match(/<tbody>/g) ?? []).length).toBeGreaterThanOrEqual(3);
+  });
+
+  test('keeps the price basis next to the unit price', () => {
+    expect(html).toContain('<td class="num">45.00 / 100 C62</td>');
+    expect(html).toContain('<td class="num">25.00</td>');
+  });
+
+  test('shows withholding and split-payment deductions before the amount due', () => {
+    const w = structuredClone(peppol) as unknown as { totals: Record<string, string> };
+    w.totals.withholdingTotal = '12.00';
+    w.totals.splitPaymentVat = '34.00';
+    const out = renderHtml(w as unknown as CanonicalInvoice);
+    expect(out).toContain('Withholding deducted</dt><dd>12.00 SEK');
+    expect(out).toContain('(split payment)</dt><dd>34.00 SEK');
+    expect(out.indexOf('12.00 SEK')).toBeLessThan(out.indexOf('Amount due'));
   });
 
   test('shows allowances and charges', () => {
@@ -401,6 +416,22 @@ describe('renderPdf', () => {
     expect(pdf.getPageCount()).toBeGreaterThan(3);
   }, 30000);
 
+  test('a very long invoice number wraps across pages instead of running off the page', async () => {
+    const long = structuredClone(peppol) as unknown as { id: string };
+    long.id = 'N'.repeat(6000);
+    const pdf = await PDFDocument.load(await renderPdf(long as unknown as CanonicalInvoice));
+    expect(pdf.getPageCount()).toBeGreaterThan(1);
+  }, 30000);
+
+  test('a very long unbroken string is wrapped in linear time', async () => {
+    const big = structuredClone(peppol) as unknown as { notes: { text: string }[] };
+    big.notes = [{ text: 'Z'.repeat(300_000) }];
+    const started = performance.now();
+    const pdf = await PDFDocument.load(await renderPdf(big as unknown as CanonicalInvoice), { updateMetadata: false });
+    expect(pdf.getPageCount()).toBeGreaterThan(40);
+    expect(performance.now() - started).toBeLessThan(60000);
+  }, 90000);
+
   test('a very tall table row continues on the next page', async () => {
     const tall = structuredClone(peppol) as unknown as { lines: { note: string }[] };
     tall.lines[1]!.note = 'word '.repeat(4000);
@@ -469,6 +500,17 @@ describe('einvoice render', () => {
     const noBinary = io();
     delete noBinary.sink.stdoutBytes;
     expect(await main(['render', '--as', 'pdf', file], noBinary.sink)).toBe(EXIT.internal);
+  });
+
+  test('--out naming an existing directory (or ending in a slash) gets <invoice-id>.<format> inside it', async () => {
+    const existing = join(dir, 'existing');
+    mkdirSync(existing);
+    const t = io();
+    expect(await main(['render', '--as', 'html', '--out', existing, '--quiet', file], t.sink)).toBe(EXIT.ok);
+    expect(readdirSync(existing)).toEqual(['INV-2026-1042.html']);
+    const slash = join(dir, 'fresh') + '/';
+    expect(await main(['render', '--as', 'pdf', '--out', slash, '--quiet', file], io().sink)).toBe(EXIT.ok);
+    expect(readdirSync(join(dir, 'fresh'))).toEqual(['INV-2026-1042.pdf']);
   });
 
   test('several invoices need a directory for --out, or pdf refuses stdout', async () => {
