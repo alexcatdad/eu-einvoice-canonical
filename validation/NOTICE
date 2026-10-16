@@ -93,3 +93,13 @@ Runtime dependencies (installed from npm, not copied into this repository)
 saxon-js 2.7.0 (Saxonica Ltd): proprietary licence permitting use and redistribution in binary form as part
   of an application; see node_modules/saxon-js/LICENSE.txt. xslt3 2.7.0 (build script only) is under the same licence.
 xmllint-wasm 5.3.0: MIT. Contains libxml2 (MIT).
+
+Not bundled: Peppol PINT and ZATCA rules
+========================================
+
+The Peppol PINT Schematron (PINT, PINT SG, A-NZ, JP, MY, AE, OM, EU), its code lists and its examples are
+published at https://docs.peppol.eu/poac under an OpenPEPPOL copyright statement that says the document "may
+not be modified, re-distribute, sold or repackaged in any other way without the prior consent of OpenPEPPOL
+AISBL". That does not allow pinning copies here, so PINT documents get the UBL 2.1 XSD layer only and the
+profile layer reports 'not-run'. Add the bundles (build-validation-bundles.ts handles a Schematron given as
+.sch or .xslt) if OpenPEPPOL's consent is obtained. The same goes for ZATCA's Schematron and SDK samples.

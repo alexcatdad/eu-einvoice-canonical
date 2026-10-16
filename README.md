@@ -224,6 +224,25 @@ What you will receive from each country, inbound. Format IDs refer to `src/forma
 | ES | `facturae` 3.2.x (`.xsig`), later UBL/CII | B2G via FACe. B2B Royal Decree approved 24 Mar 2026 (Facturae, UBL, CII, EDIFACT); start depends on the ministerial order. |
 | SE | `peppol-bis3`, legacy `svefaktura-1` | |
 
+## Beyond the EU
+
+Peppol PINT and Saudi ZATCA are UBL documents, so they run through the UBL parser; each adds its own fields in `extensions`.
+
+| Format ID | Identifier | What is mapped |
+|---|---|---|
+| `pint-sg` | `urn:peppol:pint:billing-1@sg-1` | GST is a VAT-like scheme (`vatId`), UEN from the endpoint, GST categories used: `extensions.sg` |
+| `pint-aunz` | `urn:peppol:pint:{billing,selfbilling}-1@aunz-1` | ABN or NZBN, GST: `extensions.au` or `extensions.nz` by country; self-billing sets `selfBilled` |
+| `pint-jp` | `urn:peppol:pint:{billing,selfbilling,nontaxinvoice}-1@jp-1` | Qualified invoice issuer number (`T` + 13 digits) in `extensions.jp`; the non-tax-registered variant has none |
+| `pint-my` | `urn:peppol:pint:billing-1@my-1` | TIN (scheme GST) and SST (scheme VAT), MSIC code, FTA / certified exporter / customs references, LHDN UUID: `extensions.my` |
+| `pint-ae` | `urn:peppol:pint:billing-1@ae-1` | The eight transaction-type flags, UUID, TIN, registration type and authority, exchange rate; line commodity and nature codes in `line.national`: `extensions.ae` |
+| `pint-om`, `pint-eu` | `…@om-1`, `…@eu-1` | Detected and parsed as plain UBL |
+| `peppol-pint` | `urn:peppol:pint:billing-1`, other `@xx-n`, older BIS Billing International | Plain UBL mapping |
+| `zatca-ubl` | `ProfileID reporting:1.0` | See below |
+
+Category codes of PINT SG and MY are not UNCL 5305; `categoryCode` keeps them as sent. The PINT Schematron is not bundled (OpenPEPPOL's copyright statement forbids redistribution, see `validation/NOTICE`), so PINT gets the UBL XSD layer only.
+
+**ZATCA (Saudi Arabia).** `InvoiceTypeCode/@name` (NNPNESB) gives the standard/simplified subtype and the third-party, nominal, exports, summary and self-billed flags. UUID, ICV, PIH, the invoice hash, the XAdES signature (the cryptographic stamp) and the QR code go into `clearance[0]` (authority `SA:ZATCA`) and `extensions.sa`; the QR TLV is decoded into fields and compared with the invoice. The invoice hash is recomputed with ZATCA's transforms (drop `UBLExtensions`, `cac:Signature` and the QR reference, canonicalize, SHA-256) and compared with the signature digest and QR tag 6: `extensions.sa.hashCheck` says `match`, `mismatch` or `not-checked`, and a mismatch is a warning, never an error. Credit notes (type 381 on an `Invoice` root) become `kind: 'creditNote'`. Hijri dates in date fields are converted with the tabular calendar (it can be a day off from Umm al-Qura), recorded in `extensions.sa.hijriDates` and `source.derived`.
+
 ## Build order
 
 | Phase | Parser family | Formats it covers | Mapping notes |
@@ -301,7 +320,7 @@ Skipped files and the reason are returned by both `inspect()` and `convert()`, s
 - **Signature trust:** signatures are verified cryptographically; signers are checked only when you pass `trustAnchors` or an `euTrust` snapshot. The snapshot is only as current as its fetch date and drops services the lists identify by name or key id without a certificate, and no revocation check is made on the signer's own certificate.
 - **Validation covers UBL and CII only** (XSD, EN 16931 and Peppol/XRechnung Schematron). National formats get the BR-CO arithmetic checks only; their official schemas are not run yet.
 - **Synthetic fixtures:** most national parsers were built from specifications and tested on synthetic files. Formats without a converted real sample are listed in the conformance checklist; run `sweep --expect` on your own inbound files before relying on them.
-- **Peppol PINT** gets the plain UBL mapping; PINT-specific rules are not applied.
+- **Peppol PINT and ZATCA validation:** the PINT Schematron and ZATCA's rules are not bundled (licence, see `validation/NOTICE`); only the UBL XSD runs. PINT OM and EU are mapped as plain UBL. A Hijri date whose day does not exist in the Gregorian month of the same number (for example `1446-02-30`) is rejected as an invalid date before conversion.
 - **Non-XML formats** (EDIFACT INVOIC, PDFs without embedded XML) are out of scope.
 
 ## License

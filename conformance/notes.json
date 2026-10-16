@@ -29,7 +29,18 @@
     "real/en16931-ubl-UC1.xml",
     "real/en16931-cii-UC13.xml",
     "real/fr-ctc-ubl-UC12.xml",
-    "real/fr-ctc-cii-UC10.xml"
+    "real/fr-ctc-cii-UC10.xml",
+    "ksef-fa3.xml",
+    "eslog2.xml",
+    "e-arve-two-invoices.xml",
+    "facturae-322-signed.xsig",
+    "ebinterface-61.xml",
+    "fattura-semplificata.xml",
+    "mydata.xml",
+    "sdi-metadata.xml",
+    "zatca-simplified-signed.xml",
+    "zatca-standard-signed.xml",
+    "zatca-standard-debit-signed.xml"
   ],
   "mappingSource": {
     "ubl": "EN 16931-3-2 (UBL binding) as documented in the Peppol BIS Billing 3.0 syntax pages",
@@ -47,7 +58,16 @@
     "eslog": "e-SLOG 2.0 Electronic Invoice, Part 2: Document Composition (April 2018)",
     "eslog-1": "Not mapped: the eslog parser reads eSLOG 2.0 only",
     "cfdi": "SAT Anexo 20 and the CFDI schemas cfdv40.xsd / cfdv33.xsd (sat.gob.mx/sitio_internet/cfd), with the TimbreFiscalDigital 1.1 stamp",
-    "mydata": "AADE myDATA InvoicesDoc XSD, invoice namespace v1.0 and income/expenses classification v1.0"
+    "mydata": "AADE myDATA InvoicesDoc XSD, invoice namespace v1.0 and income/expenses classification v1.0",
+    "peppol-pint": "Peppol PINT specification pages (docs.peppol.eu/poac): PINT base and older BIS Billing International identifiers; common part from the EN 16931 UBL binding",
+    "pint-sg": "Peppol PINT specification pages (docs.peppol.eu/poac), PINT SG (GST as VAT-like scheme, UEN EAS 0195)",
+    "pint-aunz": "Peppol PINT specification pages (docs.peppol.eu/poac), PINT A-NZ (ABN EAS 0151, NZBN EAS 0088, GST scheme); stored under extensions.au or extensions.nz",
+    "pint-jp": "Peppol PINT specification pages (docs.peppol.eu/poac), PINT JP and the non-tax-registered variant (qualified invoice issuer number T + 13 digits)",
+    "pint-my": "Peppol PINT specification pages (docs.peppol.eu/poac), PINT MY (TIN in the GST scheme, SST in VAT, MSIC code, LHDN references)",
+    "pint-ae": "Peppol PINT specification pages (docs.peppol.eu/poac), PINT AE (eight transaction-type flags in ProfileExecutionID, TIN EAS 0235)",
+    "pint-om": "Peppol PINT specification pages (docs.peppol.eu/poac), PINT OM: detected only, parsed as plain UBL",
+    "pint-eu": "Peppol PINT specification pages (docs.peppol.eu/poac), PINT EU: parsed as plain UBL",
+    "zatca-ubl": "ZATCA E-Invoicing Detailed Technical Guidelines and XML Implementation Standard (zatca.gov.sa): InvoiceTypeCode/@name NNPNESB, ICV/PIH/QR references, XAdES invoice hash, QR TLV tags 1-9"
   },
   "sampleSearch": {
     "$comment": "Formats for which no public sample under a licence that allows committing it was found; see test/fixtures/README.md. Nothing is committed for these.",
