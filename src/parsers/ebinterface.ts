@@ -378,8 +378,16 @@ function totalsOf(
   breakdown: VatBreakdown[],
 ): Totals {
   const gross = c.dec(root, 'TotalGrossAmount');
-  const payable = c.dec(root, 'PayableAmount');
-  if (gross === undefined || payable === undefined) throw new ParseError('TotalGrossAmount or PayableAmount missing');
+  if (gross === undefined) throw new ParseError('TotalGrossAmount missing');
+  const prepaid = c.dec(root, 'PrepaidAmount');
+  const rounding = c.dec(root, 'RoundingAmount');
+  let payable = c.dec(root, 'PayableAmount');
+  if (payable === undefined) {
+    // PayableAmount is optional up to ebInterface 4.x; real invoices omit it. BT-115 = BT-112 - BT-113 + BT-114.
+    payable = add(sub(gross, prepaid ?? '0'), rounding ?? '0');
+    c.derive('/totals/payable', 'PayableAmount absent: TotalGrossAmount - PrepaidAmount + RoundingAmount');
+    c.warn('EB-NO-PAYABLE', 'PayableAmount is absent; the amount due was derived from TotalGrossAmount');
+  }
   const lineNetTotal = sum(lines.map((l) => l.netAmount));
   c.derive('/totals/lineNetTotal', 'ebInterface has no net total; sum of the LineItemAmount values');
   const allowanceTotal = allowances.length ? sum(allowances.map((a) => a.amount)) : undefined;
@@ -399,8 +407,8 @@ function totalsOf(
     vatTotal,
     vatTotalInTaxCurrency: inTaxCurrency.length ? sum(inTaxCurrency) : undefined,
     taxInclusive: gross,
-    prepaid: c.dec(root, 'PrepaidAmount'),
-    rounding: c.dec(root, 'RoundingAmount'),
+    prepaid,
+    rounding,
     payable,
   };
 }

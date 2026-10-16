@@ -10,6 +10,7 @@ Synthetic documents with fictitious parties. Their numbers are consistent (the E
 |---|---|
 | `peppol-bis3-invoice.xml` | Peppol BIS 3 invoice: two VAT rates, document allowance and charge, prepayment, rounding, price base quantity ≠ 1, Bankgiro, embedded attachment, `#AAI#` note |
 | `peppol-bis3-creditnote.xml` | Peppol CreditNote: due date in PaymentMeans, project reference as document type 50 |
+| `peppol-bis3-reverse-charge.xml` | Peppol invoice under reverse charge (VAT category AE, 0 % stated), German seller, Swedish buyer, SEK |
 | `peppol-negative-invoice.xml` | 380 invoice with negative amounts (the other way Peppol credits) |
 | `xrechnung-ubl.xml`, `xrechnung-cii.xml` | XRechnung 3.0 in both syntaxes, Leitweg-ID, IBAN |
 | `facturx-basic-creditnote.xml` | Factur-X BASIC with TypeCode 381 on the CII root |

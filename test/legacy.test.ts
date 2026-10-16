@@ -464,3 +464,17 @@ describe('myDATA detection uses the AADE invoice namespace', () => {
     assert.notEqual(detectXml(doc('http://example.com/aade.gr/myDATA/other')).kind, 'invoice');
   });
 });
+
+describe('ZUGFeRD 1 text-only line', () => {
+  test('a line with only a note is kept, recorded as 0 and flagged', async () => {
+    const textLine =
+      '<ram:IncludedSupplyChainTradeLineItem><ram:AssociatedDocumentLineDocument><ram:IncludedNote><ram:Content>Lieferung bis 23.12.</ram:Content></ram:IncludedNote></ram:AssociatedDocumentLineDocument><ram:SpecifiedSupplyChainTradeSettlement /></ram:IncludedSupplyChainTradeLineItem>';
+    const first = '<ram:IncludedSupplyChainTradeLineItem>';
+    const src = text('zugferd1-comfort.xml');
+    assert.ok(src.includes(first));
+    const inv = await parseOne(utf8(src.replace(first, textLine + first)), 'x.xml');
+    assert.equal(inv.lines[0]?.netAmount, '0');
+    assert.equal(inv.lines[0]?.note, 'Lieferung bis 23.12.');
+    assert.ok(warningCodes(inv).includes('TEXT_LINE'));
+  });
+});

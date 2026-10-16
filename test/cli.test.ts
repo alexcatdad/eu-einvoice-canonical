@@ -208,3 +208,86 @@ describe('uniqueName', () => {
     expect(uniqueName('..', seen)).toBe('invoice-2');
   });
 });
+
+describe('einvoice export', () => {
+  const verCount = (s: string) => s.split('\r\n').filter((l) => l.startsWith('#VER')).length;
+  test('--format sie writes CP437 bytes to stdout; the example mapping is announced', async () => {
+    const proc = Bun.spawn(['bun', CLI, 'export', '--format', 'sie', '--generated', '2026-10-16', peppol], {
+      stdout: 'pipe',
+      stderr: 'pipe',
+    });
+    const [bytes, stderr, code] = await Promise.all([new Response(proc.stdout).bytes(), new Response(proc.stderr).text(), proc.exited]);
+    expect(code).toBe(0);
+    expect(stderr).toMatch(/example BAS mapping/);
+    const text = new TextDecoder('latin1').decode(bytes);
+    expect(text.startsWith('#FLAGGA 0\r\n')).toBe(true);
+    expect(text).toContain('#FORMAT PC8');
+    expect(bytes.includes(0x86)).toBe(true); // å in CP437 ("Leverantörsskulder" has ö = 0x94)
+    expect(verCount(text)).toBe(1);
+  });
+  test('--accounts with --out; --quiet silences the notes', async () => {
+    const mapping = write(
+      'mapping.json',
+      JSON.stringify({ payable: '3300', inputVat: '1570', defaultExpense: '6000', rounding: '6999', prepaid: '1500' }),
+    );
+    const out = join(tmp, 'journal.se');
+    const r = await run(['export', '--format', 'sie', '--accounts', mapping, '--out', out, '--quiet', '--generated', '2026-10-16', peppol]);
+    expect(r.code).toBe(0);
+    expect(r.stderr).toBe('');
+    const text = readFileSync(out, 'latin1');
+    expect(text).toContain('#TRANS 3300 {} -3091.00');
+    expect(text).toContain('#TRANS 6000 {}');
+  });
+  test('--format journal is JSON, --format csv is CSV', async () => {
+    const j = await run(['export', '--format', 'journal', '--quiet', peppol]);
+    expect(j.code).toBe(0);
+    expect(JSON.parse(j.stdout)[0].invoiceId).toBe('INV-2026-1042');
+    const c = await run(['export', '--format', 'csv', '--quiet', '--granularity', 'line', peppol]);
+    expect(c.code).toBe(0);
+    expect(c.stdout.startsWith('entry,date,invoice,')).toBe(true);
+  });
+  test('usage errors: missing or unknown format, bad granularity, unreadable or invalid mapping', async () => {
+    expect((await run(['export', peppol])).code).toBe(1);
+    expect((await run(['export', '--format', 'xml', peppol])).code).toBe(1);
+    expect((await run(['export', '--format', 'csv', '--granularity', 'x', peppol])).code).toBe(1);
+    const missing = await run(['export', '--format', 'csv', '--accounts', join(tmp, 'nope.json'), peppol]);
+    expect(missing.code).toBe(1);
+    expect(missing.stderr).toMatch(/cannot read the account mapping/);
+    const invalid = await run([
+      'export',
+      '--format',
+      'csv',
+      '--accounts',
+      write('bad.json', '{"payable":"2440","defaultExpense":"4010"}'),
+      peppol,
+    ]);
+    expect(invalid.code).toBe(1);
+    expect(invalid.stderr).toMatch(/"inputVat" is required/);
+  });
+  test('an invoice that cannot be booked is reported (exit 4); the others are still exported (exit 5)', async () => {
+    const mapping = write('nobalance.json', JSON.stringify({ payable: '2440', inputVat: '2641', defaultExpense: '4010' }));
+    const only = await run(['export', '--format', 'journal', '--accounts', mapping, peppol]);
+    expect(only.code).toBe(4);
+    expect(only.stderr).toMatch(/invoice INV-2026-1042: .*rounding/);
+    const some = await run([
+      'export',
+      '--format',
+      'journal',
+      '--accounts',
+      mapping,
+      '--quiet',
+      peppol,
+      fixturePath('svefaktura-1.0-credit.xml'),
+    ]);
+    expect(some.code).toBe(5);
+    expect(JSON.parse(some.stdout)).toHaveLength(1);
+  });
+  test('a non-SEK invoice needs --currency', async () => {
+    const split = fixturePath('fatturapa-split-payment.xml');
+    const refused = await run(['export', '--format', 'sie', '--quiet', split]);
+    expect(refused.code).toBe(4);
+    expect(refused.stderr).toMatch(/ledger currency is SEK/);
+    const allowed = await run(['export', '--format', 'sie', '--quiet', '--currency', 'EUR', split]);
+    expect(allowed.code).toBe(0);
+  });
+});

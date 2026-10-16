@@ -107,3 +107,14 @@ describe('CII: less common structures', async () => {
     assert.deepEqual(l1.item.classifications, [{ code: '56101504', listId: 'STI', listVersion: '2024' }]);
   });
 });
+
+describe('CII text-only line', () => {
+  test('a line with only a note is kept, recorded as 0 and flagged', async () => {
+    const src = new TextDecoder().decode(fixture('en16931-cii.xml'));
+    const first = '<ram:IncludedSupplyChainTradeLineItem>';
+    const textLine = `${first}<ram:AssociatedDocumentLineDocument><ram:IncludedNote><ram:Content>Siehe Anlage</ram:Content></ram:IncludedNote></ram:AssociatedDocumentLineDocument></ram:IncludedSupplyChainTradeLineItem>`;
+    const inv = await parseOne(utf8(src.replace(first, textLine + first)), 'x.xml');
+    assert.equal(inv.lines[0]?.netAmount, '0');
+    assert.ok(inv.source.warnings.some((w) => w.code === 'TEXT_LINE'));
+  });
+});
