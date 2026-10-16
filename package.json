@@ -21,6 +21,8 @@
     "serve:site": "bun run site/serve.ts",
     "verify:bundles": "bun scripts/verify-validation-bundles.ts",
     "build:bundles": "bun scripts/build-validation-bundles.ts",
+    "bench": "bun bench/run.ts",
+    "bench:check": "bun bench/run.ts --quick --check",
     "build:cli": "bun build --compile src/cli.ts --outfile dist/einvoice"
   },
   "author": "",

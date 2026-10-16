@@ -76,7 +76,20 @@ export interface XmlProbe {
 
 class Stop extends Error {}
 
+/**
+ * The unwrapper probes every document and detection probes it again moments later; on a document with a large
+ * attachment each probe reads the whole text node. The last result is kept (the one document, not a cache that grows).
+ */
+let last: { xml: string; probe: XmlProbe | null } | undefined;
+
 export function probeXml(xml: string): XmlProbe | null {
+  if (last?.xml === xml) return last.probe;
+  const probe = probeUncached(xml);
+  last = { xml, probe };
+  return probe;
+}
+
+function probeUncached(xml: string): XmlProbe | null {
   const parser = new SaxesParser({ xmlns: true, position: false });
   const stack: string[] = [];
   let probe: XmlProbe | null = null;

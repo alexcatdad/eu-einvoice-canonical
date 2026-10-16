@@ -45,6 +45,15 @@ jobs:
         run: bun run sweep:fixtures
       - name: Build the browser converter
         run: bun run build:site
+      - name: Performance gate (quick subset against bench/baseline.json)
+        run: bun run bench:check
+      - name: Upload the quick benchmark run
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: bench-quick
+          path: bench/last-quick.json
+          if-no-files-found: ignore
       - name: Conformance checklist (job summary and site page)
         run: bun scripts/conformance.ts --html dist/conformance.html --json dist/conformance.json
       - name: Upload the site

@@ -114,6 +114,30 @@ async function loadValidation(): Promise<typeof import('./validation/index.js')>
   return import(/* @vite-ignore */ specifier);
 }
 
+/** The smallest document that is detected as Peppol BIS 3 UBL, so every validator layer has something to run on. */
+const WARM_UP_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+<cbc:CustomizationID>urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0</cbc:CustomizationID>
+<cbc:ProfileID>urn:fdc:peppol.eu:2017:poacc:billing:01:1.0</cbc:ProfileID>
+<cbc:ID>WARM-UP</cbc:ID>
+</Invoice>`;
+
+/**
+ * Loads and compiles the validators (SaxonJS, xmllint-wasm, the UBL rule sets) ahead of the first document, by
+ * validating a tiny invoice and discarding the result. The first `convert(..., { validate: true })` otherwise pays
+ * this once (about 300 ms on a laptop). Resolves to false when the validators cannot be loaded; never throws.
+ */
+export async function warmUpValidation(options?: ValidateOptions): Promise<boolean> {
+  try {
+    const validation = await loadValidation();
+    const detection = detectXml(WARM_UP_XML);
+    const summary = await validation.validate({ xml: WARM_UP_XML }, detection, options);
+    return summary.schema !== 'unavailable' && summary.semantic !== 'unavailable';
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Unwraps, detects and parses. Never throws for bad input: every problem is an outcome or a skipped entry.
  *

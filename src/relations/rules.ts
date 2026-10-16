@@ -89,30 +89,43 @@ const isRateLine = (l: Line) =>
 function findPercentMatches(target: Line, rates: string[], earlier: Line[]): Match[] {
   const base = earlier.filter((l) => !isZero(l.netAmount)).slice(-SEARCH_LIMITS.candidates);
   const amount = round(target.netAmount);
-  const test = (set: Line[]): Match[] => {
-    const total = sum(set.map((l) => l.netAmount));
+  const negAmount = neg(amount);
+  // `total` is the running sum of `set`, folded in the same order `sum` would, so it is the same string.
+  const test = (set: Line[], total: string): Match[] => {
     const out: Match[] = [];
     for (const rate of rates) {
       const expected = round(percentOf(total, rate));
       if (cmp(expected, amount) === 0) out.push({ rate, ids: set.map((l) => l.id), role: 'surcharge' });
-      else if (cmp(expected, neg(amount)) === 0) out.push({ rate, ids: set.map((l) => l.id), role: 'discount' });
+      else if (cmp(expected, negAmount) === 0) out.push({ rate, ids: set.map((l) => l.id), role: 'discount' });
     }
     return out;
   };
 
   // Contiguous runs first: the usual case is a markup on the line(s) right above.
   const contiguous: Match[] = [];
-  for (let i = 0; i < base.length; i++) for (let j = i; j < base.length; j++) contiguous.push(...test(base.slice(i, j + 1)));
+  for (let i = 0; i < base.length; i++) {
+    let total: string = '0';
+    for (let j = i; j < base.length; j++) {
+      total = add(total, base[j].netAmount);
+      contiguous.push(...test(base.slice(i, j + 1), total));
+    }
+  }
   if (contiguous.length > 0) return contiguous;
 
-  // Then small subsets, bounded by the candidate cap and the subset size.
+  // Then small subsets, bounded by the candidate cap and the subset size. One shared stack and a running sum
+  // instead of a fresh array and a fresh sum per subset.
   const found: Match[] = [];
-  const pick = (start: number, chosen: Line[]) => {
-    if (chosen.length > 0) found.push(...test(chosen));
+  const chosen: Line[] = [];
+  const pick = (start: number, total: string) => {
+    if (chosen.length > 0) found.push(...test(chosen, total));
     if (chosen.length === SEARCH_LIMITS.subsetSize) return;
-    for (let i = start; i < base.length; i++) pick(i + 1, [...chosen, base[i]]);
+    for (let i = start; i < base.length; i++) {
+      chosen.push(base[i]);
+      pick(i + 1, add(total, base[i].netAmount));
+      chosen.pop();
+    }
   };
-  pick(0, []);
+  pick(0, '0');
   return found;
 }
 

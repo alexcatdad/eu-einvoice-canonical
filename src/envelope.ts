@@ -352,20 +352,27 @@ const stripP7m = (n?: string) => n?.replace(/\.p7m$/i, '');
 // Helpers
 // ---------------------------------------------------------------------------
 
+/** Base64 text to bytes, or null when it is not valid base64. Uses the built-in decoder where there is one (several times faster on big attachments). */
+function decodeBase64(text: string): Uint8Array | null {
+  try {
+    const native = (Uint8Array as unknown as { fromBase64?: (s: string) => Uint8Array }).fromBase64;
+    if (native) return native(text);
+    const bin = atob(text);
+    const b = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+    return b;
+  } catch {
+    return null;
+  }
+}
+
 function asBase64(bytes: Uint8Array): Uint8Array | null {
   if (bytes.length < 64) return null;
   let text = new TextDecoder('latin1').decode(bytes).trim();
   text = text.replace(/-----(BEGIN|END) [A-Z0-9 ]+-----/g, '');
   if (!/^[A-Za-z0-9+/=\s]+$/.test(text)) return null;
-  let bin: string;
-  try {
-    bin = atob(text.replace(/\s+/g, ''));
-  } catch {
-    return null;
-  }
-  if (bin.length < 16) return null;
-  const b = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+  const b = decodeBase64(text.replace(/\s+/g, ''));
+  if (!b || b.length < 16) return null;
   // Only accept if it decodes to something we can handle.
   const looksUseful =
     b[0] === 0x30 ||

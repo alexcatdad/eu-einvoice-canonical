@@ -1,0 +1,1012 @@
+{
+  "generatedAt": "2026-10-16T00:26:13.978Z",
+  "runtime": "bun 1.4.2",
+  "platform": "darwin-arm64",
+  "calibrationMs": 5.607791999999996,
+  "quick": false,
+  "cases": [
+    {
+      "id": "format/cfdi-33-ingreso-usd.xml",
+      "group": "format",
+      "bytes": 2041,
+      "docsPerSec": 8498.631720294072,
+      "medianMs": 0.11766599999998562,
+      "ratio": 0.020982589939139273,
+      "peakMB": 39.9
+    },
+    {
+      "id": "format/cfdi-40-egreso-relacionado.xml",
+      "group": "format",
+      "bytes": 2222,
+      "docsPerSec": 8507.669664205163,
+      "medianMs": 0.11754099999996015,
+      "ratio": 0.020960299526080892,
+      "peakMB": 40
+    },
+    {
+      "id": "format/cfdi-40-ieps.xml",
+      "group": "format",
+      "bytes": 2948,
+      "docsPerSec": 6906.458920385274,
+      "medianMs": 0.14479199999993853,
+      "ratio": 0.02581978789511783,
+      "peakMB": 40.6
+    },
+    {
+      "id": "format/cfdi-40-ingreso-iva-retenciones.xml",
+      "group": "format",
+      "bytes": 3640,
+      "docsPerSec": 6046.86318971887,
+      "medianMs": 0.16537500000004002,
+      "ratio": 0.02949021647023287,
+      "peakMB": 40.3
+    },
+    {
+      "id": "format/cfdi-40-pago.xml",
+      "group": "format",
+      "bytes": 1945,
+      "docsPerSec": 27939.204291361388,
+      "medianMs": 0.03579200000012861,
+      "ratio": 0.006382547712206272,
+      "peakMB": 38.2
+    },
+    {
+      "id": "format/cii-unknown.xml",
+      "group": "format",
+      "bytes": 3815,
+      "docsPerSec": 4401.234106045223,
+      "medianMs": 0.22720899999990252,
+      "ratio": 0.04051665967637578,
+      "peakMB": 40.2
+    },
+    {
+      "id": "format/cius-pt.xml",
+      "group": "format",
+      "bytes": 3541,
+      "docsPerSec": 4184.835828891984,
+      "medianMs": 0.2389579999999114,
+      "ratio": 0.04261178018013356,
+      "peakMB": 40.6
+    },
+    {
+      "id": "format/e-arve-1.2-two-invoices.xml",
+      "group": "format",
+      "bytes": 5410,
+      "docsPerSec": 2395.209580838219,
+      "medianMs": 0.4175000000000182,
+      "ratio": 0.07444997959981726,
+      "peakMB": 41.8
+    },
+    {
+      "id": "format/e-arve-two-invoices.xml",
+      "group": "format",
+      "bytes": 613,
+      "docsPerSec": 14397.189668589024,
+      "medianMs": 0.06945799999994051,
+      "ratio": 0.012385980079136416,
+      "peakMB": 38.6
+    },
+    {
+      "id": "format/ebinterface-4.3-creditmemo.xml",
+      "group": "format",
+      "bytes": 2907,
+      "docsPerSec": 4092.0716112571567,
+      "medianMs": 0.24437499999976353,
+      "ratio": 0.04357775752020825,
+      "peakMB": 40.5
+    },
+    {
+      "id": "format/ebinterface-6.1-invoice.xml",
+      "group": "format",
+      "bytes": 5485,
+      "docsPerSec": 2637.9447245044034,
+      "medianMs": 0.3790830000002643,
+      "ratio": 0.06759933321354725,
+      "peakMB": 41.3
+    },
+    {
+      "id": "format/ebinterface-61.xml",
+      "group": "format",
+      "bytes": 290,
+      "docsPerSec": 22577.440621310114,
+      "medianMs": 0.0442920000000413,
+      "ratio": 0.007898295799851586,
+      "peakMB": 38.3
+    },
+    {
+      "id": "format/en16931-2026.xml",
+      "group": "format",
+      "bytes": 5651,
+      "docsPerSec": 2840.239375376445,
+      "medianMs": 0.3520829999997659,
+      "ratio": 0.06278460399382968,
+      "peakMB": 42.1
+    },
+    {
+      "id": "format/en16931-cii.xml",
+      "group": "format",
+      "bytes": 3803,
+      "docsPerSec": 4536.855142752195,
+      "medianMs": 0.22041699999999764,
+      "ratio": 0.039305487792699476,
+      "peakMB": 40.4
+    },
+    {
+      "id": "format/eslog-1.xml",
+      "group": "format",
+      "bytes": 362,
+      "docsPerSec": 35037.31474059447,
+      "medianMs": 0.028540999999677297,
+      "ratio": 0.005089525431698843,
+      "peakMB": 38
+    },
+    {
+      "id": "format/eslog-2-credit.xml",
+      "group": "format",
+      "bytes": 2859,
+      "docsPerSec": 3270.6459525757505,
+      "medianMs": 0.3057499999999891,
+      "ratio": 0.054522350329682216,
+      "peakMB": 41.3
+    },
+    {
+      "id": "format/eslog-2-invoice.xml",
+      "group": "format",
+      "bytes": 6915,
+      "docsPerSec": 1431.4670819834844,
+      "medianMs": 0.6985839999997552,
+      "ratio": 0.12457380730236707,
+      "peakMB": 43.1
+    },
+    {
+      "id": "format/eslog2.xml",
+      "group": "format",
+      "bytes": 254,
+      "docsPerSec": 18705.92416627164,
+      "medianMs": 0.0534589999997479,
+      "ratio": 0.009532985531515423,
+      "peakMB": 38
+    },
+    {
+      "id": "format/facturae-322-batch.xml",
+      "group": "format",
+      "bytes": 6607,
+      "docsPerSec": 2213.20709200042,
+      "medianMs": 0.45183300000007875,
+      "ratio": 0.08057235361084703,
+      "peakMB": 41.9
+    },
+    {
+      "id": "format/facturae-322-iva-irpf.xml",
+      "group": "format",
+      "bytes": 8620,
+      "docsPerSec": 1932.057273906457,
+      "medianMs": 0.5175829999998314,
+      "ratio": 0.09229711087712092,
+      "peakMB": 42.1
+    },
+    {
+      "id": "format/facturae-322-recargo.xml",
+      "group": "format",
+      "bytes": 6861,
+      "docsPerSec": 2329.1943549643315,
+      "medianMs": 0.4293330000000424,
+      "ratio": 0.07656007926114997,
+      "peakMB": 42
+    },
+    {
+      "id": "format/facturae-322-rectificativa.xml",
+      "group": "format",
+      "bytes": 4008,
+      "docsPerSec": 3540.86333329353,
+      "medianMs": 0.2824170000003505,
+      "ratio": 0.05036153266746533,
+      "peakMB": 40.9
+    },
+    {
+      "id": "format/facturx-basic-creditnote.xml",
+      "group": "format",
+      "bytes": 5314,
+      "docsPerSec": 3575.1569493897227,
+      "medianMs": 0.2797080000000278,
+      "ratio": 0.049878454835705036,
+      "peakMB": 41.3
+    },
+    {
+      "id": "format/facturx-minimum.xml",
+      "group": "format",
+      "bytes": 2014,
+      "docsPerSec": 7638.485746581501,
+      "medianMs": 0.1309160000000702,
+      "ratio": 0.023345373722861027,
+      "peakMB": 39.8
+    },
+    {
+      "id": "format/fattura-semplificata.xml",
+      "group": "format",
+      "bytes": 224,
+      "docsPerSec": 27972.02797202228,
+      "medianMs": 0.035750000000007276,
+      "ratio": 0.006375058133398546,
+      "peakMB": 38.1
+    },
+    {
+      "id": "format/fatturapa-b2b.xml",
+      "group": "format",
+      "bytes": 5351,
+      "docsPerSec": 2794.9199534941704,
+      "medianMs": 0.3577919999997903,
+      "ratio": 0.06380265173882885,
+      "peakMB": 42.3
+    },
+    {
+      "id": "format/fatturapa-credit-note.xml",
+      "group": "format",
+      "bytes": 3029,
+      "docsPerSec": 4501.969611700402,
+      "medianMs": 0.22212500000023283,
+      "ratio": 0.039610063996709036,
+      "peakMB": 40.9
+    },
+    {
+      "id": "format/fatturapa-fsm10.xml",
+      "group": "format",
+      "bytes": 2245,
+      "docsPerSec": 5835.156819843001,
+      "medianMs": 0.17137499999989814,
+      "ratio": 0.03056015629679172,
+      "peakMB": 40
+    },
+    {
+      "id": "format/fatturapa-lot.xml",
+      "group": "format",
+      "bytes": 5261,
+      "docsPerSec": 2642.3011272047047,
+      "medianMs": 0.37845800000013696,
+      "ratio": 0.06748788114825535,
+      "peakMB": 42.3
+    },
+    {
+      "id": "format/fatturapa-ritenuta-cassa-bollo.xml",
+      "group": "format",
+      "bytes": 4707,
+      "docsPerSec": 3008.2787832096433,
+      "medianMs": 0.3324160000001939,
+      "ratio": 0.059277519565667576,
+      "peakMB": 41.3
+    },
+    {
+      "id": "format/fatturapa-split-payment.xml",
+      "group": "format",
+      "bytes": 3573,
+      "docsPerSec": 3958.436417613788,
+      "medianMs": 0.25262500000008004,
+      "ratio": 0.045048924781817906,
+      "peakMB": 41.1
+    },
+    {
+      "id": "format/finvoice-credit.xml",
+      "group": "format",
+      "bytes": 3535,
+      "docsPerSec": 4166.666666670456,
+      "medianMs": 0.23999999999978172,
+      "ratio": 0.04279759306332722,
+      "peakMB": 40.6
+    },
+    {
+      "id": "format/finvoice-invoice.xml",
+      "group": "format",
+      "bytes": 9339,
+      "docsPerSec": 1557.8338009455108,
+      "medianMs": 0.6419169999990118,
+      "ratio": 0.11446876061006046,
+      "peakMB": 45.3
+    },
+    {
+      "id": "format/finvoice-with-soap.xml",
+      "group": "format",
+      "bytes": 18352,
+      "docsPerSec": 881.5745626946987,
+      "medianMs": 1.1343340000003082,
+      "ratio": 0.20227818720813984,
+      "peakMB": 47.8
+    },
+    {
+      "id": "format/fr-ctc-cii.xml",
+      "group": "format",
+      "bytes": 3853,
+      "docsPerSec": 4523.188123909845,
+      "medianMs": 0.22108300000036252,
+      "ratio": 0.039424251113515385,
+      "peakMB": 40.6
+    },
+    {
+      "id": "format/fr-ctc-ubl.xml",
+      "group": "format",
+      "bytes": 3460,
+      "docsPerSec": 4186.289900559548,
+      "medianMs": 0.23887500000091677,
+      "ratio": 0.042596979346045095,
+      "peakMB": 41.2
+    },
+    {
+      "id": "format/hr-cius.xml",
+      "group": "format",
+      "bytes": 5731,
+      "docsPerSec": 3041.8250950516485,
+      "medianMs": 0.3287500000005821,
+      "ratio": 0.05862378633169388,
+      "peakMB": 42.1
+    },
+    {
+      "id": "format/isdoc-6.0.2-credit-eur.isdoc",
+      "group": "format",
+      "bytes": 6068,
+      "docsPerSec": 2646.6649375066168,
+      "medianMs": 0.3778340000008029,
+      "ratio": 0.06737660740640936,
+      "peakMB": 41.6
+    },
+    {
+      "id": "format/isdoc-6.0.2-invoice.isdoc",
+      "group": "format",
+      "bytes": 9473,
+      "docsPerSec": 1777.7777777777778,
+      "medianMs": 0.5625,
+      "ratio": 0.1003068587422644,
+      "peakMB": 42.4
+    },
+    {
+      "id": "format/ksef-fa-rr.xml",
+      "group": "format",
+      "bytes": 1752,
+      "docsPerSec": 5108.556832674636,
+      "medianMs": 0.19575000000077125,
+      "ratio": 0.034906786842445546,
+      "peakMB": 40.1
+    },
+    {
+      "id": "format/ksef-fa3-kor-before-after.xml",
+      "group": "format",
+      "bytes": 2668,
+      "docsPerSec": 3150.8467900694873,
+      "medianMs": 0.3173750000005384,
+      "ratio": 0.056595358743786975,
+      "peakMB": 40.9
+    },
+    {
+      "id": "format/ksef-fa3-kor-delta-increase.xml",
+      "group": "format",
+      "bytes": 2549,
+      "docsPerSec": 3893.5654936682186,
+      "medianMs": 0.25683399999979883,
+      "ratio": 0.045799487570116544,
+      "peakMB": 40.7
+    },
+    {
+      "id": "format/ksef-fa3-vat-multirate.xml",
+      "group": "format",
+      "bytes": 4041,
+      "docsPerSec": 2393.5355392145952,
+      "medianMs": 0.41779200000019046,
+      "ratio": 0.07450205000474175,
+      "peakMB": 41.6
+    },
+    {
+      "id": "format/ksef-fa3-zal.xml",
+      "group": "format",
+      "bytes": 2201,
+      "docsPerSec": 4211.99829838003,
+      "medianMs": 0.23741699999845878,
+      "ratio": 0.04233698396774683,
+      "peakMB": 39.3
+    },
+    {
+      "id": "format/ksef-fa3.xml",
+      "group": "format",
+      "bytes": 1054,
+      "docsPerSec": 5958.268288909588,
+      "medianMs": 0.16783399999985704,
+      "ratio": 0.029928713475795312,
+      "peakMB": 38.8
+    },
+    {
+      "id": "format/mydata-two-invoices.xml",
+      "group": "format",
+      "bytes": 4780,
+      "docsPerSec": 2668.7447292206703,
+      "medianMs": 0.374708000001192,
+      "ratio": 0.06681916875682839,
+      "peakMB": 41.9
+    },
+    {
+      "id": "format/mydata.xml",
+      "group": "format",
+      "bytes": 303,
+      "docsPerSec": 13543.895766380585,
+      "medianMs": 0.07383399999889662,
+      "ratio": 0.013166322859138973,
+      "peakMB": 38.3
+    },
+    {
+      "id": "format/nlcius-cii.xml",
+      "group": "format",
+      "bytes": 3841,
+      "docsPerSec": 4669.253433066655,
+      "medianMs": 0.2141670000000886,
+      "ratio": 0.03819096714002387,
+      "peakMB": 40.4
+    },
+    {
+      "id": "format/nlcius-ubl.xml",
+      "group": "format",
+      "bytes": 3541,
+      "docsPerSec": 4273.504273497364,
+      "medianMs": 0.23400000000037835,
+      "ratio": 0.04172765323684946,
+      "peakMB": 40.3
+    },
+    {
+      "id": "format/oioubl-2.xml",
+      "group": "format",
+      "bytes": 3423,
+      "docsPerSec": 4207.567731331837,
+      "medianMs": 0.2376669999994192,
+      "ratio": 0.04238156479402577,
+      "peakMB": 41
+    },
+    {
+      "id": "format/oioubl-3.xml",
+      "group": "format",
+      "bytes": 3467,
+      "docsPerSec": 4246.284501049239,
+      "medianMs": 0.23550000000068394,
+      "ratio": 0.04199513819354999,
+      "peakMB": 39.9
+    },
+    {
+      "id": "format/peppol-bis2.xml",
+      "group": "format",
+      "bytes": 3518,
+      "docsPerSec": 4187.026080963541,
+      "medianMs": 0.23883300000125018,
+      "ratio": 0.04258948976731846,
+      "peakMB": 40.5
+    },
+    {
+      "id": "format/peppol-bis3-creditnote.xml",
+      "group": "format",
+      "bytes": 4055,
+      "docsPerSec": 3870.9577523655257,
+      "medianMs": 0.2583340000001044,
+      "ratio": 0.04606697252681708,
+      "peakMB": 41.1
+    },
+    {
+      "id": "format/peppol-bis3-invoice.xml",
+      "group": "format",
+      "bytes": 11921,
+      "docsPerSec": 1460.3870025549325,
+      "medianMs": 0.6847500000003492,
+      "ratio": 0.1221068827089788,
+      "peakMB": 45.7
+    },
+    {
+      "id": "format/peppol-bis3-selfbilling.xml",
+      "group": "format",
+      "bytes": 3524,
+      "docsPerSec": 4349.414568794684,
+      "medianMs": 0.22991600000023027,
+      "ratio": 0.04099938086152811,
+      "peakMB": 40.3
+    },
+    {
+      "id": "format/peppol-in-sbdh.xml",
+      "group": "format",
+      "bytes": 6302,
+      "docsPerSec": 1294.0092547546021,
+      "medianMs": 0.7727919999997539,
+      "ratio": 0.13780682307755965,
+      "peakMB": 46.2
+    },
+    {
+      "id": "format/peppol-negative-invoice.xml",
+      "group": "format",
+      "bytes": 3179,
+      "docsPerSec": 4632.310364758219,
+      "medianMs": 0.21587500000168802,
+      "ratio": 0.038495543344276704,
+      "peakMB": 40.9
+    },
+    {
+      "id": "format/peppol-utf16.xml",
+      "group": "format",
+      "bytes": 11448,
+      "docsPerSec": 2801.4500305334172,
+      "medianMs": 0.3569580000003043,
+      "ratio": 0.06365393010302532,
+      "peakMB": 41.7
+    },
+    {
+      "id": "format/pint-ae-invoice.xml",
+      "group": "format",
+      "bytes": 4373,
+      "docsPerSec": 3355.7046979788756,
+      "medianMs": 0.29800000000068394,
+      "ratio": 0.05314034472046826,
+      "peakMB": 40.7
+    },
+    {
+      "id": "format/pint-aunz-au-invoice.xml",
+      "group": "format",
+      "bytes": 3726,
+      "docsPerSec": 3812.54479738316,
+      "medianMs": 0.26229200000125275,
+      "ratio": 0.04677277616595853,
+      "peakMB": 40.6
+    },
+    {
+      "id": "format/pint-aunz-nz-selfbilling-creditnote.xml",
+      "group": "format",
+      "bytes": 3899,
+      "docsPerSec": 3739.4920274201268,
+      "medianMs": 0.2674159999987751,
+      "ratio": 0.04768650477741957,
+      "peakMB": 40.5
+    },
+    {
+      "id": "format/pint-base.xml",
+      "group": "format",
+      "bytes": 3469,
+      "docsPerSec": 4170.280910116769,
+      "medianMs": 0.23979200000030687,
+      "ratio": 0.042760501816099285,
+      "peakMB": 40
+    },
+    {
+      "id": "format/pint-eu-invoice.xml",
+      "group": "format",
+      "bytes": 3472,
+      "docsPerSec": 4146.504289556414,
+      "medianMs": 0.24116700000013225,
+      "ratio": 0.043005696359660346,
+      "peakMB": 40.1
+    },
+    {
+      "id": "format/pint-jp-invoice.xml",
+      "group": "format",
+      "bytes": 4514,
+      "docsPerSec": 3112.0267385317397,
+      "medianMs": 0.3213340000002063,
+      "ratio": 0.05730134070596885,
+      "peakMB": 40.1
+    },
+    {
+      "id": "format/pint-jp-ntr-invoice.xml",
+      "group": "format",
+      "bytes": 3598,
+      "docsPerSec": 3800.4750593635063,
+      "medianMs": 0.2631250000013097,
+      "ratio": 0.046921319478559445,
+      "peakMB": 40.5
+    },
+    {
+      "id": "format/pint-my-invoice.xml",
+      "group": "format",
+      "bytes": 4906,
+      "docsPerSec": 3117.284720330636,
+      "medianMs": 0.32079199999861885,
+      "ratio": 0.05720468947468434,
+      "peakMB": 41.1
+    },
+    {
+      "id": "format/pint-om-invoice.xml",
+      "group": "format",
+      "bytes": 3472,
+      "docsPerSec": 3971.532058220755,
+      "medianMs": 0.2517919999991136,
+      "ratio": 0.044900381469054805,
+      "peakMB": 40
+    },
+    {
+      "id": "format/pint-sg-invoice.xml",
+      "group": "format",
+      "bytes": 4571,
+      "docsPerSec": 3178.3869686228372,
+      "medianMs": 0.3146249999990687,
+      "ratio": 0.05610496965634048,
+      "peakMB": 40.5
+    },
+    {
+      "id": "format/pl-pef.xml",
+      "group": "format",
+      "bytes": 3545,
+      "docsPerSec": 4208.311415081309,
+      "medianMs": 0.23762499999793363,
+      "ratio": 0.04237407521497477,
+      "peakMB": 40.4
+    },
+    {
+      "id": "format/sdi-metadata.xml",
+      "group": "format",
+      "bytes": 267,
+      "docsPerSec": 31746.031748730213,
+      "medianMs": 0.03149999999732245,
+      "ratio": 0.0056171840890893365,
+      "peakMB": 38.1
+    },
+    {
+      "id": "format/svefaktura-1.0-credit.xml",
+      "group": "format",
+      "bytes": 1702,
+      "docsPerSec": 7046.372175244307,
+      "medianMs": 0.14191700000083074,
+      "ratio": 0.025307108395038694,
+      "peakMB": 39.9
+    },
+    {
+      "id": "format/svefaktura-1.0-descriptors.xml",
+      "group": "format",
+      "bytes": 6606,
+      "docsPerSec": 2424.9772658388174,
+      "medianMs": 0.4123749999998836,
+      "ratio": 0.07353607266458596,
+      "peakMB": 42.1
+    },
+    {
+      "id": "format/svefaktura-1.0.xml",
+      "group": "format",
+      "bytes": 7343,
+      "docsPerSec": 2245.5106628090766,
+      "medianMs": 0.445332999999664,
+      "ratio": 0.07941325213197356,
+      "peakMB": 41.6
+    },
+    {
+      "id": "format/teappsxml-invoices.xml",
+      "group": "format",
+      "bytes": 10399,
+      "docsPerSec": 1429.6763641625103,
+      "medianMs": 0.6994589999994787,
+      "ratio": 0.12472984019369462,
+      "peakMB": 43.4
+    },
+    {
+      "id": "format/ubl-be.xml",
+      "group": "format",
+      "bytes": 3475,
+      "docsPerSec": 4273.504273497364,
+      "medianMs": 0.23400000000037835,
+      "ratio": 0.04172765323684946,
+      "peakMB": 39.9
+    },
+    {
+      "id": "format/ubl-unknown.xml",
+      "group": "format",
+      "bytes": 3390,
+      "docsPerSec": 4306.483842049169,
+      "medianMs": 0.23220800000126474,
+      "ratio": 0.041408097875467724,
+      "peakMB": 40.5
+    },
+    {
+      "id": "format/xrechnung-cii.xml",
+      "group": "format",
+      "bytes": 8725,
+      "docsPerSec": 2331.0023310018564,
+      "medianMs": 0.4290000000000873,
+      "ratio": 0.07650069760078256,
+      "peakMB": 41.9
+    },
+    {
+      "id": "format/xrechnung-ubl.xml",
+      "group": "format",
+      "bytes": 4164,
+      "docsPerSec": 3581.0205908736225,
+      "medianMs": 0.27924999999959255,
+      "ratio": 0.049796782762198157,
+      "peakMB": 41.1
+    },
+    {
+      "id": "format/zatca-simplified-signed.xml",
+      "group": "format",
+      "bytes": 15296,
+      "docsPerSec": 508.3666991343826,
+      "medianMs": 1.9670839999998861,
+      "ratio": 0.35077691897272356,
+      "peakMB": 56.5
+    },
+    {
+      "id": "format/zatca-standard-debit-signed.xml",
+      "group": "format",
+      "bytes": 14001,
+      "docsPerSec": 617.9992275006322,
+      "medianMs": 1.6181250000008731,
+      "ratio": 0.2885493969820696,
+      "peakMB": 55.8
+    },
+    {
+      "id": "format/zatca-standard-signed.xml",
+      "group": "format",
+      "bytes": 13750,
+      "docsPerSec": 658.9421079816924,
+      "medianMs": 1.5175840000010794,
+      "ratio": 0.27062059363134017,
+      "peakMB": 55.8
+    },
+    {
+      "id": "format/zugferd1-comfort.xml",
+      "group": "format",
+      "bytes": 10811,
+      "docsPerSec": 1950.583907296242,
+      "medianMs": 0.5126669999990554,
+      "ratio": 0.09142047351240128,
+      "peakMB": 45.3
+    },
+    {
+      "id": "wrapper/pdf-a3",
+      "group": "wrapper",
+      "bytes": 37897,
+      "docsPerSec": 942.5070688016716,
+      "medianMs": 1.0610000000015134,
+      "ratio": 0.18920102600123437,
+      "peakMB": 55.9
+    },
+    {
+      "id": "wrapper/cades-p7m",
+      "group": "wrapper",
+      "bytes": 5316,
+      "docsPerSec": 526.1081152174839,
+      "medianMs": 1.9007500000006985,
+      "ratio": 0.3389480208967629,
+      "peakMB": 55
+    },
+    {
+      "id": "wrapper/cades-p7m-base64",
+      "group": "wrapper",
+      "bytes": 7182,
+      "docsPerSec": 595.6075137077577,
+      "medianMs": 1.6789580000004207,
+      "ratio": 0.2993973385604213,
+      "peakMB": 56.2
+    },
+    {
+      "id": "wrapper/zip",
+      "group": "wrapper",
+      "bytes": 24436,
+      "docsPerSec": 878.6705363332488,
+      "medianMs": 1.138082999998005,
+      "ratio": 0.2029467212760398,
+      "peakMB": 54.3
+    },
+    {
+      "id": "wrapper/sbdh",
+      "group": "wrapper",
+      "bytes": 6302,
+      "docsPerSec": 1284.3152994076363,
+      "medianMs": 0.7786249999990105,
+      "ratio": 0.13884698291217132,
+      "peakMB": 46.3
+    },
+    {
+      "id": "wrapper/soap",
+      "group": "wrapper",
+      "bytes": 18352,
+      "docsPerSec": 884.7271324593669,
+      "medianMs": 1.1302919999980077,
+      "ratio": 0.20155740441122075,
+      "peakMB": 47.9
+    },
+    {
+      "id": "wrapper/xades-xsig",
+      "group": "wrapper",
+      "bytes": 659,
+      "docsPerSec": 8958.566629229525,
+      "medianMs": 0.11162500000136788,
+      "ratio": 0.01990533885731995,
+      "peakMB": 44.8
+    },
+    {
+      "id": "options/ubl-relations",
+      "group": "options",
+      "bytes": 11921,
+      "docsPerSec": 1449.4497164158024,
+      "medianMs": 0.6899169999996957,
+      "ratio": 0.12302827922285565,
+      "peakMB": 45
+    },
+    {
+      "id": "options/ubl-provenance",
+      "group": "options",
+      "bytes": 11921,
+      "docsPerSec": 1249.4143370312438,
+      "medianMs": 0.800374999998894,
+      "ratio": 0.1427255147835181,
+      "peakMB": 46
+    },
+    {
+      "id": "options/ubl-relations+provenance",
+      "group": "options",
+      "bytes": 11921,
+      "docsPerSec": 1241.7855883317604,
+      "medianMs": 0.805292000000918,
+      "ratio": 0.14360233047176474,
+      "peakMB": 45.8
+    },
+    {
+      "id": "options/ubl-validate",
+      "group": "options",
+      "bytes": 11921,
+      "docsPerSec": 7.740217674890582,
+      "medianMs": 129.1953330000033,
+      "ratio": 23.03853869758425,
+      "peakMB": 337.2
+    },
+    {
+      "id": "options/cii-validate",
+      "group": "options",
+      "bytes": 8725,
+      "docsPerSec": 18.329047421626694,
+      "medianMs": 54.5582089999989,
+      "ratio": 9.729000112700138,
+      "peakMB": 268.5
+    },
+    {
+      "id": "large/1000-lines-plain",
+      "group": "large",
+      "bytes": 741634,
+      "docsPerSec": 16.48324469111322,
+      "medianMs": 60.66766700000153,
+      "ratio": 10.818458851541136,
+      "peakMB": 105.4
+    },
+    {
+      "id": "large/1000-lines-relations",
+      "group": "large",
+      "bytes": 741634,
+      "docsPerSec": 3.896499238964992,
+      "medianMs": 256.640625,
+      "ratio": 45.765004301158136,
+      "peakMB": 141.9
+    },
+    {
+      "id": "large/1000-lines-provenance",
+      "group": "large",
+      "bytes": 741634,
+      "docsPerSec": 14.604287626070885,
+      "medianMs": 68.4730419999978,
+      "ratio": 12.210339113861187,
+      "peakMB": 121.8
+    },
+    {
+      "id": "large/1000-lines-relations+provenance",
+      "group": "large",
+      "bytes": 741634,
+      "docsPerSec": 3.2917891221821347,
+      "medianMs": 303.7861669999984,
+      "ratio": 54.17215313977383,
+      "peakMB": 160.2
+    },
+    {
+      "id": "large/10000-lines-plain",
+      "group": "large",
+      "bytes": 7390987,
+      "docsPerSec": 1.6984088668831827,
+      "medianMs": 588.786374999996,
+      "ratio": 104.99433199376803,
+      "peakMB": 517
+    },
+    {
+      "id": "large/10000-lines-relations",
+      "group": "large",
+      "bytes": 7390987,
+      "docsPerSec": 0.24979823590402478,
+      "medianMs": 4003.2308330000014,
+      "ratio": 713.869350539393,
+      "peakMB": 674.7
+    },
+    {
+      "id": "large/10000-lines-provenance",
+      "group": "large",
+      "bytes": 7390987,
+      "docsPerSec": 1.3624972063527614,
+      "medianMs": 733.9464589999989,
+      "ratio": 130.8797578440854,
+      "peakMB": 623.1
+    },
+    {
+      "id": "large/10000-lines-relations+provenance",
+      "group": "large",
+      "bytes": 7390987,
+      "docsPerSec": 0.2553537928178407,
+      "medianMs": 3916.1352919999918,
+      "ratio": 698.3381858670925,
+      "peakMB": 753.2
+    },
+    {
+      "id": "large/attachment-20MB",
+      "group": "large",
+      "bytes": 28342121,
+      "docsPerSec": 6.29134431627131,
+      "medianMs": 158.9485410000052,
+      "ratio": 28.3442290655583,
+      "peakMB": 303.1
+    },
+    {
+      "id": "large/attachment-20MB-base64-file",
+      "group": "large",
+      "bytes": 37789496,
+      "docsPerSec": 4.798615104325346,
+      "medianMs": 208.39345899999898,
+      "ratio": 37.161410230621804,
+      "peakMB": 347.9
+    }
+  ],
+  "bundles": [
+    {
+      "name": "app.js",
+      "bytes": 19975,
+      "gzipBytes": 8305
+    },
+    {
+      "name": "chunks/app#1.js",
+      "bytes": 405236,
+      "gzipBytes": 136122
+    },
+    {
+      "name": "chunks/app#2.js",
+      "bytes": 391356,
+      "gzipBytes": 84174
+    },
+    {
+      "name": "chunks/app#3.js",
+      "bytes": 9234,
+      "gzipBytes": 3631
+    },
+    {
+      "name": "chunks/app#4.js",
+      "bytes": 4131,
+      "gzipBytes": 1888
+    },
+    {
+      "name": "chunks/app#5.js",
+      "bytes": 216,
+      "gzipBytes": 206
+    },
+    {
+      "name": "chunks/cades.js",
+      "bytes": 1852,
+      "gzipBytes": 1006
+    },
+    {
+      "name": "chunks/envelope-cms.js",
+      "bytes": 780,
+      "gzipBytes": 492
+    },
+    {
+      "name": "chunks/envelope-pdf.js",
+      "bytes": 440815,
+      "gzipBytes": 180625
+    },
+    {
+      "name": "chunks/trust.js",
+      "bytes": 1070,
+      "gzipBytes": 568
+    },
+    {
+      "name": "chunks/tsl-load.js",
+      "bytes": 3110,
+      "gzipBytes": 1609
+    },
+    {
+      "name": "chunks/xmldsig.js",
+      "bytes": 210,
+      "gzipBytes": 183
+    },
+    {
+      "name": "eval.js",
+      "bytes": 7434,
+      "gzipBytes": 3101
+    }
+  ]
+}

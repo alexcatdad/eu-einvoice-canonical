@@ -1,0 +1,172 @@
+{
+  "generatedAt": "2026-10-16T00:26:18.225Z",
+  "runtime": "bun 1.4.2",
+  "platform": "darwin-arm64",
+  "calibrationMs": 5.650958999999993,
+  "quick": true,
+  "cases": [
+    {
+      "id": "format/facturae-322-iva-irpf.xml",
+      "group": "format",
+      "bytes": 8620,
+      "docsPerSec": 1799.9110843923895,
+      "medianMs": 0.5555830000000128,
+      "ratio": 0.09831658661830912
+    },
+    {
+      "id": "format/fatturapa-b2b.xml",
+      "group": "format",
+      "bytes": 5351,
+      "docsPerSec": 2839.561912388088,
+      "medianMs": 0.35216700000000856,
+      "ratio": 0.062319864645984685
+    },
+    {
+      "id": "format/ksef-fa3.xml",
+      "group": "format",
+      "bytes": 1054,
+      "docsPerSec": 6692.678878570922,
+      "medianMs": 0.14941700000008495,
+      "ratio": 0.026440998775621116
+    },
+    {
+      "id": "format/peppol-bis3-invoice.xml",
+      "group": "format",
+      "bytes": 11921,
+      "docsPerSec": 1281.4352074322435,
+      "medianMs": 0.7803750000000491,
+      "ratio": 0.13809602936422827
+    },
+    {
+      "id": "format/xrechnung-cii.xml",
+      "group": "format",
+      "bytes": 8725,
+      "docsPerSec": 2296.432721410951,
+      "medianMs": 0.43545799999992596,
+      "ratio": 0.07705913279496922
+    },
+    {
+      "id": "wrapper/pdf-a3",
+      "group": "wrapper",
+      "bytes": 37897,
+      "docsPerSec": 990.9162705479523,
+      "medianMs": 1.009166999999934,
+      "ratio": 0.1785833165662563
+    },
+    {
+      "id": "wrapper/cades-p7m",
+      "group": "wrapper",
+      "bytes": 5316,
+      "docsPerSec": 562.4955000359711,
+      "medianMs": 1.7777920000000904,
+      "ratio": 0.31460005284060505
+    },
+    {
+      "id": "wrapper/zip",
+      "group": "wrapper",
+      "bytes": 24436,
+      "docsPerSec": 839.0732938913183,
+      "medianMs": 1.1917909999999665,
+      "ratio": 0.2109006630555925
+    },
+    {
+      "id": "options/ubl-provenance",
+      "group": "options",
+      "bytes": 11921,
+      "docsPerSec": 1253.0668811918804,
+      "medianMs": 0.7980419999998958,
+      "ratio": 0.14122240136583838
+    },
+    {
+      "id": "options/ubl-relations+provenance",
+      "group": "options",
+      "bytes": 11921,
+      "docsPerSec": 1271.185902040111,
+      "medianMs": 0.7866669999998521,
+      "ratio": 0.13920946869369483
+    },
+    {
+      "id": "large/1000-lines-plain",
+      "group": "large",
+      "bytes": 741634,
+      "docsPerSec": 18.58328746977987,
+      "medianMs": 53.81179199999997,
+      "ratio": 9.522594660481527
+    },
+    {
+      "id": "large/1000-lines-relations+provenance",
+      "group": "large",
+      "bytes": 741634,
+      "docsPerSec": 3.61689107082585,
+      "medianMs": 276.4805409999999,
+      "ratio": 48.92630454406061
+    }
+  ],
+  "bundles": [
+    {
+      "name": "app.js",
+      "bytes": 19975,
+      "gzipBytes": 8305
+    },
+    {
+      "name": "chunks/app#1.js",
+      "bytes": 405236,
+      "gzipBytes": 136122
+    },
+    {
+      "name": "chunks/app#2.js",
+      "bytes": 391356,
+      "gzipBytes": 84174
+    },
+    {
+      "name": "chunks/app#3.js",
+      "bytes": 9234,
+      "gzipBytes": 3631
+    },
+    {
+      "name": "chunks/app#4.js",
+      "bytes": 4131,
+      "gzipBytes": 1888
+    },
+    {
+      "name": "chunks/app#5.js",
+      "bytes": 216,
+      "gzipBytes": 206
+    },
+    {
+      "name": "chunks/cades.js",
+      "bytes": 1852,
+      "gzipBytes": 1006
+    },
+    {
+      "name": "chunks/envelope-cms.js",
+      "bytes": 780,
+      "gzipBytes": 492
+    },
+    {
+      "name": "chunks/envelope-pdf.js",
+      "bytes": 440815,
+      "gzipBytes": 180625
+    },
+    {
+      "name": "chunks/trust.js",
+      "bytes": 1070,
+      "gzipBytes": 568
+    },
+    {
+      "name": "chunks/tsl-load.js",
+      "bytes": 3110,
+      "gzipBytes": 1609
+    },
+    {
+      "name": "chunks/xmldsig.js",
+      "bytes": 210,
+      "gzipBytes": 183
+    },
+    {
+      "name": "eval.js",
+      "bytes": 7434,
+      "gzipBytes": 3101
+    }
+  ]
+}
