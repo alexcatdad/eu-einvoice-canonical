@@ -106,6 +106,37 @@ JSON goes to stdout only; every error is one line on stderr.
 
 With several failures and no success the code of the first failure is used; with at least one success it is 5.
 
+## MCP server for AI agents
+
+`einvoice mcp` runs a [Model Context Protocol](https://modelcontextprotocol.io) server on stdio, so an AI agent can read and check e-invoices with the same code as the CLI.
+
+| Tool | What it does |
+|---|---|
+| `detect_invoice_format` | Unwraps the file and names the format of each document |
+| `convert_invoice` | Canonical JSON, optionally with validation, line relations and provenance |
+| `validate_invoice` | Parse, schema, EN 16931, profile and signature results with every finding |
+| `explain_finding` | Plain-language explanation of a totals rule (BR-CO-10 to BR-CO-16) |
+| `check_duplicates` | Duplicate and re-sent invoices across files |
+| `match_purchase_order` | Two- or three-way match against purchase orders |
+| `list_formats` | The format registry |
+
+Resources: `einvoice://formats` and the JSON Schemas (`einvoice://schemas/canonical-invoice.v1`, `einvoice://schemas/convert-result.v1`).
+
+Safety: tools read files only inside the directories given with `--allow-dir` (symlinks resolved); without it they accept inline XML or base64 only. The server makes no network calls. Long base64 attachments and oversized results are shortened in what the model sees, and every tool that reads an invoice tells the model that invoice text is untrusted data.
+
+Claude Desktop (`claude_desktop_config.json`) or Claude Code (`.mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "einvoice": {
+      "command": "/path/to/einvoice",
+      "args": ["mcp", "--allow-dir", "/Users/me/Invoices"]
+    }
+  }
+}
+```
+
 ## EU trusted lists
 
 Opt-in. `loadTrustLists()` fetches the EU List of Trusted Lists (LOTL) and the national lists (ETSI TS 119 612), accepts a list only if its own XML signature verifies (the LOTL against pinned signer certificates, each national list against the certificates the LOTL publishes for it), and keeps the qualified CA/QC services with their certificates and dated status history. The result is a snapshot with its fetch date; `trust/eu-trust-snapshot.json` is one, refreshed weekly by a workflow that opens a pull request.
