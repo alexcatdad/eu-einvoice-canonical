@@ -302,15 +302,23 @@ describe('CFDI edge cases', () => {
     }
   });
 
-  test('no Serie, Folio or stamp: an unstamped draft gets a placeholder id from the issuer and the timestamp', async () => {
+  test('no Serie, Folio or stamp: an unstamped draft gets a placeholder id from the issuer, the timestamp and its hash', async () => {
     const o = await run(base.replace(' Serie="A" Folio="1001"', '').replace(/<cfdi:Complemento>[\s\S]*<\/cfdi:Complemento>/, ''));
     assert.equal(o.status, 'ok');
     if (o.status === 'ok') {
       const inv = o.invoices[0];
-      assert.equal(inv.id, 'UNSTAMPED:EKU9003173C9:2026-03-05T10:20:30');
+      assert.match(inv.id, /^UNSTAMPED:EKU9003173C9:2026-03-05T10:20:30:[0-9a-f]{12}$/);
       assert.ok(warningCodes(inv).includes('MX-NO-ID'));
       assert.ok(inv.source.derived.some((d) => d.field === '/id' && /placeholder/.test(d.rule)));
     }
+  });
+
+  test('two unstamped drafts from the same issuer in the same second get different ids', async () => {
+    const draft = base.replace(' Serie="A" Folio="1001"', '').replace(/<cfdi:Complemento>[\s\S]*<\/cfdi:Complemento>/, '');
+    const a = await run(draft);
+    const b = await run(draft.replace('Total="11077.33"', 'Total="11077.34"'));
+    assert.ok(a.status === 'ok' && b.status === 'ok');
+    if (a.status === 'ok' && b.status === 'ok') assert.notEqual(a.invoices[0].id, b.invoices[0].id);
   });
 
   test('a complement other than the stamp is reported, not dropped silently', async () => {

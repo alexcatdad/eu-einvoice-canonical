@@ -203,7 +203,7 @@ const CASES: { file: string; invoices: Known[]; warnings?: string[] }[] = [
     invoices: [
       {
         format: 'mx-cfdi',
-        id: 'UNSTAMPED:AAA010101AAA:2021-12-07T23:59:59',
+        id: 'UNSTAMPED:AAA010101AAA:2021-12-07T23:59:59:d022c2ca04bb',
         issueDate: '2021-12-07',
         currency: 'MXN',
         payable: '1500',

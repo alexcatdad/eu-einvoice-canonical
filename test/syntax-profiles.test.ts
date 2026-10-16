@@ -220,6 +220,16 @@ describe('UBL outside EN 16931 (ubl-unknown): missing totals are derived', () =>
     assert.equal(warningCodes(inv).filter((c) => c === 'UBL-TOTAL-DERIVED').length, 3);
   });
 
+  test('document-level allowances without AllowanceTotalAmount are summed into the derived totals', async () => {
+    const ac =
+      '<cac:AllowanceCharge><cbc:ChargeIndicator>false</cbc:ChargeIndicator><cbc:AllowanceChargeReason>Rabatt</cbc:AllowanceChargeReason><cbc:Amount currencyID="EUR">100.00</cbc:Amount></cac:AllowanceCharge>';
+    const xml = without('LineExtensionAmount', 'TaxExclusiveAmount', 'TaxInclusiveAmount').replace('<cac:TaxTotal>', `${ac}<cac:TaxTotal>`);
+    const inv = await parseOne(utf8(xml), 'x.xml');
+    assert.equal(inv.totals.allowanceTotal, '100.00');
+    assert.equal(inv.totals.taxExclusive, '900.00');
+    assert.ok(inv.source.derived.some((d) => d.field === '/totals/allowanceTotal'));
+  });
+
   test('without DocumentCurrencyCode the currency comes from PayableAmount', async () => {
     const inv = await parseOne(utf8(src.replace('<cbc:DocumentCurrencyCode>EUR</cbc:DocumentCurrencyCode>', '')), 'x.xml');
     assert.equal(inv.currency, 'EUR');

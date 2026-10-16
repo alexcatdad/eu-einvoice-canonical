@@ -87,10 +87,7 @@ function attrOf(e: Element | undefined, name: string): string | undefined {
 
 export function parseEbinterface(input: ParseInput): CanonicalInvoice[] {
   if (input.format.id !== 'ebinterface')
-    throw new NotImplementedError(
-      'ebinterface',
-      `ebInterface ${input.details.version ?? ''} is not mapped: only 3.0 to 6.1 are (versions before 3.0 date from 2001-2007)`,
-    );
+    throw new NotImplementedError('ebinterface', `ebInterface ${input.details.version ?? ''} is not mapped: only 3.0 to 6.1 are`);
   const root = parseXml(input.payload.xml);
   const c = new Ctx({});
   // 3.0, 3.02 and 4.0: the structure before 4.1 (see the header comment).

@@ -519,9 +519,17 @@ describe('CII dates in format 610 (month) and 616 (ISO week)', () => {
     assert.deepEqual(inv.invoicePeriod, { start: '2024-02-01', end: '2024-02-29' });
   });
 
-  test('week 53 of a year with 52 weeks is an error', async () => {
-    const week = '<udt:DateTimeString format="616">202153</udt:DateTimeString>';
-    const r = await convert(period(week, week), 'x.xml');
-    assert.equal(r.outcomes[0].status, 'error');
+  for (const value of ['202153', '201353']) {
+    test(`week 53 of a year with 52 weeks is an error (${value})`, async () => {
+      const week = `<udt:DateTimeString format="616">${value}</udt:DateTimeString>`;
+      const r = await convert(period(week, week), 'x.xml');
+      assert.equal(r.outcomes[0].status, 'error');
+    });
+  }
+
+  test('week 53 of a year that has one is accepted', async () => {
+    const week = '<udt:DateTimeString format="616">202053</udt:DateTimeString>';
+    const inv = await parseOne(period(week, week), 'x.xml');
+    assert.deepEqual(inv.invoicePeriod, { start: '2020-12-28', end: '2021-01-03' });
   });
 });

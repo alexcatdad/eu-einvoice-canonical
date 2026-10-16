@@ -611,14 +611,16 @@ export const FORMATS = [
   },
   {
     id: 'ebinterface-2',
-    name: 'ebInterface 1.0-2.2',
+    name: 'ebInterface 2.x',
     family: 'ebinterface',
     countries: ['AT'],
     status: 'legacy',
     phase: 3,
-    notes: 'Pre-3.0 ebInterface (2001-2007). Detected and reported as unsupported: no public sample beyond schema-generated instances.',
+    notes:
+      'ebInterface 2.0-2.2 (namespaced). Detected and reported as unsupported: no public sample beyond schema-generated instances. ' +
+      '1.0 has no namespace, and a bare Invoice root is not claimed.',
     match: (p) => {
-      const m = /^http:\/\/www\.ebinterface\.at\/schema\/([12])p(\d+)\/$/.exec(p.rootNs);
+      const m = /^http:\/\/www\.ebinterface\.at\/schema\/(2)p(\d+)\/$/.exec(p.rootNs);
       return m && p.rootName === 'Invoice' ? { version: `${m[1]}.${m[2]}` } : null;
     },
   },

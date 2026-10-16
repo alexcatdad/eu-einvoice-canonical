@@ -232,7 +232,9 @@ function spanDay(fmt: '610' | '616', raw: string, end: boolean): IsoDate | undef
     const monday = 4 - ((d.getUTCDay() + 6) % 7);
     const weeks = new Date(0);
     weeks.setUTCFullYear(year, 11, 28); // 28 December is always in the last week
-    const last = Math.round((weeks.getTime() - Date.UTC(year, 0, monday)) / 604_800_000) + 1;
+    const first = new Date(0);
+    first.setUTCFullYear(year, 0, monday);
+    const last = Math.floor((weeks.getTime() - first.getTime()) / 604_800_000) + 1;
     if (n < 1 || n > last) return undefined;
     d.setUTCFullYear(year, 0, monday + (n - 1) * 7 + (end ? 6 : 0));
   }
