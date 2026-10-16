@@ -33,7 +33,7 @@ function record(name: string, details: fc.RunDetails<[unknown]>, c: FuzzCase | u
   const message =
     details.errorInstance instanceof Error
       ? details.errorInstance.message
-      : `${String(details.errorInstance)} (${details.error ?? 'no message'})`;
+      : `${String(details.errorInstance)} (${(details as { error?: string }).error ?? 'no message'})`;
   const textual = c && c.bytes.length <= 4000 && c.bytes.every((b) => b >= 0x20 || b === 0x09 || b === 0x0a || b === 0x0d);
   const summary = [
     `### ${name}`,
