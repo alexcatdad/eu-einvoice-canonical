@@ -31,11 +31,9 @@ function walk(dir: string, prefix = ''): string[] {
 }
 
 const ID = /\sid="([^"]+)"/g;
-const decode = (s: string) =>
-  s
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
+/** Undoes the entity escapes Astro writes in attributes, in one pass so `&amp;quot;` stays `&quot;`. */
+const ENTITIES: Record<string, string> = { '&amp;': '&', '&quot;': '"', '&#39;': "'" };
+const decode = (s: string) => s.replace(/&(?:amp|quot|#39);/g, (e) => ENTITIES[e] ?? e);
 
 export function checkSite(dist: string, root: string): CheckResult {
   const problems: string[] = [];
