@@ -291,3 +291,69 @@ describe('einvoice export', () => {
     expect(allowed.code).toBe(0);
   });
 });
+
+describe('einvoice write', () => {
+  test('writes an invoice file as UBL on stdout', async () => {
+    const r = await run(['write', '--to', 'ubl', peppol]);
+    expect(r.code).toBe(0);
+    expect(r.stdout.startsWith('<?xml version="1.0" encoding="UTF-8"?>\n<Invoice xmlns=')).toBe(true);
+    expect(r.stdout).toContain('<cbc:ID>INV-2026-1042</cbc:ID>');
+    expect(r.stderr).toBe('');
+  });
+  test('writes canonical JSON as CII, and --profile picks the specification', async () => {
+    const converted = await run(['convert', peppol]);
+    const json = write('canonical.json', converted.stdout);
+    const cii = await run(['write', '--to', 'cii', json]);
+    expect(cii.code).toBe(0);
+    expect(cii.stdout).toContain('<rsm:CrossIndustryInvoice');
+    const x = await run(['write', '--to=ubl', '--profile', 'xrechnung', '-'], converted.stdout);
+    expect(x.code).toBe(0);
+    expect(x.stdout).toContain('xrechnung_3.0');
+  });
+  test('converts a national format first', async () => {
+    const r = await run(['write', '--to', 'cii', fixturePath('fatturapa-b2b.xml')]);
+    expect(r.code).toBe(0);
+    expect(r.stdout).toContain('<ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>');
+  });
+  test('several invoices need --out, which gets one file each', async () => {
+    const lot = fixturePath('fatturapa-lot.xml');
+    const refused = await run(['write', '--to', 'ubl', lot]);
+    expect(refused.code).toBe(1);
+    expect(refused.stderr).toMatch(/--out/);
+    const dir = join(tmp, 'written');
+    const ok = await run(['write', '--to', 'ubl', '--out', dir, '--quiet', lot]);
+    expect(ok.code).toBe(0);
+    const files = readdirSync(dir);
+    expect(files.length).toBeGreaterThan(1);
+    expect(files.every((f) => f.endsWith('.xml'))).toBe(true);
+  });
+  test('usage errors', async () => {
+    expect((await run(['write', peppol])).code).toBe(1);
+    expect((await run(['write', '--to', 'json', peppol])).code).toBe(1);
+    const profile = await run(['write', '--to', 'ubl', '--profile', 'nope', peppol]);
+    expect(profile.code).toBe(1);
+    expect(profile.stderr).toMatch(/--profile must be one of/);
+  });
+  test('JSON that is not an invoice is refused (exit 2); a non-invoice document is unsupported (exit 3)', async () => {
+    const notInvoice = await run(['write', '--to', 'ubl', write('not-invoice.json', '{"hello":1}')]);
+    expect(notInvoice.code).toBe(2);
+    expect(notInvoice.stderr).toMatch(/not a canonical invoice/);
+    const empty = await run(['write', '--to', 'ubl', write('empty.json', '[]')]);
+    expect(empty.code).toBe(2);
+    expect(empty.stderr).toMatch(/holds no invoices/);
+    const partial = await run(['write', '--to', 'cii', write('partial.json', '{"kind":"invoice","id":"x","lines":[],"totals":{}}')]);
+    expect(partial.code).toBe(2);
+    expect(partial.stderr).toMatch(/not a canonical invoice: .*must be a/);
+    const broken = await run(['write', '--to', 'ubl', write('broken.json', '{"kind":')]);
+    expect(broken.code).toBe(2);
+    const other = await run(['write', '--to', 'ubl', fixturePath('sdi-metadata.xml')]);
+    expect(other.code).toBe(3);
+  });
+  test('a malformed decimal in the JSON is reported, not written (exit 2)', async () => {
+    const converted = JSON.parse((await run(['convert', peppol])).stdout);
+    converted[0].totals.payable = '12,5';
+    const r = await run(['write', '--to', 'ubl', write('bad-decimal.json', JSON.stringify(converted))]);
+    expect(r.code).toBe(2);
+    expect(r.stderr).toMatch(/not a decimal/);
+  });
+});

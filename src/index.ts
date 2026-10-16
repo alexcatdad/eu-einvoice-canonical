@@ -56,6 +56,9 @@ export {
 } from './signature/index.js';
 export type { ValidateOptions } from './validation/index.js';
 export * as values from './values.js';
+export { type CiiOptions, toCii } from './writers/cii.js';
+export { WriterError, type WriterProfile } from './writers/shared.js';
+export { toUbl, type UblOptions } from './writers/ubl.js';
 
 /**
  * Major version of the published JSON Schemas (`schemas/*.v1.schema.json`). Additive changes to the model keep it;

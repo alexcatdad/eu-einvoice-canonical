@@ -444,14 +444,17 @@ function attachment(c: Ctx, r: Element, s: Scope): Attachment {
 
 function line(c: Ctx, l: Element, isCn: boolean, s: Scope, sub = false): Line {
   const qtyName = sub ? 'cbc:InvoicedQuantity' : isCn ? 'cbc:CreditedQuantity' : 'cbc:InvoicedQuantity';
-  const qtyEl = c.el(l, qtyName);
+  // A sub-line of a credit note line is a SubCreditNoteLine in UBL 2.1 and carries a CreditedQuantity; the XRechnung-style SubInvoiceLine uses InvoicedQuantity.
+  const qtyEl = c.el(l, qtyName) ?? (sub ? c.el(l, 'cbc:CreditedQuantity') : undefined);
   const price = c.el(l, 'cac:Price');
   const priceAc = c.el(price, 'cac:AllowanceCharge');
   const tax = c.el(l, 'cac:Item/cac:ClassifiedTaxCategory');
   const objectRef = c.all(l, 'cac:DocumentReference').find((r) => c.text(r, 'cbc:DocumentTypeCode') === '130');
   const netAmount = s.dec(l, 'cbc:LineExtensionAmount', 'netAmount');
   if (netAmount === undefined) throw new ParseError(`Line ${c.text(l, 'cbc:ID') ?? '?'}: LineExtensionAmount (BT-131) missing`);
-  const subLines = c.all(l, 'cac:SubInvoiceLine').map((e, i) => line(c, e, isCn, s.in('subLines').in(i), true));
+  const subLines = [...c.all(l, 'cac:SubInvoiceLine'), ...c.all(l, 'cac:SubCreditNoteLine')].map((e, i) =>
+    line(c, e, isCn, s.in('subLines').in(i), true),
+  );
   const p = s.in('price');
   const priceNet = p.dec(price, 'cbc:PriceAmount', 'net');
   return {

@@ -30,6 +30,7 @@ received file ──► unwrap() ──► XML payload(s) ──► detectXml() 
 | `src/server.ts` | The reference HTTP server for `openapi/openapi.yaml` (`Bun.serve`, nothing else); `src/problems.ts` is the error catalogue. |
 | `src/detect.ts` | `detectXml()`: invoice format, known non-invoice, or unknown. |
 | `src/parsers/` | `ubl.ts`, `cii.ts`, `svefaktura.ts`, the shared DOM reader (`context.ts`) and the family registry with stubs for the rest. |
+| `src/writers/` | `ubl.ts` and `cii.ts`: canonical invoice back to Peppol BIS 3 UBL 2.1 and EN 16931 CII D16B (`toUbl`, `toCii`); `shared.ts` is the XML builder, escaping and specification choice. |
 | `src/values.ts` | `toDecimal()` / `toIsoDate()` constructors and exact BigInt arithmetic. No value passes through a JS `number`. |
 | `src/checks.ts` | EN 16931 calculation rules BR-CO-10/13/14/15/16, run after every parse. Mismatches become warnings; values are never rewritten. |
 | `src/index.ts` | `inspect(bytes)` (unwrap + detect) and `convert(bytes)` (unwrap + detect + parse). Both return everything that was skipped, with the reason. |
@@ -89,6 +90,7 @@ einvoice inspect <file...>                 the unwrap and detect result as JSON
 einvoice convert <file...> [--out <dir>]   canonical JSON array on stdout, or one <invoice-id>.json per invoice in <dir>
 einvoice export  <file...> --format sie|journal|csv [--accounts mapping.json] [--out <file>]   bookkeeping entries
 einvoice render  --as html|pdf <file...> [--lang en|de|fr] [--out <file|dir>]   human-readable invoice
+einvoice write   <file...> --to ubl|cii [--profile peppol-bis3|xrechnung|en16931] [--out <dir>]   write canonical JSON (or any invoice file) as UBL 2.1 or CII D16B
 einvoice sweep   <dir...> [--expect answers.json]   detection coverage / known-answer check
 einvoice trust-lists update [--out <snapshot.json>] [--lotl-signer <cert.pem>]   fetch and verify the EU trusted lists
 einvoice match   --po <order.json|order.xml>... [--receipts r.json] [--tolerance '<json>'] <invoice...>   match to purchase orders
@@ -208,6 +210,34 @@ einvoice render --as pdf  a.xml b.xml --out out/        # one <invoice-id>.pdf p
 - **PDF** is built with pdf-lib and the standard Helvetica fonts (nothing embedded). Text wraps, long line lists continue on further pages with the table header repeated, and each page says "Page x of y". Output is deterministic (the PDF dates come from the invoice issue date). The standard fonts only cover the WinAnsi (Western European) character set: other characters, such as Cyrillic, Greek or CJK, are drawn as `?` in the PDF but are intact in the HTML.
 - **Languages:** labels exist for `en`, `de` and `fr`; any other tag keeps English labels and is still used for the `lang` attribute. Values are shown as the invoice states them (decimal strings, ISO dates, code values); nothing is recalculated or reformatted.
 - The demo site still builds its own sheet; it does not use these renderers.
+
+## Writing UBL and CII
+
+The inverse of the parsers: a canonical invoice becomes a Peppol BIS Billing 3.0 UBL 2.1 document (`Invoice`, or `CreditNote` for `kind: 'creditNote'`) or an EN 16931 CII D16B `CrossIndustryInvoice`.
+
+```ts
+import { toCii, toUbl } from 'eu-einvoice-canonical';
+
+const ubl = toUbl(invoice);                          // string; keeps an EN 16931 based specification id, else Peppol BIS 3
+const xr = toUbl(invoice, { profile: 'xrechnung' }); // or 'peppol-bis3' | 'en16931': stamps BT-24 and BT-23
+const cii = toCii(invoice);
+```
+
+```
+einvoice write --to ubl invoice.xml            # any invoice file: converted first, then written
+einvoice write --to cii canonical.json         # the JSON `einvoice convert` printed (one invoice or an array)
+einvoice write --to ubl --out out/ lot.xml     # several invoices: one <invoice-id>.xml each
+```
+
+- **Deterministic and well-formed.** The same invoice gives the same bytes: two-space indentation, elements in the order of the UBL 2.1 and CII D16B schemas (not the parser's), a declaration and a trailing newline. Text and attributes are escaped, and characters XML 1.0 forbids (control characters, lone surrogates) are dropped.
+- **Decimals stay strings.** Amounts, quantities and rates are written exactly as the model holds them (`"100.0000"` stays `100.0000`); a value that is not an `xsd:decimal` throws `WriterError`. The only arithmetic is the exact BigInt sum from `values.ts`, used once: when the model has a VAT breakdown but no VAT total (BT-110), the total is the sum of the breakdown, because both syntaxes require one.
+- **Only EN 16931 is written.** Country extensions, clearance data, withholdings, other taxes, payment schedules, extra parties and national type codes have no place in either binding and are left out. A document from a national format therefore comes back as an EN 16931 invoice, not as the original.
+- **Where the syntax cannot hold a value** it is dropped, never invented: UBL has no credit note due date outside `PaymentMeans`, no sales order reference without an order reference, and no gross price without a discount; CII has no issue time, card network or sub-lines, one preceding invoice, and keeps BT-7 and BT-8 on the VAT lines. A payment with several credit transfers becomes several payment means in both. The full list, with reasons, is the allow-list in `test/writers.test.ts`.
+- **Round trip.** The tests parse every fixture, write it as UBL and as CII and parse the result again. For EN 16931 based fixtures the canonical invoices must be equal apart from `source` and the allow-listed differences; for national formats the EN 16931 core (parties, totals, VAT breakdown, line ids and amounts) must be equal. Fixtures that are valid as received are also validated as written with the XSD and EN 16931 Schematron layers (and the Peppol / XRechnung layer when the syntax is unchanged).
+- **Specification identifiers stay inside their syntax.** An EN 16931 based identifier is kept when it exists in the target syntax (Peppol BIS for UBL, XRechnung and NLCIUS for both); a Peppol identifier on a CII document or a Factur-X one on a UBL document is replaced by the EN 16931 base (CII) or Peppol BIS 3 (UBL), and `profile` overrides it.
+- CII has one remittance reference, one direct debit mandate and one creditor identifier per document, so they apply to every payment means when the document is read back; a bank identifier that is not a BIC (`SE:BANKGIRO`) is not written as `BICID`.
+- The VAT point date code (BT-8) is UNTDID 2005 in UBL and UNTDID 2475 in CII, so the writers translate it (5, 29, 72 and 3, 35, 432).
+- A credit note written to CII whose type code is not a credit code is written as 381, since CII reads the direction from the type code.
 
 ## The canonical model
 

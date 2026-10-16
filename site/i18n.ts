@@ -4,14 +4,7 @@
  * Placeholders are written {name}. HTML pages mark static text with data-i18n (text), data-i18n-html (trusted markup from the catalogue),
  * data-i18n-attr ("attribute:key;attribute:key") and optionally data-i18n-params (JSON).
  */
-import de from './i18n/de.json' with { type: 'json' };
 import en from './i18n/en.json' with { type: 'json' };
-import es from './i18n/es.json' with { type: 'json' };
-import fr from './i18n/fr.json' with { type: 'json' };
-import it from './i18n/it.json' with { type: 'json' };
-import nl from './i18n/nl.json' with { type: 'json' };
-import pl from './i18n/pl.json' with { type: 'json' };
-import ro from './i18n/ro.json' with { type: 'json' };
 
 export type Messages = Record<string, string>;
 
@@ -28,7 +21,27 @@ export const LANGUAGES = [
 ] as const;
 export type Lang = (typeof LANGUAGES)[number]['code'];
 
-const CATALOGUES: Record<Lang, Messages> = { en, de, fr, it, es, nl, pl, ro };
+/** English is bundled; every other catalogue is its own chunk, fetched the first time it is needed. */
+const CATALOGUES: Partial<Record<Lang, Messages>> = { en };
+const LOADERS: Record<Exclude<Lang, 'en'>, () => Promise<{ default: Messages }>> = {
+  de: () => import('./i18n/de.json', { with: { type: 'json' } }),
+  fr: () => import('./i18n/fr.json', { with: { type: 'json' } }),
+  it: () => import('./i18n/it.json', { with: { type: 'json' } }),
+  es: () => import('./i18n/es.json', { with: { type: 'json' } }),
+  nl: () => import('./i18n/nl.json', { with: { type: 'json' } }),
+  pl: () => import('./i18n/pl.json', { with: { type: 'json' } }),
+  ro: () => import('./i18n/ro.json', { with: { type: 'json' } }),
+};
+
+async function loadCatalogue(lang: Lang): Promise<boolean> {
+  if (CATALOGUES[lang]) return true;
+  try {
+    CATALOGUES[lang] = (await LOADERS[lang as Exclude<Lang, 'en'>]()).default;
+    return true;
+  } catch {
+    return false;
+  }
+}
 const STORAGE_KEY = 'einvoice-lang';
 
 /** 'de-AT', 'DE_at' and 'de' all become 'de'; anything we have no catalogue for becomes undefined. */
@@ -79,7 +92,7 @@ export function onLanguageChange(fn: () => void) {
 
 /** Looks a message up in the current language, then in English, then returns the key. Placeholders without a value are left as written. */
 export function t(key: string, params?: Record<string, string | number>): string {
-  const msg = CATALOGUES[current][key] ?? en[key as keyof typeof en] ?? key;
+  const msg = CATALOGUES[current]?.[key] ?? en[key as keyof typeof en] ?? key;
   return params ? msg.replace(/\{(\w+)\}/g, (m, name: string) => (name in params ? String(params[name]) : m)) : msg;
 }
 
@@ -115,8 +128,15 @@ export function applyDocument(root: ParentNode = document) {
     }
 }
 
-/** Switches language: remembers the choice, drops a stale ?lang= from the address, updates the page and tells listeners. */
-export function setLanguage(lang: Lang, persist = true) {
+let switches = 0;
+
+/**
+ * Switches language: loads its catalogue, remembers the choice, drops a stale ?lang= from the address, updates the page and
+ * tells listeners. If the catalogue cannot be loaded the page stays as it is; a later switch wins over an earlier one still loading.
+ */
+export async function setLanguage(lang: Lang, persist = true) {
+  const ticket = ++switches;
+  if (!(await loadCatalogue(lang)) || ticket !== switches) return;
   current = lang;
   if (persist) {
     try {
@@ -138,10 +158,11 @@ export function setLanguage(lang: Lang, persist = true) {
   for (const fn of listeners) fn();
 }
 
-/** Picks the language for this visit and applies it to the static markup. Call once at start-up. */
+/** Picks the language for this visit and applies it to the static markup (English at once, any other language once its catalogue arrives). Call once at start-up. */
 export function initLanguage() {
-  current = pickLanguage({ search: location.search, stored: readStored(), languages: navigator.languages });
+  const lang = pickLanguage({ search: location.search, stored: readStored(), languages: navigator.languages });
   applyDocument();
+  if (lang !== 'en') void setLanguage(lang, false);
 }
 
 /** Fills the language <select> (id lang-select) and wires it up. The labels are the language names in their own language. */
@@ -155,7 +176,7 @@ export function initSwitcher() {
   }
   select.addEventListener('change', () => {
     const lang = normalizeLang(select.value);
-    if (lang) setLanguage(lang);
+    if (lang) void setLanguage(lang);
   });
   onLanguageChange(() => {
     select.value = current;
