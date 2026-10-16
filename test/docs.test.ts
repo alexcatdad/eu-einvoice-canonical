@@ -121,7 +121,10 @@ describe('docs pages from the README', () => {
   });
 
   test('the README badge row is left out, not shown as bare alt-text links', () => {
-    expect(site.pages.every((p) => !p.html.includes('code-scanning') && !p.markdown.includes('img.shields.io'))).toBe(true);
+    // A linked image in markdown is `[![alt](src)](href)`; the badge row is the only one in the README.
+    const linkedImage = /\[!\[[^\]]*\]\([^)]*\)\]\(/;
+    expect(site.pages.filter((p) => linkedImage.test(p.markdown)).map((p) => p.path)).toEqual([]);
+    expect(site.pages.filter((p) => p.html.includes('>CodeQL</a>')).map((p) => p.path)).toEqual([]);
   });
 
   test('slugs follow the GitHub rule, so README anchors keep working', () => {

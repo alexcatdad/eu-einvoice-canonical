@@ -62,7 +62,7 @@ describe('<Invoice>', () => {
     const cn = html(<Invoice invoice={creditNote} idPrefix="c" />);
     expect(cn).toContain('<article class="einvoice einvoice--credit"');
     expect(cn).toContain('<p class="einvoice-badge">Credit note</p>');
-    expect(cn).toContain(`>Credit note ${creditNote.id}</h1>`);
+    expect(cn).toContain(`>Credit note <span class="einvoice-number">${creditNote.id}</span></h1>`);
     expect(plain(cn)).toContain('<dt>Amount credited</dt><dd>SEK 250.00</dd>');
   });
 
