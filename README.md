@@ -79,8 +79,11 @@ einvoice detect  <file...>                 format id, version and profile per do
 einvoice inspect <file...>                 the unwrap and detect result as JSON
 einvoice convert <file...> [--out <dir>]   canonical JSON array on stdout, or one <invoice-id>.json per invoice in <dir>
 einvoice sweep   <dir...> [--expect answers.json]   detection coverage / known-answer check
+einvoice trust-lists update [--out <snapshot.json>] [--lotl-signer <cert.pem>]   fetch and verify the EU trusted lists
 einvoice match   --po <order.json|order.xml>... [--receipts r.json] [--tolerance '<json>'] <invoice...>   match to purchase orders
 ```
+
+`convert --eu-trust[=<snapshot.json>]` checks signers against a trusted-list snapshot (see [EU trusted lists](#eu-trusted-lists)).
 
 Flags: `--pretty` indents JSON; `--quiet` silences notes and warnings (errors are still printed); `--limits '{"maxEntries":10}'` overrides `UnwrapLimits`; `--validate` is accepted by `convert` and is a no-op with a message until the validation module lands.
 JSON goes to stdout only; every error is one line on stderr.
@@ -98,6 +101,21 @@ JSON goes to stdout only; every error is one line on stderr.
 | 8 | `match` verdict is `needs-review` |
 
 With several failures and no success the code of the first failure is used; with at least one success it is 5.
+
+## EU trusted lists
+
+Opt-in. `loadTrustLists()` fetches the EU List of Trusted Lists (LOTL) and the national lists (ETSI TS 119 612), accepts a list only if its own XML signature verifies (the LOTL against pinned signer certificates, each national list against the certificates the LOTL publishes for it), and keeps the qualified CA/QC services with their certificates and dated status history. The result is a snapshot with its fetch date; `trust/eu-trust-snapshot.json` is one, refreshed weekly by a workflow that opens a pull request.
+
+```ts
+const euTrust = await loadTrustLists(); // or parseSnapshot(fileText)
+const result = await convert(bytes, 'invoice.xml', undefined, { euTrust });
+result.outcomes[0].invoices[0].source.signatures[0].euTrust;
+// { qualified: true, status: 'qualified', service: { name, provider, territory, statusAtSigning, currentStatus }, snapshot: { fetchedAt, nextUpdate, stale } }
+```
+
+`qualified` means the signer chains to a CA/QC service whose status was granted at the signing time (a service withdrawn later still counts, one withdrawn before does not); `snapshot.stale` says the snapshot is older than its next-update date. `trustAnchorsFromSnapshot(snapshot, at?)` gives the service certificates as `trustAnchors` if you only want the chain check. The LOTL signer is pinned from `lotlSigners`, else from the `previous` snapshot, else trusted on first use (the snapshot says which, and the first update prints a note): pass the certificate from the Official Journal to pin it. Revocation of the signer's own certificate (CRL/OCSP) is not checked.
+
+In the browser page the check is a checkbox and loads lazily. The national servers mostly do not allow browser access (CORS), so the page falls back to the snapshot published with the site and says so.
 
 ## Matching invoices to purchase orders
 
@@ -276,7 +294,7 @@ Skipped files and the reason are returned by both `inspect()` and `convert()`, s
 
 - **Unverified detection rules:** `ubl-unknown` and `cii-unknown` are fallbacks, not confirmed formats. The Croatian spec spells its own identifier inconsistently, so `hr-cius` only checks for `urn:mfin.gov.`.
 - **EN 16931-1:2026** (published March 2026; 164 to 216 business terms and 32 to 39 groups, per trade press) is not modelled beyond the identifier. Checked on 2026-10-16: the ConnectingEurope validation artefacts (v1.3.17, UBL 2.1 / CII D16B) and the KoSIT XRechnung Schematron (v2.6.0, XRechnung 3.0) contain no 2026 terms, and the EN 16931-1:2026 text and the updated CEN/TS 16931-3-x bindings are paywalled, so neither the exact BT/BG ids and names nor their UBL/CII paths are confirmed. Secondary sources mention multiple payment terms (BG-33), early-payment discounts (BG-35) and line-level delivery (BG-37) but disagree on detail, so nothing was added to `src/canonical.ts` or the parsers. Missing: the CEN/TS 16931-3-1 and 3-3 binding tables, or the 2026 Schematron/XSD once ConnectingEurope or Peppol BIS publish them. 2026-identified documents still parse, with the 2017 terms only.
-- **Signature trust:** signatures are verified cryptographically, but signers are only checked against a trust list when you pass `trustAnchors`; no EU trust lists ship with the library.
+- **Signature trust:** signatures are verified cryptographically; signers are checked only when you pass `trustAnchors` or an `euTrust` snapshot. The snapshot is only as current as its fetch date and drops services the lists identify by name or key id without a certificate, and no revocation check is made on the signer's own certificate.
 - **Validation covers UBL and CII only** (XSD, EN 16931 and Peppol/XRechnung Schematron). National formats get the BR-CO arithmetic checks only; their official schemas are not run yet.
 - **Synthetic fixtures:** most national parsers were built from specifications and tested on synthetic files. Formats without a converted real sample are listed in the conformance checklist; run `sweep --expect` on your own inbound files before relying on them.
 - **Peppol PINT** gets the plain UBL mapping; PINT-specific rules are not applied.

@@ -2,13 +2,19 @@
 import * as asn1js from 'asn1js';
 import * as pkijs from 'pkijs';
 import type { SignatureInfo } from '../canonical.js';
-import { certificateDetails, commonName, evaluateTrust, parseAnchors, type TrustAnchor } from './trust.js';
+import { assessTrust } from './eu-trust.js';
+import { certificateDetails, commonName, parseAnchors, type TrustAnchor } from './trust.js';
+import type { TrustSnapshot } from './tsl.js';
 
 const OID_SIGNED_DATA = '1.2.840.113549.1.7.2';
 const OID_SIGNING_TIME = '1.2.840.113549.1.9.5';
 
 /** One SignatureInfo per SignerInfo. Never throws: a structure that cannot be read is a finding on one 'CAdES' entry. */
-export async function verifyCades(bytes: Uint8Array, trustAnchors?: TrustAnchor[]): Promise<SignatureInfo[]> {
+export async function verifyCades(
+  bytes: Uint8Array,
+  trustAnchors?: TrustAnchor[],
+  eu: { euTrust?: TrustSnapshot; now?: Date } = {},
+): Promise<SignatureInfo[]> {
   let sd: pkijs.SignedData;
   let content: Uint8Array | undefined;
   try {
@@ -52,9 +58,7 @@ export async function verifyCades(bytes: Uint8Array, trustAnchors?: TrustAnchor[
       info.verified = r.signatureVerified === true;
       if (!info.verified) info.reason = r.message || 'Signature value does not match the signed content';
       if (info.verified) {
-        const t = await evaluateTrust(cert, certs, anchors, signedAt ?? new Date());
-        info.trust = t.trust;
-        if (t.reason) info.trustReason = t.reason;
+        await assessTrust(info, cert, certs, anchors, signedAt, eu);
       }
     } catch (e) {
       info.verified = false;
