@@ -3344,6 +3344,9 @@
             },
             "myDataInvoiceType": {
               "type": "string"
+            },
+            "myDataRequestedInvoiceType": {
+              "type": "string"
             }
           },
           "description": "Header values found, trimmed. First occurrence wins."
@@ -3430,6 +3433,12 @@
               }
             },
             "myDataInvoiceType": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "myDataRequestedInvoiceType": {
               "type": "object",
               "additionalProperties": {
                 "type": "string"

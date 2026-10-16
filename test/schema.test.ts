@@ -12,7 +12,13 @@ const ajv = new Ajv2020({ strict: false, allErrors: false });
 const validateInvoice = ajv.compile(schema('canonical-invoice'));
 const validateResult = ajv.compile(schema('convert-result'));
 
-const fixtures = readdirSync(fixturePath('')).filter((f) => f !== 'README.md' && f !== 'expected.json' && !f.startsWith('.'));
+const fixtures = readdirSync(fixturePath('')).flatMap((f) =>
+  f === 'real'
+    ? readdirSync(fixturePath('real')).map((r) => `real/${r}`)
+    : f === 'README.md' || f === 'expected.json' || f.startsWith('.')
+      ? []
+      : [f],
+);
 
 describe('JSON Schema', () => {
   test('schemas declare draft 2020-12 and a versioned $id under the Pages site', () => {
