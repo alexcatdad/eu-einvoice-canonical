@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { type CanonicalInvoice, convert, type Line } from '../src/index.js';
 import { evaluate, scoreCase } from '../src/relations/eval.js';
 import { LABELLED_CASES, toLines } from '../src/relations/labelled.js';
-import { applyModelLabels, buildModelInput, buildPrompt, LABEL_SCHEMA, parseModelOutput } from '../src/relations/model.js';
+import { applyModelLabels, buildModelInput, buildPrompt, LABEL_SCHEMA, parseModelOutput, stripThinking } from '../src/relations/model.js';
 import { analyseLines, applyRelations, isDescriptor, percentagesIn, SEARCH_LIMITS } from '../src/relations/rules.js';
 import { percentOf } from '../src/values.js';
 import { fixture } from './helpers.js';
@@ -495,5 +495,36 @@ describe('evaluation set', () => {
       { from: '3', to: ['1'], type: 'markup', method: 'arithmetic', confidence: 'proven' },
     ]);
     expect(s).toMatchObject({ rolesCorrect: 3, relationsFound: 1, relationsTrue: 0, provenWrong: 1 });
+  });
+});
+
+describe('hostile text runs in linear time', () => {
+  const line = (id: string, note?: string): Line =>
+    ({
+      id,
+      note,
+      netAmount: '10.00',
+      allowances: [],
+      charges: [],
+      item: { name: 'x', classifications: [], attributes: [] },
+    }) as unknown as Line;
+
+  test('a note with a huge whitespace run after a line keyword', () => {
+    const started = performance.now();
+    const a = analyseLines({ lines: [line('1', `line${' '.repeat(100_000)}x`), line('2', 'see line no. 1')] });
+    expect(performance.now() - started).toBeLessThan(1000);
+    expect(a.relations.some((r) => r.type === 'note-reference' && r.from === '2' && r.to.includes('1'))).toBe(true);
+  });
+
+  test('model output with many unclosed <think> tags', () => {
+    const raw = `${'<think>'.repeat(50_000)}{"roles":{}}`;
+    const started = performance.now();
+    expect(stripThinking(raw)).toBe('');
+    parseModelOutput(raw, buildModelInput({ lines: [line('1')] }));
+    expect(performance.now() - started).toBeLessThan(1000);
+  });
+
+  test('closed <think> blocks are removed and the JSON after them is read', () => {
+    expect(stripThinking('a<think>x</think>b<think>y</think>c')).toBe('abc');
   });
 });

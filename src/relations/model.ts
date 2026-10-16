@@ -80,14 +80,34 @@ export function buildPrompt(input: ModelInput): string {
   ].join('\n');
 }
 
+/** Removes <think>...</think> blocks with a linear scan (a lazy regex backtracks on many unclosed tags). */
+export function stripThinking(text: string): string {
+  let out = '';
+  let from = 0;
+  for (;;) {
+    const open = text.indexOf('<think>', from);
+    if (open === -1) return out + text.slice(from);
+    const close = text.indexOf('</think>', open + 7);
+    if (close === -1) return out + text.slice(from, open); // an unclosed block runs to the end
+    out += text.slice(from, open);
+    from = close + 8;
+  }
+}
+
+/** The outermost {...} span, from the first '{' to the last '}', or undefined. */
+function jsonSpan(text: string): string | undefined {
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  return start !== -1 && end > start ? text.slice(start, end + 1) : undefined;
+}
+
 /** Accepts the model's text or object and keeps only what is valid for this invoice. Never throws. */
 export function parseModelOutput(raw: unknown, input: ModelInput): ModelOutput {
   let value: unknown = raw;
   if (typeof raw === 'string') {
-    const text = raw.replace(/<think>[\s\S]*?<\/think>/g, '');
-    const m = /\{[\s\S]*\}/.exec(text);
+    const json = jsonSpan(stripThinking(raw));
     try {
-      value = m ? JSON.parse(m[0]) : undefined;
+      value = json === undefined ? undefined : JSON.parse(json);
     } catch {
       value = undefined;
     }
