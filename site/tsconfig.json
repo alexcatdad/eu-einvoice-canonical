@@ -1,0 +1,14 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "include": [".astro/types.d.ts", "src/**/*", "../src/validation/saxon-js.d.ts"],
+  "exclude": ["../dist", "src/content/docs/api"],
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "baseUrl": ".",
+    "paths": { "@/*": ["./src/*"] },
+    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": false,
+    "allowImportingTsExtensions": true
+  }
+}

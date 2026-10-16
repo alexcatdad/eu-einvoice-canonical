@@ -1,19 +1,20 @@
 /**
- * Static documentation pages, generated from README.md (and docs/*.md) at build time. The README stays the single
- * source of truth: this file only decides which section lands on which page and writes the metadata for it.
+ * The documentation, generated from README.md (and docs/*.md) at build time. The README stays the single source of
+ * truth: this file only decides which section lands on which page and writes the metadata for it. site/prepare.ts
+ * writes the result as Starlight content (src/content/docs/docs/*.md), markdown twins, llms.txt and llms-full.txt.
  *
  *   - Every README section (## and the ### it names) maps to one page through PAGES. An unmapped section throws, so a
  *     new README section cannot silently drop out of the site (test/docs.test.ts checks the same).
- *   - One page per registry format (docs/formats/<id>.html) is assembled from the registry plus the README table rows
+ *   - One page per registry format (docs/formats/<id>/) is assembled from the registry plus the README table rows
  *     that mention the format id.
- *   - The same markdown feeds the HTML pages, docs/<slug>.md, llms.txt and llms-full.txt.
+ *   - The same markdown feeds the Starlight pages, docs/<slug>.md, llms.txt and llms-full.txt.
  *
- * Nothing here ships to the browser; the pages are plain HTML with no script.
+ * Nothing here ships to the browser.
  */
 import { Lexer, Marked, type Token, type Tokens } from 'marked';
 import { FORMATS } from '../src/formats.js';
-import { absolute, breadcrumbs, esc, page, REPO_URL, rootOf, SITE_URL } from './chrome.js';
 import { converts } from './coverage.js';
+import { absolute, REPO_URL, route, SITE_NAME, SITE_URL, siteHref } from './site.js';
 
 export const GROUPS = ['Start', 'Use it', 'Model and contracts', 'Formats', 'Project'] as const;
 type Group = (typeof GROUPS)[number];
@@ -240,19 +241,26 @@ export const PAGES: PageDef[] = [
 // ---------------------------------------------------------------------------
 
 export interface DocPage {
-  /** Path from the site root, for example `docs/cli.html`. */
-  path: string;
+  /** Route from the site root, for example `docs/cli/`. */
+  route: string;
+  /** The Starlight content file, relative to src/content/docs: `docs/cli.md`. Also the markdown twin's path from the site root. */
+  file: string;
   title: string;
   description: string;
   group: Group;
   kind: 'section' | 'format' | 'extra' | 'formats-index';
-  /** The page as markdown, links absolute: also published as `<path without .html>.md` and joined into llms-full.txt. */
+  /** The page as markdown with absolute links: published as the markdown twin and joined into llms-full.txt. */
   markdown: string;
-  /** The complete HTML document. */
-  html: string;
+  /** The page body for Starlight: markdown with root-relative links, no h1 (Starlight writes the title). */
+  body: string;
   /** README headings that ended up on this page. */
   sections: string[];
   source: string;
+  editUrl: string;
+  /** Position in its sidebar group. */
+  order: number;
+  /** Structured data for the page: TechArticle and BreadcrumbList. */
+  jsonld: object[];
 }
 
 export interface DocSources {
@@ -274,11 +282,12 @@ export interface DocSite {
 // README splitting
 // ---------------------------------------------------------------------------
 
+/** GitHub's heading anchor rule (github-slugger), which Starlight uses too, so README anchors keep working. */
 export const slugify = (s: string) =>
   s
     .toLowerCase()
     .replace(/`/g, '')
-    .replace(/[^\p{L}\p{N}\s-]/gu, '')
+    .replace(/[^\p{L}\p{N}\s_-]/gu, '')
     .trim()
     .replace(/\s/g, '-');
 
@@ -297,12 +306,10 @@ interface Block {
 function splitReadme(tokens: Token[]): { blocks: Block[]; headings: DocSite['headings'] } {
   const blocks: Block[] = [];
   const headings: DocSite['headings'] = [];
-  let cur: Block | undefined;
   const intro = sectionToPage.get('');
   if (!intro) throw new Error('PAGES has no page for the README introduction');
-  cur = { def: intro, heading: '', depth: 1, tokens: [] };
+  let cur: Block = { def: intro, heading: '', depth: 1, tokens: [] };
   blocks.push(cur);
-  let parent = intro;
   for (const tok of tokens) {
     if (tok.type === 'heading' && tok.depth === 1) continue;
     if (tok.type === 'heading' && (tok.depth === 2 || (tok.depth === 3 && sectionToPage.has(tok.text)))) {
@@ -311,10 +318,9 @@ function splitReadme(tokens: Token[]): { blocks: Block[]; headings: DocSite['hea
       cur = { def, heading: tok.text, depth: tok.depth, tokens: [] };
       blocks.push(cur);
       headings.push({ text: tok.text, depth: tok.depth, page: def.slug });
-      if (tok.depth === 2) parent = def;
       continue;
     }
-    if (tok.type === 'heading' && tok.depth >= 2) headings.push({ text: tok.text, depth: tok.depth, page: cur?.def.slug ?? parent.slug });
+    if (tok.type === 'heading' && tok.depth >= 2) headings.push({ text: tok.text, depth: tok.depth, page: cur.def.slug });
     cur.tokens.push(tok);
   }
   for (const p of PAGES)
@@ -346,25 +352,22 @@ const headingRaw = (t: Tokens.Heading) => `${'#'.repeat(t.depth)} ${t.text}\n\n`
 // ---------------------------------------------------------------------------
 
 interface LinkContext {
-  /** Path of the page the link is on (for relative output), or undefined to produce absolute URLs. */
-  from?: string;
+  /** README anchor to the slug of the page it ended up on. */
   anchors: Map<string, string>;
+  /** Anchors that are a page's own title: a link to them goes to the page, without a fragment. */
+  pageAnchors: Set<string>;
   /** `docs/SUPPLY-CHAIN.md` to `docs/supply-chain.html`. */
   extras: Map<string, string>;
-  /** The slug of the page being rendered, to keep same-page anchors as `#x`. */
-  self: string;
 }
 
-function resolveHref(href: string, ctx: LinkContext): string {
-  /** A site path (no leading slash), relative to the page when `from` is set, else absolute. */
-  const local = (path: string, frag = '') => {
-    if (!ctx.from) return absolute(path) + frag;
-    if (path === ctx.from) return frag || './';
-    return `${rootOf(ctx.from)}${path}`.replace(/(^|\/)index\.html$/, '$1') + frag || './';
-  };
+/** Where a link in the README points on the site; `abs` gives an absolute URL (markdown twins), else root-relative. */
+function resolveHref(href: string, ctx: LinkContext, abs: boolean): string {
+  const local = (path: string, frag = '') => (abs ? absolute(path) : siteHref(path)) + frag;
   if (href.startsWith('#')) {
-    const target = ctx.anchors.get(href.slice(1));
-    return target ? local(pagePath(target), href) : href;
+    const anchor = href.slice(1);
+    const target = ctx.anchors.get(anchor);
+    if (!target) return href;
+    return local(pagePath(target), ctx.pageAnchors.has(anchor) ? '' : href);
   }
   if (href.startsWith(SITE_URL)) {
     const [path = '', frag = ''] = href.slice(SITE_URL.length).split(/(?=#)/);
@@ -380,149 +383,20 @@ function resolveHref(href: string, ctx: LinkContext): string {
 
 const pagePath = (slug: string) => `docs/${slug}.html`;
 
-/** Rewrites markdown links to absolute URLs, leaving code blocks alone. */
-function absolutizeMarkdown(md: string, ctx: LinkContext): string {
+/** Rewrites markdown links, leaving code alone (fenced blocks and inline code spans). */
+function rewriteLinks(md: string, ctx: LinkContext, abs: boolean): string {
   return md
-    .split(/(```[\s\S]*?```)/g)
-    .map((part, i) =>
-      i % 2 ? part : part.replace(/\]\(([^)\s]+)\)/g, (_m, href: string) => `](${resolveHref(href, { ...ctx, from: undefined })})`),
-    )
+    .split(/(```[\s\S]*?```|`[^`\n]*`)/g)
+    .map((part, i) => (i % 2 ? part : part.replace(/\]\(([^)\s]+)\)/g, (_m, href: string) => `](${resolveHref(href, ctx, abs)})`)))
     .join('');
 }
 
-// ---------------------------------------------------------------------------
-// Rendering
-// ---------------------------------------------------------------------------
-
-function renderBody(
-  tokens: Token[],
-  ctx: LinkContext,
-  links: Tokens.Generic['links'],
-): { html: string; headings: { id: string; text: string; depth: number }[] } {
-  const used = new Set<string>();
-  const headings: { id: string; text: string; depth: number }[] = [];
-  const marked = new Marked({
-    gfm: true,
-    renderer: {
-      heading(t: Tokens.Heading) {
-        let id = slugify(t.text) || 'section';
-        for (let n = 2; used.has(id); n++) id = `${slugify(t.text) || 'section'}-${n}`;
-        used.add(id);
-        const plain = t.text.replace(/`/g, '');
-        headings.push({ id, text: plain, depth: t.depth });
-        return `<h${t.depth} id="${id}">${this.parser.parseInline(t.tokens)}<a class="anchor" href="#${id}" aria-label="Link to ${esc(plain)}">#</a></h${t.depth}>\n`;
-      },
-      link(t: Tokens.Link) {
-        const title = t.title ? ` title="${esc(t.title)}"` : '';
-        return `<a href="${esc(resolveHref(t.href, ctx))}"${title}>${this.parser.parseInline(t.tokens)}</a>`;
-      },
-      // The README has a badge image; the site makes no outside requests, so an image renders as its alt text.
-      image(t: Tokens.Image) {
-        return esc(t.text);
-      },
-    },
-  });
-  const list = Object.assign([...tokens], { links }) as Token[] & { links: Tokens.Generic['links'] };
-  const html = marked
-    .parser(list)
-    .replace(/<table>/g, '<div class="table-scroll" tabindex="0"><table>')
-    .replace(/<\/table>/g, '</table></div>')
-    .replace(/<pre>/g, '<pre tabindex="0">');
-  return { html, headings };
-}
-
-function sidebar(pages: DocPage[], current: string): string {
-  const root = rootOf(current);
-  const rel = (p: string) => `${root}${p}`.replace(/index\.html$/, '');
-  const groups = GROUPS.map((g) => {
-    const items = pages.filter((p) => p.group === g && p.kind !== 'format');
-    if (!items.length) return '';
-    const lis = items
-      .map((p) => `<li><a href="${rel(p.path)}"${p.path === current ? ' aria-current="page"' : ''}>${esc(shortTitle(p))}</a></li>`)
-      .join('');
-    return `<p class="side-h">${g}</p><ul>${lis}</ul>`;
-  }).join('');
-  return groups;
-}
-
-const shortTitle = (p: DocPage) => (p.path === 'docs/index.html' ? 'Overview' : p.title);
-
-interface Shell {
-  pages: DocPage[];
-  version: string;
-  date: string;
-}
-
-function shell(
-  p: Omit<DocPage, 'html'>,
-  bodyHtml: string,
-  headings: { id: string; text: string; depth: number }[],
-  ctx: Shell,
-  extra: { related?: { href: string; label: string }[]; edit: string; crumbs: { name: string; path: string }[] },
-): string {
-  const root = rootOf(p.path);
-  const side = sidebar(ctx.pages, p.path);
-  const toc = headings.filter((h) => h.depth === 2);
-  const tocHtml =
-    toc.length >= 3
-      ? `<nav class="toc" aria-label="On this page"><p>On this page</p><ul>${toc.map((h) => `<li><a href="#${h.id}">${esc(h.text)}</a></li>`).join('')}</ul></nav>`
-      : '';
-  const ordered = ctx.pages.filter((x) => x.kind === 'section' || x.kind === 'extra');
-  const i = ordered.findIndex((x) => x.path === p.path);
-  const prev = i > 0 ? ordered[i - 1] : undefined;
-  const next = i >= 0 ? ordered[i + 1] : undefined;
-  const pager = (x: DocPage | undefined, cls: string, label: string) =>
-    x ? `<a class="${cls}" href="${root}${x.path}"><span>${label}</span>${esc(shortTitle(x))}</a>` : '<span></span>';
-  const related = extra.related?.length
-    ? `<section class="related" aria-labelledby="related-h"><h2 id="related-h">Related</h2><ul>${extra.related.map((r) => `<li><a href="${root}${r.href.replace(/index\.html$/, '')}">${esc(r.label)}</a></li>`).join('')}</ul></section>`
-    : '';
-  const crumbs = `<nav class="crumbs" aria-label="Breadcrumb"><ol>${extra.crumbs
-    .map((c, n) =>
-      n === extra.crumbs.length - 1
-        ? `<li aria-current="page">${esc(c.name)}</li>`
-        : `<li><a href="${root}${c.path.replace(/index\.html$/, '')}">${esc(c.name)}</a></li>`,
-    )
-    .join('')}</ol></nav>`;
-  const h1Id = (p.kind === 'section' && p.path !== 'docs/index.html' ? slugify(p.sections[0] ?? p.title) : slugify(p.title)) || 'top';
-  const body = `<div class="docs">
-  <div class="docs-side"><nav aria-label="Documentation">${side}</nav></div>
-  <details class="docs-menu"><summary>Documentation menu</summary><nav aria-label="Documentation menu">${side}</nav></details>
-  <article class="prose">
-    ${crumbs}
-    <h1 id="${h1Id}">${esc(p.title)}</h1>
-    ${tocHtml}
-    ${bodyHtml}
-    ${related}
-    <nav class="pager" aria-label="Previous and next page">${pager(prev, 'prev', 'Previous')}${pager(next, 'next', 'Next')}</nav>
-    <p class="edit"><a href="${esc(extra.edit)}">Edit this page on GitHub</a> (the documentation is generated from the README).</p>
-  </article>
-</div>`;
-  const jsonld = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'TechArticle',
-      headline: p.title,
-      description: p.description,
-      url: absolute(p.path),
-      inLanguage: 'en',
-      dateModified: ctx.date,
-      author: { '@type': 'Person', name: 'alexcatdad', url: 'https://github.com/alexcatdad' },
-      isPartOf: { '@type': 'WebSite', name: 'E-invoice to JSON', url: SITE_URL },
-      about: { '@type': 'SoftwareSourceCode', name: 'eu-einvoice-canonical', codeRepository: REPO_URL },
-    },
-    breadcrumbs(extra.crumbs),
-  ];
-  return page({
-    title: p.title.includes('eu-einvoice-canonical') ? p.title : `${p.title} · eu-einvoice-canonical`,
-    description: p.description,
-    path: p.path,
-    body,
-    current: 'docs',
-    type: 'article',
-    bodyClass: 'doc-page',
-    jsonld,
-  });
-}
+/** Images become their alt text: the site makes no outside requests. */
+const dropImages = (md: string) =>
+  md
+    .split(/(```[\s\S]*?```|`[^`\n]*`)/g)
+    .map((part, i) => (i % 2 ? part : part.replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')))
+    .join('');
 
 // ---------------------------------------------------------------------------
 // Format pages
@@ -564,8 +438,6 @@ function formatMarkdown(f: (typeof FORMATS)[number], readme: Token[]): { md: str
     unverified: 'unverified: the detection rule is not confirmed against a real file',
   }[f.status];
   const lines: string[] = [
-    `# ${f.name}`,
-    '',
     `- Format id: \`${f.id}\``,
     `- Countries: ${countries}`,
     `- Status: ${status}`,
@@ -608,15 +480,44 @@ function formatMarkdown(f: (typeof FORMATS)[number], readme: Token[]): { md: str
 // The site
 // ---------------------------------------------------------------------------
 
+const related = (items: { href: string; label: string }[] | undefined) =>
+  items?.length ? `\n\n## Related\n\n${items.map((r) => `- [${r.label}](${SITE_URL}${r.href})`).join('\n')}\n` : '';
+
+function jsonld(p: { route: string; title: string; description: string }, date: string, crumbs: { name: string; path: string }[]) {
+  return [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'TechArticle',
+      headline: p.title,
+      description: p.description,
+      url: absolute(p.route),
+      inLanguage: 'en',
+      dateModified: date,
+      author: { '@type': 'Person', name: 'alexcatdad', url: 'https://github.com/alexcatdad' },
+      isPartOf: { '@type': 'WebSite', name: SITE_NAME, url: SITE_URL },
+      about: { '@type': 'SoftwareSourceCode', name: 'eu-einvoice-canonical', codeRepository: REPO_URL },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c.name, item: absolute(c.path) })),
+    },
+  ];
+}
+
 export function buildDocs(src: DocSources): DocSite {
   const lexer = new Marked({ gfm: true });
   const lexed = lexer.lexer(src.readme);
-  const links = (lexed as unknown as { links: Tokens.Generic['links'] }).links ?? {};
   const { blocks, headings } = splitReadme(lexed);
 
   // Anchors of README headings, so [text](#heading) keeps working across pages.
   const anchors = new Map<string, string>();
-  for (const h of headings) anchors.set(slugify(h.text), sectionToPage.get(h.text)?.slug ?? h.page);
+  const pageAnchors = new Set<string>();
+  for (const h of headings) {
+    const own = sectionToPage.get(h.text);
+    anchors.set(slugify(h.text), own?.slug ?? h.page);
+    if (own && own.sections[0] === h.text) pageAnchors.add(slugify(h.text));
+  }
   // docs/*.md extras
   const extraDefs = Object.entries(src.extras).map(([file, content]) => {
     const slug = file.replace(/\.md$/, '').toLowerCase();
@@ -639,201 +540,186 @@ export function buildDocs(src: DocSources): DocSite {
     };
   });
   const extras = new Map(extraDefs.map((e) => [`docs/${e.file}`, pagePath(e.slug)]));
+  const ctx: LinkContext = { anchors, pageAnchors, extras };
 
   const pages: DocPage[] = [];
-  const shellCtx: Shell = { pages, version: src.packageVersion, date: src.date };
-  const pending: {
-    page: Omit<DocPage, 'html'>;
-    body: string;
-    headings: { id: string; text: string; depth: number }[];
-    related?: PageDef['related'];
-    edit: string;
-    crumbs: { name: string; path: string }[];
-  }[] = [];
-
-  const queue = (
-    p: Omit<DocPage, 'html'>,
-    tokens: Token[],
-    ctxSelf: string,
-    opts: { related?: PageDef['related']; edit: string; crumbs: { name: string; path: string }[] },
+  const add = (
+    p: Omit<DocPage, 'markdown' | 'body' | 'jsonld' | 'route' | 'file'> & { slug: string },
+    md: string,
+    crumbs: { name: string; path: string }[],
   ) => {
-    const ctx: LinkContext = { from: p.path, anchors, extras, self: ctxSelf };
-    const { html, headings: hs } = renderBody(tokens, ctx, links);
-    pending.push({ page: p, body: html, headings: hs, ...opts });
+    const r = route(`docs/${p.slug}.html`);
+    const file = `docs/${p.slug}.md`;
+    const clean = dropImages(md).trim();
+    const { slug: _slug, ...rest } = p;
+    pages.push({
+      ...rest,
+      route: r,
+      file,
+      body: `${rewriteLinks(clean, ctx, false)}\n`,
+      markdown: `# ${p.title}\n\n${rewriteLinks(clean, ctx, true)}\n`,
+      jsonld: jsonld({ route: r, title: p.title, description: p.description }, src.date, crumbs),
+    });
   };
 
-  for (const def of PAGES) {
+  PAGES.forEach((def, order) => {
     const mine = blocks.filter((b) => b.def === def);
     if (!mine.length) throw new Error(`No README content for docs page "${def.slug}"`);
     const tokens: Token[] = [];
-    const md: string[] = [];
     mine.forEach((b, n) => {
-      const body = shiftedTokens(b, n === 0);
       if (n > 0) tokens.push({ type: 'heading', raw: '', depth: 2, text: b.heading, tokens: Lexer.lexInline(b.heading) } as Tokens.Heading);
-      tokens.push(...body.filter((t) => !isBadgeRow(t)));
+      tokens.push(...shiftedTokens(b, n === 0).filter((t) => !isBadgeRow(t)));
     });
-    const slugCtx = { from: undefined as string | undefined, anchors, extras, self: def.slug };
-    for (const t of tokens) md.push(t.type === 'heading' ? headingRaw(t as Tokens.Heading) : t.raw);
-    const markdown = `# ${def.title}\n\n${absolutizeMarkdown(md.join(''), slugCtx).trim()}\n`;
-    const path = pagePath(def.slug);
-    queue(
+    const md = tokens.map((t) => (t.type === 'heading' ? headingRaw(t as Tokens.Heading) : t.raw)).join('') + related(def.related);
+    add(
       {
-        path,
+        slug: def.slug,
         title: def.title,
         description: def.description,
         group: def.group,
         kind: 'section',
-        markdown,
         sections: def.sections.filter(Boolean),
         source: 'README.md',
+        editUrl: `${REPO_URL}/blob/main/README.md`,
+        order,
       },
-      tokens,
-      def.slug,
-      {
-        related: def.related,
-        edit: `${REPO_URL}/blob/main/README.md`,
-        crumbs:
-          def.slug === 'index'
-            ? [{ name: 'Docs', path: 'docs/index.html' }]
-            : [
-                { name: 'Docs', path: 'docs/index.html' },
-                { name: def.title, path },
-              ],
-      },
+      md,
+      def.slug === 'index'
+        ? [{ name: 'Docs', path: 'docs/index.html' }]
+        : [
+            { name: 'Docs', path: 'docs/index.html' },
+            { name: def.title, path: pagePath(def.slug) },
+          ],
     );
-  }
+  });
 
-  for (const e of extraDefs) {
-    const lexedExtra = lexer.lexer(e.content);
-    const body = lexedExtra
+  extraDefs.forEach((e, n) => {
+    const body = lexer
+      .lexer(e.content)
       .filter((t) => !(t.type === 'heading' && t.depth === 1))
       .map((t) => (t.type === 'heading' ? ({ ...t, depth: Math.max(2, t.depth) } as Tokens.Heading) : t));
-    const md = body.map((t) => (t.type === 'heading' ? headingRaw(t as Tokens.Heading) : t.raw)).join('');
-    const path = pagePath(e.slug);
-    const slugCtx = { from: undefined as string | undefined, anchors, extras, self: e.slug };
-    queue(
+    add(
       {
-        path,
+        slug: e.slug,
         title: e.title,
         description: e.description,
         group: 'Project',
         kind: 'extra',
-        markdown: `# ${e.title}\n\n${absolutizeMarkdown(md, slugCtx).trim()}\n`,
         sections: [],
         source: `docs/${e.file}`,
+        editUrl: `${REPO_URL}/blob/main/docs/${e.file}`,
+        order: PAGES.length + n,
       },
-      body,
-      e.slug,
-      {
-        edit: `${REPO_URL}/blob/main/docs/${e.file}`,
-        crumbs: [
-          { name: 'Docs', path: 'docs/index.html' },
-          { name: e.title, path },
-        ],
-      },
+      body.map((t) => (t.type === 'heading' ? headingRaw(t as Tokens.Heading) : t.raw)).join(''),
+      [
+        { name: 'Docs', path: 'docs/index.html' },
+        { name: e.title, path: pagePath(e.slug) },
+      ],
     );
-  }
+  });
 
   // One page per registry format. The `-unknown` ids are fallbacks, not formats anyone sends.
   const formats = FORMATS.filter((f) => !f.id.endsWith('-unknown'));
-  for (const f of formats) {
+  formats.forEach((f, n) => {
     const { md, description } = formatMarkdown(f, lexed);
-    const tokens = lexer.lexer(md).filter((t) => !(t.type === 'heading' && t.depth === 1));
-    const path = `docs/formats/${f.id}.html`;
-    const slugCtx = { from: undefined as string | undefined, anchors, extras, self: '' };
-    queue(
+    add(
       {
-        path,
+        slug: `formats/${f.id}`,
         title: f.name,
         description,
         group: 'Formats',
         kind: 'format',
-        markdown: absolutizeMarkdown(md, slugCtx),
         sections: [],
         source: 'README.md',
+        editUrl: `${REPO_URL}/blob/main/src/formats.ts`,
+        order: n,
       },
-      tokens,
-      '',
-      {
-        related: [
-          { href: 'docs/formats/index.html', label: 'All supported formats' },
+      md +
+        related([
+          { href: 'docs/formats/', label: 'All supported formats' },
           { href: 'conformance.html', label: 'Conformance checklist' },
-        ],
-        edit: `${REPO_URL}/blob/main/README.md`,
-        crumbs: [
-          { name: 'Docs', path: 'docs/index.html' },
-          { name: 'Formats', path: 'docs/formats/index.html' },
-          { name: f.name, path },
-        ],
-      },
+        ]),
+      [
+        { name: 'Docs', path: 'docs/index.html' },
+        { name: 'Formats', path: 'docs/formats/index.html' },
+        { name: f.name, path: `docs/formats/${f.id}.html` },
+      ],
     );
-  }
+  });
 
   // The formats index.
-  {
-    const rows = formats.map((f) => `| [${f.name}](docs/formats/${f.id}.html) | \`${f.id}\` | ${f.countries.join(', ')} | ${f.status} |`);
-    const md = [
+  add(
+    {
+      slug: 'formats/index',
+      title: 'Supported e-invoice formats',
+      description: `The ${formats.length} e-invoice formats eu-einvoice-canonical detects and converts: Peppol BIS 3, XRechnung, Factur-X, FatturaPA, KSeF, Facturae and more, by country.`,
+      group: 'Formats',
+      kind: 'formats-index',
+      sections: [],
+      source: 'src/formats.ts',
+      editUrl: `${REPO_URL}/blob/main/src/formats.ts`,
+      order: -1,
+    },
+    [
       'Every format in the registry, with the countries that send it. Each page says how the format is detected and what the converter maps; the conformance checklist shows how well each one is tested.',
       '',
       '| Format | Id | Countries | Status |',
       '|---|---|---|---|',
-      ...rows,
-    ].join('\n');
-    const path = 'docs/formats/index.html';
-    const tokens = lexer.lexer(md);
-    queue(
-      {
-        path,
-        title: 'Supported e-invoice formats',
-        description: `The ${formats.length} e-invoice formats eu-einvoice-canonical detects and converts: Peppol BIS 3, XRechnung, Factur-X, FatturaPA, KSeF, Facturae and more, by country.`,
-        group: 'Formats',
-        kind: 'formats-index',
-        markdown: `# Supported e-invoice formats\n\n${absolutizeMarkdown(md, { from: undefined, anchors, extras, self: '' })}\n`,
-        sections: [],
-        source: 'src/formats.ts',
-      },
-      tokens,
-      '',
-      {
-        related: [{ href: 'conformance.html', label: 'Conformance checklist' }],
-        edit: `${REPO_URL}/blob/main/src/formats.ts`,
-        crumbs: [
-          { name: 'Docs', path: 'docs/index.html' },
-          { name: 'Formats', path },
-        ],
-      },
-    );
-  }
+      ...formats.map(
+        (f) => `| [${f.name}](${SITE_URL}docs/formats/${f.id}.html) | \`${f.id}\` | ${f.countries.join(', ')} | ${f.status} |`,
+      ),
+    ].join('\n') + related([{ href: 'conformance.html', label: 'Conformance checklist' }]),
+    [
+      { name: 'Docs', path: 'docs/index.html' },
+      { name: 'Formats', path: 'docs/formats/index.html' },
+    ],
+  );
 
   // The landing page lists every page with its description, so each is one click from the docs root.
-  for (const q of pending) pages.push({ ...q.page, html: '' });
-  const cards = GROUPS.map((g) => {
-    const items = pages.filter((p) => p.group === g && p.kind !== 'format' && p.path !== 'docs/index.html');
-    if (!items.length) return '';
-    return `<section class="docs-group"><h2 id="${slugify(g)}-pages">${g}</h2><ul>${items
-      .map((p) => `<li><a href="${p.path.replace('docs/', '')}">${esc(p.title)}</a><span>${esc(p.description)}</span></li>`)
-      .join('')}</ul></section>`;
-  }).join('');
-  pending.forEach((q, n) => {
-    const extraHtml =
-      q.page.path === 'docs/index.html' ? `<h2 id="all-pages">All documentation pages</h2><div class="docs-groups">${cards}</div>` : '';
-    const body = q.page.path === 'docs/index.html' ? q.body + extraHtml : q.body;
-    const hs =
-      q.page.path === 'docs/index.html' ? [...q.headings, { id: 'all-pages', text: 'All documentation pages', depth: 2 }] : q.headings;
-    pages[n] = { ...q.page, html: shell(q.page, body, hs, shellCtx, { related: q.related, edit: q.edit, crumbs: q.crumbs }) };
-  });
+  const index = pages.find((p) => p.route === 'docs/');
+  if (index) {
+    const cards = GROUPS.map((g) => {
+      const items = pages.filter((p) => p.group === g && p.kind !== 'format' && p !== index);
+      return items.length ? `### ${g}\n\n${items.map((p) => `- [${p.title}](${SITE_URL}${p.route}): ${p.description}`).join('\n')}\n` : '';
+    })
+      .filter(Boolean)
+      .join('\n');
+    const all = `\n## All documentation pages\n\n${cards}`;
+    index.body += rewriteLinks(all, ctx, false);
+    index.markdown += rewriteLinks(all, ctx, true);
+  }
 
   return { pages, headings };
 }
 
-// ---------------------------------------------------------------------------
-// llms.txt, llms-full.txt, sitemap.xml, robots.txt
-// ---------------------------------------------------------------------------
+/** The sidebar of the docs, in the shape Starlight's `sidebar` option takes. */
+export function sidebar(site: DocSite): object[] {
+  const link = (p: DocPage) => ({ label: p.route === 'docs/' ? 'Overview' : p.title, link: `/${p.route}` });
+  const byOrder = (a: DocPage, b: DocPage) => a.order - b.order;
+  return GROUPS.map((g) => {
+    const items: object[] = site.pages
+      .filter((p) => p.group === g && p.kind !== 'format')
+      .sort(byOrder)
+      .map(link);
+    if (g === 'Formats')
+      items.push({
+        label: 'Every format',
+        collapsed: true,
+        items: site.pages
+          .filter((p) => p.kind === 'format')
+          .sort(byOrder)
+          .map(link),
+      });
+    return { label: g, items };
+  });
+}
 
-const mdPath = (p: DocPage) => p.path.replace(/\.html$/, '.md');
+// ---------------------------------------------------------------------------
+// llms.txt, llms-full.txt, robots.txt
+// ---------------------------------------------------------------------------
 
 export function buildLlmsTxt(site: DocSite, version: string): string {
-  const link = (p: DocPage) => `- [${p.title}](${absolute(mdPath(p))}): ${p.description}`;
+  const link = (p: DocPage) => `- [${p.title}](${SITE_URL}${p.file}): ${p.description}`;
   const section = (title: string, group: Group) =>
     `## ${title}\n\n${site.pages
       .filter((p) => p.group === group && p.kind !== 'format')
@@ -845,7 +731,7 @@ export function buildLlmsTxt(site: DocSite, version: string): string {
 > TypeScript library, command line, HTTP API, MCP server and browser converter that read any XML e-invoice sent in the EU (Peppol BIS 3, XRechnung, Factur-X/ZUGFeRD, FatturaPA, KSeF, Facturae and many national formats, ${formats.length} in all) and map it to one canonical JSON model built on EN 16931. Version ${version}, licence 0BSD. The browser converter runs entirely client-side: files are never uploaded.
 
 Machine interfaces:
-- MCP server: run \`einvoice mcp\` (stdio) to give an agent the tools detect_invoice_format, convert_invoice, validate_invoice, explain_finding, check_duplicates, match_purchase_order and list_formats. See [MCP server for AI agents](${absolute('docs/mcp.md')}).
+- MCP server: run \`einvoice mcp\` (stdio) to give an agent the tools detect_invoice_format, convert_invoice, validate_invoice, explain_finding, check_duplicates, match_purchase_order and list_formats. See [MCP server for AI agents](${SITE_URL}docs/mcp.md).
 - OpenAPI 3.1 spec: ${absolute('openapi/openapi.yaml')} (JSON: ${absolute('openapi/openapi.json')}), served by \`einvoice serve\`.
 - JSON Schemas: ${absolute('schemas/canonical-invoice.v1.schema.json')}, ${absolute('schemas/convert-result.v1.schema.json')}, ${absolute('schemas/inspect-result.v1.schema.json')}.
 - Complete documentation as one text file: ${absolute('llms-full.txt')}.
@@ -885,16 +771,11 @@ const demote = (md: string) =>
     .join('');
 
 export function buildLlmsFull(site: DocSite): string {
-  const head = `# E-invoice to JSON (eu-einvoice-canonical): full documentation\n\nThe complete documentation, generated from the repository README and docs/ folder. Index: ${absolute('llms.txt')}. Interactive converter: ${SITE_URL}. OpenAPI spec: ${absolute('openapi/openapi.yaml')}.\n`;
-  return head + site.pages.map((p) => `\n---\n\nSource: ${absolute(p.path)}\n\n${demote(p.markdown)}`).join('');
+  const head = `# E-invoice to JSON (eu-einvoice-canonical): full documentation\n\nThe complete documentation, generated from the repository README and docs/ folder. Index: ${absolute('llms.txt')}. Interactive converter: ${SITE_URL}. OpenAPI spec: ${absolute('openapi/openapi.yaml')}. MCP server: \`einvoice mcp\`.\n`;
+  return head + site.pages.map((p) => `\n---\n\nSource: ${absolute(p.route)}\n\n${demote(p.markdown)}`).join('');
 }
 
-export function buildSitemap(paths: string[], date: string): string {
-  const urls = paths.map((p) => `  <url><loc>${esc(absolute(p))}</loc><lastmod>${date}</lastmod></url>`).join('\n');
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
-}
-
-export const robotsTxt = () => `User-agent: *\nAllow: /\n\nSitemap: ${absolute('sitemap.xml')}\n`;
+export const robotsTxt = () => `User-agent: *\nAllow: /\n\nSitemap: ${absolute('sitemap-index.xml')}\n`;
 
 /** SoftwareSourceCode and WebApplication for the home page. */
 export function homeJsonLd(version: string, description: string): object[] {
@@ -914,7 +795,7 @@ export function homeJsonLd(version: string, description: string): object[] {
     {
       '@context': 'https://schema.org',
       '@type': 'WebApplication',
-      name: 'E-invoice to JSON',
+      name: SITE_NAME,
       url: SITE_URL,
       description,
       applicationCategory: 'BusinessApplication',

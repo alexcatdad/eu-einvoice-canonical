@@ -1,0 +1,39 @@
+/**
+ * A file drop zone on react-dropzone, built as a <label> around a real file input: the input keeps the keyboard focus
+ * (Enter or Space opens the picker), a click anywhere on the zone opens it, and files dropped on it are read.
+ */
+import type * as React from 'react';
+import { useDropzone } from 'react-dropzone';
+import { cn } from '@/lib/utils';
+
+export function Dropzone({
+  onFile,
+  accept,
+  className,
+  children,
+}: {
+  onFile: (file: File) => void;
+  /** The `accept` attribute of the file input. */
+  accept: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    multiple: false,
+    noClick: true,
+    noKeyboard: true,
+    useFsAccessApi: false,
+    onDrop: (files) => {
+      const f = files[0];
+      if (f) onFile(f);
+    },
+  });
+  // react-dropzone hides its input with display: none; this one stays focusable and is hidden visually only.
+  const { style: _hidden, ...input } = getInputProps({ accept }) as React.InputHTMLAttributes<HTMLInputElement>;
+  return (
+    <label {...getRootProps({ className: cn('slot', isDragActive && 'dragging', className) })}>
+      <input {...input} className="visually-hidden" />
+      {children}
+    </label>
+  );
+}

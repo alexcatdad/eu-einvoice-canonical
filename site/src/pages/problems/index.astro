@@ -1,0 +1,39 @@
+---
+/** One page for the problem type URIs (`<base>#<slug>`), from the same catalogue the server uses. */
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { PROBLEM_BASE, PROBLEMS } from '../../../../src/problems.ts';
+
+const items = Object.entries(PROBLEMS);
+---
+
+<StarlightPage
+  frontmatter={{
+    title: 'Error types',
+    description: 'The problem type URIs of the e-invoice conversion API (RFC 9457), with HTTP status and command line exit code for each.',
+  }}
+  headings={items.map(([slug, p]) => ({ depth: 2, slug, text: p.title }))}
+>
+  <p>
+    Every error of the conversion API is an <a href="https://www.rfc-editor.org/rfc/rfc9457">RFC 9457</a> problem. The <code>type</code> is
+    one of these URIs. They are the command line's exit codes 2 to 7, so a script and a service client see the same categories. Requests
+    over a size or count limit answer 413 with the first type.
+  </p>
+  <ul class="problem-list not-content">
+    {
+      items.map(([slug, p]) => (
+        <li>
+          <h2 id={slug}>
+            {p.title} <code>{slug}</code>
+          </h2>
+          <p>{p.summary}</p>
+          <p>
+            HTTP status {p.statuses.join(' or ')}. Command line exit code {p.exitCode}. Type URI:{' '}
+            <code>
+              {PROBLEM_BASE}#{slug}
+            </code>
+          </p>
+        </li>
+      ))
+    }
+  </ul>
+</StarlightPage>

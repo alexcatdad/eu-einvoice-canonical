@@ -273,7 +273,8 @@ describe('packaging', () => {
     return seen;
   }
 
-  for (const entry of ['src/index.ts', 'src/server.ts', 'site/app.ts']) {
+  // The site's converter is a React island on purpose; the library's own entry points stay free of React.
+  for (const entry of ['src/index.ts', 'src/server.ts']) {
     test(`${entry} never reaches React`, () => {
       const graph = [...importGraph(join(root, entry))];
       expect(graph.length).toBeGreaterThan(5);

@@ -1,0 +1,66 @@
+---
+/** Starlight's footer (edit link, previous and next) followed by the site colophon and links. */
+import Default from '@astrojs/starlight/components/Footer.astro';
+import { href, isTranslated, REPO_URL, routeOf, text } from '../lib/nav';
+
+const translated = isTranslated(routeOf(Astro.url.pathname));
+const i18n = (key: string) => (translated ? { 'data-i18n': key } : {});
+const links: [string, string][] = [
+  ['', 'nav.converter'],
+  ['docs/', 'nav.docs'],
+  ['docs/line-roles-and-relations/', 'footer.relations'],
+  ['eval/', 'footer.eval'],
+  ['conformance/', 'nav.formats'],
+  ['corpus/', 'nav.realworld'],
+  ['api-reference/', 'nav.api'],
+  ['api/', 'nav.typescript'],
+  ['deliverables/', 'nav.deliverables'],
+  ['llms.txt', 'footer.llms'],
+];
+---
+
+<Default />
+<div class="site-footer">
+  {/* The colophon comes from the bundled English catalogue (trusted markup), never from page input. */}
+  <p class="colophon" {...(translated ? { 'data-i18n-html': 'footer.colophon' } : {})} set:html={text('footer.colophon')} />
+  <ul class="footer-links">
+    {
+      links.map(([route, key]) => (
+        <li>
+          <a href={href(route)} {...i18n(key)}>
+            {text(key)}
+          </a>
+        </li>
+      ))
+    }
+    <li><a href={REPO_URL} {...i18n('nav.github')}>{text('nav.github')}</a></li>
+  </ul>
+</div>
+
+<style>
+  .site-footer {
+    margin-top: var(--space-6);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--rule);
+    color: var(--muted);
+    font-size: var(--sl-text-sm);
+  }
+  .colophon {
+    max-width: 44rem;
+    margin: 0 0 var(--space-3);
+  }
+  .footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .footer-links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-h);
+    color: var(--ink);
+  }
+</style>

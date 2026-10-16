@@ -17,7 +17,7 @@
     "sweep:fixtures": "bun scripts/sweep.ts test/fixtures --expect test/fixtures/expected.json",
     "build:schemas": "bun scripts/build-schemas.ts",
     "check:schemas": "bun scripts/build-schemas.ts --check",
-    "build:site": "bun run site/build.ts",
+    "build:site": "cd site && bun run build",
     "serve:site": "bun run site/serve.ts",
     "verify:bundles": "bun scripts/verify-validation-bundles.ts",
     "build:bundles": "bun scripts/build-validation-bundles.ts",

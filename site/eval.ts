@@ -66,7 +66,7 @@ async function runEngine(spec: EngineSpec): Promise<Row> {
 }
 
 function show() {
-  $('#summary').hidden = false;
+  $('#summary-box').hidden = false;
   $('#detail').hidden = false;
   $('#summary tbody').innerHTML = rows
     .map((r) =>

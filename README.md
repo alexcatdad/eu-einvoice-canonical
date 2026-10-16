@@ -14,7 +14,7 @@ One TypeScript model for every XML e-invoice you can receive from the 27 EU memb
 
 **Status:**
 - Every parser family is implemented: UBL (Peppol BIS 3 and self-billing, PINT, XRechnung, NLCIUS, CIUS-RO, CIUS-PT, HR-CIUS, OIOUBL, plain EN 16931), CII (Factur-X/ZUGFeRD 2 in every profile, XRechnung CII), Svefaktura 1.0, FatturaPA, KSeF FA(2)/FA(3)/FA_RR, Facturae, ISDOC, ebInterface, Finvoice, e-arve, eSLOG 2.0, ZUGFeRD 1.0, TEAPPSXML and myDATA.
-- Also built: CAdES/XAdES signature verification, opt-in XSD and Schematron validation for UBL and CII, field-level provenance, the `einvoice` CLI, a coverage gate, and a per-format conformance checklist (`conformance.html` on the site).
+- Also built: CAdES/XAdES signature verification, opt-in XSD and Schematron validation for UBL and CII, field-level provenance, the `einvoice` CLI, a coverage gate, and a per-format conformance checklist (the [conformance page](https://alexcatdad.github.io/eu-einvoice-canonical/conformance/) on the site).
 - How well each format is covered (fixtures, real samples, mapping source, validation) is in the generated conformance checklist, not in this README, so it cannot drift.
 
 ```
@@ -43,7 +43,7 @@ received file ──► unwrap() ──► XML payload(s) ──► detectXml() 
 | `test/` | Detection, parser, hostile-input and value tests (about 160), plus `fixtures/expected.json` for the known-answer sweep. |
 | `scripts/sweep.ts` | Runs detection over a directory tree. Without `--expect` it counts formats; with `--expect answers.json` it checks each file against a known answer and exits 1 on a mismatch. |
 | `schemas/` | Generated JSON Schemas (draft 2020-12) for `CanonicalInvoice` and `ConvertResult`. `bun run build:schemas` regenerates them from `src/canonical.ts`; CI fails when they are stale. |
-| `site/` | The browser converter published to GitHub Pages (`bun run build:site` builds it into `dist/`). |
+| `site/` | The GitHub Pages site, an Astro project with its own `package.json`: Starlight docs generated from this README (`site/docs.ts`), the browser converter as a React island, and the conformance, real-world results and API reference pages. `bun run build:site` builds it into `dist/`. |
 
 ## Site languages
 
@@ -64,7 +64,8 @@ bun test
 bun run sweep:fixtures                               # known-answer check of every fixture
 bun scripts/sweep.ts /path/to/inbound/files          # what you actually receive
 bun scripts/sweep.ts /path/to/files --expect answers.json
-bun run build:site && bun run serve:site             # the browser converter on http://localhost:4173
+(cd site && bun install --frozen-lockfile)          # once: the site's own dependencies (Astro, Starlight, TypeDoc)
+bun run build:site && bun run serve:site             # the site on http://localhost:4173/eu-einvoice-canonical/
 ```
 
 ```ts
@@ -228,7 +229,7 @@ einvoice render --as pdf  a.xml b.xml --out out/        # one <invoice-id>.pdf p
 
 - **HTML** is self-contained: inline CSS, print styles (the standalone page prints on A4 with 15 mm margins), no scripts, no links, no images and no external resources, and the standalone page carries a Content-Security-Policy (`default-src 'none'`) on top. It uses landmarks, labelled sections and `<th scope>` so screen readers can navigate it. Invoices are untrusted input: every value is escaped (ampersand, angle brackets, both quote characters and backtick; control characters dropped), attachments are listed by name only (never decoded or linked) and external URIs appear as plain text. `test/render.test.ts` injects `<script>` and attribute-breaking strings into every text field and checks that only the renderer's own tags and attributes come out.
 - **PDF** is built with pdf-lib and the standard Helvetica fonts (nothing embedded), with amounts written with the currency code. Text wraps, long line lists continue on further pages with the table header repeated, and each page says "Page x of y". Output is deterministic (the PDF dates come from the invoice issue date). The standard fonts only cover the WinAnsi (Western European) character set: accented letters outside it lose the accent (`ș` as `s`, `ł` as `l`), and other characters, such as Cyrillic, Greek or CJK, are drawn as `?` in the PDF but are intact in the HTML.
-- The demo site still builds its own sheet; it does not use these renderers.
+- The browser converter shows the Invoice tab with the React component below.
 
 ### React component
 
@@ -259,7 +260,7 @@ The result is an A4-like sheet: the title and document number on the left with t
   <Invoice invoice={invoice} lang="de" className="einvoice-shadcn" />
   ```
 - **Safe by construction.** Text reaches the DOM only as React children and attribute values, which React escapes; the components never use `dangerouslySetInnerHTML`, and `test/react.test.tsx` renders an invoice with `<script>` and attribute-breaking strings in every field. No effects and no browser globals, so it renders on the server (`renderToString`, React Server Components) as well as in the browser. Element ids come from `useId`, or from `idPrefix` when you need stable ones.
-- **Dependencies.** `react` and `react-dom` (18 or later) are optional peer dependencies; there are no others. Only the `/react` entry imports React: the main entry, the HTTP server and the site bundle never do, which a test checks by walking their import graphs.
+- **Dependencies.** `react` and `react-dom` (18 or later) are optional peer dependencies; there are no others. Only the `/react` entry imports React: the main entry and the HTTP server never do, which a test checks by walking their import graphs.
 - **Demo.** `bun examples/react/render.tsx invoice.xml de > invoice.html` server-renders any supported file with the component into a standalone page.
 
 ## Writing UBL and CII
@@ -329,7 +330,7 @@ relations: [
 - Also found: line allowances whose base amount is another line (`allowance-base`), notes naming another line (`note-reference`), and shared item ids or order-line references (`same-item`, `same-order-line`, always `review`).
 - `method` says how a relation was found (`rule`, `arithmetic` or `model`); `confidence` is `proven`, `likely` or `review`, and is absent for structural rules that cannot be wrong.
 
-An optional language model can label what the rules leave as plain items (freight, labour, discount in Swedish and other languages) and propose links. It runs in the browser only (`site/model.ts`: WebLLM with Qwen3, or Chrome's Gemini Nano), is held to a JSON schema, never overrides a rule and marks everything `method: 'model'`, `confidence: 'review'`. `applyModelLabels(invoice, labeller)` merges its output. `site/eval.html` (built next to the converter) scores the rules and the models on the labelled set in `src/relations/labelled.ts` and records accuracy, time, download size and memory.
+An optional language model can label what the rules leave as plain items (freight, labour, discount in Swedish and other languages) and propose links. It runs in the browser only (`site/model.ts`: WebLLM with Qwen3, or Chrome's Gemini Nano), is held to a JSON schema, never overrides a rule and marks everything `method: 'model'`, `confidence: 'review'`. `applyModelLabels(invoice, labeller)` merges its output. The [evaluation page](https://alexcatdad.github.io/eu-einvoice-canonical/eval/) (`site/eval.ts`) scores the rules and the models on the labelled set in `src/relations/labelled.ts` and records accuracy, time, download size and memory.
 
 ## JSON Schema
 
@@ -350,7 +351,7 @@ The library exports `schemaVersion` (`'v1'`), the major version in the schema fi
 
 ## Conversion API (HTTP)
 
-`einvoice serve` starts a small stateless server that implements [`openapi/openapi.yaml`](openapi/openapi.yaml) (OpenAPI 3.1) with the same `convert()`, `inspect()` and `detectXml()` as the library. The rendered reference is at [/api.html](https://alexcatdad.github.io/eu-einvoice-canonical/api.html) on the site.
+`einvoice serve` starts a small stateless server that implements [`openapi/openapi.yaml`](openapi/openapi.yaml) (OpenAPI 3.1) with the same `convert()`, `inspect()` and `detectXml()` as the library. The rendered reference is at [/api-reference/](https://alexcatdad.github.io/eu-einvoice-canonical/api-reference/) on the site.
 
 ```sh
 einvoice serve --port 8080 --cors          # or: bun src/cli.ts serve
@@ -382,7 +383,7 @@ Contract tests (`test/api-contract.test.ts`) start the server in-process, send e
 
 ## Deliverables and versioning
 
-What the project publishes, all from the same TypeScript sources and listed on the [Deliverables page](https://alexcatdad.github.io/eu-einvoice-canonical/deliverables.html):
+What the project publishes, all from the same TypeScript sources and listed on the [Deliverables page](https://alexcatdad.github.io/eu-einvoice-canonical/deliverables/):
 
 | Deliverable | Where | Version |
 | --- | --- | --- |

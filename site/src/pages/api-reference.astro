@@ -1,0 +1,87 @@
+---
+/**
+ * The HTTP API reference, rendered by Scalar from the self-contained copy of the spec that site/prepare.ts writes.
+ * Scalar's bundle is served from this site (public/scalar/), never from a CDN.
+ */
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { ScalarComponent } from '@scalar/astro';
+import { href } from '../lib/nav';
+---
+
+<StarlightPage
+  frontmatter={{
+    title: 'HTTP API reference',
+    description: 'OpenAPI 3.1 reference for the e-invoice conversion API: convert, inspect, detect, formats and schemas.',
+    template: 'splash',
+    tableOfContents: false,
+    pagefind: false,
+  }}
+>
+  <div class="not-content api-reference">
+    <ul class="links api-files">
+      <li><a href={href('openapi/openapi.yaml')}>openapi.yaml</a></li>
+      <li><a href={href('openapi/openapi.json')}>openapi.json</a></li>
+      <li><a href={href('openapi/openapi.bundled.json')}>Self-contained JSON</a></li>
+      <li><a href={href('problems/')}>Error types</a></li>
+      <li><a href={href('docs/http-api/')}>Guide</a></li>
+    </ul>
+    <ScalarComponent
+      renderMode="client"
+      configuration={{
+        url: href('openapi/openapi.bundled.json'),
+        cdn: href('scalar/standalone.js'),
+        theme: 'none',
+        withDefaultFonts: false,
+        hideClientButton: true,
+        hideDownloadButton: false,
+        hideDarkModeToggle: true,
+        showDeveloperTools: 'never',
+        telemetry: false,
+        defaultOpenAllTags: true,
+        layout: 'modern',
+      }}
+    />
+    <noscript><p>The reference needs JavaScript. Read <a href={href('openapi/openapi.yaml')}>openapi.yaml</a> directly.</p></noscript>
+  </div>
+</StarlightPage>
+
+<style is:global>
+  /* Scalar with theme "none": its variables, set to the site's palette. */
+  .api-reference {
+    --scalar-custom-header-height: var(--sl-nav-height);
+    --scalar-font: var(--sans);
+    --scalar-font-code: var(--mono);
+    --scalar-radius: 3px;
+    --scalar-radius-lg: 3px;
+    --scalar-radius-xl: 3px;
+    --scalar-background-1: var(--paper);
+    --scalar-background-2: color-mix(in srgb, var(--paper) 92%, var(--ink));
+    --scalar-background-3: color-mix(in srgb, var(--paper) 84%, var(--ink));
+    --scalar-background-accent: color-mix(in srgb, var(--ink) 10%, transparent);
+    --scalar-color-1: var(--text);
+    --scalar-color-2: var(--text);
+    --scalar-color-3: var(--muted);
+    --scalar-color-accent: var(--ink);
+    --scalar-border-color: var(--rule);
+    --scalar-sidebar-background-1: var(--desk);
+    --scalar-sidebar-color-1: var(--text);
+    --scalar-sidebar-color-2: var(--muted);
+    --scalar-sidebar-color-active: var(--ink);
+    --scalar-sidebar-search-background: var(--paper);
+    --scalar-sidebar-search-color: var(--muted);
+    --scalar-sidebar-border-color: var(--rule);
+    --scalar-button-1: var(--ink);
+    --scalar-button-1-color: var(--on-ink);
+    --scalar-button-1-hover: color-mix(in srgb, var(--ink) 82%, var(--text));
+    --scalar-color-green: var(--ok);
+    --scalar-color-red: var(--pen);
+    --scalar-color-orange: var(--warn);
+    --scalar-color-blue: var(--ink);
+  }
+  .main-pane:has(.api-reference) .sl-container {
+    max-width: none;
+  }
+  .api-files {
+    margin-bottom: var(--space-3);
+  }
+</style>

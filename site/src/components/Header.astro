@@ -1,0 +1,259 @@
+---
+/**
+ * The site header: wordmark, the site navigation, search, the language picker on translated pages, theme and GitHub.
+ * Below 64rem the navigation folds into a "Menu" disclosure, so the header never wraps or scrolls sideways.
+ */
+import Search from '@astrojs/starlight/components/Search.astro';
+import ThemeSelect from '@astrojs/starlight/components/ThemeSelect.astro';
+import { href, isTranslated, NAV, REPO_URL, routeOf, text } from '../lib/nav';
+import SiteTitle from './SiteTitle.astro';
+
+const route = routeOf(Astro.url.pathname);
+const translated = isTranslated(route);
+const i18n = (key: string) => (translated ? { 'data-i18n': key } : {});
+const items = NAV.map((n) => ({ ...n, current: n.match(route) }));
+---
+
+<div class="header">
+  <div class="title-wrapper"><SiteTitle /></div>
+  <nav class="site-nav" aria-label={text('nav.label')} {...(translated ? { 'data-i18n-attr': 'aria-label:nav.label' } : {})}>
+    <ul>
+      {
+        items.map((n) => (
+          <li>
+            <a href={href(n.route)} aria-current={n.current ? 'page' : undefined} {...i18n(n.key)}>
+              {text(n.key)}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+  <div class="right-group print:hidden">
+    <Search />
+    {
+      translated && (
+        <div class="lang">
+          <label for="lang-select" data-i18n="lang.label">
+            {text('lang.label')}
+          </label>
+          <span class="lang-code" aria-hidden="true">
+            EN
+          </span>
+          <select id="lang-select" />
+        </div>
+      )
+    }
+    <div class="wide-only"><ThemeSelect /></div>
+    <a class="github wide-only" href={REPO_URL} {...i18n('nav.github')}>{text('nav.github')}</a>
+    <details class="site-menu">
+      <summary>Menu</summary>
+      <div class="site-menu-panel">
+        <nav aria-label={text('nav.label')}>
+          <ul>
+            {
+              items.map((n) => (
+                <li>
+                  <a href={href(n.route)} aria-current={n.current ? 'page' : undefined} {...i18n(n.key)}>
+                    {text(n.key)}
+                  </a>
+                </li>
+              ))
+            }
+            <li><a href={REPO_URL} {...i18n('nav.github')}>{text('nav.github')}</a></li>
+          </ul>
+        </nav>
+        <ThemeSelect />
+      </div>
+    </details>
+  </div>
+</div>
+
+<script>
+  // The phone menu closes on Escape and on a click outside it, like a menu would.
+  for (const menu of document.querySelectorAll<HTMLDetailsElement>('details.site-menu')) {
+    document.addEventListener('click', (e) => {
+      if (menu.open && !menu.contains(e.target as Node)) menu.open = false;
+    });
+    menu.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && menu.open) {
+        menu.open = false;
+        menu.querySelector('summary')?.focus();
+      }
+    });
+  }
+</script>
+
+<style>
+  .header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    height: 100%;
+  }
+  .title-wrapper {
+    display: flex;
+    min-width: 0;
+    flex: none;
+  }
+  .site-nav {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .site-nav ul,
+  .site-menu ul {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .site-nav ul {
+    gap: var(--space-1);
+  }
+  .site-nav a,
+  .site-menu li a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-h);
+    padding: 0 var(--space-2);
+    color: var(--text);
+    font-weight: 500;
+    font-size: var(--sl-text-sm);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+  }
+  .site-nav a:hover {
+    color: var(--ink);
+  }
+  .site-nav a[aria-current='page'] {
+    color: var(--ink);
+    font-weight: 700;
+    border-bottom-color: var(--pink-edge);
+  }
+  .right-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-left: auto;
+    flex: none;
+  }
+  .github {
+    color: var(--text);
+    font-size: var(--sl-text-sm);
+    font-weight: 500;
+  }
+  .lang {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--sl-text-sm);
+  }
+  .lang select {
+    min-height: var(--control-h);
+    padding: 0 var(--space-2);
+    border: 1px solid var(--rule);
+    border-radius: var(--r);
+    background: var(--paper);
+    color: var(--text);
+    font: inherit;
+  }
+  .lang-code {
+    display: none;
+  }
+  .site-menu {
+    display: none;
+    position: relative;
+  }
+  .site-menu summary {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-h);
+    padding: 0 var(--space-3);
+    border: 1px solid var(--rule);
+    border-radius: var(--r);
+    background: var(--paper);
+    color: var(--ink);
+    font-weight: 700;
+    font-size: var(--sl-text-sm);
+    cursor: pointer;
+    list-style: none;
+  }
+  .site-menu summary::-webkit-details-marker {
+    display: none;
+  }
+  .site-menu-panel {
+    position: absolute;
+    inset-inline-end: 0;
+    top: calc(100% + var(--space-2));
+    z-index: 30;
+    display: grid;
+    gap: var(--space-3);
+    min-width: 14rem;
+    padding: var(--space-3);
+    border: 1px solid var(--rule);
+    border-radius: var(--r);
+    background: var(--paper);
+    box-shadow: var(--sl-shadow-md);
+  }
+  .site-menu ul {
+    flex-direction: column;
+  }
+  .site-menu li a {
+    width: 100%;
+  }
+  .site-menu li a[aria-current='page'] {
+    color: var(--ink);
+    font-weight: 700;
+    border-bottom-color: var(--pink-edge);
+  }
+  @media (max-width: 64rem) {
+    .site-nav,
+    .wide-only {
+      display: none;
+    }
+    .site-menu {
+      display: block;
+    }
+  }
+  /* Phones: the language select is drawn as a short code (EN, DE...) over a transparent native select. */
+  @media (max-width: 40rem) {
+    .header {
+      gap: var(--space-2);
+    }
+    .right-group {
+      gap: var(--space-2);
+    }
+    .lang label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    .lang-code {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: var(--control-h);
+      min-height: var(--control-h);
+      border: 1px solid var(--rule);
+      border-radius: var(--r);
+      background: var(--paper);
+      color: var(--ink);
+      font-weight: 700;
+      pointer-events: none;
+    }
+    .lang select {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      opacity: 0;
+    }
+    .lang:focus-within .lang-code {
+      outline: 3px solid var(--ink);
+      outline-offset: 2px;
+    }
+  }
+</style>

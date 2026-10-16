@@ -47,10 +47,14 @@ jobs:
           if-no-files-found: ignore
       - name: Known-answer detection sweep over the fixtures
         run: bun run sweep:fixtures
-      - name: Install TypeDoc (its own package, because it needs the JavaScript TypeScript compiler)
+      - name: Install the site's dependencies (Astro, Starlight, TypeDoc, React; its own package)
         run: bun install --frozen-lockfile
-        working-directory: typedoc
-      - name: Build the site (browser converter, API reference, TypeDoc)
+        working-directory: site
+      - name: Latest corpus report for the Real-world results page (when there is one)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/fetch-corpus-report.sh
+      - name: Build the site (docs from the README, converter, conformance checklist in the job summary) and check its links
         run: bun run build:site
       - name: Performance gate (quick subset against bench/baseline.json)
         run: bun run bench:check
@@ -61,12 +65,11 @@ jobs:
           name: bench-quick
           path: bench/last-quick.json
           if-no-files-found: ignore
-      - name: Conformance checklist (job summary and site page)
-        run: bun scripts/conformance.ts --html dist/conformance.html --json dist/conformance.json
-      - name: Real-world results page (latest corpus report, when there is one)
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: scripts/fetch-corpus-report.sh dist
+      - name: Accessibility and privacy gate (axe in light and dark, 320 and 375 px, keyboard focus, outside requests)
+        working-directory: site
+        run: |
+          bunx playwright install --with-deps chromium
+          bun a11y.ts
       - name: Upload the site
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5

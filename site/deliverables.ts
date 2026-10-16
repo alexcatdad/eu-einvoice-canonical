@@ -36,18 +36,6 @@ async function showRelease(): Promise<void> {
   }
 }
 
-/** corpus.html exists only once a corpus report has been published; until then the link points at the workflow. */
-async function checkCorpusPage(): Promise<void> {
-  const link = document.getElementById('corpus-page');
-  if (!link) return;
-  try {
-    const res = await fetch('corpus.html', { method: 'HEAD' });
-    if (!res.ok) link.closest('li')?.remove();
-  } catch {
-    link.closest('li')?.remove();
-  }
-}
-
 initLanguage();
 initSwitcher();
 onLanguageChange(() => {
@@ -62,4 +50,3 @@ document.getElementById('release-lookup')?.addEventListener('click', (e) => {
     else button.disabled = false;
   });
 });
-void checkCorpusPage();

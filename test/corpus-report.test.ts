@@ -1,6 +1,15 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
-import { aggregate, type FileResult, linkHtml, normaliseMessage, renderHtml, renderMarkdown, summarise } from '../scripts/corpus-lib.js';
+import {
+  aggregate,
+  describeReport,
+  type FileResult,
+  linkHtml,
+  normaliseMessage,
+  renderHtml,
+  renderMarkdown,
+  summarise,
+} from '../scripts/corpus-lib.js';
 import { convert } from '../src/index.js';
 import { fixturePath } from './helpers.js';
 
@@ -77,9 +86,10 @@ test('aggregate counts per corpus and format, clusters errors and rates BR-CO wa
   expect(md).toContain('### Top 20 error messages');
   expect(md).toContain('Timed out or crashed');
   const html = renderHtml(report);
-  expect(html).toContain('<title>Real-world results');
+  expect(html).toContain('<h2>By format</h2>');
   expect(html).toContain('Bad value');
-  expect(linkHtml(report)).toContain('href="corpus.html"');
+  expect(describeReport(report)).toContain(`${report.totals.files} files`);
+  expect(linkHtml(report)).toContain('href="/eu-einvoice-canonical/corpus/"');
 });
 
 test('the page escapes messages from files', () => {

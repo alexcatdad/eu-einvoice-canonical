@@ -1,0 +1,163 @@
+---
+/**
+ * Everything the project publishes. Versions and the schema table come from the files, so the page cannot go stale.
+ * The text is English here and marked with catalogue keys; site/deliverables.ts swaps in the reader's language.
+ */
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import pkg from '../../../package.json' with { type: 'json' };
+import en from '../../i18n/en.json' with { type: 'json' };
+import { href, REPO_URL } from '../lib/nav';
+
+const root = join(process.cwd(), '..');
+const spec = JSON.parse(readFileSync(join(root, 'openapi/openapi.json'), 'utf8')) as { info: { version: string } };
+const params = { package: pkg.version, schema: 'v1', spec: spec.info.version };
+const paramsAttr = JSON.stringify(params);
+const msg = (key: keyof typeof en) => en[key].replace(/\{(\w+)\}/g, (m, name: string) => (params as Record<string, string>)[name] ?? m);
+/** Message keys of the schema descriptions; the English text is written into the page. */
+const DESCRIBED: Record<string, keyof typeof en> = {
+  'canonical-invoice': 'deliv.schemaCanonical',
+  'convert-result': 'deliv.schemaConvert',
+  'inspect-result': 'deliv.schemaInspect',
+};
+const schemas = readdirSync(join(root, 'schemas'))
+  .filter((f) => f.endsWith('.schema.json'))
+  .map((file) => {
+    const m = /^(.+)\.(v\d+)\.schema\.json$/.exec(file);
+    const name = m?.[1] ?? file;
+    return { name, version: m?.[2] ?? '', file, key: DESCRIBED[name] };
+  });
+schemas.push({ name: 'formats', version: 'v1', file: 'formats.json', key: 'deliv.schemaFormats' });
+---
+
+<StarlightPage
+  frontmatter={{ title: en['deliv.title'], description: en['deliv.description'], template: 'splash', tableOfContents: false }}
+>
+  <div class="not-content deliverables">
+    <p class="lede" data-i18n="deliv.lede">{en['deliv.lede']}</p>
+    {/* Catalogue markup (trusted, bundled); the parameters are versions read from the repository's own files. */}
+    <p class="privacy" data-i18n-html="deliv.versions" data-i18n-params={paramsAttr} set:html={msg('deliv.versions')} />
+
+    <ul class="doc-grid">
+      <li class="deliverable">
+        <h2 class="deliverable-title" data-i18n="deliv.libTitle">{en['deliv.libTitle']}</h2>
+        <p data-i18n-html="deliv.libBody" set:html={en['deliv.libBody']} />
+        <span class="version" data-i18n="deliv.libVersion" data-i18n-params={paramsAttr}>{msg('deliv.libVersion')}</span>
+        <ul class="links">
+          <li><a href={href('api/')} data-i18n="deliv.libDocs">{en['deliv.libDocs']}</a></li>
+          <li><a href={`${REPO_URL}/blob/main/src/canonical.ts`}>canonical.ts</a></li>
+          <li><a href={`${REPO_URL}#readme`} data-i18n="deliv.libReadme">{en['deliv.libReadme']}</a></li>
+        </ul>
+      </li>
+      <li class="deliverable">
+        <h2 class="deliverable-title" data-i18n="deliv.apiTitle">{en['deliv.apiTitle']}</h2>
+        <p data-i18n-html="deliv.apiBody" set:html={en['deliv.apiBody']} />
+        <span class="version" data-i18n="deliv.apiVersion" data-i18n-params={paramsAttr}>{msg('deliv.apiVersion')}</span>
+        <ul class="links">
+          <li><a href={href('api-reference/')} data-i18n="deliv.apiReference">{en['deliv.apiReference']}</a></li>
+          <li><a href={href('openapi/openapi.yaml')}>openapi.yaml</a></li>
+          <li><a href={href('openapi/openapi.json')}>openapi.json</a></li>
+          <li><a href={href('problems/')} data-i18n="deliv.apiErrors">{en['deliv.apiErrors']}</a></li>
+        </ul>
+      </li>
+      <li class="deliverable">
+        <h2 class="deliverable-title" data-i18n="deliv.cliTitle">{en['deliv.cliTitle']}</h2>
+        <p data-i18n-html="deliv.cliBody" set:html={en['deliv.cliBody']} />
+        <span class="version" id="release-version" data-i18n="deliv.cliLatest">{en['deliv.cliLatest']}</span>
+        <div class="release-lookup">
+          <button type="button" class="btn secondary" id="release-lookup" data-i18n="deliv.cliLookup">{en['deliv.cliLookup']}</button>
+          <p class="version" data-i18n="deliv.cliLookupNote">{en['deliv.cliLookupNote']}</p>
+        </div>
+        <ul class="links" id="release-assets">
+          <li><a href={`${REPO_URL}/releases/latest`} data-i18n="deliv.cliGithub">{en['deliv.cliGithub']}</a></li>
+        </ul>
+      </li>
+      <li class="deliverable">
+        <h2 class="deliverable-title" data-i18n="deliv.browserTitle">{en['deliv.browserTitle']}</h2>
+        <p data-i18n="deliv.browserBody">{en['deliv.browserBody']}</p>
+        <ul class="links">
+          <li><a href={href('')} data-i18n="deliv.browserOpen">{en['deliv.browserOpen']}</a></li>
+        </ul>
+      </li>
+      <li class="deliverable">
+        <h2 class="deliverable-title" data-i18n="deliv.confTitle">{en['deliv.confTitle']}</h2>
+        <p data-i18n="deliv.confBody">{en['deliv.confBody']}</p>
+        <ul class="links">
+          <li><a href={href('conformance/')} data-i18n="deliv.confLink">{en['deliv.confLink']}</a></li>
+        </ul>
+      </li>
+      <li class="deliverable">
+        <h2 class="deliverable-title" data-i18n="deliv.corpusTitle">{en['deliv.corpusTitle']}</h2>
+        <p data-i18n="deliv.corpusBody">{en['deliv.corpusBody']}</p>
+        <ul class="links">
+          <li><a href={href('corpus/')} data-i18n="deliv.corpusPage">{en['deliv.corpusPage']}</a></li>
+          <li><a href={`${REPO_URL}/actions/workflows/corpus.yml`} data-i18n="deliv.corpusRuns">{en['deliv.corpusRuns']}</a></li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2 id="schemas" data-i18n="deliv.schemasTitle">{en['deliv.schemasTitle']}</h2>
+    <p data-i18n="deliv.schemasBody">{en['deliv.schemasBody']}</p>
+    <div class="table-scroll" tabindex="0" role="region" aria-labelledby="schemas">
+      <table class="doc-table">
+        <thead>
+          <tr>
+            <th scope="col" data-i18n="deliv.thSchema">{en['deliv.thSchema']}</th>
+            <th scope="col" data-i18n="deliv.thDescribes">{en['deliv.thDescribes']}</th>
+            <th scope="col" data-i18n="deliv.thVersion">{en['deliv.thVersion']}</th>
+            <th scope="col" data-i18n="deliv.thFile">{en['deliv.thFile']}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            schemas.map((s) => (
+              <tr>
+                <td>
+                  <code>{s.name}</code>
+                </td>
+                {s.key ? <td data-i18n-html={s.key} set:html={en[s.key]} /> : <td />}
+                <td>
+                  <code>{s.version}</code>
+                </td>
+                <td>
+                  <a href={href(`schemas/${s.file}`)}>{s.file}</a>
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="run" data-i18n="deliv.runTitle">{en['deliv.runTitle']}</h2>
+    <pre
+      tabindex="0"><code>einvoice serve --port 8080 --cors
+docker build -t einvoice-api . &amp;&amp; docker run --rm -p 8080:8080 einvoice-api
+
+curl -X POST --data-binary @invoice.xml -H 'Content-Type: application/xml' \
+  'http://localhost:8080/v1/convert?relations=true'</code></pre>
+  </div>
+</StarlightPage>
+
+<script>
+  import '../../deliverables.ts';
+</script>
+
+<style>
+  .deliverables > h2 {
+    margin: var(--space-6) 0 var(--space-3);
+  }
+  .deliverables > p {
+    max-width: 46rem;
+  }
+  .deliverables pre {
+    margin: var(--space-3) 0 0;
+    padding: var(--space-4);
+    overflow-x: auto;
+    border: 1px solid var(--rule);
+    border-radius: var(--r);
+    background: var(--paper);
+    font-size: 0.875rem;
+  }
+</style>

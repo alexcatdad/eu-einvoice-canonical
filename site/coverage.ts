@@ -3,6 +3,7 @@
  * so the build can write the grid into the Formats page and the converter can reuse the short names.
  */
 import { EU_COUNTRIES, FORMATS, type FormatDef, IMPLEMENTED_FAMILIES } from '../src/index.js';
+import { siteHref } from './site.js';
 
 const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -67,11 +68,11 @@ export function shortName(f: FormatDef) {
 
 const regions = new Intl.DisplayNames(['en'], { type: 'region' });
 
-/** The country-by-country grid as static English HTML; each chip links to the format's page under `root`. */
-export function coverageHtml(root: string): string {
+/** The country-by-country grid as static English HTML; each chip links to the format's page. */
+export function coverageHtml(): string {
   const chip = (f: FormatDef) => {
     const ok = converts(f);
-    return `<li class="fmt ${ok ? 'converts' : 'identifies'}"><a href="${root}docs/formats/${esc(f.id)}.html" title="${esc(f.notes)}">${esc(shortName(f))}<span class="visually-hidden">${ok ? ', converted to canonical JSON' : ', identified, parser still to come'}</span></a></li>`;
+    return `<li class="fmt ${ok ? 'converts' : 'identifies'}"><a href="${esc(siteHref(`docs/formats/${f.id}/`))}" title="${esc(f.notes)}">${esc(shortName(f))}<span class="visually-hidden">${ok ? ', converted to canonical JSON' : ', identified, parser still to come'}</span></a></li>`;
   };
   const eu = new Set<string>(EU_COUNTRIES);
   const all = FORMATS as readonly FormatDef[];
@@ -89,7 +90,7 @@ export function coverageHtml(root: string): string {
         cc,
         formats.length
           ? formats.map(chip).join('')
-          : `<li class="fmt converts"><a href="${root}docs/formats/peppol-bis3.html">Peppol BIS 3</a></li>`,
+          : `<li class="fmt converts"><a href="${esc(siteHref('docs/formats/peppol-bis3/'))}">Peppol BIS 3</a></li>`,
       );
     })
     .join('');

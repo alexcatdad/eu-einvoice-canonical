@@ -4,7 +4,7 @@ What protects releases and CI, how to verify a download, and the repository sett
 
 ## In place
 
-- **Pinned actions.** Every third-party GitHub Action is pinned to a full commit SHA with a version comment. Dependabot (`.github/dependabot.yml`) proposes updates weekly, grouped, for GitHub Actions, npm (root and `typedoc/`; Dependabot maintains `bun.lock` through the npm ecosystem) and the Docker base image.
+- **Pinned actions.** Every third-party GitHub Action is pinned to a full commit SHA with a version comment. Dependabot (`.github/dependabot.yml`) proposes updates weekly, grouped, for GitHub Actions, npm (root and `site/`; Dependabot maintains `bun.lock` through the npm ecosystem) and the Docker base image.
 - **Least privilege.** Each workflow starts from `permissions: {}` and each job declares only what it needs. Checkouts use `persist-credentials: false` except in the two workflows that push a branch (`corpus-pins.yml`, `trust-lists.yml`).
 - **Frozen installs.** Workflows use `bun install --frozen-lockfile`; Bun and the base image are pinned to 1.4.2.
 - **Release artifacts** (`release.yml`, on `v*` tags):
