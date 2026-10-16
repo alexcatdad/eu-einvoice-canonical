@@ -104,7 +104,7 @@ const SERVICES: Record<string, [string, string][]> = {
   notYetGranted: [['granted', '2026-03-01T00:00:00Z']],
 };
 
-async function world(opts: { nextUpdate?: string; tamper?: (xml: string) => string; wrongListSigner?: boolean } = {}): Promise<World> {
+async function identities() {
   const lotlSigner = await makeIdentity('LOTL Signer', 'rsa', undefined, false, FROM);
   const listSigner = await makeIdentity('AA List Signer', 'ec', undefined, false, FROM);
   const stranger = await makeIdentity('Not Published Signer', 'rsa', undefined, false, FROM);
@@ -131,6 +131,16 @@ async function world(opts: { nextUpdate?: string; tamper?: (xml: string) => stri
     false,
     FROM,
   );
+  return { lotlSigner, listSigner, stranger, leaves, svcs };
+}
+
+// Only the identities are reused. Each world signs new lists and owns its fetch state and snapshot.
+let sharedIdentities: ReturnType<typeof identities> | undefined;
+async function world(
+  opts: { nextUpdate?: string; tamper?: (xml: string) => string; wrongListSigner?: boolean; freshIdentities?: boolean } = {},
+): Promise<World> {
+  sharedIdentities ??= identities();
+  const { lotlSigner, listSigner, stranger, leaves, svcs } = await (opts.freshIdentities ? identities() : sharedIdentities);
 
   const nextUpdate = opts.nextUpdate ?? '2026-07-01T00:00:00Z';
   const lotl = await signList(
@@ -160,6 +170,18 @@ const check = async (w: World, leaf: string, now = NOW) =>
   (await inspect(await signedBy(w.leaves[leaf]!), 'x.xsig', undefined, { euTrust: w.snapshot, now })).documents[0]!.payload.signatures[0]!;
 
 describe('loading the trusted lists', () => {
+  test('worlds keep served bytes, fetch history and parsed snapshots isolated', async () => {
+    const first = await world();
+    const second = await world();
+    first.serve.set(TSL_URL, new Error('first world only'));
+    first.fetched.push('https://first.test/only');
+    first.snapshot.lists[0]!.services.length = 0;
+    assert.ok((await second.fetch(TSL_URL)).byteLength > 0);
+    assert.ok(!second.fetched.includes('https://first.test/only'));
+    assert.ok(second.snapshot.lists[0]!.services.length > 0);
+    assert.equal((await check(second, 'valid')).euTrust?.qualified, true);
+  });
+
   test('parses the LOTL pointers and the CA/QC services with their history', async () => {
     const w = await world();
     const parsed = parseTrustedList(new TextDecoder().decode(w.serve.get(TSL_URL) as Uint8Array));
@@ -203,7 +225,7 @@ describe('loading the trusted lists', () => {
     const again = await loadTrustLists({ fetch: w.fetch, previous: w.snapshot, now: NOW });
     assert.equal(again.lotl.pinned, 'previous-snapshot');
 
-    const other = await world(); // a different, equally valid LOTL signer
+    const other = await world({ freshIdentities: true }); // a different, equally valid LOTL signer
     await assert.rejects(loadTrustLists({ fetch: other.fetch, previous: w.snapshot, now: NOW }), (e: Error) => {
       assert.ok(e instanceof LotlError);
       assert.match(e.message, /not published as the signer/);

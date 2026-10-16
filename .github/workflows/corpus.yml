@@ -36,6 +36,12 @@ jobs:
         with:
           bun-version: 1.4.2
       - run: bun install --frozen-lockfile
+      - name: Restore pinned corpus clones
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: test/corpus/repos
+          key: corpus-${{ runner.os }}-${{ hashFiles('scripts/fetch-corpora.sh') }}
+          restore-keys: corpus-${{ runner.os }}-
       - name: Fetch the corpora at their pinned commits
         run: scripts/fetch-corpora.sh test/corpus/repos | tee corpus-pins.txt
       - name: Coverage sweep (never fails the job)

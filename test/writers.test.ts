@@ -428,12 +428,17 @@ describe('written documents validate', () => {
   test('EN 16931 fixtures that are valid as received stay valid when written', { timeout: 300_000 }, async () => {
     const problems: string[] = [];
     let checked = 0;
+    const timings: { file: string; ms: number }[] = [];
     for (const { label, file, inv } of converted) {
       if (!EN_FORMATS.has(inv.source.format) || converted.filter((c) => c.file === file).length !== 1) continue;
+      const started = performance.now();
       const received = await convert(new Uint8Array(readFileSync(join(FIXTURES, file))), file, undefined, { validate: true });
       const o = received.outcomes[0];
       const v = o?.status === 'ok' ? o.invoices[0].source.validation : undefined;
-      if (v?.schema !== 'passed' || v.semantic !== 'passed') continue; // only documents that are valid as received can be held to it
+      if (v?.schema !== 'passed' || v.semantic !== 'passed') {
+        timings.push({ file, ms: performance.now() - started });
+        continue; // only documents that are valid as received can be held to it
+      }
       for (const target of TARGETS) {
         const xml = write(inv, target);
         const w = await validate({ xml }, detectXml(xml));
@@ -449,7 +454,10 @@ describe('written documents validate', () => {
           }
         }
       }
+      timings.push({ file, ms: performance.now() - started });
     }
+    if (process.env.CI || process.env.CI_PROFILE)
+      console.log('[writers] slowest validation round trips:', timings.sort((a, b) => b.ms - a.ms).slice(0, 5));
     assert.ok(checked >= 6, `only ${checked} written documents were validated`);
     assert.deepEqual(problems, []);
   });

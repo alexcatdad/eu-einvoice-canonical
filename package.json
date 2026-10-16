@@ -25,7 +25,10 @@
     "bench:check": "bun bench/run.ts --quick --check",
     "build:cli": "bun build --compile src/cli.ts --outfile dist/einvoice",
     "build:react-css": "bun scripts/build-react-css.ts",
-    "check:react-css": "bun scripts/build-react-css.ts --check"
+    "check:react-css": "bun scripts/build-react-css.ts --check",
+    "check:lib": "bun run lint:ci && bun run check:schemas && bun run check:react-css && bun run typecheck && bun run verify:bundles && bun run coverage && bun run coverage:check && bun run sweep:fixtures",
+    "check:site": "bun run build:site && bun run --cwd site typecheck && bun run bench:check",
+    "check:a11y": "bun run --cwd site a11y"
   },
   "author": "",
   "license": "0BSD",

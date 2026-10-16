@@ -66,7 +66,16 @@ bun scripts/sweep.ts /path/to/inbound/files          # what you actually receive
 bun scripts/sweep.ts /path/to/files --expect answers.json
 (cd site && bun install --frozen-lockfile)          # once: the site's own dependencies (Astro, Starlight, TypeDoc)
 bun run build:site && bun run serve:site             # the site on http://localhost:4173/eu-einvoice-canonical/
+bun run check:lib                                   # all library CI gates, including coverage and generated files
+bun run check:site                                  # build, site typecheck, benchmark and bundle-size gates
+(cd site && bunx playwright install --with-deps --only-shell chromium) # once: accessibility browser
+bun run check:a11y                                  # accessibility/privacy gates against the built dist/
 ```
+
+CI runs the library and site checks in parallel and requires both plus the Docker smoke test before deployment.
+The optional `scripts/fetch-corpus-report.sh` downloads the latest corpus report before building the site; local
+checks work without it. Accessibility checks print per-scenario timings; `A11Y_JOBS=1 bun run check:a11y` runs
+them serially for profiling (the default is two isolated browser contexts at a time).
 
 ```ts
 import { convert } from 'eu-einvoice-canonical';
