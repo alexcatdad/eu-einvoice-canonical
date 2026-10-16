@@ -1,0 +1,35 @@
+name: Format request
+description: Ask for support for an e-invoice format or version that is not covered yet
+labels: [format]
+body:
+  - type: markdown
+    attributes:
+      value: Do not attach real invoices. Link to public specifications and to samples whose licence allows redistribution.
+  - type: input
+    id: name
+    attributes:
+      label: Format name and version
+    validations:
+      required: true
+  - type: input
+    id: country
+    attributes:
+      label: Country or network
+      placeholder: "e.g. PL, Peppol, none"
+  - type: textarea
+    id: spec
+    attributes:
+      label: Specification links
+      description: Official documentation, XSD or Schematron. Say whether it is freely available.
+    validations:
+      required: true
+  - type: textarea
+    id: samples
+    attributes:
+      label: Public samples
+      description: Links to sample files and the licence that applies to them. If none exist, say so.
+  - type: textarea
+    id: need
+    attributes:
+      label: Why do you need it?
+      description: How many invoices you receive in this format, and whether you need parsing, validation or writing.

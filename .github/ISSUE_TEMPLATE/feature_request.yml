@@ -1,0 +1,31 @@
+name: Feature request
+description: Suggest an improvement that is not a new format
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do that you cannot do today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where would it live?
+      options:
+        - Library API
+        - CLI
+        - HTTP server
+        - MCP server
+        - Browser converter
+        - Canonical model / JSON Schema
+        - Other

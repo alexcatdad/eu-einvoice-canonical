@@ -1,1 +1,26 @@
-test/export/expected/*.se -text
+* text=auto eol=lf
+
+# Byte-exact test data and pinned validator bundles (hash-verified): never normalise line endings or encodings
+# (ISO-8859-1/15, UTF-16, CRLF, BOMs and signed XML are part of what is tested).
+test/fixtures/** -text
+test/corpus/** -text
+test/export/expected/** -text
+validation/bundles/** -text
+
+# Binary
+*.pdf binary
+*.zip binary
+*.p7m binary
+*.isdocx binary
+*.wasm binary
+
+# Generated: collapsed in diffs and excluded from language statistics
+schemas/*.json linguist-generated=true
+openapi/openapi.json linguist-generated=true
+trust/eu-trust-snapshot.json linguist-generated=true
+bun.lock linguist-generated=true
+typedoc/bun.lock linguist-generated=true
+
+# Vendored third-party content
+validation/bundles/** linguist-vendored=true
+test/fixtures/** linguist-vendored=true
