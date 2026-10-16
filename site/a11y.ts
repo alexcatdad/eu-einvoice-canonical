@@ -50,7 +50,8 @@ const problems: string[] = [];
 async function open(browser: Browser, options: BrowserContextOptions): Promise<Page> {
   const context = await browser.newContext(options);
   const page = await context.newPage();
-  page.on('close', () => void context.close());
+  // The context goes with its page; once the browser is closed it is already gone, which is fine.
+  page.on('close', () => void context.close().catch(() => {}));
   return page;
 }
 
