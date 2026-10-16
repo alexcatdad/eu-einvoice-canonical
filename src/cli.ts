@@ -7,7 +7,22 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { runDuplicates } from './duplicates/run.js';
-import { type CanonicalInvoice, convert, DEFAULT_LIMITS, type Detection, inspect, type UnwrapLimits } from './index.js';
+import {
+  BAS_EXAMPLE_MAPPING,
+  buildJournalEntry,
+  type CanonicalInvoice,
+  convert,
+  DEFAULT_LIMITS,
+  type Detection,
+  inspect,
+  type JournalEntry,
+  JournalError,
+  journalToCsv,
+  journalToJson,
+  parseAccountMapping,
+  toSie4,
+  type UnwrapLimits,
+} from './index.js';
 import { isOrderXml, MatchInputError, matchInvoice, parseOrder, parsePurchaseOrdersJson, parseReceiptsJson } from './matching/index.js';
 import type { PurchaseOrder, Tolerances } from './matching/types.js';
 import { parseSnapshot, snapshotNextUpdate, type TrustSnapshot } from './signature/tsl.js';
@@ -37,6 +52,8 @@ export interface Validator {
 
 export interface IO {
   stdout(text: string): void;
+  /** Raw bytes to stdout (SIE files are CP437, not UTF-8). */
+  stdoutBytes?(bytes: Uint8Array): void;
   stderr(line: string): void;
   readStdin(): Promise<Uint8Array>;
 }
@@ -54,6 +71,8 @@ const USAGE = `Usage:
   einvoice detect  <file...>                 format id, version and profile per document
   einvoice inspect <file...>                 unwrap and detect result as JSON
   einvoice convert <file...> [--out <dir>]   canonical JSON (stdout, or one <invoice-id>.json per invoice in <dir>)
+  einvoice export  <file...> --format sie|journal|csv [--accounts mapping.json] [--out <file>]
+                                             bookkeeping entries for received invoices (SIE 4I, JSON or CSV)
   einvoice sweep   <dir...> [--expect answers.json]
   einvoice trust-lists update [--out <snapshot.json>] [--lotl-signer <cert.pem>] [--lotl-url <url>]
                                              fetch the EU trusted lists, verify them and write a snapshot
@@ -68,6 +87,8 @@ convert --eu-trust[=<snapshot.json>] checks signers against a trusted-list snaps
                                              duplicate and re-sent invoices across files; exit 9 if any
 
 A file argument of "-" reads stdin.
+Export flags: --accounts <mapping.json> (default: an example BAS mapping)  --currency <code> (SIE ledger currency, default SEK)
+              --series <id> (SIE series, default LF)  --granularity account|line  --generated YYYY-MM-DD (SIE #GEN date)
 --tolerance takes e.g. '{"unitPrice":{"percent":"2"},"quantity":{"absolute":"1"}}' (keys: quantity, unitPrice, total, vat).
 Flags: --pretty  --quiet  --limits '<json>'  --validate  --help
 Exit codes: 0 ok, 1 usage, 2 unsafe/malformed input, 3 unsupported format, 4 validation failed,
@@ -86,6 +107,12 @@ interface Parsed {
   lotlUrl?: string;
   out?: string;
   expect?: string;
+  format?: string;
+  accounts?: string;
+  currency?: string;
+  series?: string;
+  granularity?: string;
+  generated?: string;
   index?: string;
   window?: number;
   json: boolean;
@@ -107,6 +134,12 @@ function parseArgs(argv: string[]): Parsed {
     '--po',
     '--receipts',
     '--tolerance',
+    '--format',
+    '--accounts',
+    '--currency',
+    '--series',
+    '--granularity',
+    '--generated',
     '--index',
     '--window',
     '--allow-dir',
@@ -152,6 +185,24 @@ function parseArgs(argv: string[]): Parsed {
         break;
       case '--expect':
         p.expect = value;
+        break;
+      case '--format':
+        p.format = value;
+        break;
+      case '--accounts':
+        p.accounts = value;
+        break;
+      case '--currency':
+        p.currency = value;
+        break;
+      case '--series':
+        p.series = value;
+        break;
+      case '--granularity':
+        p.granularity = value;
+        break;
+      case '--generated':
+        p.generated = value;
         break;
       case '--index':
         p.index = value;
@@ -271,7 +322,7 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     io.stdout(`${USAGE}\n`);
     return EXIT.ok;
   }
-  const commands = ['detect', 'inspect', 'convert', 'sweep', 'trust-lists', 'match', 'duplicates', 'mcp'];
+  const commands = ['detect', 'inspect', 'convert', 'export', 'sweep', 'trust-lists', 'match', 'duplicates', 'mcp'];
   if (!commands.includes(args.command)) {
     io.stderr(`einvoice: unknown command "${args.command}" (try --help)`);
     return EXIT.usage;
@@ -285,6 +336,16 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
       `einvoice: ${args.command} needs at least one ${args.command === 'sweep' || args.command === 'duplicates' ? 'directory' : 'file'}`,
     );
     return EXIT.usage;
+  }
+  if (args.command === 'export') {
+    if (!['sie', 'journal', 'csv'].includes(args.format ?? '')) {
+      io.stderr('einvoice: export needs --format sie, journal or csv');
+      return EXIT.usage;
+    }
+    if (args.granularity !== undefined && !['account', 'line'].includes(args.granularity)) {
+      io.stderr('einvoice: --granularity must be account or line');
+      return EXIT.usage;
+    }
   }
   if (args.command === 'match' && args.po.length === 0) {
     io.stderr('einvoice: match needs --po <order.json|order.xml>');
@@ -325,6 +386,17 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
       else note('--validate: the validation module is not available in this build; documents are converted without validation');
     }
 
+    let mapping = BAS_EXAMPLE_MAPPING;
+    if (args.command === 'export') {
+      if (args.accounts) {
+        try {
+          mapping = parseAccountMapping(JSON.parse(readFileSync(args.accounts, 'utf8')));
+        } catch (e) {
+          err(`${args.accounts}: ${e instanceof JournalError ? e.message : `cannot read the account mapping: ${(e as Error).message}`}`);
+          return EXIT.usage;
+        }
+      } else note('no --accounts given: using the example BAS mapping, which is a demonstration and not advice on how to book anything');
+    }
     let euTrust: TrustSnapshot | undefined;
     if (args.euTrust) {
       if (args.command !== 'convert') note(`--eu-trust only applies to convert; ignored for ${args.command}`);
@@ -347,6 +419,7 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     }
 
     const tally = new Tally();
+    const entries: JournalEntry[] = [];
     const inspected: unknown[] = [];
     const invoices: CanonicalInvoice[] = [];
     const seenNames = new Set<string>();
@@ -411,8 +484,18 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
                 continue;
               }
             }
+            if (args.command === 'export') {
+              try {
+                entries.push(buildJournalEntry(inv, mapping, { granularity: args.granularity as 'account' | 'line' | undefined }));
+              } catch (e) {
+                if (!(e instanceof JournalError)) throw e;
+                err(`${label}: invoice ${inv.id}: ${e.message}`);
+                valid = false;
+                continue;
+              }
+            }
             invoices.push(inv);
-            if (args.out) {
+            if (args.command === 'convert' && args.out) {
               const name = uniqueName(inv.id, seenNames);
               writeFileSync(join(resolve(args.out), `${name}.json`), json(inv));
               written++;
@@ -437,6 +520,30 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
       skippedFailure(r.skipped);
     }
 
+    if (args.command === 'export' && entries.length > 0) {
+      let out: string | Uint8Array;
+      if (args.format === 'sie') {
+        let sie: ReturnType<typeof toSie4>;
+        try {
+          sie = toSie4(entries, { currency: args.currency, series: args.series, generated: args.generated });
+        } catch (e) {
+          if (!(e instanceof JournalError)) throw e;
+          err(e.message);
+          return EXIT.validation;
+        }
+        for (const w of sie.warnings) note(w);
+        out = sie.bytes;
+      } else out = args.format === 'csv' ? journalToCsv(entries) : journalToJson(entries, args.pretty);
+      if (args.out) {
+        writeFileSync(resolve(args.out), out);
+        note(`wrote ${entries.length} journal entr${entries.length === 1 ? 'y' : 'ies'} to ${args.out}`);
+      } else if (typeof out === 'string') io.stdout(out);
+      else if (io.stdoutBytes) io.stdoutBytes(out);
+      else {
+        err('this environment cannot write binary output to stdout; use --out <file>');
+        return EXIT.internal;
+      }
+    }
     if (args.command === 'inspect') io.stdout(json(inspected));
     if (args.command === 'convert' && !args.out) io.stdout(json(invoices));
     if (args.command === 'convert' && args.out) note(`wrote ${written} invoice file(s) to ${args.out}`);
@@ -568,6 +675,9 @@ if (import.meta.main) {
     },
     stderr: (l) => {
       process.stderr.write(`${l}\n`);
+    },
+    stdoutBytes: (b) => {
+      process.stdout.write(b);
     },
     readStdin: async () => new Uint8Array(await Bun.stdin.arrayBuffer()),
   };

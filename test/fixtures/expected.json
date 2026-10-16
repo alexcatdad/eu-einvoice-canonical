@@ -62,6 +62,9 @@
   "peppol-bis3-creditnote.xml": [
     "peppol-bis3"
   ],
+  "peppol-bis3-reverse-charge.xml": [
+    "peppol-bis3"
+  ],
   "peppol-negative-invoice.xml": [
     "peppol-bis3"
   ],
