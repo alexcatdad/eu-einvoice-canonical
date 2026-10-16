@@ -2,6 +2,8 @@ import type { Results } from './run.js';
 
 /** A case fails when it is more than this many times slower (relative to calibration) than the baseline. */
 export const MAX_SLOWDOWN = 2;
+/** If the typical case is this much slower, something is wrong with everything (or the machine differs wildly). */
+export const MAX_GLOBAL_SLOWDOWN = 3;
 /** A chunk fails when it is more than this much larger than the baseline. */
 export const MAX_BUNDLE_GROWTH = 1.15;
 
@@ -10,18 +12,29 @@ export interface Comparison {
   bundles: { name: string; base?: number; now?: number; growth?: number; fail: boolean }[];
   failures: string[];
   calibration: { base: number; now: number };
+  /** Median slowdown over all cases: how much slower this machine is than the one that made the baseline, beyond the calibration loop. */
+  machineFactor: number;
 }
 
 export function compare(base: Results, now: Results): Comparison {
   const failures: string[] = [];
   const baseCases = new Map(base.cases.map((c) => [c.id, c]));
-  const rows: Comparison['rows'] = [];
-  for (const c of now.cases) {
+  // Different hardware shifts the ratios of everything together (memory, crypto and WASM speed relative to the
+  // calibration loop), so each case is judged against the median shift; one case getting slower stands out from it.
+  const raw = now.cases.flatMap((c) => {
     const b = baseCases.get(c.id);
-    if (!b) continue;
-    const factor = c.ratio / b.ratio;
+    return b ? [{ c, b, factor: c.ratio / b.ratio }] : [];
+  });
+  const sorted = raw.map((r) => r.factor).sort((a, b) => a - b);
+  const machineFactor = sorted.length ? sorted[Math.floor(sorted.length / 2)] : 1;
+  if (machineFactor > MAX_GLOBAL_SLOWDOWN)
+    failures.push(`the typical case is ${machineFactor.toFixed(2)}x slower than the baseline (limit ${MAX_GLOBAL_SLOWDOWN}x)`);
+  const rows: Comparison['rows'] = [];
+  for (const { c, b, factor: absolute } of raw) {
+    const factor = absolute / machineFactor;
     const fail = factor > MAX_SLOWDOWN;
-    if (fail) failures.push(`${c.id} is ${factor.toFixed(2)}x slower than the baseline (limit ${MAX_SLOWDOWN}x)`);
+    if (fail)
+      failures.push(`${c.id} is ${factor.toFixed(2)}x slower than the baseline, relative to the other cases (limit ${MAX_SLOWDOWN}x)`);
     rows.push({ id: c.id, baseRatio: b.ratio, ratio: c.ratio, factor, docsPerSec: c.docsPerSec, fail });
   }
   const baseBundles = new Map(base.bundles.map((c) => [c.name, c]));
@@ -35,7 +48,7 @@ export function compare(base: Results, now: Results): Comparison {
     if (fail) failures.push(`bundle ${name} grew ${((growth - 1) * 100).toFixed(1)}% (limit ${(MAX_BUNDLE_GROWTH - 1) * 100}%)`);
     bundles.push({ name, base: b, now: n, growth, fail });
   }
-  return { rows, bundles, failures, calibration: { base: base.calibrationMs, now: now.calibrationMs } };
+  return { rows, bundles, failures, calibration: { base: base.calibrationMs, now: now.calibrationMs }, machineFactor };
 }
 
 const kb = (n?: number) => (n === undefined ? '—' : `${(n / 1024).toFixed(1)} KB`);
@@ -46,9 +59,9 @@ export function renderComparison(c: Comparison): string {
     '## Performance gate',
     '',
     c.failures.length ? `**${c.failures.length} regression(s):**\n${c.failures.map((f) => `- ${f}`).join('\n')}\n` : 'No regressions.',
-    `Calibration loop: ${c.calibration.now.toFixed(2)} ms now, ${c.calibration.base.toFixed(2)} ms in the baseline. Times below are ratios to it; a case fails above ${MAX_SLOWDOWN}x.`,
+    `Calibration loop: ${c.calibration.now.toFixed(2)} ms now, ${c.calibration.base.toFixed(2)} ms in the baseline. Times are ratios to it. This machine runs the cases ${c.machineFactor.toFixed(2)}x (median) slower than the baseline machine did; a case fails when it is more than ${MAX_SLOWDOWN}x slower than that, or when the median itself passes ${MAX_GLOBAL_SLOWDOWN}x.`,
     '',
-    '| Case | docs/s | vs baseline | |',
+    '| Case | docs/s | vs baseline (after the median) | |',
     '|---|---:|---:|---|',
     ...c.rows.map((r) => `| ${r.id} | ${r.docsPerSec.toFixed(1)} | ${r.factor.toFixed(2)}x | ${r.fail ? 'FAIL' : ''} |`),
     '',

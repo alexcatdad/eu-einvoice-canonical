@@ -16,11 +16,23 @@ test('the gate passes when nothing moved', () => {
   expect(compare(results(0.1, 1000), results(0.1, 1000)).failures).toEqual([]);
 });
 
-test('the gate fails above 2x slower, relative to the calibration loop', () => {
-  expect(compare(results(0.1, 1000), results(0.1 * MAX_SLOWDOWN * 0.99, 1000)).failures).toEqual([]);
-  const slow = compare(results(0.1, 1000), results(0.1 * MAX_SLOWDOWN * 1.01, 1000));
+const many = (ratios: number[]): Results => ({
+  ...results(0.1, 1000),
+  cases: ratios.map((ratio, i) => ({ id: `format/f${i}`, group: 'format', bytes: 1, docsPerSec: 1, medianMs: 1, ratio })),
+});
+
+test('one case more than 2x slower than the rest fails, a uniformly slower machine does not', () => {
+  const base = many([0.1, 0.1, 0.1, 0.1, 0.1]);
+  expect(compare(base, many([0.15, 0.15, 0.15, 0.15, 0.15])).failures).toEqual([]);
+  const slow = compare(base, many([0.15, 0.15, 0.15, 0.15, 0.15 * MAX_SLOWDOWN * 1.05]));
   expect(slow.failures).toHaveLength(1);
-  expect(slow.failures[0]).toContain('slower');
+  expect(slow.failures[0]).toContain('f4');
+  expect(compare(base, many([0.15, 0.15, 0.15, 0.15, 0.15 * MAX_SLOWDOWN * 0.95])).failures).toEqual([]);
+});
+
+test('everything several times slower fails', () => {
+  const c = compare(many([0.1, 0.1, 0.1]), many([0.4, 0.4, 0.4]));
+  expect(c.failures[0]).toContain('typical case');
 });
 
 test('the gate fails when a chunk grows more than 15%', () => {
