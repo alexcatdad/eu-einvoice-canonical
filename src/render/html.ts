@@ -15,11 +15,12 @@ import { INVOICE_CSS, PAGE_CSS } from './style.js';
 
 export interface RenderHtmlOptions {
   /**
-   * BCP 47 language tag for labels, number and date formats, and the `lang` attribute. Labels exist for
-   * `en`, `de`, `fr`, `it`, `es`, `nl`, `pl` and `ro`; other languages use English labels with their own
-   * number and date formats (`en-GB`, `de-CH`...).
+   * BCP 47 language tag for labels and the `lang` attribute. Labels exist for
+   * `en`, `de`, `fr`, `it`, `es`, `nl`, `pl` and `ro`; other languages use English labels.
    */
   lang?: RenderLanguage | (string & {});
+  /** Formatting override (e.g. `de-CH`). Defaults to the invoice's seller country. */
+  locale?: string;
   /** `true` (default): a complete HTML document. `false`: just the `<article>` with its `<style>`, to embed in another page. */
   standalone?: boolean;
 }
@@ -331,7 +332,7 @@ const minifiedCss = INVOICE_CSS.replace(/\n\s*/g, '').replace(/\s*([{}:;,>])\s*/
  * everything but its own inline style.
  */
 export function renderHtml(invoice: CanonicalInvoice, options: RenderHtmlOptions = {}): string {
-  const view = buildInvoiceView(invoice, options.lang);
+  const view = buildInvoiceView(invoice, options.lang, { locale: options.locale });
   const article = `<style>${minifiedCss}</style>${articleHtml(view)}`;
   if (options.standalone === false) return article;
   return (

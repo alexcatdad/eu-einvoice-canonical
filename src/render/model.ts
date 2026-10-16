@@ -1,5 +1,5 @@
 /**
- * The content of a rendered invoice as plain data, already formatted for one language: dates, amounts,
+ * The content of a rendered invoice as plain data, formatted for its country and label language: dates, amounts,
  * percentages, addresses, identifiers and free text. `renderHtml`, `renderPdf` and the React component all
  * draw from this, so they always show the same things. Nothing here is escaped; escaping is the job of the
  * output format.
@@ -8,6 +8,7 @@
 import type { Address, AllowanceCharge, CanonicalInvoice, Identifier, Line, Party, Period, VatInfo } from '../canonical.js';
 import { FORMATS_BY_ID } from '../formats.js';
 import {
+  countryLocale,
   countryName,
   formatAmount,
   formatDate,
@@ -15,6 +16,7 @@ import {
   formatMoney,
   formatPercent,
   formatQuantity,
+  formatTime,
   type Para,
   paragraphs,
   resolveLocale,
@@ -27,7 +29,7 @@ export type Align = 'left' | 'right';
 
 /**
  * A formatted value. `text` is always set; the renderers use the richer forms when present: `paras` for free
- * text, `lines` for a postal address, `iso` for a date (shown in the reader's locale, ISO kept in a tooltip),
+ * text, `lines` for a postal address, `iso` for a date (shown in the formatting locale, ISO kept in a tooltip),
  * `title` for a code behind a name.
  */
 export interface Value {
@@ -154,6 +156,8 @@ export interface InvoiceView {
 }
 
 export interface ViewOptions {
+  /** BCP 47 formatting override. Defaults to seller country, then a single-country source format, then `lang`. */
+  locale?: string;
   /** How amounts with a currency show it: `symbol` (default, `€`) or `code` (`EUR`, for fonts without the symbol). */
   currencyDisplay?: 'symbol' | 'code';
 }
@@ -190,14 +194,30 @@ function periodValue(p: Period | undefined, locale: string): Value | undefined {
 /** An address as the lines of an envelope, with the country spelled out in the reader's language. */
 function addressLines(a: Address | undefined, locale: string): string[] {
   if (!a) return [];
-  const anglo =
-    a.countryCode === 'GB' || a.countryCode === 'US' || a.countryCode === 'CA' || a.countryCode === 'AU' || a.countryCode === 'IE';
-  const city = anglo
-    ? [[a.city, a.countrySubdivision].filter(present).join(', '), a.postalCode].filter(present).join(' ')
-    : [a.postalCode, a.city].filter(present).join(' ');
-  const lines = [a.line1, a.line2, a.line3, city].filter(present);
-  if (!anglo && present(a.countrySubdivision)) lines.push(a.countrySubdivision);
-  if (present(a.countryCode)) lines.push(countryName(a.countryCode, locale));
+  const country = a.countryCode?.trim().toUpperCase();
+  const lines = [a.line1, a.line2, a.line3].filter(present);
+  // UPU's Hungary country sheet puts the locality before the street and the postcode last.
+  if (country === 'HU') {
+    if (present(a.city)) lines.unshift(a.city);
+    lines.push(...[a.countrySubdivision, a.postalCode].filter(present));
+  } else if (country === 'GB' || country === 'IE') {
+    lines.push(...[a.city, a.countrySubdivision, a.postalCode].filter(present));
+  } else if (country === 'LV') {
+    const city = [a.city, a.postalCode].filter(present).join(', ');
+    if (present(a.countrySubdivision)) lines.push(a.countrySubdivision);
+    if (city) lines.push(city);
+  } else if (country === 'IT') {
+    const city = [a.postalCode, a.city, a.countrySubdivision].filter(present).join(' ');
+    if (city) lines.push(city);
+  } else if (country === 'US' || country === 'CA' || country === 'AU') {
+    const city = [a.city, a.countrySubdivision, a.postalCode].filter(present).join(' ');
+    if (city) lines.push(city);
+  } else {
+    const city = [a.postalCode, a.city].filter(present).join(' ');
+    if (city) lines.push(city);
+    if (present(a.countrySubdivision)) lines.push(a.countrySubdivision);
+  }
+  if (present(a.countryCode)) lines.push(countryName(country!, locale));
   return lines;
 }
 
@@ -312,10 +332,17 @@ function account(t: T, id: string): [string, Value] {
   return iban ? [t('iban'), text(iban, { code: true })] : [t('account'), text(id, { code: true })];
 }
 
-/** Builds everything a reader sees, formatted for `lang` (a BCP 47 tag; unknown languages get English labels). */
+/** Formats invoice values for its country, with labels in `lang` (unknown languages get English labels). */
 export function buildInvoiceView(inv: CanonicalInvoice, lang?: string, options: ViewOptions = {}): InvoiceView {
   const safe = safeLang(lang);
-  const locale = resolveLocale(safe);
+  const labelLocale = resolveLocale(safe);
+  const countries = FORMATS_BY_ID[inv.source.format]?.countries;
+  const locale =
+    options.locale !== undefined
+      ? resolveLocale(options.locale)
+      : (countryLocale(inv.seller.address?.countryCode) ??
+        countryLocale(countries?.length === 1 ? countries[0] : undefined) ??
+        labelLocale);
   const t = labelsFor(safe);
   const cur = inv.currency;
   const money = (v: string) => formatMoney(v, cur, locale, options.currencyDisplay);
@@ -328,7 +355,7 @@ export function buildInvoiceView(inv: CanonicalInvoice, lang?: string, options: 
       t('seller'),
       t,
       inv.seller,
-      locale,
+      labelLocale,
       fields([
         [t('taxRegistration'), inv.seller.taxRegistrationId],
         [
@@ -339,7 +366,7 @@ export function buildInvoiceView(inv: CanonicalInvoice, lang?: string, options: 
         ],
       ]),
     ),
-    party('buyer', t('buyer'), t, inv.buyer, locale),
+    party('buyer', t('buyer'), t, inv.buyer, labelLocale),
   ];
   if (inv.payee) {
     parties.push({
@@ -356,7 +383,7 @@ export function buildInvoiceView(inv: CanonicalInvoice, lang?: string, options: 
       role: 'taxRepresentative',
       heading: t('taxRepresentative'),
       name: present(r.name) ? r.name : undefined,
-      address: addressLines(r.address, locale),
+      address: addressLines(r.address, labelLocale),
       fields: fields([[t('vatId'), r.vatId]]),
     });
   }
@@ -366,7 +393,7 @@ export function buildInvoiceView(inv: CanonicalInvoice, lang?: string, options: 
       role: 'delivery',
       heading: t('delivery'),
       name: present(d.partyName) ? d.partyName : undefined,
-      address: addressLines(d.address, locale),
+      address: addressLines(d.address, labelLocale),
       fields: fields([identField(t('location'), d.locationId), [t('deliveryDate'), dateValue(d.actualDate, locale)]]),
     });
   }
@@ -374,7 +401,7 @@ export function buildInvoiceView(inv: CanonicalInvoice, lang?: string, options: 
   const issue = dateValue(inv.issueDate, locale);
   const issueValue =
     issue && present(inv.issueTime)
-      ? { ...issue, text: `${issue.text}, ${inv.issueTime.slice(0, 5)}`, title: `${inv.issueDate}T${inv.issueTime}` }
+      ? { ...issue, text: `${issue.text}, ${formatTime(inv.issueTime, locale)}`, title: `${inv.issueDate}T${inv.issueTime}` }
       : issue;
   const facts = fields([
     [t('issueDate'), issueValue],

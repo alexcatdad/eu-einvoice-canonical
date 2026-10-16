@@ -29,7 +29,7 @@ const html = (node: Parameters<typeof renderToStaticMarkup>[0]) => renderToStati
 const plain = (s: string) => s.replace(/[  ]/g, ' ');
 
 describe('<Invoice>', () => {
-  const out = plain(html(<Invoice invoice={peppol} lang="de" idPrefix="t" />));
+  const out = plain(html(<Invoice invoice={peppol} lang="de" locale="de" idPrefix="t" />));
 
   test('renders the whole invoice as one labelled article', () => {
     expect(out.startsWith('<article class="einvoice" lang="de" aria-labelledby="t-title">')).toBe(true);
@@ -59,7 +59,7 @@ describe('<Invoice>', () => {
   });
 
   test('a credit note is marked as one', () => {
-    const cn = html(<Invoice invoice={creditNote} idPrefix="c" />);
+    const cn = html(<Invoice invoice={creditNote} locale="en" idPrefix="c" />);
     expect(cn).toContain('<article class="einvoice einvoice--credit"');
     expect(cn).toContain('<p class="einvoice-badge">Credit note</p>');
     expect(cn).toContain(`>Credit note <span class="einvoice-number">${creditNote.id}</span></h1>`);
@@ -90,7 +90,7 @@ describe('<Invoice>', () => {
   test('renders the optional parts: payee, schedule, card, mandate, exemptions, notes as lists', () => {
     const r = structuredClone(rich) as unknown as { notes: { text: string }[] };
     r.notes = [{ text: 'Terms:\n- one\n- two' }];
-    const out = plain(html(<Invoice invoice={r as unknown as CanonicalInvoice} idPrefix="r" />));
+    const out = plain(html(<Invoice invoice={r as unknown as CanonicalInvoice} locale="en" idPrefix="r" />));
     expect(out).toContain('<p class="einvoice-party-name">Payee Ltd</p>');
     expect(out).toContain('<dt>Card</dt><dd>VISA …1234</dd>');
     expect(out).toContain('<th scope="col">Exemption reason</th>');
@@ -141,7 +141,7 @@ describe('<Invoice>', () => {
 });
 
 describe('the exported parts compose on their own', () => {
-  const view = buildInvoiceView(peppol, 'en');
+  const view = buildInvoiceView(peppol, 'en', { locale: 'en' });
 
   test('each part renders from an invoice or from a shared view', () => {
     expect(html(<InvoiceHeader invoice={peppol} idPrefix="p" />)).toMatch(/^<header class="einvoice-header">/);
@@ -149,7 +149,7 @@ describe('the exported parts compose on their own', () => {
     expect(html(<InvoiceReferences view={view} idPrefix="p" />)).toContain('id="p-references"');
     expect(html(<InvoiceLines view={view} />)).toContain('Hyllkonsol');
     expect(html(<InvoiceAdjustments view={view} />)).toContain('Volymrabatt (95)');
-    expect(html(<VatBreakdown invoice={peppol} />)).toContain('<td class="einvoice-num">637.50</td>');
+    expect(html(<VatBreakdown invoice={peppol} locale="en" />)).toContain('<td class="einvoice-num">637.50</td>');
     expect(plain(html(<InvoiceTotals view={view} />))).toContain('<dt>Amount due</dt><dd>SEK 3,091.00</dd>');
     expect(html(<PaymentDetails view={view} />)).toContain('4711000123');
     expect(html(<InvoiceNotes view={view} />)).toContain('tidrapport.txt');
