@@ -47,17 +47,20 @@ export function buildCases(): Case[] {
     };
   };
   const conv =
-    (name: string, input: () => Uint8Array, opts: ConvertOptions = {}, size?: { bytes: number }) =>
+    (name: string, input: () => Uint8Array, opts: ConvertOptions = {}, size?: { bytes: number }, expectOk = true) =>
     async () => {
       const bytes = input();
       if (size) size.bytes = bytes.length;
       const r = await convert(bytes, name, undefined, opts);
-      if (!r.outcomes.length) throw new Error(`${name}: nothing converted`);
+      if (!r.outcomes.length || (expectOk && !r.outcomes.some((o) => o.status === 'ok')))
+        throw new Error(`${name}: no invoice was converted`);
     };
   const add = (c: Omit<Case, 'run' | 'bytes'> & { name: string; input: () => Uint8Array; opts?: ConvertOptions }) => {
     const { name, input, opts, ...rest } = c;
+    // Fixtures that are not meant to become invoices (metadata, unknown documents) only need to produce an outcome.
+    const expectOk = rest.group !== 'format' || !!rest.quick;
     const out: Case = { ...rest, bytes: 0, run: async () => undefined };
-    out.run = conv(name, input, opts, out);
+    out.run = conv(name, input, opts, out, expectOk);
     cases.push(out);
   };
 

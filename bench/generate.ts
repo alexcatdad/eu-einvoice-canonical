@@ -60,6 +60,7 @@ export function invoiceWithAttachment(megabytes: number): Uint8Array {
   return new TextEncoder().encode(BASE.slice(0, at) + doc + BASE.slice(at));
 }
 
+const generatorVersion = Bun.hash(readFileSync(import.meta.path, 'utf8') + BASE).toString(36);
 const cacheDir = join(import.meta.dir, '.cache');
 
 /**
@@ -67,7 +68,8 @@ const cacheDir = join(import.meta.dir, '.cache');
  * measures peak memory pays for the input bytes but not for generating them.
  */
 export function cached(name: string, make: () => Uint8Array): Uint8Array {
-  const path = join(cacheDir, name);
+  // The name carries a hash of this file and the fixture it builds on, so changing a generator makes a new input.
+  const path = join(cacheDir, `${generatorVersion}-${name}`);
   if (!existsSync(path)) {
     mkdirSync(cacheDir, { recursive: true });
     writeFileSync(path, make());

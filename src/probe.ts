@@ -78,9 +78,14 @@ class Stop extends Error {}
 
 /**
  * The unwrapper probes every document and detection probes it again moments later; on a document with a large
- * attachment each probe reads the whole text node. The last result is kept (the one document, not a cache that grows).
+ * attachment each probe reads the whole text node. The last result is kept (the one document, not a cache that grows), until `clearProbeCache()`.
  */
 let last: { xml: string; probe: XmlProbe | null } | undefined;
+
+/** Drops the kept result so an idle process does not hold on to the last document; `convert` and `inspect` call it when done. */
+export function clearProbeCache(): void {
+  last = undefined;
+}
 
 export function probeXml(xml: string): XmlProbe | null {
   if (last?.xml === xml) return last.probe;

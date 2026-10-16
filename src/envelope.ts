@@ -354,6 +354,8 @@ const stripP7m = (n?: string) => n?.replace(/\.p7m$/i, '');
 
 /** Base64 text to bytes, or null when it is not valid base64. Uses the built-in decoder where there is one (several times faster on big attachments). */
 function decodeBase64(text: string): Uint8Array | null {
+  // Same acceptance as atob on every runtime: only the base64 alphabet, padding only as the last one or two characters of a full quantum, no lone trailing character.
+  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(text) || text.length % 4 === 1 || (text.includes('=') && text.length % 4 !== 0)) return null;
   try {
     const native = (Uint8Array as unknown as { fromBase64?: (s: string) => Uint8Array }).fromBase64;
     if (native) return native(text);

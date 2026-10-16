@@ -37,6 +37,13 @@ export function compare(base: Results, now: Results): Comparison {
       failures.push(`${c.id} is ${factor.toFixed(2)}x slower than the baseline, relative to the other cases (limit ${MAX_SLOWDOWN}x)`);
     rows.push({ id: c.id, baseRatio: b.ratio, ratio: c.ratio, factor, docsPerSec: c.docsPerSec, fail });
   }
+  // A quick case that appeared or vanished means the gate covers something different from the baseline: refresh it on purpose.
+  if (base.quick && now.quick) {
+    const nowIds = new Set(now.cases.map((c) => c.id));
+    for (const id of baseCases.keys())
+      if (!nowIds.has(id)) failures.push(`case ${id} is in the baseline but was not measured; refresh bench/baseline.json`);
+    for (const id of nowIds) if (!baseCases.has(id)) failures.push(`case ${id} has no baseline; refresh bench/baseline.json`);
+  }
   const baseBundles = new Map(base.bundles.map((c) => [c.name, c]));
   const nowBundles = new Map(now.bundles.map((c) => [c.name, c]));
   const bundles: Comparison['bundles'] = [];

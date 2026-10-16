@@ -3,6 +3,7 @@ import { checkTotals } from './checks.js';
 import { type Detection, detectXml } from './detect.js';
 import { type Skipped, type UnwrapLimits, type UnwrapOptions, unwrap, type XmlPayload } from './envelope.js';
 import { NotImplementedError, PARSERS, ParseError } from './parsers/index.js';
+import { clearProbeCache } from './probe.js';
 import { applyRelations } from './relations/rules.js';
 import { signatureFindings, signatureStatus } from './signature/index.js';
 import type { ValidateOptions } from './validation/index.js';
@@ -71,6 +72,7 @@ export async function inspect(
 ): Promise<InspectResult> {
   const { fileSha256, payloads, skipped } = await unwrap(bytes, filename, limits, options);
   const documents = payloads.map(({ xml, ...payload }) => ({ payload, detection: detectXml(xml, { fromPdf: payload.fromPdf }) }));
+  clearProbeCache();
   return { fileSha256, documents, skipped };
 }
 
@@ -133,7 +135,7 @@ export async function warmUpValidation(options?: ValidateOptions): Promise<boole
     const validation = await loadValidation();
     const detection = detectXml(WARM_UP_XML);
     const summary = await validation.validate({ xml: WARM_UP_XML }, detection, options);
-    return summary.schema !== 'unavailable' && summary.semantic !== 'unavailable';
+    return summary.schema !== 'unavailable' && summary.semantic !== 'unavailable' && summary.profile !== 'unavailable';
   } catch {
     return false;
   }
@@ -193,6 +195,7 @@ export async function convert(
       return { status: 'error', detection, payload: meta, error: `Internal error: ${(e as Error).message}` };
     }
   });
+  clearProbeCache();
   if (options.validate) {
     let validation: typeof import('./validation/index.js') | undefined;
     let loadError = '';

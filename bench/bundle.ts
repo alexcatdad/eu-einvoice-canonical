@@ -23,14 +23,15 @@ export function bundleSizes(dist = join(import.meta.dir, '..', 'dist')): ChunkSi
       return { name, bytes: buf.length, gzipBytes: gzipSync(buf).length };
     })
     .sort((a, b) => a.name.localeCompare(b.name) || b.bytes - a.bytes);
-  // Several chunks share a name (`chunks/app`): number them largest first so the keys stay stable between builds.
-  const seen = new Map<string, number>();
-  const total = new Map<string, number>();
-  for (const c of sized) total.set(c.name, (total.get(c.name) ?? 0) + 1);
-  return sized.map((c) => {
-    if ((total.get(c.name) ?? 0) < 2) return c;
-    const n = (seen.get(c.name) ?? 0) + 1;
-    seen.set(c.name, n);
-    return { ...c, name: c.name.replace(/\.js$/, `#${n}.js`) };
-  });
+  // Chunks that share a name (`chunks/app`) are summed: their order by size can change between builds, which would
+  // swap their identities and hide growth, while the total of the group cannot.
+  const byName = new Map<string, ChunkSize>();
+  for (const c of sized) {
+    const hit = byName.get(c.name);
+    if (hit) {
+      hit.bytes += c.bytes;
+      hit.gzipBytes += c.gzipBytes;
+    } else byName.set(c.name, { ...c });
+  }
+  return [...byName.values()];
 }
