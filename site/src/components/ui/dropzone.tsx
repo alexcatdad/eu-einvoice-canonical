@@ -29,7 +29,15 @@ export function Dropzone({
     },
   });
   // react-dropzone hides its input with display: none; this one stays focusable and is hidden visually only.
-  const { style: _hidden, ...input } = getInputProps({ accept }) as React.InputHTMLAttributes<HTMLInputElement>;
+  // It also takes the input out of the tab order; here the input is how the keyboard reaches the picker. Clearing its
+  // value on every click lets the same file be chosen again (after it changed on disk, say).
+  const { style: _hidden, ...input } = getInputProps({
+    accept,
+    tabIndex: 0,
+    onClick: (e: React.MouseEvent<HTMLInputElement>) => {
+      e.currentTarget.value = '';
+    },
+  }) as React.InputHTMLAttributes<HTMLInputElement>;
   // Its root gets role="presentation", which a <label> may not carry; the label keeps its own semantics.
   const { role: _presentation, ...root } = getRootProps({
     className: cn('slot', isDragActive && 'dragging', className),

@@ -123,8 +123,9 @@ async function focusVisible(browser: Browser) {
       const el = document.activeElement as HTMLElement | null;
       if (!el || el === document.body) return undefined;
       const s = getComputedStyle(el);
-      // A file input hidden visually shows its focus on the drop zone around it.
-      const shown = el.matches('.slot input') ? getComputedStyle(el.closest('.slot')!) : s;
+      // A file input hidden visually shows its focus on the drop zone around it, the paste box's textarea on the box.
+      const frame = el.matches('.slot input') ? el.closest('.slot') : el.matches('.paste textarea') ? el.closest('.paste') : null;
+      const shown = frame ? getComputedStyle(frame) : s;
       const ring = shown.outlineStyle !== 'none' && Number.parseFloat(shown.outlineWidth) > 0;
       const shadow = shown.boxShadow !== 'none';
       return {

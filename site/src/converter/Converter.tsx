@@ -383,8 +383,12 @@ export default function Converter() {
               }}
               onPaste={(e) => {
                 // Pasting into the box converts straight away; typing and editing do not.
-                const text = e.clipboardData.getData('text/plain').trim();
-                if (text) setTimeout(() => void run(new TextEncoder().encode(text), 'pasted.xml'), 0);
+                // The whole box after the paste lands, not just the pasted fragment (it may replace a selection).
+                if (!e.clipboardData.getData('text/plain').trim()) return;
+                setTimeout(() => {
+                  const text = pasteRef.current?.value.trim();
+                  if (text) void run(new TextEncoder().encode(text), 'pasted.xml');
+                }, 0);
               }}
             />
             <div className="paste-foot">
