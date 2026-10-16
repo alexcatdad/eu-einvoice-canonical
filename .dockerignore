@@ -1,0 +1,13 @@
+.git
+.github
+.claude
+node_modules
+dist
+coverage
+test
+site
+scripts
+typedoc
+conformance
+openapi
+*.md

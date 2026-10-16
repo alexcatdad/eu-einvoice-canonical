@@ -1,7 +1,10 @@
 /**
- * Generates the JSON Schemas (draft 2020-12) for CanonicalInvoice and ConvertResult from the TypeScript types:
- *   bun scripts/build-schemas.ts           write schemas/*.schema.json
- *   bun scripts/build-schemas.ts --check   fail if the committed files differ from what the types produce
+ * Generates the published interface files from the TypeScript sources:
+ *   - the JSON Schemas (draft 2020-12) for CanonicalInvoice, ConvertResult and InspectResult: schemas/*.schema.json
+ *   - the format registry as schemas/formats.json (the body of GET /v1/formats)
+ *   - openapi/openapi.json, the JSON form of the hand-written openapi/openapi.yaml
+ *   bun scripts/build-schemas.ts           write them
+ *   bun scripts/build-schemas.ts --check   fail if the committed files differ from what the sources produce
  *
  * Branded primitives (Decimal, IsoDate, IsoTime) become string patterns, open code-list unions become
  * strings with the common values as `examples`, and BT/BG comments stay as `description`s.
@@ -9,7 +12,7 @@
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import {
   createFormatter,
   createParser,
@@ -19,7 +22,7 @@ import {
   SchemaGenerator,
   type SubNodeParser,
 } from 'ts-json-schema-generator';
-import { FORMATS } from '../src/formats.js';
+import { describeFormats, FORMATS } from '../src/formats.js';
 import { schemaVersion } from '../src/index.js';
 
 const root = join(import.meta.dir, '..');
@@ -28,6 +31,7 @@ export const SCHEMA_BASE_URL = 'https://alexcatdad.github.io/eu-einvoice-canonic
 export const SCHEMAS = [
   { type: 'CanonicalInvoice', file: `canonical-invoice.${schemaVersion}.schema.json`, title: 'CanonicalInvoice' },
   { type: 'ConvertResult', file: `convert-result.${schemaVersion}.schema.json`, title: 'ConvertResult' },
+  { type: 'InspectResult', file: `inspect-result.${schemaVersion}.schema.json`, title: 'InspectResult' },
 ] as const;
 
 /** Pattern definitions for the branded string types. */
@@ -133,24 +137,34 @@ function generate(type: string, file: string): string {
 }
 
 const check = process.argv.includes('--check');
-const dir = join(root, 'schemas');
-if (!check) mkdirSync(dir, { recursive: true });
-let stale = false;
-for (const s of SCHEMAS) {
-  const text = generate(s.type, s.file);
-  const path = join(dir, s.file);
-  if (check) {
-    let current = '';
-    try {
-      current = readFileSync(path, 'utf8');
-    } catch {}
-    if (current !== text) {
-      console.error(`schemas/${s.file} is stale: run "bun run build:schemas" and commit the result`);
-      stale = true;
-    }
-  } else {
-    writeFileSync(path, text);
-    console.log(`Wrote schemas/${s.file} (${(text.length / 1024).toFixed(0)} KB)`);
-  }
+
+/** Every generated file: path relative to the repository root, and its content. */
+export function outputs(): { path: string; text: string }[] {
+  const files = SCHEMAS.map((s) => ({ path: `schemas/${s.file}`, text: generate(s.type, s.file) }));
+  files.push({ path: 'schemas/formats.json', text: `${JSON.stringify({ formats: describeFormats() }, null, 2)}\n` });
+  const spec = Bun.YAML.parse(readFileSync(join(root, 'openapi/openapi.yaml'), 'utf8'));
+  files.push({ path: 'openapi/openapi.json', text: `${JSON.stringify(spec, null, 2)}\n` });
+  return files;
 }
-if (stale) process.exit(1);
+
+if (import.meta.main) {
+  let stale = false;
+  for (const f of outputs()) {
+    const path = join(root, f.path);
+    if (check) {
+      let current = '';
+      try {
+        current = readFileSync(path, 'utf8');
+      } catch {}
+      if (current !== f.text) {
+        console.error(`${f.path} is stale: run "bun run build:schemas" and commit the result`);
+        stale = true;
+      }
+    } else {
+      mkdirSync(dirname(path), { recursive: true });
+      writeFileSync(path, f.text);
+      console.log(`Wrote ${f.path} (${(f.text.length / 1024).toFixed(0)} KB)`);
+    }
+  }
+  if (stale) process.exit(1);
+}

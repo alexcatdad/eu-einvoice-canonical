@@ -1,0 +1,9 @@
+{
+  "name": "eu-einvoice-canonical-typedoc",
+  "private": true,
+  "description": "Builds the TypeScript API reference. Kept apart because TypeDoc needs the JavaScript TypeScript compiler (5.x/6.x), not the native 7.x the project itself uses.",
+  "devDependencies": {
+    "typedoc": "0.28.20",
+    "typescript": "5.9.3"
+  }
+}

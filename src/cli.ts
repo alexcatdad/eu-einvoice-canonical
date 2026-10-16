@@ -25,6 +25,7 @@ import {
 } from './index.js';
 import { isOrderXml, MatchInputError, matchInvoice, parseOrder, parsePurchaseOrdersJson, parseReceiptsJson } from './matching/index.js';
 import type { PurchaseOrder, Tolerances } from './matching/types.js';
+import { startServer } from './server.js';
 import { parseSnapshot, snapshotNextUpdate, type TrustSnapshot } from './signature/tsl.js';
 import { LotlError, loadTrustLists } from './signature/tsl-load.js';
 import { runSweep } from './sweep.js';
@@ -65,6 +66,8 @@ export interface Deps {
   fetch?: (url: string) => Promise<Uint8Array>;
   /** Clock for snapshot dates. */
   now?: Date;
+  /** Stops `serve` (it otherwise runs until SIGINT or SIGTERM). */
+  signal?: AbortSignal;
 }
 
 const USAGE = `Usage:
@@ -81,6 +84,8 @@ convert --eu-trust[=<snapshot.json>] checks signers against a trusted-list snaps
 ~/.einvoice/eu-trust-snapshot.json, or trust/eu-trust-snapshot.json next to the sources).
   einvoice match   --po <order.json|order.xml>... [--receipts r.json] [--tolerance '<json>'] <invoice...>
                                              match invoice lines to purchase orders (two-way; three-way with --receipts)
+  einvoice serve   [--port 8080] [--host 127.0.0.1] [--cors[=<origin>]] [--eu-trust[=<snapshot.json>]] [--limits '<json>']
+                                             the conversion API (openapi/openapi.yaml): POST /v1/convert, /v1/inspect, /v1/detect
   einvoice mcp [--allow-dir <dir>]...           Model Context Protocol server on stdio, for AI agents; files only
                                              inside the allowed directories
   einvoice duplicates <dir...> [--window days] [--index index.json] [--json]
@@ -116,6 +121,9 @@ interface Parsed {
   index?: string;
   window?: number;
   json: boolean;
+  port?: number;
+  host?: string;
+  cors?: string | true;
   limits?: Partial<UnwrapLimits>;
   po: string[];
   receipts?: string;
@@ -142,6 +150,8 @@ function parseArgs(argv: string[]): Parsed {
     '--generated',
     '--index',
     '--window',
+    '--port',
+    '--host',
     '--allow-dir',
   ]);
   for (let i = 0; i < argv.length; i++) {
@@ -216,6 +226,18 @@ function parseArgs(argv: string[]): Parsed {
       case '--json':
         p.json = true;
         break;
+      case '--cors':
+        p.cors = value ?? true;
+        break;
+      case '--host':
+        p.host = value;
+        break;
+      case '--port': {
+        const n = Number(value);
+        if (!Number.isInteger(n) || n < 0 || n > 65535) throw new UsageError('--port must be a whole number from 0 to 65535');
+        p.port = n;
+        break;
+      }
       case '--allow-dir':
         p.allowDir.push(value!);
         break;
@@ -322,7 +344,7 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     io.stdout(`${USAGE}\n`);
     return EXIT.ok;
   }
-  const commands = ['detect', 'inspect', 'convert', 'export', 'sweep', 'trust-lists', 'match', 'duplicates', 'mcp'];
+  const commands = ['detect', 'inspect', 'convert', 'export', 'sweep', 'trust-lists', 'match', 'duplicates', 'mcp', 'serve'];
   if (!commands.includes(args.command)) {
     io.stderr(`einvoice: unknown command "${args.command}" (try --help)`);
     return EXIT.usage;
@@ -331,7 +353,7 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     io.stderr('einvoice: trust-lists needs a subcommand: update');
     return EXIT.usage;
   }
-  if (args.files.length === 0 && args.command !== 'mcp') {
+  if (args.files.length === 0 && args.command !== 'mcp' && args.command !== 'serve') {
     io.stderr(
       `einvoice: ${args.command} needs at least one ${args.command === 'sweep' || args.command === 'duplicates' ? 'directory' : 'file'}`,
     );
@@ -359,6 +381,7 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
 
   try {
     if (args.command === 'trust-lists') return await updateTrustLists(args, io, deps, note, err);
+    if (args.command === 'serve') return await runServe(args, io, deps, note, err);
     if (args.command === 'sweep') {
       if (args.validate) note('--validate has no effect on sweep');
       return await runSweep(args.files, { expect: args.expect, limits: args.limits }, (l) => io.stdout(`${l}\n`));
@@ -556,6 +579,49 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     err(`internal error: ${(e as Error).message}`);
     return EXIT.internal;
   }
+}
+
+/** Runs the conversion API until the signal aborts or the process is told to stop. */
+async function runServe(args: Parsed, io: IO, deps: Deps, note: (line: string) => void, err: (line: string) => void): Promise<number> {
+  let trustSnapshot: TrustSnapshot | null = null;
+  if (args.euTrust) {
+    const path = snapshotPath(args.euTrust === true ? undefined : args.euTrust);
+    try {
+      trustSnapshot = parseSnapshot(readFileSync(path, 'utf8'));
+    } catch (e) {
+      err(
+        `--eu-trust: cannot use the trusted-list snapshot ${path}: ${(e as Error).message} (create one with: einvoice trust-lists update)`,
+      );
+      return EXIT.usage;
+    }
+  }
+  let server: ReturnType<typeof startServer>;
+  try {
+    server = startServer({
+      port: args.port ?? 8080,
+      hostname: args.host,
+      cors: args.cors,
+      limits: args.limits,
+      trustSnapshot,
+      now: deps.now,
+    });
+  } catch (e) {
+    err(`serve: cannot listen: ${(e as Error).message}`);
+    return EXIT.internal;
+  }
+  io.stdout(`listening on http://${server.hostname?.includes(':') ? `[${server.hostname}]` : server.hostname}:${server.port}\n`);
+  if (args.cors) note(`CORS is on for ${args.cors === true ? 'any origin' : args.cors}`);
+  await new Promise<void>((done) => {
+    const stop = () => done();
+    deps.signal?.addEventListener('abort', stop);
+    if (deps.signal?.aborted) done();
+    else if (!deps.signal) {
+      process.once('SIGINT', stop);
+      process.once('SIGTERM', stop);
+    }
+  });
+  await server.stop();
+  return EXIT.ok;
 }
 
 /** Where a snapshot lives when no file is named: $EINVOICE_TRUST_SNAPSHOT, the user's cache, then the repository copy. */

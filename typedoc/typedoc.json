@@ -1,0 +1,19 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["../src/index.ts", "../src/server.ts", "../src/problems.ts"],
+  "tsconfig": "./tsconfig.json",
+  "out": "../dist/api",
+  "name": "eu-einvoice-canonical",
+  "readme": "none",
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "skipErrorChecking": true,
+  "includeVersion": true,
+  "navigationLinks": {
+    "Deliverables": "../deliverables.html",
+    "API reference (HTTP)": "../api.html",
+    "GitHub": "https://github.com/alexcatdad/eu-einvoice-canonical"
+  },
+  "customCss": "./theme.css",
+  "hideGenerator": true
+}

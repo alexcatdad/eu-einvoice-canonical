@@ -25,6 +25,7 @@ received file ──► unwrap() ──► XML payload(s) ──► detectXml() 
 | `src/formats.ts` | Registry of 37 formats with detection rules, parser family, countries, status and build phase. |
 | `src/probe.ts` | Streaming header read (root, namespaces, CustomizationID, guideline ID, KSeF form code...). |
 | `src/envelope.ts` | Unwrapping: PDF attachments, CMS signed data, base64, ZIP, SBDH, SOAP, encoding. Rejects DOCTYPEs and enforces size/count limits. |
+| `src/server.ts` | The reference HTTP server for `openapi/openapi.yaml` (`Bun.serve`, nothing else); `src/problems.ts` is the error catalogue. |
 | `src/detect.ts` | `detectXml()`: invoice format, known non-invoice, or unknown. |
 | `src/parsers/` | `ubl.ts`, `cii.ts`, `svefaktura.ts`, the shared DOM reader (`context.ts`) and the family registry with stubs for the rest. |
 | `src/values.ts` | `toDecimal()` / `toIsoDate()` constructors and exact BigInt arithmetic. No value passes through a JS `number`. |
@@ -83,6 +84,7 @@ einvoice sweep   <dir...> [--expect answers.json]   detection coverage / known-a
 einvoice trust-lists update [--out <snapshot.json>] [--lotl-signer <cert.pem>]   fetch and verify the EU trusted lists
 einvoice match   --po <order.json|order.xml>... [--receipts r.json] [--tolerance '<json>'] <invoice...>   match to purchase orders
 einvoice duplicates <dir...> [--window days] [--index index.json] [--json]   duplicate and re-sent invoices; exit 9 if found
+einvoice serve   [--port 8080] [--host 127.0.0.1] [--cors[=<origin>]] [--eu-trust[=<snapshot.json>]]   the conversion API, see below
 ```
 
 `convert --eu-trust[=<snapshot.json>]` checks signers against a trusted-list snapshot (see [EU trusted lists](#eu-trusted-lists)).
@@ -218,12 +220,13 @@ An optional language model can label what the rules leave as plain items (freigh
 
 ## JSON Schema
 
-Consumers that are not written in TypeScript can validate and generate code from the output with two JSON Schemas (draft 2020-12), generated from the types and published with the site:
+Consumers that are not written in TypeScript can validate and generate code from the output with three JSON Schemas (draft 2020-12), generated from the types and published with the site:
 
 - [`canonical-invoice.v1.schema.json`](https://alexcatdad.github.io/eu-einvoice-canonical/schemas/canonical-invoice.v1.schema.json): one `CanonicalInvoice`
 - [`convert-result.v1.schema.json`](https://alexcatdad.github.io/eu-einvoice-canonical/schemas/convert-result.v1.schema.json): what `convert()` returns (`outcomes[].invoices[]` are `CanonicalInvoice`s)
+- [`inspect-result.v1.schema.json`](https://alexcatdad.github.io/eu-einvoice-canonical/schemas/inspect-result.v1.schema.json): what `inspect()` returns, including the `Detection` type
 
-Decimals, dates and times are strings with a `pattern`; open code lists (currency, country, VAT category, unit...) are plain strings whose common values are listed under `examples`; the BT/BG comments are the `description`s. Objects are open (`additionalProperties` is not false), so a payload from a newer minor release still validates. `bun run build:schemas` rewrites the files and the CI `test` job runs `bun run check:schemas`, which fails when the committed files differ from the types. Every test fixture's converted output is validated against them in `test/schema.test.ts`.
+Decimals, dates and times are strings with a `pattern`; open code lists (currency, country, VAT category, unit...) are plain strings whose common values are listed under `examples`; the BT/BG comments are the `description`s. Objects are open (`additionalProperties` is not false), so a payload from a newer minor release still validates. `bun run build:schemas` rewrites the files (and `schemas/formats.json` and `openapi/openapi.json`) and the CI `test` job runs `bun run check:schemas`, which fails when the committed files differ from the types. Every test fixture's converted output is validated against them in `test/schema.test.ts`.
 
 ### Schema versioning
 
@@ -231,6 +234,58 @@ The library exports `schemaVersion` (`'v1'`), the major version in the schema fi
 
 - **Additive changes keep v1**: new optional fields, new extension blocks, new code-list examples, new formats, new warning codes. Files are regenerated in place.
 - **Breaking changes go to v2**: removing or renaming a field, changing a field's type or meaning, making an optional field required, or narrowing a pattern. `*.v2.schema.json` is published next to the v1 files, which stay available at their URLs.
+
+## Conversion API (HTTP)
+
+`einvoice serve` starts a small stateless server that implements [`openapi/openapi.yaml`](openapi/openapi.yaml) (OpenAPI 3.1) with the same `convert()`, `inspect()` and `detectXml()` as the library. The rendered reference is at [/api.html](https://alexcatdad.github.io/eu-einvoice-canonical/api.html) on the site.
+
+```sh
+einvoice serve --port 8080 --cors          # or: bun src/cli.ts serve
+curl -X POST --data-binary @invoice.xml -H 'Content-Type: application/xml' 'http://localhost:8080/v1/convert?relations=true'
+curl -X POST -F file=@invoice.pdf http://localhost:8080/v1/inspect
+```
+
+| Endpoint | Does |
+| --- | --- |
+| `POST /v1/convert` | File (multipart `file` or raw body) to `ConvertResult`. Query: `validate`, `relations`, `provenance`, `euTrust`, `filename`. |
+| `POST /v1/inspect` | Unwrap and detect to `InspectResult`. |
+| `POST /v1/detect` | Raw XML to a `Detection`. |
+| `GET /v1/formats` | The format registry: id, name, family, countries, status. |
+| `GET /v1/schemas/{name}` | `canonical-invoice`, `convert-result` or `inspect-result` JSON Schema. |
+| `GET /health` | Liveness, package and schema versions. |
+
+Errors are `application/problem+json` ([RFC 9457](https://www.rfc-editor.org/rfc/rfc9457)) and use the CLI's exit-code categories as `type` URIs ([listed here](https://alexcatdad.github.io/eu-einvoice-canonical/problems/)): `unsafe-or-malformed` (400, and 413 for a limit), `unsupported`, `validation-failed` and `partial` (422, with the full result in `result`), `validator-unavailable` (503) and `internal` (500). `?euTrust=true` needs a trusted-list snapshot, so start the server with `--eu-trust`; `?validate=true` runs the XSD and Schematron layers (when the bundles are not readable it answers 503).
+
+The server writes nothing to disk and keeps no state. The upload is read through a counting reader and refused with 413 as soon as it passes `maxFileBytes` (50 MiB; `--limits '{"maxFileBytes":10485760}'` lowers it, the other `UnwrapLimits` apply too). CORS is off unless you pass `--cors` (any origin) or `--cors=https://app.example`. It listens on 127.0.0.1 by default; there is no authentication, so put it behind your own gateway before exposing it.
+
+The Docker image runs the same command from the Bun runtime image:
+
+```sh
+docker build -t einvoice-api .
+docker run --rm --read-only -p 8080:8080 einvoice-api      # add --cors or --limits after the image name
+```
+
+Contract tests (`test/api-contract.test.ts`) start the server in-process, send every fixture through every endpoint and check status, headers and body of each response against `openapi.yaml`; the spec itself is validated as OpenAPI 3.1 and its references into `schemas/` are checked, so the spec and the generated schemas cannot drift.
+
+## Deliverables and versioning
+
+What the project publishes, all from the same TypeScript sources and listed on the [Deliverables page](https://alexcatdad.github.io/eu-einvoice-canonical/deliverables.html):
+
+| Deliverable | Where | Version |
+| --- | --- | --- |
+| TypeScript library and types | this package (`src/index.ts`), [TypeDoc](https://alexcatdad.github.io/eu-einvoice-canonical/api/) | package semver (`package.json`) |
+| JSON Schemas | `schemas/*.v1.schema.json`, published at `/schemas/` | `v1` in the file names and `$id`s |
+| Format registry | `schemas/formats.json`, `GET /v1/formats` | follows the package |
+| HTTP API | `openapi/openapi.yaml` (and `.json`), `einvoice serve`, the Dockerfile | `/v1` path prefix; the spec carries its own `info.version` |
+| Command line | `einvoice` binaries on each [GitHub release](https://github.com/alexcatdad/eu-einvoice-canonical/releases/latest) | package semver |
+| Browser converter, conformance checklist, corpus results | the Pages site | built from `main` |
+
+**Compatibility promise.** The JSON Schema major version and the API prefix move together: `v1` stays compatible for as long as it is published.
+
+- *Additive changes keep `v1` (a minor or patch release):* new optional fields, new extension blocks, new formats and code-list values, new warning codes, new endpoints or query parameters. Objects are open and clients must ignore fields they do not know.
+- *Breaking changes get `v2` (a major release):* removing or renaming a field, changing its type or meaning, making an optional field required, narrowing a pattern, removing an endpoint or changing a problem `type`. `*.v2.schema.json` and `/v2` are published next to v1, and the v1 files and endpoints stay available.
+- *Package semver* follows the TypeScript API: a major release for breaking changes to exported functions and types, which also bumps the schema and API version when the output shape changed. The CLI's exit codes and the problem `type` URIs are part of the promise.
+- Everything generated is checked in CI: the schemas, `formats.json` and `openapi.json` are rebuilt and compared (`bun run check:schemas`), and the contract tests fail when a response no longer matches the spec.
 
 ## EU coverage
 
