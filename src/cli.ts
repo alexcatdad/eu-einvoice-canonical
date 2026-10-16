@@ -22,8 +22,12 @@ import {
   parseAccountMapping,
   renderHtml,
   renderPdf,
+  toCii,
   toSie4,
+  toUbl,
   type UnwrapLimits,
+  WriterError,
+  type WriterProfile,
 } from './index.js';
 import { isOrderXml, MatchInputError, matchInvoice, parseOrder, parsePurchaseOrdersJson, parseReceiptsJson } from './matching/index.js';
 import type { PurchaseOrder, Tolerances } from './matching/types.js';
@@ -81,6 +85,8 @@ const USAGE = `Usage:
   einvoice render  --as html|pdf <file...> [--lang en|de|fr] [--out <file|dir>]
                                              human-readable invoice: a self-contained HTML page or an A4 PDF
                                              (stdout for html; pdf needs --out unless stdout is a binary sink)
+  einvoice write   <file...> --to ubl|cii [--profile peppol-bis3|xrechnung|en16931] [--out <dir>]
+                                             canonical JSON, or any invoice file (converted first), written as Peppol BIS 3 UBL 2.1 or EN 16931 CII D16B
   einvoice sweep   <dir...> [--expect answers.json]
   einvoice trust-lists update [--out <snapshot.json>] [--lotl-signer <cert.pem>] [--lotl-url <url>]
                                              fetch the EU trusted lists, verify them and write a snapshot
@@ -120,6 +126,8 @@ interface Parsed {
   format?: string;
   as?: string;
   lang?: string;
+  to?: string;
+  profile?: string;
   accounts?: string;
   currency?: string;
   series?: string;
@@ -152,6 +160,8 @@ function parseArgs(argv: string[]): Parsed {
     '--format',
     '--as',
     '--lang',
+    '--to',
+    '--profile',
     '--accounts',
     '--currency',
     '--series',
@@ -213,6 +223,12 @@ function parseArgs(argv: string[]): Parsed {
         break;
       case '--lang':
         p.lang = value;
+        break;
+      case '--to':
+        p.to = value;
+        break;
+      case '--profile':
+        p.profile = value;
         break;
       case '--accounts':
         p.accounts = value;
@@ -359,7 +375,20 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     io.stdout(`${USAGE}\n`);
     return EXIT.ok;
   }
-  const commands = ['detect', 'inspect', 'convert', 'export', 'render', 'sweep', 'trust-lists', 'match', 'duplicates', 'mcp', 'serve'];
+  const commands = [
+    'detect',
+    'inspect',
+    'convert',
+    'export',
+    'render',
+    'write',
+    'sweep',
+    'trust-lists',
+    'match',
+    'duplicates',
+    'mcp',
+    'serve',
+  ];
   if (!commands.includes(args.command)) {
     io.stderr(`einvoice: unknown command "${args.command}" (try --help)`);
     return EXIT.usage;
@@ -394,6 +423,16 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
       return EXIT.usage;
     }
   }
+  if (args.command === 'write') {
+    if (args.to !== 'ubl' && args.to !== 'cii') {
+      io.stderr('einvoice: write needs --to ubl or --to cii');
+      return EXIT.usage;
+    }
+    if (args.profile !== undefined && !(args.profile in PROFILE_NAMES)) {
+      io.stderr(`einvoice: --profile must be one of ${Object.keys(PROFILE_NAMES).join(', ')}`);
+      return EXIT.usage;
+    }
+  }
   if (args.command === 'match' && args.po.length === 0) {
     io.stderr('einvoice: match needs --po <order.json|order.xml>');
     return EXIT.usage;
@@ -421,6 +460,7 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
       );
     }
     if (args.command === 'match') return await runMatch(args, io, json, err);
+    if (args.command === 'write') return await runWrite(args, io, err, note);
     if (args.command === 'mcp') {
       const { runMcpStdio } = await import('./mcp/stdio.js');
       await runMcpStdio({ allowDirs: args.allowDir });
@@ -730,6 +770,132 @@ async function updateTrustLists(
     }
     throw e;
   }
+}
+
+const PROFILE_NAMES: Record<WriterProfile, true> = { 'peppol-bis3': true, xrechnung: true, en16931: true };
+
+/** Canonical invoices from JSON (the output of `einvoice convert`: one invoice or an array), or undefined when the bytes are not JSON. */
+function canonicalFromJson(bytes: Uint8Array): CanonicalInvoice[] | undefined {
+  const raw = new TextDecoder().decode(bytes);
+  const text = raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw;
+  if (!/^\s*[[{]/.test(text)) return undefined;
+  const v: unknown = JSON.parse(text);
+  const list = Array.isArray(v) ? v : [v];
+  if (list.length === 0) throw new Error('JSON holds no invoices');
+  for (const [i, inv] of list.entries()) {
+    const problem = canonicalProblem(inv);
+    if (problem)
+      throw new Error(
+        `JSON is not a canonical invoice${list.length > 1 ? ` (entry ${i})` : ''}: ${problem} (expected the output of \`einvoice convert\`)`,
+      );
+  }
+  return list as CanonicalInvoice[];
+}
+
+const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
+
+/** What the writers read without checking: the required scalars, the party and totals objects, and every list. Undefined when all are there. */
+function canonicalProblem(inv: unknown): string | undefined {
+  if (!isObject(inv)) return 'not an object';
+  if (inv.kind !== 'invoice' && inv.kind !== 'creditNote') return 'kind must be "invoice" or "creditNote"';
+  for (const k of ['id', 'issueDate', 'currency', 'typeCode', 'specificationId'])
+    if (typeof inv[k] !== 'string') return `${k} must be a string`;
+  for (const k of ['notes', 'precedingInvoices', 'payments', 'allowances', 'charges', 'vatBreakdown', 'attachments', 'lines'])
+    if (!Array.isArray(inv[k])) return `${k} must be a list`;
+  for (const k of ['seller', 'buyer', 'totals']) if (!isObject(inv[k])) return `${k} must be an object`;
+  const totals = inv.totals as Record<string, unknown>;
+  for (const k of ['lineNetTotal', 'taxExclusive', 'taxInclusive', 'payable'])
+    if (typeof totals[k] !== 'string') return `totals.${k} must be a decimal string`;
+  for (const k of ['seller', 'buyer'])
+    if (!Array.isArray((inv[k] as Record<string, unknown>).identifiers)) return `${k}.identifiers must be a list`;
+  for (const [i, line] of (inv.lines as unknown[]).entries()) {
+    if (!isObject(line) || typeof line.id !== 'string' || typeof line.netAmount !== 'string' || !isObject(line.item))
+      return `lines[${i}] needs id, netAmount and item`;
+    if (!Array.isArray(line.allowances) || !Array.isArray(line.charges)) return `lines[${i}] needs allowances and charges lists`;
+    const item = line.item as Record<string, unknown>;
+    if (!Array.isArray(item.classifications) || !Array.isArray(item.attributes))
+      return `lines[${i}].item needs classifications and attributes lists`;
+  }
+  for (const [i, p] of (inv.payments as unknown[]).entries())
+    if (!isObject(p) || !Array.isArray(p.creditTransfers)) return `payments[${i}] needs a creditTransfers list`;
+  return undefined;
+}
+
+/** `einvoice write`: canonical JSON, or any invoice file converted first, written as UBL or CII. */
+async function runWrite(args: Parsed, io: IO, err: (line: string) => void, note: (line: string) => void): Promise<number> {
+  const tally = new Tally();
+  const outputs: { id: string; xml: string }[] = [];
+  const profile = args.profile as WriterProfile | undefined;
+  const write = (label: string, inv: CanonicalInvoice): boolean => {
+    try {
+      outputs.push({ id: inv.id, xml: args.to === 'ubl' ? toUbl(inv, { profile }) : toCii(inv, { profile }) });
+      return true;
+    } catch (e) {
+      // A WriterError names the value; anything else is a shape the check above did not foresee, which is still the input's fault.
+      err(`${label}: invoice ${inv.id}: ${e instanceof WriterError ? e.message : `cannot be written (${(e as Error).message})`}`);
+      return false;
+    }
+  };
+  for (const file of args.files) {
+    const label = file === '-' ? 'stdin' : file;
+    let bytes: Uint8Array;
+    try {
+      bytes = file === '-' ? await io.readStdin() : new Uint8Array(readFileSync(file));
+    } catch (e) {
+      err(`${label}: cannot read: ${(e as Error).message}`);
+      tally.fail(EXIT.internal);
+      continue;
+    }
+    let canonical: CanonicalInvoice[] | undefined;
+    try {
+      canonical = canonicalFromJson(bytes);
+    } catch (e) {
+      err(`${label}: ${(e as Error).message}`);
+      tally.fail(EXIT.unsafe);
+      continue;
+    }
+    if (canonical) {
+      if (canonical.map((inv) => write(label, inv)).every(Boolean)) tally.good();
+      else tally.fail(EXIT.unsafe);
+      continue;
+    }
+    const r = await convert(bytes, file === '-' ? undefined : file, args.limits);
+    for (const o of r.outcomes) {
+      if (o.status === 'ok') {
+        if (o.invoices.map((inv) => write(label, inv)).every(Boolean)) tally.good();
+        else tally.fail(EXIT.unsafe);
+      } else if (o.status === 'not-an-invoice') {
+        err(`${label}: not an invoice (${o.detection.kind === 'other-document' ? o.detection.label : 'unknown'})`);
+        tally.fail(EXIT.unsupported);
+      } else if (o.status === 'unsupported') {
+        err(`${label}: ${o.reason}`);
+        tally.fail(EXIT.unsupported);
+      } else {
+        err(`${label}: ${o.error}`);
+        tally.fail(o.error.startsWith('Internal error') ? EXIT.internal : EXIT.unsafe);
+      }
+    }
+    for (const s of r.skipped) {
+      if (BENIGN_SKIP.test(s.reason)) note(`${label}: ${s.reason}`);
+      else {
+        err(`${label}: ${s.reason}`);
+        tally.fail(EXIT.unsafe);
+      }
+    }
+  }
+  if (outputs.length === 0) return tally.code();
+  if (args.out) {
+    const dir = resolve(args.out);
+    mkdirSync(dir, { recursive: true });
+    const seen = new Set<string>();
+    for (const o of outputs) writeFileSync(join(dir, `${uniqueName(o.id, seen)}.xml`), o.xml);
+    note(`wrote ${outputs.length} ${args.to?.toUpperCase()} file(s) to ${args.out}`);
+  } else if (outputs.length === 1) io.stdout(outputs[0]!.xml);
+  else {
+    err(`${outputs.length} invoices were written; give --out <dir> to get one file per invoice`);
+    return EXIT.usage;
+  }
+  return tally.code();
 }
 
 async function runMatch(args: Parsed, io: IO, json: (v: unknown) => string, err: (line: string) => void): Promise<number> {

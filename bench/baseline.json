@@ -105,38 +105,73 @@
   "bundles": [
     {
       "name": "app.js",
-      "bytes": 20919,
-      "gzipBytes": 8621
+      "bytes": 21876,
+      "gzipBytes": 8152
     },
     {
       "name": "chunks/app.js",
-      "bytes": 825060,
-      "gzipBytes": 231566
+      "bytes": 873594,
+      "gzipBytes": 247380
     },
     {
       "name": "chunks/cades.js",
       "bytes": 1852,
-      "gzipBytes": 1003
+      "gzipBytes": 1005
+    },
+    {
+      "name": "chunks/de.js",
+      "bytes": 14544,
+      "gzipBytes": 5790
     },
     {
       "name": "chunks/envelope-cms.js",
       "bytes": 780,
-      "gzipBytes": 489
+      "gzipBytes": 490
     },
     {
       "name": "chunks/envelope-pdf.js",
-      "bytes": 440815,
-      "gzipBytes": 180613
+      "bytes": 449468,
+      "gzipBytes": 183544
+    },
+    {
+      "name": "chunks/es.js",
+      "bytes": 14782,
+      "gzipBytes": 5694
+    },
+    {
+      "name": "chunks/fr.js",
+      "bytes": 14870,
+      "gzipBytes": 5746
+    },
+    {
+      "name": "chunks/it.js",
+      "bytes": 14490,
+      "gzipBytes": 5599
+    },
+    {
+      "name": "chunks/nl.js",
+      "bytes": 14292,
+      "gzipBytes": 5612
+    },
+    {
+      "name": "chunks/pl.js",
+      "bytes": 14440,
+      "gzipBytes": 5936
+    },
+    {
+      "name": "chunks/ro.js",
+      "bytes": 14441,
+      "gzipBytes": 5674
     },
     {
       "name": "chunks/trust.js",
-      "bytes": 1070,
-      "gzipBytes": 569
+      "bytes": 914,
+      "gzipBytes": 510
     },
     {
       "name": "chunks/tsl-load.js",
       "bytes": 3110,
-      "gzipBytes": 1614
+      "gzipBytes": 1615
     },
     {
       "name": "chunks/xmldsig.js",
@@ -144,9 +179,14 @@
       "gzipBytes": 184
     },
     {
+      "name": "deliverables.js",
+      "bytes": 1560,
+      "gzipBytes": 799
+    },
+    {
       "name": "eval.js",
-      "bytes": 7434,
-      "gzipBytes": 3099
+      "bytes": 7520,
+      "gzipBytes": 3124
     }
   ]
 }
