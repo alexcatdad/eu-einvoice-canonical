@@ -75,7 +75,7 @@ export function runIsolated(c: FuzzCase, hangMs = HANG_MS, hang = false): Promis
     w.onmessage = (e: MessageEvent) => {
       if (e.data.id !== id) return;
       clearTimeout(timer);
-      if (e.data.ok) resolve({ result: e.data.result, ms: e.data.ms });
+      if (e.data.ok) resolve({ result: JSON.parse(e.data.json), ms: e.data.ms });
       else reject(new Error(`convert() threw: ${e.data.error}`));
     };
     w.postMessage({ id, bytes: c.bytes, filename: c.filename, limits: c.limits, options: c.options, hang });

@@ -18,7 +18,8 @@ scope.onmessage = async ({ data }) => {
   const started = performance.now();
   try {
     const result = await convert(data.bytes, data.filename, data.limits, data.options);
-    scope.postMessage({ id: data.id, ok: true, result, ms: performance.now() - started });
+    // JSON, not structured clone: the result is the wire form every property checks anyway.
+    scope.postMessage({ id: data.id, ok: true, json: JSON.stringify(result), ms: performance.now() - started });
   } catch (e) {
     scope.postMessage({ id: data.id, ok: false, error: e instanceof Error ? `${e.name}: ${e.message}` : String(e) });
   }
