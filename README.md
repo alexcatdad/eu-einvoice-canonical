@@ -1,6 +1,12 @@
 # eu-einvoice-canonical
 
+[![CI](https://github.com/alexcatdad/eu-einvoice-canonical/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/alexcatdad/eu-einvoice-canonical/actions/workflows/ci.yml)
+[![CodeQL](https://img.shields.io/badge/CodeQL-enabled-brightgreen)](https://github.com/alexcatdad/eu-einvoice-canonical/security/code-scanning)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/alexcatdad/eu-einvoice-canonical/badge)](https://scorecard.dev/viewer/?uri=github.com/alexcatdad/eu-einvoice-canonical)
+[![License: 0BSD](https://img.shields.io/badge/license-0BSD-blue)](LICENSE)
+[![Pages](https://img.shields.io/badge/demo-GitHub%20Pages-blue)](https://alexcatdad.github.io/eu-einvoice-canonical/)
+
+[Contributing](CONTRIBUTING.md) | [Code of Conduct](CODE_OF_CONDUCT.md) | [Security](SECURITY.md) | [Changelog](CHANGELOG.md)
 
 One TypeScript model for every XML e-invoice you can receive from the 27 EU member states, plus the layer that gets you from a received file to "this is format X, version Y": unwrapping (PDF/A-3, `.p7m`, ZIP, SBDH, SOAP, legacy encodings), detection, and parsing into canonical JSON.
 

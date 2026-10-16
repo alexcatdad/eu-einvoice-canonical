@@ -1,0 +1,61 @@
+name: Bug report
+description: Wrong detection, wrong or missing field, crash, or a hang on an input file
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Do not upload real invoices or anything containing personal data** (names, addresses, VAT or tax numbers, IBANs, e-mail addresses). Replace them with fictitious values before attaching anything. Security problems go through [private reporting](https://github.com/alexcatdad/eu-einvoice-canonical/security/advisories/new), not here.
+  - type: input
+    id: format
+    attributes:
+      label: Format
+      description: The format and version you expected, for example Peppol BIS 3, FatturaPA FPR12, Facturae 3.2.2, Factur-X EN 16931.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: CLI or library version
+      description: Output of `einvoice --version`, or the package version or commit you use.
+      placeholder: "1.2.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: How are you using it?
+      options:
+        - CLI
+        - Library
+        - HTTP server
+        - MCP server
+        - Browser converter
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What happened and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: sample
+    attributes:
+      label: Minimal sanitized sample
+      description: The smallest file that reproduces it, with all personal data replaced. Paste the XML here. Mention it if the encoding or line endings matter.
+      render: xml
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output or error message
+      render: shell
+  - type: checkboxes
+    id: sanitized
+    attributes:
+      label: Confirmation
+      options:
+        - label: The sample contains no real personal data or confidential business data.
+          required: true
