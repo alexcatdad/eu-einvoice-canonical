@@ -1,0 +1,19 @@
+#FLAGGA 0
+#PROGRAM "einvoice-test" 1.0
+#FORMAT PC8
+#GEN 20261016
+#SIETYP 4
+#FNAMN "Uppsala kommun"
+#ORGNR 212000-0001
+#VALUTA SEK
+#KONTO 2440 "Leverant”rsskulder"
+#KONTO 2614 "Utg†ende moms omv„nd skattskyldighet, 25 %"
+#KONTO 2645 "Ber„knad ing†ende moms p† f”rv„rv fr†n utlandet"
+#KONTO 6540 "IT-tj„nster"
+#VER "LF" "1" 20261012 "Beispiel Software GmbH invoice RC-2026-0310"
+{
+#TRANS 6540 {} 10000.00 20261012 "Softwarelizenz 2026"
+#TRANS 2645 {} 2500.00 20261012 "VAT AE 25 % (reverse charge, input)"
+#TRANS 2614 {} -2500.00 20261012 "VAT AE 25 % (reverse charge, output)"
+#TRANS 2440 {} -10000.00 20261012 "Beispiel Software GmbH RC-2026-0310"
+}

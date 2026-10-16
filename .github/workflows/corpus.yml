@@ -1,9 +1,11 @@
 name: Public corpora
 
-# Detection against public sample collections: weekly and on demand, never on a pull request.
+# Public sample collections: weekly and on demand, never on a pull request.
 # 1. coverage: every file under the corpora goes through detection (what is found, what is unknown)
 # 2. correctness: a manifest of files whose format is clear from their folder must all match
-# The clones are pinned in scripts/fetch-corpora.sh.
+# 3. real-world run: every file is converted with validation and line relations, and the report
+#    (artifact corpus-report) feeds the Real-world results page of the site (scripts/fetch-corpus-report.sh)
+# The clones are pinned in scripts/fetch-corpora.sh; licences are recorded in test/corpus/SOURCES.md.
 
 on:
   schedule:
@@ -24,7 +26,7 @@ defaults:
 jobs:
   corpus:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
@@ -38,15 +40,35 @@ jobs:
       - name: Known-answer sweep
         if: always()
         run: bun scripts/sweep.ts --expect test/corpus/expected.json | tee corpus-expect.txt
+      - name: Real-world run (convert every file, 60 s per file)
+        run: bun scripts/corpus-run.ts test/corpus/repos --out dist/corpus-report.json --details dist/corpus-details.ndjson --md dist/corpus-report.md --pins corpus-pins.txt --jobs 4 --timeout 60 > corpus-run.log
       - name: Summary
         if: always()
         run: |
           {
+            [ -f dist/corpus-report.md ] && cat dist/corpus-report.md
             echo '## Public corpora'
             echo '### Pinned commits'; echo '```'; cat corpus-pins.txt; echo '```'
             echo '### Known answers'; echo '```'; tail -n 40 corpus-expect.txt; echo '```'
             echo '### Coverage (counts per format)'; echo '```'; head -n 200 corpus-report.txt; echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload the report the site page is built from
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: corpus-report
+          path: |
+            dist/corpus-report.json
+            dist/corpus-report.md
+          if-no-files-found: warn
+      - name: Upload per-file results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: corpus-details
+          path: dist/corpus-details.ndjson
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Upload reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -56,3 +78,4 @@ jobs:
             corpus-pins.txt
             corpus-report.txt
             corpus-expect.txt
+            corpus-run.log

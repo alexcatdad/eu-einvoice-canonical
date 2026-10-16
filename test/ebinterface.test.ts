@@ -232,3 +232,22 @@ describe('ebInterface variants', () => {
     await assert.rejects(variant(inv, ' InvoiceCurrency="EUR"', ''), /InvoiceCurrency/);
   });
 });
+
+describe('ebInterface without PayableAmount (optional before 5.0, common in the wild)', () => {
+  test('the amount due is derived from the gross total and recorded as derived', async () => {
+    const inv = await variant('ebinterface-4.3-creditmemo.xml', '<PayableAmount>-270.00</PayableAmount>', '');
+    assert.equal(inv.totals.payable, '-270.00');
+    assert.ok(warningCodes(inv).includes('EB-NO-PAYABLE'));
+    assert.ok(inv.source.derived.some((d) => d.field === '/totals/payable'));
+  });
+
+  test('a prepaid amount is subtracted', async () => {
+    const inv = await variant('ebinterface-6.1-invoice.xml', '<PayableAmount>1002.00</PayableAmount>', '');
+    assert.equal(inv.totals.payable, '1002.00');
+  });
+
+  test('without TotalGrossAmount it is still an error', async () => {
+    const src = text('ebinterface-4.3-creditmemo.xml').replace('<TotalGrossAmount>-270.00</TotalGrossAmount>', '');
+    await assert.rejects(parseOne(utf8(src), 'x.xml'), /TotalGrossAmount missing/);
+  });
+});

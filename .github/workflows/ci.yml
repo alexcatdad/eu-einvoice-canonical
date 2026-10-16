@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -47,6 +48,10 @@ jobs:
         run: bun run build:site
       - name: Conformance checklist (job summary and site page)
         run: bun scripts/conformance.ts --html dist/conformance.html --json dist/conformance.json
+      - name: Real-world results page (latest corpus report, when there is one)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/fetch-corpus-report.sh dist
       - name: Upload the site
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v5

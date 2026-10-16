@@ -640,6 +640,14 @@ select {
   position: sticky;
   top: 1rem;
 }
+.journal-note {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  border-bottom: 1px solid var(--rule);
+}
+
 .json-bar {
   display: flex;
   flex-wrap: wrap;
