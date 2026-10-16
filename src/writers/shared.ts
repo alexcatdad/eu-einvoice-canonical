@@ -103,6 +103,21 @@ export function serialize(root: XmlNode, namespaces: Attrs): string {
 }
 
 // ---------------------------------------------------------------------------
+// VAT point date code (BT-8)
+// ---------------------------------------------------------------------------
+
+/** BT-8 is coded with UNTDID 2005 in UBL (InvoicePeriod/DescriptionCode) and with UNTDID 2475 in CII (DueDateTypeCode). */
+const BT8_2475_TO_2005: Record<string, string> = { '5': '3', '29': '35', '72': '432' };
+const BT8_2005_TO_2475: Record<string, string> = { '3': '5', '35': '29', '432': '72' };
+
+/** The code as UBL writes it: a UNTDID 2475 code is translated, anything else is kept. */
+export const vatPointCodeForUbl = (code: string | undefined): string | undefined =>
+  code === undefined ? undefined : (BT8_2475_TO_2005[code] ?? code);
+/** The code as CII writes it: a UNTDID 2005 code is translated, anything else is kept. */
+export const vatPointCodeForCii = (code: string | undefined): string | undefined =>
+  code === undefined ? undefined : (BT8_2005_TO_2475[code] ?? code);
+
+// ---------------------------------------------------------------------------
 // Specification identifier (BT-24) and business process (BT-23)
 // ---------------------------------------------------------------------------
 

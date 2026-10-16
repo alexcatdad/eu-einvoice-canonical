@@ -32,6 +32,7 @@ import {
   optDec,
   resolveSpecification,
   serialize,
+  vatPointCodeForUbl,
   type WriterProfile,
   type XmlNode,
 } from './shared.js';
@@ -99,7 +100,7 @@ export function toUbl(invoice: CanonicalInvoice, options: UblOptions = {}): stri
           'InvoicePeriod',
           cbc('StartDate', invoice.invoicePeriod?.start),
           cbc('EndDate', invoice.invoicePeriod?.end),
-          cbc('DescriptionCode', invoice.vatPointDateCode),
+          cbc('DescriptionCode', vatPointCodeForUbl(invoice.vatPointDateCode)),
         )
       : undefined;
 

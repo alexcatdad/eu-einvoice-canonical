@@ -31,6 +31,7 @@ import {
   optDec,
   resolveSpecification,
   serialize,
+  vatPointCodeForCii,
   type WriterProfile,
   type XmlNode,
 } from './shared.js';
@@ -318,7 +319,7 @@ function taxes(inv: CanonicalInvoice): XmlNode[] {
       ram('CategoryCode', v.categoryCode),
       ram('ExemptionReasonCode', v.exemptionReasonCode),
       first ? dateTime('TaxPointDate', inv.taxPointDate, 'udt:DateString') : undefined,
-      first ? ram('DueDateTypeCode', inv.vatPointDateCode) : undefined,
+      first ? ram('DueDateTypeCode', vatPointCodeForCii(inv.vatPointDateCode)) : undefined,
       ram('RateApplicablePercent', optDec(v.rate, 'VAT rate')),
     );
   });

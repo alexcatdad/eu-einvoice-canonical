@@ -18,6 +18,7 @@ import {
 } from '../src/index.js';
 import { CREDIT_TYPE_CODES, parseXml } from '../src/parsers/context.js';
 import { validate } from '../src/validation/index.js';
+import { vatPointCodeForCii, vatPointCodeForUbl } from '../src/writers/shared.js';
 import { utf8 } from './helpers.js';
 
 type Target = 'ubl' | 'cii';
@@ -69,8 +70,26 @@ const LOSSES: Loss[] = [
     id: 'extensions-follow-the-detected-format',
     target: 'both',
     reason:
-      'Country extensions (xrechnungVersion, zugferdProfile, FR profile) are read from the detected format, which depends on the syntax. They are compared only when the document is written back in its own syntax.',
+      'Country extensions (xrechnungVersion, zugferdProfile, FR profile) are read from the detected format, which depends on the syntax and, for Factur-X, on the XML having come out of a PDF. They are compared only when the document is written back in its own syntax and was not extracted from a PDF.',
     apply: () => {},
+  },
+  {
+    id: 'ubl-vat-point-date-code-list',
+    target: 'ubl',
+    reason:
+      'BT-8 is coded with UNTDID 2005 in UBL and UNTDID 2475 in CII. The writer translates (5, 29, 72 to 3, 35, 432), so the code comes back in the target list.',
+    apply: (inv) => {
+      inv.vatPointDateCode = vatPointCodeForUbl(inv.vatPointDateCode);
+    },
+  },
+  {
+    id: 'cii-vat-point-date-code-list',
+    target: 'cii',
+    reason:
+      'BT-8 is coded with UNTDID 2005 in UBL and UNTDID 2475 in CII. The writer translates (3, 35, 432 to 5, 29, 72), so the code comes back in the target list.',
+    apply: (inv) => {
+      inv.vatPointDateCode = vatPointCodeForCii(inv.vatPointDateCode);
+    },
   },
   {
     id: 'ubl-credit-note-due-date-needs-payment-means',
@@ -143,7 +162,7 @@ const LOSSES: Loss[] = [
   {
     id: 'cii-card-network',
     target: 'cii',
-    reason: 'The CII financial card has no network.',
+    reason: 'The CII financial card (ApplicableTradeSettlementFinancialCard) has no card network field.',
     apply: (inv) => {
       for (const p of inv.payments) if (p.card) p.card.network = undefined;
     },
@@ -221,13 +240,13 @@ const LOSSES: Loss[] = [
 ];
 
 /** The canonical invoice as it is expected to come back from `target`: lossy fields settled, `source` dropped, undefined keys gone. */
-function expected(inv: CanonicalInvoice, target: Target, crossSyntax: boolean): unknown {
+function expected(inv: CanonicalInvoice, target: Target, dropExtensions: boolean): unknown {
   const copy = structuredClone(inv);
   for (const loss of LOSSES) {
     if (loss.target !== 'both' && loss.target !== target) continue;
     loss.apply(copy);
   }
-  if (crossSyntax) copy.extensions = {};
+  if (dropExtensions) copy.extensions = {};
   const { source, ...rest } = copy;
   void source;
   return JSON.parse(JSON.stringify(rest));
@@ -350,8 +369,8 @@ describe('round trip: parse, write, parse again', () => {
           parseXml(xml); // well-formed
           const back = await reparse(xml);
           if (strict) {
-            const sameSyntax = family(inv) === target;
-            assert.deepEqual(diffs(expected(inv, target, !sameSyntax), expected(back, target, !sameSyntax)), []);
+            const keepExtensions = family(inv) === target && !inv.source.envelope.some((s) => s.kind === 'pdf-attachment');
+            assert.deepEqual(diffs(expected(inv, target, !keepExtensions), expected(back, target, !keepExtensions)), []);
           } else {
             assert.deepEqual(diffs(core(inv), core(back)), []);
           }
@@ -687,7 +706,9 @@ describe('a hand-built invoice that uses every part of the mapping', () => {
       '<ram:InvoiceReferencedDocument>',
       '<ram:ReceivableSpecifiedTradeAccountingAccount>',
     ];
-    const at = order.map((s) => xml.indexOf(s));
+    // The header elements are searched after the last line item: lines have a BuyerOrderReferencedDocument, an AdditionalReferencedDocument and so on of their own.
+    const tail = xml.lastIndexOf('</ram:IncludedSupplyChainTradeLineItem>');
+    const at = order.map((s, i) => xml.indexOf(s, i < 6 ? 0 : tail));
     assert.ok(
       at.every((i) => i >= 0),
       `missing: ${order.filter((_, i) => at[i] < 0)}`,
