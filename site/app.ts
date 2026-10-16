@@ -19,7 +19,10 @@ import {
   type Party,
   type SignatureInfo,
   type TrustSnapshot,
+  toCii,
   toSie4,
+  toUbl,
+  WriterError,
 } from '../src/index.js';
 import { currentLang, esc, initLanguage, initSwitcher, onLanguageChange, t } from './i18n.js';
 import { ENGINES, loadEngine } from './model.js';
@@ -548,7 +551,7 @@ function jsonPanel(item: Item): string {
     : `<button type="button" data-view="full" aria-pressed="true">${esc(t('json.viewDetection'))}</button>`;
   return `<section class="json-panel" aria-label="${esc(t('json.panel'))}">
     <div class="json-bar"><div class="views">${views}</div>
-      <div class="actions"><button type="button" class="btn quiet" data-act="copy">${esc(t('json.copy'))}</button><button type="button" class="btn" data-act="download">${esc(t('json.download'))}</button>${item.invoice ? `<button type="button" class="btn quiet" data-act="journal">${esc(t('json.journal'))}</button>` : ''}</div></div>
+      <div class="actions"><button type="button" class="btn quiet" data-act="copy">${esc(t('json.copy'))}</button><button type="button" class="btn" data-act="download">${esc(t('json.download'))}</button>${item.invoice ? `<button type="button" class="btn quiet" data-act="journal">${esc(t('json.journal'))}</button><button type="button" class="btn quiet" data-act="write-ubl">${esc(t('json.writeUbl'))}</button><button type="button" class="btn quiet" data-act="write-cii">${esc(t('json.writeCii'))}</button>` : ''}</div></div>
     ${item.invoice ? `<p class="journal-note">${t('json.journalNote')}</p>` : ''}
     <pre class="json" tabindex="0" aria-label="${esc(t('json.output'))}"></pre>
   </section>`;
@@ -589,6 +592,24 @@ function wireJson(item: Item, result: ConvertResult) {
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     toast(t('toast.downloaded'));
   });
+  for (const target of ['ubl', 'cii'] as const) {
+    resultEl.querySelector<HTMLButtonElement>(`[data-act="write-${target}"]`)?.addEventListener('click', () => {
+      const inv = item.invoice;
+      if (!inv) return;
+      try {
+        const xml = target === 'ubl' ? toUbl(inv) : toCii(inv);
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([xml], { type: 'application/xml' }));
+        a.download = `${inv.id.replace(/[^\w.-]+/g, '_')}.${target}.xml`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        toast(t('toast.written', { format: target.toUpperCase() }));
+      } catch (e) {
+        if (!(e instanceof WriterError)) throw e;
+        showNotice(t('notice.noWriteTitle', { format: target.toUpperCase() }), e.message);
+      }
+    });
+  }
   resultEl.querySelector<HTMLButtonElement>('[data-act="journal"]')?.addEventListener('click', () => {
     const inv = item.invoice;
     if (!inv) return;

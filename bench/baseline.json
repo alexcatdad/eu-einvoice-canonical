@@ -105,18 +105,18 @@
   "bundles": [
     {
       "name": "app.js",
-      "bytes": 20919,
-      "gzipBytes": 8621
+      "bytes": 21512,
+      "gzipBytes": 8013
     },
     {
       "name": "chunks/app.js",
-      "bytes": 825060,
-      "gzipBytes": 231566
+      "bytes": 974166,
+      "gzipBytes": 272211
     },
     {
       "name": "chunks/cades.js",
       "bytes": 1852,
-      "gzipBytes": 1003
+      "gzipBytes": 1006
     },
     {
       "name": "chunks/envelope-cms.js",
@@ -125,28 +125,33 @@
     },
     {
       "name": "chunks/envelope-pdf.js",
-      "bytes": 440815,
-      "gzipBytes": 180613
+      "bytes": 449435,
+      "gzipBytes": 183519
     },
     {
       "name": "chunks/trust.js",
-      "bytes": 1070,
-      "gzipBytes": 569
+      "bytes": 914,
+      "gzipBytes": 511
     },
     {
       "name": "chunks/tsl-load.js",
       "bytes": 3110,
-      "gzipBytes": 1614
+      "gzipBytes": 1612
     },
     {
       "name": "chunks/xmldsig.js",
       "bytes": 210,
-      "gzipBytes": 184
+      "gzipBytes": 183
+    },
+    {
+      "name": "deliverables.js",
+      "bytes": 1102,
+      "gzipBytes": 624
     },
     {
       "name": "eval.js",
       "bytes": 7434,
-      "gzipBytes": 3099
+      "gzipBytes": 3094
     }
   ]
 }
