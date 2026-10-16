@@ -2,11 +2,16 @@
  * Fuzzing: hostile input must never crash, hang or surface an internal error.
  *
  * Normal runs use a fixed seed and a few dozen cases per strategy (well under a minute). The nightly workflow
- * sets FUZZ_RUNS and a random FUZZ_SEED. To replay a failure: FUZZ_SEED=<seed> FUZZ_PATH=<path> FUZZ_RUNS=<runs> bun test test/fuzz
- * (the seed, path and run count are in fuzz-failures/summary.md and in the failure message).
+ * sets FUZZ_RUNS, FUZZ_ISOLATE=1 (each conversion runs in a terminable worker) and a random FUZZ_SEED.
+ *
+ * Every XML fixture gets one deterministic case before random sampling starts, so even the bounded run touches all of them.
+ *
+ * To replay a failure, either re-run the seed (FUZZ_SEED, FUZZ_PATH and FUZZ_RUNS from fuzz-failures/summary.md, with -t set to the
+ * test name), or feed the saved input back: FUZZ_REPLAY=<file>.bin bun test test/fuzz -t replay. The second form is exact even for
+ * cases built from a freshly generated signing key, which a seed alone cannot reproduce.
  */
 import { describe, expect, test } from 'bun:test';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import * as fc from 'fast-check';
 import {
@@ -16,8 +21,12 @@ import {
   byteMutation,
   envelopeSpec,
   generatedXml,
+  generatedXmlWith,
+  onePerFixture,
   shapedXml,
+  XML_FIXTURES,
   xmlMutation,
+  xmlMutationWith,
 } from './generate.js';
 import { checkCase, type FuzzCase } from './properties.js';
 
@@ -40,10 +49,16 @@ function record(name: string, details: fc.RunDetails<[unknown]>, c: FuzzCase | u
     '',
     `- Property violated: \`${message.split('\n')[0].slice(0, 300)}\``,
     `- Input: ${c ? `${c.label}, ${c.bytes.length} bytes after shrinking` : 'n/a'}`,
-    `- Replay: \`FUZZ_SEED=${details.seed} FUZZ_PATH=${details.counterexamplePath} FUZZ_RUNS=${details.numRuns} bun test test/fuzz -t "${name}"\``,
+    `- Replay by seed: \`FUZZ_SEED=${details.seed} FUZZ_PATH=${details.counterexamplePath} FUZZ_RUNS=${details.numRuns} bun test test/fuzz -t "${name}"\``,
+    `- Replay the exact bytes: \`FUZZ_REPLAY=fuzz-failures/${name.replace(/[^\w.-]+/g, '_')}.bin bun test test/fuzz -t replay\``,
     '',
     ...(c && textual ? ['```xml', Buffer.from(c.bytes).toString('utf8').replace(/`{3}/g, "'''"), '```', ''] : []),
-    ...(c && !textual ? [`The shrunk input is binary (${c.bytes.length} bytes); see \`${name}.bin\` in the uploaded artifact.`, ''] : []),
+    ...(c && !textual
+      ? [
+          `The shrunk input is binary (${c.bytes.length} bytes); see \`${name.replace(/[^\w.-]+/g, '_')}.bin\` in the uploaded artifact.`,
+          '',
+        ]
+      : []),
   ].join('\n');
   writeFileSync(join(OUT, 'summary.md'), `${summary}\n`, { flag: 'a' });
   if (c) {
@@ -71,7 +86,12 @@ function record(name: string, details: fc.RunDetails<[unknown]>, c: FuzzCase | u
   return message;
 }
 
-async function fuzz<T>(name: string, arb: fc.Arbitrary<T>, toCase: (t: T) => FuzzCase | Promise<FuzzCase>): Promise<void> {
+async function fuzz<T>(
+  name: string,
+  arb: fc.Arbitrary<T>,
+  toCase: (t: T) => FuzzCase | Promise<FuzzCase>,
+  examples: T[] = [],
+): Promise<void> {
   let last: FuzzCase | undefined;
   let lastFailing: FuzzCase | undefined;
   const details = await fc.check(
@@ -92,6 +112,7 @@ async function fuzz<T>(name: string, arb: fc.Arbitrary<T>, toCase: (t: T) => Fuz
       interruptAfterTimeLimit: TIME_LIMIT_MS,
       markInterruptAsFailure: false,
       endOnFailure: false,
+      examples: examples.map((e): [T] => [e]),
     },
   );
   if (details.failed) {
@@ -102,26 +123,48 @@ async function fuzz<T>(name: string, arb: fc.Arbitrary<T>, toCase: (t: T) => Fuz
   expect(details.failed).toBe(false);
 }
 
+const NAME = {
+  structural: 'structural mutation of every fixture',
+  bytes: 'byte-level mutation of the binary fixtures',
+  grammar: 'XML generated from each parser grammar',
+  shaped: 'deeply nested and very wide documents',
+  envelope: 'envelope recursion up to and beyond maxDepth',
+};
+
 describe('fuzz: hostile input never crashes, hangs or reports an internal error', () => {
-  test('structural mutation of every fixture', () => fuzz('structural-mutation', xmlMutation, (c) => c), TIME_LIMIT_MS + 30_000);
+  const count = XML_FIXTURES.length;
+  const limit = TIME_LIMIT_MS + 30_000;
+
+  test(NAME.structural, () => fuzz(NAME.structural, xmlMutation, (c) => c, onePerFixture(xmlMutationWith, count, SEED)), limit);
 
   test(
-    'byte-level mutation of the binary fixtures',
+    NAME.bytes,
     async () => {
       const seeds = await binarySeeds();
       expect(seeds.length).toBeGreaterThanOrEqual(BINARY_FIXTURES.length);
-      await fuzz('byte-mutation', byteMutation(seeds), (c) => c);
+      const make = (f: fc.Arbitrary<number>) => byteMutation(seeds, f, fc.constant(false));
+      await fuzz(NAME.bytes, byteMutation(seeds), (c) => c, onePerFixture(make, seeds.length, SEED));
     },
-    TIME_LIMIT_MS + 30_000,
+    limit,
   );
 
-  test('XML generated from each parser grammar', () => fuzz('grammar-generated', generatedXml, (c) => c), TIME_LIMIT_MS + 30_000);
+  test(NAME.grammar, () => fuzz(NAME.grammar, generatedXml, (c) => c, onePerFixture(generatedXmlWith, count, SEED)), limit);
 
-  test('deeply nested and very wide documents', () => fuzz('deep-and-wide', shapedXml, (c) => c), TIME_LIMIT_MS + 30_000);
+  test(NAME.shaped, () => fuzz(NAME.shaped, shapedXml, (c) => c), limit);
 
-  test(
-    'envelope recursion up to and beyond maxDepth',
-    () => fuzz('envelope-recursion', envelopeSpec, buildEnvelope),
-    TIME_LIMIT_MS + 30_000,
-  );
+  test(NAME.envelope, () => fuzz(NAME.envelope, envelopeSpec, buildEnvelope), limit);
+});
+
+const REPLAY = process.env.FUZZ_REPLAY;
+describe.skipIf(!REPLAY)('fuzz: replay', () => {
+  test('replay a saved counterexample', async () => {
+    const meta = JSON.parse(readFileSync(String(REPLAY).replace(/\.bin$/, '.json'), 'utf8'));
+    await checkCase({
+      label: `replay of ${REPLAY}`,
+      filename: meta.filename,
+      bytes: new Uint8Array(readFileSync(String(REPLAY))),
+      limits: meta.limits,
+      options: meta.options,
+    });
+  });
 });

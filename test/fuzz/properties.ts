@@ -51,7 +51,39 @@ export function checkResult(result: ConvertResult): void {
   }
 }
 
+/** Nightly runs convert() in a worker that is terminated at the deadline, so a case that blocks synchronously is reported, not waited for. */
+const ISOLATE = process.env.FUZZ_ISOLATE === '1';
+const HANG_MS = Number(process.env.FUZZ_HANG_MS ?? BUDGET_MS + 15_000);
+
+let worker: Worker | undefined;
+let nextId = 0;
+
+/** Runs one conversion in the shared worker; rejects (and replaces the worker) when it does not answer within `hangMs`. */
+export function runIsolated(c: FuzzCase, hangMs = HANG_MS, hang = false): Promise<{ result: ConvertResult; ms: number }> {
+  worker ??= new Worker(new URL('./worker.ts', import.meta.url).href);
+  const w = worker;
+  const id = ++nextId;
+  return new Promise((resolve, reject) => {
+    const fail = (message: string) => {
+      clearTimeout(timer);
+      w.terminate();
+      if (worker === w) worker = undefined;
+      reject(new Error(message));
+    };
+    const timer = setTimeout(() => fail(`hang: no result within ${hangMs} ms (worker terminated)`), hangMs);
+    w.onerror = (e) => fail(`worker crashed: ${e.message}`);
+    w.onmessage = (e: MessageEvent) => {
+      if (e.data.id !== id) return;
+      clearTimeout(timer);
+      if (e.data.ok) resolve({ result: e.data.result, ms: e.data.ms });
+      else reject(new Error(`convert() threw: ${e.data.error}`));
+    };
+    w.postMessage({ id, bytes: c.bytes, filename: c.filename, limits: c.limits, options: c.options, hang });
+  });
+}
+
 async function run(c: FuzzCase): Promise<{ result: ConvertResult; ms: number }> {
+  if (ISOLATE) return runIsolated(c);
   const started = performance.now();
   let result: ConvertResult;
   try {

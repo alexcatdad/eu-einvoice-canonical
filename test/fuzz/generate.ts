@@ -315,21 +315,38 @@ export function mutateXml(fixture: Fixture, ops: XmlOp[], enc: Encoding): Uint8A
   return encode(xml, enc);
 }
 
-export const xmlMutation: fc.Arbitrary<FuzzCase> = fc
-  .record({ f: fc.nat(), ops: fc.array(xmlOp, { minLength: 1, maxLength: 8 }), enc: encodingArb, deep: fc.boolean() })
-  .map(({ f, ops, enc, deep }): FuzzCase | undefined => {
-    const fixture = XML_FIXTURES[f % XML_FIXTURES.length];
-    const bytes = mutateXml(fixture, ops, enc);
-    return (
-      bytes && {
-        label: `xml-mutation of ${fixture.name}`,
-        filename: fixture.name,
-        bytes,
-        options: deep ? { relations: true, provenance: true } : {},
-      }
-    );
-  })
-  .filter((c): c is FuzzCase => c !== undefined);
+/** One structurally mutated fixture; `f` picks the fixture, so a constant covers one fixture and `fc.nat()` any. */
+export const xmlMutationWith = (f: fc.Arbitrary<number>): fc.Arbitrary<FuzzCase | undefined> =>
+  fc
+    .record({ f, ops: fc.array(xmlOp, { minLength: 1, maxLength: 8 }), enc: encodingArb, deep: fc.boolean() })
+    .map(({ f, ops, enc, deep }): FuzzCase | undefined => {
+      const fixture = XML_FIXTURES[f % XML_FIXTURES.length];
+      const bytes = mutateXml(fixture, ops, enc);
+      return (
+        bytes && {
+          label: `xml-mutation of ${fixture.name}`,
+          filename: fixture.name,
+          bytes,
+          options: deep ? { relations: true, provenance: true } : {},
+        }
+      );
+    });
+
+export const xmlMutation: fc.Arbitrary<FuzzCase> = xmlMutationWith(fc.nat()).filter((c): c is FuzzCase => c !== undefined);
+
+/** One deterministic case per entry of a pool (every fixture gets at least one case before random sampling starts). */
+export function onePerFixture(
+  make: (f: fc.Arbitrary<number>) => fc.Arbitrary<FuzzCase | undefined>,
+  count: number,
+  seed: number,
+): FuzzCase[] {
+  const out: FuzzCase[] = [];
+  for (let i = 0; i < count; i++) {
+    const c = fc.sample(make(fc.constant(i)), { numRuns: 1, seed: seed + i })[0];
+    if (c) out.push(c);
+  }
+  return out;
+}
 
 // ---------------------------------------------------------------------------
 // Byte-level mutation
@@ -527,12 +544,16 @@ export async function binarySeeds(): Promise<Fixture[]> {
   return seeds;
 }
 
-export const byteMutation = (seedList: Fixture[]): fc.Arbitrary<FuzzCase> =>
+export const byteMutation = (
+  seedList: Fixture[],
+  f: fc.Arbitrary<number> = fc.nat(),
+  viaXml: fc.Arbitrary<boolean> = fc.boolean(),
+): fc.Arbitrary<FuzzCase> =>
   fc
     .record({
-      f: fc.nat(),
+      f,
       ops: fc.array(byteOp, { minLength: 1, maxLength: 6 }),
-      viaXml: fc.boolean(),
+      viaXml,
     })
     .map(({ f, ops, viaXml }): FuzzCase => {
       // Mostly binary seeds; sometimes a plain XML fixture, which exercises the text decoders.
@@ -545,34 +566,36 @@ export const byteMutation = (seedList: Fixture[]): fc.Arbitrary<FuzzCase> =>
 // Grammar-generated XML, deep and wide documents
 // ---------------------------------------------------------------------------
 
-export const generatedXml: fc.Arbitrary<FuzzCase> = fc
-  .record({
-    f: fc.nat(),
-    trees: fc.array(treeSpec, { minLength: 1, maxLength: 12 }),
-    where: fc.array(fc.nat(), { minLength: 1, maxLength: 12 }),
-  })
-  .map(({ f, trees, where }): FuzzCase | undefined => {
-    const fixture = XML_FIXTURES[f % XML_FIXTURES.length];
-    // Keep the root element and its declarations (so detection routes to this fixture's parser), then fill it from the grammar.
-    const doc = parseDoc(fixture.bytes);
-    if (!doc?.documentElement) return undefined;
-    const vocab = vocabulary(doc);
-    const root = doc.documentElement;
-    while (root.firstChild) root.removeChild(root.firstChild);
-    const placed: ElementNode[] = [root as unknown as ElementNode];
-    trees.forEach((t, i) => {
-      const el = buildTree(doc, t, vocab);
-      placed[where[i % where.length] % placed.length].appendChild(el);
-      placed.push(el);
+export const generatedXmlWith = (f: fc.Arbitrary<number>): fc.Arbitrary<FuzzCase | undefined> =>
+  fc
+    .record({
+      f,
+      trees: fc.array(treeSpec, { minLength: 1, maxLength: 12 }),
+      where: fc.array(fc.nat(), { minLength: 1, maxLength: 12 }),
+    })
+    .map(({ f, trees, where }): FuzzCase | undefined => {
+      const fixture = XML_FIXTURES[f % XML_FIXTURES.length];
+      // Keep the root element and its declarations (so detection routes to this fixture's parser), then fill it from the grammar.
+      const doc = parseDoc(fixture.bytes);
+      if (!doc?.documentElement) return undefined;
+      const vocab = vocabulary(doc);
+      const root = doc.documentElement;
+      while (root.firstChild) root.removeChild(root.firstChild);
+      const placed: ElementNode[] = [root as unknown as ElementNode];
+      trees.forEach((t, i) => {
+        const el = buildTree(doc, t, vocab);
+        placed[where[i % where.length] % placed.length].appendChild(el);
+        placed.push(el);
+      });
+      return {
+        label: `generated from the grammar of ${fixture.name}`,
+        filename: fixture.name,
+        bytes: encoder.encode(new XMLSerializer().serializeToString(doc as never)),
+        options: { relations: true, provenance: true },
+      };
     });
-    return {
-      label: `generated from the grammar of ${fixture.name}`,
-      filename: fixture.name,
-      bytes: encoder.encode(new XMLSerializer().serializeToString(doc as never)),
-      options: { relations: true, provenance: true },
-    };
-  })
-  .filter((c): c is FuzzCase => c !== undefined);
+
+export const generatedXml: fc.Arbitrary<FuzzCase> = generatedXmlWith(fc.nat()).filter((c): c is FuzzCase => c !== undefined);
 
 /** Deeply nested or very wide documents, built as strings so the generator itself does not recurse. */
 export const shapedXml: fc.Arbitrary<FuzzCase> = fc
@@ -682,13 +705,25 @@ export const envelopeSpec: fc.Arbitrary<EnvelopeSpec> = fc.record({
   maxDepth: fc.option(fc.integer({ min: 0, max: 8 }), { nil: undefined }),
 });
 
+/** Plain UTF-8 XML text (no BOM, no UTF-16): the only thing the SBDH and SOAP wrappers can carry. */
+function isXmlText(bytes: Uint8Array): boolean {
+  const body = bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf ? bytes.subarray(3) : bytes;
+  return body.length > 0 && !body.includes(0) && /^\s*</.test(decoder.decode(body.subarray(0, 64)));
+}
+
 export async function buildEnvelope(spec: EnvelopeSpec): Promise<FuzzCase> {
   const fixture = XML_FIXTURES[spec.f % XML_FIXTURES.length];
   let bytes = fixture.bytes;
-  for (const layer of spec.layers) bytes = await wrap(layer, bytes);
+  const applied: Layer[] = [];
+  for (const layer of spec.layers) {
+    // An XML wrapper around binary or UTF-16 content would only be malformed XML; skip it so the nesting is what gets tested.
+    if ((layer === 'sbdh' || layer === 'soap') && !isXmlText(bytes)) continue;
+    bytes = await wrap(layer, bytes);
+    applied.push(layer);
+  }
   return {
-    label: `${spec.layers.join(' > ')} around ${fixture.name}${spec.maxDepth === undefined ? '' : ` (maxDepth ${spec.maxDepth})`}`,
-    filename: `${fixture.name}.${spec.layers[spec.layers.length - 1]}`,
+    label: `${applied.join(' > ')} around ${fixture.name}${spec.maxDepth === undefined ? '' : ` (maxDepth ${spec.maxDepth})`}`,
+    filename: `${fixture.name}.${applied[applied.length - 1] ?? 'xml'}`,
     bytes,
     limits: spec.maxDepth === undefined ? undefined : { maxDepth: spec.maxDepth },
   };

@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import { withinXmlDepth } from '../../src/envelope.js';
 import { convert } from '../../src/index.js';
 import { fixture, utf8 } from '../helpers.js';
-import { checkCase } from './properties.js';
+import { checkCase, runIsolated } from './properties.js';
 
 const text = (name: string) => new TextDecoder().decode(fixture(name));
 
@@ -81,5 +81,20 @@ describe('fuzz regressions', () => {
     const bytes = without('peppol-bis3-invoice.xml', /<cbc:TaxableAmount[^>]*>[^<]*<\/cbc:TaxableAmount>/);
     await checkCase({ label: 'subtotal without taxable amount', bytes });
     expect((await convert(bytes, 'x.xml')).outcomes[0].status).toBe('error');
+  });
+
+  test('the isolated runner returns the same result as an in-process run', async () => {
+    const bytes = fixture('peppol-bis3-invoice.xml');
+    const [inProcess, isolated] = [await convert(bytes, 'a.xml'), await runIsolated({ label: 'isolated', filename: 'a.xml', bytes })];
+    expect(JSON.stringify(isolated.result)).toBe(JSON.stringify(inProcess));
+  });
+
+  test('the isolated runner terminates a case that blocks the event loop', async () => {
+    const started = performance.now();
+    await expect(runIsolated({ label: 'hang', bytes: utf8('<a/>') }, 500, true)).rejects.toThrow(/hang: no result within 500 ms/);
+    expect(performance.now() - started).toBeLessThan(5000);
+    // A fresh worker takes over afterwards.
+    const ok = await runIsolated({ label: 'after', bytes: utf8('<a/>') });
+    expect(ok.result.outcomes.length).toBe(1);
   });
 });
