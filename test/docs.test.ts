@@ -72,7 +72,7 @@ describe('docs pages from the README', () => {
       expect(p.html).toContain('property="og:description"');
       expect(p.html).toContain('"@type":"TechArticle"');
       expect(p.html).toContain('"@type":"BreadcrumbList"');
-      expect(p.html).not.toMatch(/<h[1-6](?![^>]*\bid=)[^>]*>/);
+      expect(p.html).not.toMatch(/<h[1-6](?=[\s>])(?![^>]*\bid=)[^>]*>/);
       expect(p.html).not.toContain('<script src');
       expect(p.html).not.toContain('<img');
     }
