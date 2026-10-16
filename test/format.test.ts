@@ -26,6 +26,17 @@ describe('formatDecimal', () => {
     expect(plain(formatDecimal('1234567.891', 'fr'))).toBe('1 234 567,891');
   });
 
+  test('takes the group widths from the locale (en-IN groups by two after the first three)', () => {
+    expect(formatDecimal('12345678.9', 'en-IN')).toBe('1,23,45,678.9');
+    expect(formatDecimal('100000', 'en-IN')).toBe('1,00,000');
+    expect(formatDecimal('123', 'en-IN')).toBe('123');
+    expect(formatMoney('12345678.9', 'INR', 'en-IN')).toBe('₹1,23,45,678.90');
+    // Group widths count digits as code points, also in numbering systems outside the BMP.
+    expect(formatDecimal('1234567890', 'en-u-nu-mathbold')).toBe('1,234,567,890');
+    // Exact digits all the way: a float would have rounded this one.
+    expect(formatDecimal('1234567890123456789', 'en-IN')).toBe('12,34,56,78,90,12,34,56,789');
+  });
+
   test('follows locales that leave four-digit numbers ungrouped', () => {
     expect(formatDecimal('1234', 'es')).toBe('1234');
     expect(formatDecimal('12345', 'es')).toBe('12.345');

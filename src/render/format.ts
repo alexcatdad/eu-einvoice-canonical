@@ -21,6 +21,9 @@ interface Symbols {
   decimal: string;
   /** 2 where the locale leaves four-digit numbers ungrouped (es, pl: 1234 but 12 345). */
   minGrouping: number;
+  /** Digits in the group next to the decimal sign (3), and in every group further left (3, or 2 in en-IN). */
+  primary: number;
+  secondary: number;
 }
 
 const symbolCache = new Map<string, Symbols>();
@@ -30,7 +33,17 @@ function symbols(locale: string): Symbols {
   if (!s) {
     const nf = new Intl.NumberFormat(locale);
     const parts = nf.formatToParts(1234567.5);
+    // The integer groups of a long probe give the widths: 1,234,567,890 or 1,23,45,67,890 (en-IN).
+    const groups = nf
+      .formatToParts(1234567890)
+      .filter((p) => p.type === 'integer')
+      // Code points, not UTF-16 units: some numbering systems (mathbold, adlm) use supplementary-plane digits.
+      .map((p) => [...p.value].length);
+    const primary = groups.length > 1 ? groups[groups.length - 1]! : 3;
+    const secondary = groups.length > 2 ? groups[groups.length - 2]! : primary;
     s = {
+      primary,
+      secondary,
       group: parts.find((p) => p.type === 'group')?.value ?? ',',
       decimal: parts.find((p) => p.type === 'decimal')?.value ?? '.',
       minGrouping: nf.formatToParts(1234).some((p) => p.type === 'group') ? 1 : 2,
@@ -44,9 +57,10 @@ function symbols(locale: string): Symbols {
 function digits(int: string, frac: string, locale: string, minFraction: number): string {
   const s = symbols(locale);
   let grouped = int;
-  if (int.length >= 4 + s.minGrouping - 1) {
-    grouped = '';
-    for (let end = int.length; end > 0; end -= 3) grouped = int.slice(Math.max(0, end - 3), end) + (grouped ? s.group + grouped : '');
+  if (int.length >= s.primary + s.minGrouping) {
+    grouped = int.slice(-s.primary);
+    for (let end = int.length - s.primary; end > 0; end -= s.secondary)
+      grouped = `${int.slice(Math.max(0, end - s.secondary), end)}${s.group}${grouped}`;
   }
   const f = frac.padEnd(minFraction, '0');
   return f ? `${grouped}${s.decimal}${f}` : grouped;

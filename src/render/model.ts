@@ -71,12 +71,16 @@ export interface LineView {
   /** "per 100 pcs" when the price is for more than one unit. */
   priceBasis?: string;
   vat: Value;
+  /** The VAT category code (S, Z, E, AE...), for outputs without tooltips. */
+  vatCategory?: string;
   net: string;
 }
 
 export interface AdjustmentView {
   reason: string;
   vat: Value;
+  /** The VAT category code (S, Z, E, AE...), for outputs without tooltips. */
+  vatCategory?: string;
   amount: string;
 }
 
@@ -275,6 +279,7 @@ function lineView(t: T, l: Line, cur: string, locale: string): LineView {
     unitPrice: p ? formatAmount(p.net, cur, locale) : '',
     priceBasis: basis,
     vat: vatValue(t, l.vat, locale),
+    vatCategory: l.vat?.categoryCode,
     net: formatAmount(l.netAmount, cur, locale),
   };
 }
@@ -289,6 +294,7 @@ function adjustment(a: AllowanceCharge, t: T, cur: string, locale: string): Adju
   return {
     reason: [reason, pct].filter(present).join(' · '),
     vat: vatValue(t, a.vat, locale),
+    vatCategory: a.vat?.categoryCode,
     amount: formatAmount(a.amount, cur, locale),
   };
 }
@@ -417,7 +423,9 @@ export function buildInvoiceView(inv: CanonicalInvoice, lang?: string, options: 
     for (const c of p.creditTransfers) {
       f.push(account(t, c.accountId));
       f.push([t('accountHolder'), c.accountName]);
-      f.push([t('bic'), present(c.serviceProviderId) ? text(c.serviceProviderId, { code: true }) : undefined]);
+      // Only a BIC is called one; national clearing ids (SE:BANKGIRO, SE:PLUSGIRO) get the generic label.
+      const bic = present(c.serviceProviderId) && /^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(c.serviceProviderId);
+      f.push([bic ? t('bic') : t('bank'), present(c.serviceProviderId) ? text(c.serviceProviderId, { code: true }) : undefined]);
     }
     if (p.card) {
       f.push([t('card'), [p.card.network, `…${p.card.primaryAccountNumber.slice(-4)}`].filter(present).join(' ')]);
