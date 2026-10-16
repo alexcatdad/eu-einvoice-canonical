@@ -24,20 +24,25 @@ export interface RenderHtmlOptions {
   standalone?: boolean;
 }
 
-const ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;', '`': '&#96;' };
-
 /**
  * Escapes text for HTML element content and quoted attribute values. Control characters (other than tab and
  * newline) are dropped, since they have no use in an invoice and some browsers treat them oddly.
  */
 export function escapeHtml(text: string): string {
-  let out = '';
+  let kept = '';
   for (const ch of String(text)) {
     const cp = ch.codePointAt(0)!;
     if ((cp < 0x20 && cp !== 0x09 && cp !== 0x0a && cp !== 0x0d) || cp === 0x7f) continue;
-    out += ESCAPES[ch] ?? ch;
+    kept += ch;
   }
-  return out;
+  // A plain replace chain (ampersand first), so static analysis recognises it as an HTML sanitiser.
+  return kept
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/`/g, '&#96;');
 }
 
 /*

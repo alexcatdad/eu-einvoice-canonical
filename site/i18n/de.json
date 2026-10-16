@@ -296,5 +296,8 @@
   "val.passed": "Bestanden",
   "val.failed": "Fehlgeschlagen",
   "val.not-run": "Nicht ausgeführt",
-  "val.unavailable": "Nicht verfügbar"
+  "val.unavailable": "Nicht verfügbar",
+  "deliv.cliLookup": "Neueste Version abfragen",
+  "deliv.cliLookupNote": "Fragt api.github.com nach der Dateiliste. Ohne Klick wird nichts angefragt.",
+  "hero.title": "E-Rechnung in JSON umwandeln"
 }

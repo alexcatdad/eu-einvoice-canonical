@@ -12,8 +12,8 @@
  */
 import { Lexer, Marked, type Token, type Tokens } from 'marked';
 import { FORMATS } from '../src/formats.js';
-import { IMPLEMENTED_FAMILIES } from '../src/parsers/index.js';
 import { absolute, breadcrumbs, esc, page, REPO_URL, rootOf, SITE_URL } from './chrome.js';
+import { converts } from './coverage.js';
 
 export const GROUPS = ['Start', 'Use it', 'Model and contracts', 'Formats', 'Project'] as const;
 type Group = (typeof GROUPS)[number];
@@ -364,7 +364,7 @@ function resolveHref(href: string, ctx: LinkContext): string {
   const [file = '', frag = ''] = href.split(/(?=#)/);
   const extra = ctx.extras.get(file);
   if (extra) return local(extra, frag);
-  if (/^(openapi|schemas)\//.test(file)) return local(file, frag);
+  if (/^(openapi|schemas)\//.test(file) || /^docs\/[\w/-]+\.html$/.test(file)) return local(file, frag);
   return `${REPO_URL}/blob/main/${file}${frag}`;
 }
 
@@ -546,7 +546,7 @@ function formatMarkdown(f: (typeof FORMATS)[number], readme: Token[]): { md: str
   const coverage = tableStartingWith(readme, 'Country');
   const beyond = tableStartingWith(readme, 'Format ID');
   const build = tableStartingWith(readme, 'Phase');
-  const converts = IMPLEMENTED_FAMILIES.includes(f.family);
+  const ok = converts(f);
   const countries = f.countries.map((c) => (c === 'EU' ? 'EU-wide' : `${countryName(c)} (${c})`)).join(', ');
   const status = {
     current: 'in active use',
@@ -559,7 +559,7 @@ function formatMarkdown(f: (typeof FORMATS)[number], readme: Token[]): { md: str
     `- Format id: \`${f.id}\``,
     `- Countries: ${countries}`,
     `- Status: ${status}`,
-    `- Parser: \`${f.family}\` family, ${converts ? 'converts to canonical JSON' : 'identified only; the parser is still to come'}`,
+    `- Parser: \`${f.family}\` family, ${ok ? 'converts to canonical JSON' : 'identified only; this format is not mapped yet'}`,
     '',
     f.notes,
   ];

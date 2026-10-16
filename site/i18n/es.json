@@ -296,5 +296,8 @@
   "val.passed": "Superado",
   "val.failed": "Fallido",
   "val.not-run": "No ejecutado",
-  "val.unavailable": "No disponible"
+  "val.unavailable": "No disponible",
+  "deliv.cliLookup": "Buscar la última versión",
+  "deliv.cliLookupNote": "Consulta api.github.com para obtener la lista de archivos. No se pide nada hasta que pulsas el botón.",
+  "hero.title": "Convierte una factura electrónica a JSON"
 }

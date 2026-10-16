@@ -296,5 +296,8 @@
   "val.passed": "Passed",
   "val.failed": "Failed",
   "val.not-run": "Not run",
-  "val.unavailable": "Unavailable"
+  "val.unavailable": "Unavailable",
+  "deliv.cliLookup": "Look up the latest release",
+  "deliv.cliLookupNote": "Asks api.github.com for the file list. Nothing is requested until you press the button.",
+  "hero.title": "Convert an e-invoice to JSON"
 }
