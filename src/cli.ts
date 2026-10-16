@@ -62,8 +62,10 @@ convert --eu-trust[=<snapshot.json>] checks signers against a trusted-list snaps
 ~/.einvoice/eu-trust-snapshot.json, or trust/eu-trust-snapshot.json next to the sources).
   einvoice match   --po <order.json|order.xml>... [--receipts r.json] [--tolerance '<json>'] <invoice...>
                                              match invoice lines to purchase orders (two-way; three-way with --receipts)
+  einvoice mcp [--allow-dir <dir>]...           Model Context Protocol server on stdio, for AI agents; files only
+                                             inside the allowed directories
   einvoice duplicates <dir...> [--window days] [--index index.json] [--json]
-                                             duplicate and re-sent invoices across files; exit 8 if any
+                                             duplicate and re-sent invoices across files; exit 9 if any
 
 A file argument of "-" reads stdin.
 --tolerance takes e.g. '{"unitPrice":{"percent":"2"},"quantity":{"absolute":"1"}}' (keys: quantity, unitPrice, total, vat).
@@ -91,10 +93,11 @@ interface Parsed {
   po: string[];
   receipts?: string;
   tolerance?: Tolerances;
+  allowDir: string[];
 }
 
 function parseArgs(argv: string[]): Parsed {
-  const p: Parsed = { command: '', files: [], pretty: false, quiet: false, validate: false, json: false, po: [] };
+  const p: Parsed = { command: '', files: [], pretty: false, quiet: false, validate: false, json: false, po: [], allowDir: [] };
   const takesValue = new Set([
     '--out',
     '--expect',
@@ -106,6 +109,7 @@ function parseArgs(argv: string[]): Parsed {
     '--tolerance',
     '--index',
     '--window',
+    '--allow-dir',
   ]);
   for (let i = 0; i < argv.length; i++) {
     let a = argv[i]!;
@@ -160,6 +164,9 @@ function parseArgs(argv: string[]): Parsed {
       }
       case '--json':
         p.json = true;
+        break;
+      case '--allow-dir':
+        p.allowDir.push(value!);
         break;
       case '--po':
         p.po.push(value!);
@@ -264,7 +271,7 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     io.stdout(`${USAGE}\n`);
     return EXIT.ok;
   }
-  const commands = ['detect', 'inspect', 'convert', 'sweep', 'trust-lists', 'match', 'duplicates'];
+  const commands = ['detect', 'inspect', 'convert', 'sweep', 'trust-lists', 'match', 'duplicates', 'mcp'];
   if (!commands.includes(args.command)) {
     io.stderr(`einvoice: unknown command "${args.command}" (try --help)`);
     return EXIT.usage;
@@ -273,7 +280,7 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     io.stderr('einvoice: trust-lists needs a subcommand: update');
     return EXIT.usage;
   }
-  if (args.files.length === 0) {
+  if (args.files.length === 0 && args.command !== 'mcp') {
     io.stderr(
       `einvoice: ${args.command} needs at least one ${args.command === 'sweep' || args.command === 'duplicates' ? 'directory' : 'file'}`,
     );
@@ -305,6 +312,11 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
       );
     }
     if (args.command === 'match') return await runMatch(args, io, json, err);
+    if (args.command === 'mcp') {
+      const { runMcpStdio } = await import('./mcp/stdio.js');
+      await runMcpStdio({ allowDirs: args.allowDir });
+      return EXIT.ok;
+    }
 
     let validator: Validator | null = null;
     if (args.validate) {
