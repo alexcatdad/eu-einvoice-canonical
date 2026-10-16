@@ -1,23 +1,26 @@
 import type { PDFDocument, PDFFont, PDFPage } from 'pdf-lib';
 import type { CanonicalInvoice } from '../canonical.js';
 import { labelsFor, type RenderLanguage } from './labels.js';
-import { buildInvoiceView, type Column, type Field, type InvoiceView, parasText, valueText } from './model.js';
+import { buildInvoiceView, type Column, type Field, type InvoiceView, parasText, type Value, valueText } from './model.js';
 
 export interface RenderPdfOptions {
   /** Language for labels, numbers and dates: `en`, `de`, `fr`, `it`, `es`, `nl`, `pl`, `ro`. Other languages use English labels. */
   lang?: RenderLanguage | (string & {});
 }
 
-type Block =
+export type Block =
   | { kind: 'kv'; heading: string; rows: [label: string, value: string][] }
   | { kind: 'totals'; heading: string; rows: [label: string, value: string][] }
   | { kind: 'table'; heading: string; columns: Column[]; rows: string[][] }
   | { kind: 'list'; heading: string; items: string[] };
 
+/** VAT as the PDF shows it: the category code with the rate (`S 25%`), or with the category name when there is no rate. */
+const vatText = (v: Value, category: string | undefined) => (category && v.text !== category ? `${category} ${v.text}` : v.text);
+
 const kv = (fs: Field[]): [string, string][] => fs.map((f) => [f.label, valueText(f.value)]);
 
-/** The view as the simple blocks the PDF writer draws: key/value lists, tables and bullet lists. */
-function blocks(v: InvoiceView, addressLabel: string): Block[] {
+/** The view as the simple blocks the PDF writer draws: key/value lists, tables and bullet lists. @internal (exported for tests) */
+export function pdfBlocks(v: InvoiceView, addressLabel: string): Block[] {
   const out: Block[] = [];
   for (const p of v.parties) {
     const head: [string, string][] = [];
@@ -38,7 +41,7 @@ function blocks(v: InvoiceView, addressLabel: string): Block[] {
         [l.name, parasText(l.description), l.details.join(' · '), ...l.adjustments].filter(Boolean).join('\n'),
         l.quantity.text,
         l.priceBasis ? `${l.unitPrice}\n${l.priceBasis}` : l.unitPrice,
-        l.vat.text,
+        vatText(l.vat, l.vatCategory),
         l.net,
       ]),
     });
@@ -48,7 +51,7 @@ function blocks(v: InvoiceView, addressLabel: string): Block[] {
         kind: 'table',
         heading: v.headings[key],
         columns: v.adjustmentColumns,
-        rows: v[key].map((a) => [a.reason, a.vat.text, a.amount]),
+        rows: v[key].map((a) => [a.reason, vatText(a.vat, a.vatCategory), a.amount]),
       });
     }
   }
@@ -392,7 +395,7 @@ export async function renderPdf(invoice: CanonicalInvoice, options: RenderPdfOpt
   w.text(w.clean(view.due.label), PAGE.margin, w.y - 13, bold, 11);
   w.text(w.clean(view.due.value.text), PAGE.margin + LABEL_WIDTH, w.y - 14, bold, 14, view.credit ? CREDIT : ACCENT);
   w.y -= 22;
-  for (const b of blocks(view, t('address'))) w.block(b);
+  for (const b of pdfBlocks(view, t('address'))) w.block(b);
 
   const count = w.pages.length;
   const footerTitle = w.wrap(view.title, font, 8, PAGE.width - 2 * PAGE.margin - 100)[0] ?? '';

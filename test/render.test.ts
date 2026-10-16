@@ -5,6 +5,9 @@ import { join } from 'node:path';
 import { PDFDocument } from 'pdf-lib';
 import { EXIT, type IO, main } from '../src/cli.js';
 import { type CanonicalInvoice, escapeHtml, renderHtml, renderPdf } from '../src/index.js';
+import { buildInvoiceView } from '../src/render/model.js';
+import { pdfBlocks } from '../src/render/pdf.js';
+import { reactCss } from '../src/render/style.js';
 import { fixturePath, parseOne } from './helpers.js';
 import { enrich, expectOnlyOwnMarkup, PAYLOAD, poison } from './render-helpers.js';
 
@@ -310,7 +313,7 @@ describe('renderHtml escapes untrusted input', () => {
       expect(html).not.toMatch(/<script|<\/script/i);
     });
 
-    test(`${name}: only our own tags and attributes appear`, () => expectOnlyOwnMarkup(html.replace(/<style>.*?<\/style>/s, '')));
+    test(`${name}: only our own tags and attributes appear`, () => expectOnlyOwnMarkup(html.replace(/<style>.*?<\/style>/gs, '')));
   }
 
   test('every field shows up escaped, so nothing is silently dropped', () => {
@@ -342,6 +345,38 @@ describe('renderHtml escapes untrusted input', () => {
   test('the PDF renderer also survives the hostile invoice', async () => {
     const pdf = await PDFDocument.load(await renderPdf(hostile));
     expect(pdf.getPageCount()).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('review fixes', () => {
+  test('only a BIC is labelled as one; national clearing ids get the generic Bank label', () => {
+    // The Peppol fixture names SE:BANKGIRO as the service provider.
+    const html = renderHtml(peppol);
+    expect(html).toContain('<dt>Bank</dt><dd><span class="einvoice-code">SE:BANKGIRO</span></dd>');
+    expect(html).not.toContain('Bank (BIC)');
+    const bic = structuredClone(peppol) as unknown as { payments: { creditTransfers: { serviceProviderId?: string }[] }[] };
+    bic.payments[0]!.creditTransfers[0]!.serviceProviderId = 'DEUTDEFF500';
+    expect(renderHtml(bic as unknown as CanonicalInvoice)).toContain(
+      '<dt>Bank (BIC)</dt><dd><span class="einvoice-code">DEUTDEFF500</span></dd>',
+    );
+    expect(renderHtml(peppol, { lang: 'fr' })).toContain('<dt>Banque</dt>');
+  });
+
+  test('PDF line and allowance rows keep the VAT category with the rate', () => {
+    const blocks = pdfBlocks(buildInvoiceView(rich, 'en', { currencyDisplay: 'code' }), 'Address');
+    const lines = blocks.find((b) => b.heading === 'Lines');
+    if (lines?.kind !== 'table') throw new Error('no lines table');
+    const vatColumn = lines.columns.findIndex((c) => c.label === 'VAT');
+    expect(lines.rows.map((r) => r[vatColumn])).toEqual(['S 25%', 'S 25%', 'S 12%', 'S 25%']);
+    const charges = blocks.find((b) => b.heading === 'Charges');
+    if (charges?.kind !== 'table') throw new Error('no charges table');
+    expect(charges.rows[0]![1]).toBe('E Exempt');
+  });
+
+  test('the standalone page prints on A4 with 15 mm margins; the fragment and the React stylesheet set no page rule', () => {
+    expect(renderHtml(peppol)).toContain('<style>@media print{@page{size:A4;margin:15mm}body{margin:0}}</style>');
+    expect(renderHtml(peppol, { standalone: false })).not.toContain('@page');
+    expect(reactCss()).not.toContain('@page');
   });
 });
 

@@ -11,7 +11,7 @@ import {
   type TotalKind,
   type Value,
 } from './model.js';
-import { INVOICE_CSS } from './style.js';
+import { INVOICE_CSS, PAGE_CSS } from './style.js';
 
 export interface RenderHtmlOptions {
   /**
@@ -332,7 +332,7 @@ export function renderHtml(invoice: CanonicalInvoice, options: RenderHtmlOptions
   return (
     `<!doctype html><html lang="${view.lang}"><head><meta charset="utf-8">` +
     `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">` +
-    `<meta name="viewport" content="width=device-width,initial-scale=1">` +
+    `<meta name="viewport" content="width=device-width,initial-scale=1"><style>${PAGE_CSS}</style>` +
     `<title>${escapeHtml(view.title)}</title></head><body><main>${article}</main></body></html>\n`
   );
 }
