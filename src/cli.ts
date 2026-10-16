@@ -82,7 +82,7 @@ const USAGE = `Usage:
   einvoice convert <file...> [--out <dir>]   canonical JSON (stdout, or one <invoice-id>.json per invoice in <dir>)
   einvoice export  <file...> --format sie|journal|csv [--accounts mapping.json] [--out <file>]
                                              bookkeeping entries for received invoices (SIE 4I, JSON or CSV)
-  einvoice render  --as html|pdf <file...> [--lang en|de|fr|it|es|nl|pl|ro] [--out <file|dir>]
+  einvoice render  --as html|pdf <file...> [--lang en|de|fr|it|es|nl|pl|ro] [--locale de-CH] [--out <file|dir>]
                                              human-readable invoice: a self-contained HTML page or an A4 PDF
                                              (stdout for html; pdf needs --out unless stdout is a binary sink)
   einvoice write   <file...> --to ubl|cii [--profile peppol-bis3|xrechnung|en16931] [--out <dir>]
@@ -126,6 +126,7 @@ interface Parsed {
   format?: string;
   as?: string;
   lang?: string;
+  locale?: string;
   to?: string;
   profile?: string;
   accounts?: string;
@@ -160,6 +161,7 @@ function parseArgs(argv: string[]): Parsed {
     '--format',
     '--as',
     '--lang',
+    '--locale',
     '--to',
     '--profile',
     '--accounts',
@@ -223,6 +225,9 @@ function parseArgs(argv: string[]): Parsed {
         break;
       case '--lang':
         p.lang = value;
+        break;
+      case '--locale':
+        p.locale = value;
         break;
       case '--to':
         p.to = value;
@@ -421,6 +426,14 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     if (args.lang !== undefined && !/^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8}){0,3}$/.test(args.lang)) {
       io.stderr('einvoice: --lang must be a language tag such as en, de or fr');
       return EXIT.usage;
+    }
+    if (args.locale !== undefined) {
+      try {
+        if (!Intl.getCanonicalLocales(args.locale).length) throw new RangeError('Empty locale');
+      } catch {
+        io.stderr('einvoice: --locale must be a locale tag such as ro-RO or de-CH');
+        return EXIT.usage;
+      }
     }
   }
   if (args.command === 'write') {
@@ -641,7 +654,9 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
       const bodies: Uint8Array[] = [];
       for (const inv of invoices) {
         bodies.push(
-          as === 'pdf' ? await renderPdf(inv, { lang: args.lang }) : new TextEncoder().encode(renderHtml(inv, { lang: args.lang })),
+          as === 'pdf'
+            ? await renderPdf(inv, { lang: args.lang, locale: args.locale })
+            : new TextEncoder().encode(renderHtml(inv, { lang: args.lang, locale: args.locale })),
         );
       }
       // --out is a directory when several inputs were given, when it already is one, or when it ends in a separator.

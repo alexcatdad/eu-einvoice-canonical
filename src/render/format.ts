@@ -16,6 +16,15 @@ export function resolveLocale(lang: string | undefined): string {
   }
 }
 
+/** CLDR's likely language for a country; unknown and non-country regions do not supply defaults. */
+export function countryLocale(country: string | undefined): string | undefined {
+  const code = country?.trim().toUpperCase();
+  if (!code || !/^[A-Z]{2}$/.test(code) || ['EU', 'EZ', 'UN', 'ZZ', 'XA', 'XB'].includes(code)) return undefined;
+  if (!new Intl.DisplayNames(['en'], { type: 'region', fallback: 'none' }).of(code)) return undefined;
+  const locale = new Intl.Locale(`und-${code}`).maximize();
+  return `${locale.language}-${code}`;
+}
+
 interface Symbols {
   group: string;
   decimal: string;
@@ -156,6 +165,15 @@ export function formatDate(value: string, locale: string): { text: string; iso?:
   if (d.getUTCFullYear() !== Number(m[1]) || d.getUTCMonth() !== Number(m[2]) - 1 || d.getUTCDate() !== Number(m[3]))
     return { text: value };
   return { text: new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone: 'UTC' }).format(d), iso: m[0] };
+}
+
+/** The invoice's wall-clock time, without shifting its date or discarding a malformed source value. */
+export function formatTime(value: string, locale: string): string {
+  const m = /^(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|([+-])(\d{2}):(\d{2}))?$/.exec(value.trim());
+  if (!m || Number(m[1]) > 23 || Number(m[2]) > 59 || Number(m[3]) > 59) return value;
+  if (m[4] && (Number(m[5]) > 14 || Number(m[6]) > 59 || (Number(m[5]) === 14 && Number(m[6]) !== 0))) return value;
+  const date = new Date(Date.UTC(2000, 0, 1, Number(m[1]), Number(m[2]), Number(m[3])));
+  return new Intl.DateTimeFormat(locale, { timeStyle: 'short', timeZone: 'UTC' }).format(date);
 }
 
 /** An IBAN in groups of four (`DE89 3704 0044 0532 0130 00`), when the string is one with a valid check sum. */

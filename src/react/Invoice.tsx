@@ -35,8 +35,10 @@ export type PartProps = CommonProps &
     | {
         /** The canonical invoice, as `convert` or `parse` return it. */
         invoice: CanonicalInvoice;
-        /** BCP 47 tag for labels, numbers and dates. Labels exist for en, de, fr, it, es, nl, pl and ro. */
+        /** BCP 47 tag for labels. Labels exist for en, de, fr, it, es, nl, pl and ro. */
         lang?: RenderLanguage | (string & {});
+        /** Formatting override. Defaults to the invoice's seller country. */
+        locale?: string;
         view?: undefined;
       }
     | {
@@ -44,6 +46,7 @@ export type PartProps = CommonProps &
         view: InvoiceView;
         invoice?: undefined;
         lang?: undefined;
+        locale?: undefined;
       }
   );
 
@@ -57,7 +60,7 @@ interface Ctx {
 
 function useCtx(props: PartProps): Ctx {
   const reactId = useId();
-  const v = props.view ?? buildInvoiceView(props.invoice, props.lang);
+  const v = props.view ?? buildInvoiceView(props.invoice, props.lang, { locale: props.locale });
   const id = props.idPrefix ?? `einvoice${reactId.replace(/[^A-Za-z0-9_-]/g, '')}`;
   return { v, id, c: props.unstyled ? () => undefined : (name) => name };
 }

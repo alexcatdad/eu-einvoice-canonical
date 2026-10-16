@@ -38,7 +38,7 @@ const headings = (html: string) => [...html.matchAll(/<h2 class="einvoice-h2" id
 const plain = (s: string) => s.replace(/[\u00a0\u202f]/g, ' ');
 
 describe('renderHtml structure', () => {
-  const html = plain(renderHtml(peppol));
+  const html = plain(renderHtml(peppol, { locale: 'en' }));
 
   test('is a complete document with a language, a title and a heading', () => {
     expect(html.startsWith('<!doctype html><html lang="en">')).toBe(true);
@@ -120,7 +120,7 @@ describe('renderHtml structure', () => {
     const w = structuredClone(peppol) as unknown as { totals: Record<string, string> };
     w.totals.withholdingTotal = '12.00';
     w.totals.splitPaymentVat = '34.00';
-    const out = plain(renderHtml(w as unknown as CanonicalInvoice));
+    const out = plain(renderHtml(w as unknown as CanonicalInvoice, { locale: 'en' }));
     expect(out).toContain('Withholding deducted</dt><dd>SEK 12.00');
     expect(out).toContain('(split payment)</dt><dd>SEK 34.00');
     expect(out.indexOf('SEK 12.00')).toBeLessThan(out.indexOf('<div class="einvoice-total einvoice-total--due">'));
@@ -174,7 +174,7 @@ describe('renderHtml structure', () => {
   });
 
   test('a credit note says so: badge, title, class and "amount credited"', () => {
-    const cn = plain(renderHtml(creditNote));
+    const cn = plain(renderHtml(creditNote, { locale: 'en' }));
     expect(cn).toContain('<article class="einvoice einvoice--credit"');
     expect(cn).toContain('<p class="einvoice-badge">Credit note</p>');
     expect(cn).toContain(
@@ -184,7 +184,7 @@ describe('renderHtml structure', () => {
   });
 
   test('renders another syntax too', () => {
-    const x = plain(renderHtml(xrechnung));
+    const x = plain(renderHtml(xrechnung, { locale: 'en' }));
     expect(x).toContain(`Invoice <span class="einvoice-number">${escapeHtml(xrechnung.id)}</span></h1>`);
     expect(x).toContain('€1,190.00');
     expect(headings(x)).toContain('VAT breakdown');
@@ -194,7 +194,7 @@ describe('renderHtml structure', () => {
 
 describe('renderHtml options', () => {
   test('German and French labels, number and date formats, language attribute', () => {
-    const de = plain(renderHtml(peppol, { lang: 'de' }));
+    const de = plain(renderHtml(peppol, { lang: 'de', locale: 'de' }));
     expect(de).toContain('<html lang="de">');
     expect(de).toContain('>Rechnung <span class="einvoice-number">INV-2026-1042</span></h1>');
     expect(headings(de)).toContain('Umsatzsteuer-Aufschlüsselung');
@@ -203,7 +203,7 @@ describe('renderHtml options', () => {
     expect(de).toContain('<td class="einvoice-num">1.900,00</td>');
     expect(de).toContain('<span title="S – Regelsatz">25 %</span>');
     expect(de).toContain('Schweden');
-    const fr = plain(renderHtml(creditNote, { lang: 'fr-CH' }));
+    const fr = plain(renderHtml(creditNote, { lang: 'fr-CH', locale: 'fr-CH' }));
     expect(fr).toContain('<html lang="fr-CH">');
     expect(fr).toContain('Avoir');
     expect(headings(fr)).toContain('Ventilation de la TVA');
@@ -254,12 +254,12 @@ describe('renderHtml options', () => {
 });
 
 describe('renderHtml with every optional part', () => {
-  const html = plain(renderHtml(rich));
+  const html = plain(renderHtml(rich, { locale: 'en' }));
   test('parties, delivery, payee, tax representative', () => {
     for (const h of ['Payee', 'Tax representative', 'Delivery']) expect(headings(html)).toContain(h);
     expect(html).toContain('<p class="einvoice-party-name">Payee Ltd</p>');
     expect(html).toContain('<address class="einvoice-address">Gatan 1<br/>Malmö</address>');
-    expect(html).toContain('<time dateTime="2026-10-15" title="2026-10-15T10:30:00">Oct 15, 2026, 10:30</time>');
+    expect(html).toContain('<time dateTime="2026-10-15" title="2026-10-15T10:30:00">Oct 15, 2026, 10:30 AM</time>');
   });
   test('line details', () => {
     expect(html).toContain('<p>Oak, 40 cm</p>');
@@ -369,7 +369,7 @@ describe('review fixes', () => {
   });
 
   test('PDF line and allowance rows keep the VAT category with the rate', () => {
-    const blocks = pdfBlocks(buildInvoiceView(rich, 'en', { currencyDisplay: 'code' }), 'Address');
+    const blocks = pdfBlocks(buildInvoiceView(rich, 'en', { currencyDisplay: 'code', locale: 'en' }), 'Address');
     const lines = blocks.find((b) => b.heading === 'Lines');
     if (lines?.kind !== 'table') throw new Error('no lines table');
     const vatColumn = lines.columns.findIndex((c) => c.label === 'VAT');

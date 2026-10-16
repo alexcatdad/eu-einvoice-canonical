@@ -4,8 +4,10 @@ import { labelsFor, type RenderLanguage } from './labels.js';
 import { buildInvoiceView, type Column, type Field, type InvoiceView, parasText, type Value, valueText } from './model.js';
 
 export interface RenderPdfOptions {
-  /** Language for labels, numbers and dates: `en`, `de`, `fr`, `it`, `es`, `nl`, `pl`, `ro`. Other languages use English labels. */
+  /** Language for labels: `en`, `de`, `fr`, `it`, `es`, `nl`, `pl`, `ro`. Other languages use English labels. */
   lang?: RenderLanguage | (string & {});
+  /** Formatting override (e.g. `de-CH`). Defaults to the invoice's seller country. */
+  locale?: string;
 }
 
 export type Block =
@@ -356,7 +358,7 @@ class Writer {
  * and every page carries "Page x of y".
  */
 export async function renderPdf(invoice: CanonicalInvoice, options: RenderPdfOptions = {}): Promise<Uint8Array> {
-  const view = buildInvoiceView(invoice, options.lang, { currencyDisplay: 'code' });
+  const view = buildInvoiceView(invoice, options.lang, { locale: options.locale, currencyDisplay: 'code' });
   const lang = view.lang;
   const t = labelsFor(lang);
   lib = (await import('../envelope-pdf.js')).pdfLib;
