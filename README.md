@@ -498,7 +498,7 @@ Run `scripts/sweep.ts` over a few months of your real inbound files before build
 
 ## What was tested
 
-CI (`.github/workflows/ci.yml`) runs all of this on every push and pull request, and deploys the browser converter only when everything passes.
+CI (`.github/workflows/ci.yml`) runs all of this on every push and pull request, and deploys the browser converter only when everything passes. The site build checks that every README section has a page and that no internal link or `#fragment` is broken (`site/check.ts`), and `site/a11y.ts` runs axe-core in the light and dark themes on the converter (every result tab) and the docs, checks that nothing scrolls sideways at 320 and 375 px, that keyboard focus is visible and that no page requests anything from another host but the fonts.
 
 - **Detection (every fixture plus header-only cases):** each of the 27 fixtures, envelopes, versions and profiles; every UBL and CII profile rule (Peppol, EHF extension, self-billing, XRechnung, NLCIUS, CIUS-RO/PT, HR-CIUS, OIOUBL 2/3, PINT, UBL.BE, EN 16931 2017/2026, BIS 2, Factur-X MINIMUM to EXTENDED, ZUGFeRD 2.0); probe edge cases (a 4,000-element UBLExtensions block, CDATA, a foreign-namespace CustomizationID, prefixed roots, whitespace in a namespace).
 - **Parsers:** field-by-field assertions on synthetic fixtures written for this suite (see `test/fixtures/README.md`): a full Peppol BIS 3 invoice, a credit note, a negative 380 invoice, XRechnung UBL and CII, Factur-X BASIC (381) and MINIMUM, and Svefaktura 1.0 invoice and credit. The real samples (ANAF, HR-CIUS, PINT, Factur-X PDF) must parse with no BR-CO warnings. Also tested: a malformed amount gives an `error` that names the element, and tampered totals give BR-CO warnings with the values left untouched.
