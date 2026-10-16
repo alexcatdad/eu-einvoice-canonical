@@ -62,7 +62,7 @@ describe('message keys used by the site', () => {
     const src = readFileSync(join(siteDir, name), 'utf8');
     const keys: string[] = [];
     for (const m of src.matchAll(/\bt\(\s*(['"`])([^'"`$]+)\1/g)) keys.push(m[2]);
-    for (const m of src.matchAll(/data-i18n(?:-html)?="([^"]+)"/g)) keys.push(m[1]);
+    for (const m of src.matchAll(/data-i18n(?:-html)?="([^"$]+)"/g)) keys.push(m[1]);
     for (const m of src.matchAll(/data-i18n-attr="([^"]+)"/g)) for (const pair of m[1].split(';')) keys.push(pair.split(':')[1].trim());
     for (const m of src.matchAll(literal)) keys.push(m[2]);
     return keys;

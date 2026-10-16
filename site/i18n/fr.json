@@ -1,6 +1,6 @@
 {
-  "app.title": "Facture électronique en JSON",
-  "app.description": "Convertissez une facture électronique de l'UE (Peppol BIS 3, XRechnung, Factur-X, Svefaktura et autres) en JSON canonique, entièrement dans votre navigateur.",
+  "meta.title": "Facture électronique en JSON",
+  "meta.description": "Convertissez une facture électronique de l'UE (Peppol BIS 3, XRechnung, Factur-X, Svefaktura et autres) en JSON canonique, entièrement dans votre navigateur.",
   "lang.label": "Langue",
   "masthead.lede": "Déposez une facture électronique reçue. Elle est dépouillée de son enveloppe, identifiée et transposée dans un modèle canonique unique fondé sur la norme EN&nbsp;16931. Vous obtenez le JSON, ainsi que la facture reconstruite à partir de celui-ci, pour vérifier la correspondance.",
   "masthead.privacy": "<strong>Rien ne quitte cet onglet.</strong> La conversion s'effectue dans votre navigateur ; les fichiers ne sont jamais envoyés.",

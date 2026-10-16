@@ -1,6 +1,6 @@
 {
-  "app.title": "E-invoice to JSON",
-  "app.description": "Convert an EU e-invoice (Peppol BIS 3, XRechnung, Factur-X, Svefaktura and more) to canonical JSON, entirely in your browser.",
+  "meta.title": "E-invoice to JSON",
+  "meta.description": "Convert an EU e-invoice (Peppol BIS 3, XRechnung, Factur-X, Svefaktura and more) to canonical JSON, entirely in your browser.",
   "lang.label": "Language",
   "masthead.lede": "Drop an e-invoice you received. It is unwrapped, identified and mapped to one canonical model built on EN&nbsp;16931. You get the JSON, and the invoice rebuilt from it so you can check the mapping.",
   "masthead.privacy": "<strong>Nothing leaves this tab.</strong> The conversion runs in your browser; files are never uploaded.",

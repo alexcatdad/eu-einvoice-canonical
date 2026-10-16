@@ -1,6 +1,6 @@
 {
-  "app.title": "E-factuur naar JSON",
-  "app.description": "Zet een Europese e-factuur (Peppol BIS 3, XRechnung, Factur-X, Svefaktura en meer) om naar canoniek JSON, volledig in je browser.",
+  "meta.title": "E-factuur naar JSON",
+  "meta.description": "Zet een Europese e-factuur (Peppol BIS 3, XRechnung, Factur-X, Svefaktura en meer) om naar canoniek JSON, volledig in je browser.",
   "lang.label": "Taal",
   "masthead.lede": "Sleep een ontvangen e-factuur hierheen. Het bestand wordt uitgepakt, herkend en omgezet naar één canoniek model op basis van EN&nbsp;16931. Je krijgt het JSON en de daaruit opnieuw opgebouwde factuur, zodat je de omzetting kunt controleren.",
   "masthead.privacy": "<strong>Er verlaat niets dit tabblad.</strong> De omzetting gebeurt in je browser; bestanden worden nooit geüpload.",

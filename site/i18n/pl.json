@@ -1,6 +1,6 @@
 {
-  "app.title": "E-faktura do JSON",
-  "app.description": "Przekształć unijną e-fakturę (Peppol BIS 3, XRechnung, Factur-X, Svefaktura i inne) w kanoniczny JSON, w całości w przeglądarce.",
+  "meta.title": "E-faktura do JSON",
+  "meta.description": "Przekształć unijną e-fakturę (Peppol BIS 3, XRechnung, Factur-X, Svefaktura i inne) w kanoniczny JSON, w całości w przeglądarce.",
   "lang.label": "Język",
   "masthead.lede": "Upuść tutaj otrzymaną e-fakturę. Zostanie rozpakowana, rozpoznana i przeniesiona do jednego modelu kanonicznego opartego na normie EN&nbsp;16931. Otrzymasz plik JSON oraz fakturę odtworzoną na jego podstawie, żeby można było sprawdzić przeniesienie danych.",
   "masthead.privacy": "<strong>Nic nie opuszcza tej karty.</strong> Konwersja odbywa się w przeglądarce; pliki nigdy nie są wysyłane.",

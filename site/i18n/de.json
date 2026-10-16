@@ -1,6 +1,6 @@
 {
-  "app.title": "E-Rechnung in JSON",
-  "app.description": "Wandeln Sie eine EU-E-Rechnung (Peppol BIS 3, XRechnung, Factur-X, Svefaktura und mehr) direkt im Browser in kanonisches JSON um.",
+  "meta.title": "E-Rechnung in JSON",
+  "meta.description": "Wandeln Sie eine EU-E-Rechnung (Peppol BIS 3, XRechnung, Factur-X, Svefaktura und mehr) direkt im Browser in kanonisches JSON um.",
   "lang.label": "Sprache",
   "masthead.lede": "Legen Sie eine empfangene E-Rechnung hier ab. Sie wird ausgepackt, erkannt und in ein einheitliches Modell auf Basis von EN&nbsp;16931 überführt. Sie erhalten das JSON und die daraus neu aufgebaute Rechnung, damit Sie die Zuordnung prüfen können.",
   "masthead.privacy": "<strong>Nichts verlässt diesen Tab.</strong> Die Umwandlung läuft in Ihrem Browser; Dateien werden nie hochgeladen.",

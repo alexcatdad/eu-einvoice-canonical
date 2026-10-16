@@ -1,6 +1,6 @@
 {
-  "app.title": "E-factură în JSON",
-  "app.description": "Convertește o e-factură din UE (Peppol BIS 3, XRechnung, Factur-X, Svefaktura și altele) în JSON canonic, integral în browser.",
+  "meta.title": "E-factură în JSON",
+  "meta.description": "Convertește o e-factură din UE (Peppol BIS 3, XRechnung, Factur-X, Svefaktura și altele) în JSON canonic, integral în browser.",
   "lang.label": "Limba",
   "masthead.lede": "Trage aici o e-factură primită. Este despachetată, recunoscută și transpusă într-un singur model canonic bazat pe standardul EN&nbsp;16931. Primești JSON-ul și factura reconstruită din el, ca să poți verifica transpunerea.",
   "masthead.privacy": "<strong>Nimic nu părăsește această filă.</strong> Conversia se face în browserul tău; fișierele nu sunt încărcate niciodată.",
