@@ -82,6 +82,7 @@ einvoice detect  <file...>                 format id, version and profile per do
 einvoice inspect <file...>                 the unwrap and detect result as JSON
 einvoice convert <file...> [--out <dir>]   canonical JSON array on stdout, or one <invoice-id>.json per invoice in <dir>
 einvoice export  <file...> --format sie|journal|csv [--accounts mapping.json] [--out <file>]   bookkeeping entries
+einvoice render  --as html|pdf <file...> [--lang en|de|fr] [--out <file|dir>]   human-readable invoice
 einvoice sweep   <dir...> [--expect answers.json]   detection coverage / known-answer check
 einvoice trust-lists update [--out <snapshot.json>] [--lotl-signer <cert.pem>]   fetch and verify the EU trusted lists
 einvoice match   --po <order.json|order.xml>... [--receipts r.json] [--tolerance '<json>'] <invoice...>   match to purchase orders
@@ -178,6 +179,29 @@ const result = matching.matchInvoice(invoice, [matching.parseOrder(orderXml)], {
 - The builder never invents a value and never emits an unbalanced entry: when the invoice's own totals disagree with its lines, or an account the invoice needs is missing from the mapping, it throws a `JournalError` that names the amounts or the missing account. `roundingTolerance` books a stated small residual to the rounding account instead.
 - SIE amounts are in the ledger currency (`--currency`, default SEK); an invoice in another currency is refused, no exchange rate is applied. Exports are byte-compared with `test/export/expected/*.se` in the tests.
 - The demo site has a "Download journal entry" button that exports the shown invoice as SIE with the example mapping.
+
+## Human-readable rendering
+
+`renderHtml(invoice, { lang?, standalone? })` and `renderPdf(invoice, { lang? })` turn a canonical invoice into something a person can read, print or archive. Both draw from one content model (`src/render/model.ts`), so they show the same things: seller and buyer with identifiers, references and dates, lines, allowances and charges, the VAT breakdown, totals, payment details, notes, and attachments listed by name.
+
+```ts
+import { convert, renderHtml, renderPdf } from 'eu-einvoice-canonical';
+
+const html = renderHtml(invoice, { lang: 'de' });   // a complete HTML document (string)
+const fragment = renderHtml(invoice, { standalone: false }); // just <style> + <article>, to embed
+const pdf = await renderPdf(invoice, { lang: 'fr' }); // Uint8Array, A4
+```
+
+```
+einvoice render --as html invoice.xml > invoice.html
+einvoice render --as pdf  invoice.xml --out invoice.pdf
+einvoice render --as pdf  a.xml b.xml --out out/        # one <invoice-id>.pdf per invoice
+```
+
+- **HTML** is self-contained: inline CSS, print styles for A4, no scripts, no links, no images and no external resources, and the standalone page carries a Content-Security-Policy (`default-src 'none'`) on top. It uses landmarks, labelled sections and `<th scope>` so screen readers can navigate it. Invoices are untrusted input: every value is escaped (ampersand, angle brackets, both quote characters and backtick; control characters dropped), attachments are listed by name only (never decoded or linked) and external URIs appear as plain text. `test/render.test.ts` injects `<script>` and attribute-breaking strings into every text field and checks that only the renderer's own tags and attributes come out.
+- **PDF** is built with pdf-lib and the standard Helvetica fonts (nothing embedded). Text wraps, long line lists continue on further pages with the table header repeated, and each page says "Page x of y". Output is deterministic (the PDF dates come from the invoice issue date). The standard fonts only cover the WinAnsi (Western European) character set: other characters, such as Cyrillic, Greek or CJK, are drawn as `?` in the PDF but are intact in the HTML.
+- **Languages:** labels exist for `en`, `de` and `fr`; any other tag keeps English labels and is still used for the `lang` attribute. Values are shown as the invoice states them (decimal strings, ISO dates, code values); nothing is recalculated or reformatted.
+- The demo site still builds its own sheet; it does not use these renderers.
 
 ## The canonical model
 

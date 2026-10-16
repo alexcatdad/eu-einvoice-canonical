@@ -3,7 +3,7 @@
  * einvoice: command-line front end for unwrapping, detecting and converting inbound e-invoices.
  * See the README ("Command line") for commands, flags and exit codes.
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { runDuplicates } from './duplicates/run.js';
@@ -20,6 +20,8 @@ import {
   journalToCsv,
   journalToJson,
   parseAccountMapping,
+  renderHtml,
+  renderPdf,
   toSie4,
   type UnwrapLimits,
 } from './index.js';
@@ -76,6 +78,9 @@ const USAGE = `Usage:
   einvoice convert <file...> [--out <dir>]   canonical JSON (stdout, or one <invoice-id>.json per invoice in <dir>)
   einvoice export  <file...> --format sie|journal|csv [--accounts mapping.json] [--out <file>]
                                              bookkeeping entries for received invoices (SIE 4I, JSON or CSV)
+  einvoice render  --as html|pdf <file...> [--lang en|de|fr] [--out <file|dir>]
+                                             human-readable invoice: a self-contained HTML page or an A4 PDF
+                                             (stdout for html; pdf needs --out unless stdout is a binary sink)
   einvoice sweep   <dir...> [--expect answers.json]
   einvoice trust-lists update [--out <snapshot.json>] [--lotl-signer <cert.pem>] [--lotl-url <url>]
                                              fetch the EU trusted lists, verify them and write a snapshot
@@ -113,6 +118,8 @@ interface Parsed {
   out?: string;
   expect?: string;
   format?: string;
+  as?: string;
+  lang?: string;
   accounts?: string;
   currency?: string;
   series?: string;
@@ -143,6 +150,8 @@ function parseArgs(argv: string[]): Parsed {
     '--receipts',
     '--tolerance',
     '--format',
+    '--as',
+    '--lang',
     '--accounts',
     '--currency',
     '--series',
@@ -198,6 +207,12 @@ function parseArgs(argv: string[]): Parsed {
         break;
       case '--format':
         p.format = value;
+        break;
+      case '--as':
+        p.as = value;
+        break;
+      case '--lang':
+        p.lang = value;
         break;
       case '--accounts':
         p.accounts = value;
@@ -344,7 +359,7 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     io.stdout(`${USAGE}\n`);
     return EXIT.ok;
   }
-  const commands = ['detect', 'inspect', 'convert', 'export', 'sweep', 'trust-lists', 'match', 'duplicates', 'mcp', 'serve'];
+  const commands = ['detect', 'inspect', 'convert', 'export', 'render', 'sweep', 'trust-lists', 'match', 'duplicates', 'mcp', 'serve'];
   if (!commands.includes(args.command)) {
     io.stderr(`einvoice: unknown command "${args.command}" (try --help)`);
     return EXIT.usage;
@@ -366,6 +381,16 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     }
     if (args.granularity !== undefined && !['account', 'line'].includes(args.granularity)) {
       io.stderr('einvoice: --granularity must be account or line');
+      return EXIT.usage;
+    }
+  }
+  if (args.command === 'render') {
+    if (!['html', 'pdf'].includes(args.as ?? '')) {
+      io.stderr('einvoice: render needs --as html or --as pdf');
+      return EXIT.usage;
+    }
+    if (args.lang !== undefined && !/^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8}){0,3}$/.test(args.lang)) {
+      io.stderr('einvoice: --lang must be a language tag such as en, de or fr');
       return EXIT.usage;
     }
   }
@@ -562,6 +587,43 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
         note(`wrote ${entries.length} journal entr${entries.length === 1 ? 'y' : 'ies'} to ${args.out}`);
       } else if (typeof out === 'string') io.stdout(out);
       else if (io.stdoutBytes) io.stdoutBytes(out);
+      else {
+        err('this environment cannot write binary output to stdout; use --out <file>');
+        return EXIT.internal;
+      }
+    }
+    if (args.command === 'render' && invoices.length > 0) {
+      const as = args.as as 'html' | 'pdf';
+      if (!args.out && as === 'pdf' && invoices.length > 1) {
+        err('render --as pdf of several invoices needs --out <directory>');
+        return EXIT.usage;
+      }
+      const bodies: Uint8Array[] = [];
+      for (const inv of invoices) {
+        bodies.push(
+          as === 'pdf' ? await renderPdf(inv, { lang: args.lang }) : new TextEncoder().encode(renderHtml(inv, { lang: args.lang })),
+        );
+      }
+      // --out is a directory when several inputs were given, when it already is one, or when it ends in a separator.
+      const outIsDir =
+        !!args.out &&
+        (args.files.length > 1 ||
+          invoices.length > 1 ||
+          /[\\/]$/.test(args.out) ||
+          (existsSync(args.out) && statSync(args.out).isDirectory()));
+      if (args.out && !outIsDir) {
+        writeFileSync(resolve(args.out), bodies[0]!);
+        note(`wrote ${as} to ${args.out}`);
+      } else if (args.out) {
+        mkdirSync(resolve(args.out), { recursive: true });
+        const seen = new Set<string>();
+        invoices.forEach((inv, i) => {
+          writeFileSync(join(resolve(args.out!), `${uniqueName(inv.id, seen)}.${as}`), bodies[i]!);
+        });
+        note(`wrote ${invoices.length} ${as} files to ${args.out}`);
+      } else if (as === 'html') {
+        for (const b of bodies) io.stdout(new TextDecoder().decode(b));
+      } else if (io.stdoutBytes) io.stdoutBytes(bodies[0]!);
       else {
         err('this environment cannot write binary output to stdout; use --out <file>');
         return EXIT.internal;

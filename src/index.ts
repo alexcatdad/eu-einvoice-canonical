@@ -40,6 +40,8 @@ export {
   parseModelOutput,
 } from './relations/model.js';
 export { analyseLines, applyRelations, isDescriptor, type LineAnalysis, percentagesIn } from './relations/rules.js';
+export { escapeHtml, type RenderHtmlOptions, renderHtml } from './render/html.js';
+export { type RenderPdfOptions, renderPdf } from './render/pdf.js';
 export {
   LOTL_URL,
   type LoadOptions,
