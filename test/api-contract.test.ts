@@ -297,6 +297,8 @@ describe('endpoints', () => {
     expect(wrong.status).toBe(405);
     expect(wrong.headers.get('allow')).toBe('POST');
     expect((await fetch(`${base}/health`, { method: 'POST' })).status).toBe(405);
+    // Names inherited from Object.prototype are not schemas.
+    expect((await fetch(`${base}/v1/schemas/toString`)).status).toBe(404);
     expect((await fetch(`${base}/v1/schemas/convert-result`, { method: 'POST' })).status).toBe(405);
   });
 });

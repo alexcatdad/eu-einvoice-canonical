@@ -609,7 +609,7 @@ async function runServe(args: Parsed, io: IO, deps: Deps, note: (line: string) =
     err(`serve: cannot listen: ${(e as Error).message}`);
     return EXIT.internal;
   }
-  io.stdout(`listening on http://${server.hostname}:${server.port}\n`);
+  io.stdout(`listening on http://${server.hostname?.includes(':') ? `[${server.hostname}]` : server.hostname}:${server.port}\n`);
   if (args.cors) note(`CORS is on for ${args.cors === true ? 'any origin' : args.cors}`);
   await new Promise<void>((done) => {
     const stop = () => done();

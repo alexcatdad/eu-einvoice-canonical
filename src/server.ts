@@ -235,7 +235,7 @@ export function createHandler(opts: ServerOptions = {}): Handler {
       if (schema) {
         if (req.method !== 'GET') return generic(405, 'Method not allowed', `Use GET for ${path}`, { Allow: 'GET' });
         const name = decodeURIComponent(schema[1]!);
-        return name in SCHEMAS
+        return Object.hasOwn(SCHEMAS, name)
           ? json(SCHEMAS[name], 200, 'application/schema+json', 'public, max-age=300')
           : generic(404, 'Not found', `No schema named "${name}" (known: ${Object.keys(SCHEMAS).join(', ')})`);
       }
@@ -244,7 +244,8 @@ export function createHandler(opts: ServerOptions = {}): Handler {
       if (e instanceof BodyTooLarge) return tooLarge('The upload');
       if (e instanceof BadRequest)
         return e.message.startsWith('Query') ? generic(400, 'Bad request', e.message) : problem('unsafe-or-malformed', e.message);
-      return problem('internal', e instanceof Error ? e.message : String(e));
+      console.error('einvoice serve: internal error', e);
+      return problem('internal', 'An internal error occurred');
     }
   };
 }
@@ -268,7 +269,11 @@ function classify(result: ConvertResult, validate: boolean): Failure | null {
       const summaries = o.invoices.map((i) => i.source.validation);
       const failed = summaries.some((v) => v && LAYERS.some((l) => v[l] === 'failed'));
       validated += summaries.length;
-      unavailable += summaries.filter((v) => v && LAYERS.every((l) => v[l] === 'unavailable')).length;
+      // Only the layers planned for the format count: the others stay 'not-run'.
+      unavailable += summaries.filter((v) => {
+        const planned = v ? LAYERS.filter((l) => v[l] !== 'not-run') : [];
+        return v && planned.length > 0 && planned.every((l) => v[l] === 'unavailable');
+      }).length;
       if (failed)
         failures.push({
           slug: 'validation-failed',
@@ -285,7 +290,7 @@ function classify(result: ConvertResult, validate: boolean): Failure | null {
     } else if (o.status === 'unsupported') {
       failures.push({ slug: 'unsupported', status: 422, detail: o.reason });
     } else if (o.error.startsWith('Internal error')) {
-      failures.push({ slug: 'internal', status: 500, detail: o.error });
+      failures.push({ slug: 'internal', status: 500, detail: 'An internal error occurred while converting a document' });
     } else {
       failures.push({ slug: 'unsafe-or-malformed', status: 400, detail: o.error });
     }
@@ -316,12 +321,12 @@ function classify(result: ConvertResult, validate: boolean): Failure | null {
 
 /** Starts the server. `port: 0` picks a free port (read it from `server.port`). */
 export function startServer(opts: ServerOptions = {}): ReturnType<typeof Bun.serve> {
-  const limits = { ...DEFAULT_LIMITS, ...opts.limits };
   return Bun.serve({
     port: opts.port ?? 8080,
     hostname: opts.hostname ?? '127.0.0.1',
-    // Bun refuses bigger bodies itself (plain 413); the handler's own cap answers problem+json below this.
-    maxRequestBodySize: limits.maxFileBytes + MULTIPART_SLACK + 1024 * 1024,
+    // Bun's own ceiling is set to its maximum so every oversized body reaches the handler's counting reader and gets the
+    // problem+json 413; the reader stops at maxFileBytes, so nothing larger is ever held in memory.
+    maxRequestBodySize: 2 ** 32 - 1,
     fetch: createHandler(opts),
   });
 }
