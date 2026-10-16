@@ -104,5 +104,3 @@ No sample was committed for a format when no licence allowing it could be found.
 | Peppol BIS 3, NLCIUS, CIUS-PT, UBL.BE, Peppol BIS 2, Peppol self-billing, Poland PEF, OIOUBL 3 | not found under a usable licence |
 | Facturae | not found (the only licensed copy is Facturae 3.0, which the parser does not read) |
 | Finvoice, TEAPPSXML, e-arve, eSLOG 2.0, Svefaktura 1.0, FatturaPA semplificata | not found under a usable licence |
-
-The weekly corpus run also checks parse results: `test/corpus/parse-expected.json` holds id, issue date, currency, payable amount and line count read from the XML text of 313 UBL and CII corpus files, and `scripts/corpus-parse.ts` compares the parser against it (regenerate with `--write` after moving a pin).
