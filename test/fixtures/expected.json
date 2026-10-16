@@ -2,6 +2,63 @@
   "peppol-bis3-invoice.xml": [
     "peppol-bis3"
   ],
+  "real/fatturapa-ade-FPR12-1.xml": [
+    "fatturapa"
+  ],
+  "real/fatturapa-ade-FPA12-1.xml": [
+    "fatturapa"
+  ],
+  "real/fatturapa-ade-FPR12-3-lot.xml": [
+    "fatturapa"
+  ],
+  "real/ksef-fa3-pdf-generator.xml": [
+    "ksef"
+  ],
+  "real/isdoc-test001.isdoc": [
+    "isdoc"
+  ],
+  "real/isdoc-priklad.isdoc": [
+    "isdoc"
+  ],
+  "real/ebinterface-4.1-sample.xml": [
+    "ebinterface"
+  ],
+  "real/ebinterface-4.3-sample.xml": [
+    "ebinterface"
+  ],
+  "real/oioubl-2.01-invoice.xml": [
+    "oioubl-2"
+  ],
+  "real/oioubl-2.01-creditnote.xml": [
+    "oioubl-2"
+  ],
+  "real/mydata-requested-invoice.xml": [
+    "gr-mydata"
+  ],
+  "real/mydata-requested-two-invoices.xml": [
+    "gr-mydata"
+  ],
+  "real/zugferd1-comfort-einfach.pdf": [
+    "zugferd-1"
+  ],
+  "real/xrechnung-ubl-01.01a.xml": [
+    "xrechnung-ubl"
+  ],
+  "real/xrechnung-cii-01.01a.xml": [
+    "xrechnung-cii"
+  ],
+  "real/en16931-ubl-UC1.xml": [
+    "en16931-ubl"
+  ],
+  "real/en16931-cii-UC13.xml": [
+    "en16931-cii"
+  ],
+  "real/fr-ctc-ubl-UC12.xml": [
+    "fr-ctc-ubl"
+  ],
+  "real/fr-ctc-cii-UC10.xml": [
+    "fr-ctc-cii"
+  ],
   "peppol-bis3-creditnote.xml": [
     "peppol-bis3"
   ],
@@ -208,5 +265,20 @@
   ],
   "eslog-1.xml": [
     "eslog-1"
+  ],
+  "cfdi-40-ingreso-iva-retenciones.xml": [
+    "mx-cfdi"
+  ],
+  "cfdi-40-egreso-relacionado.xml": [
+    "mx-cfdi"
+  ],
+  "cfdi-40-ieps.xml": [
+    "mx-cfdi"
+  ],
+  "cfdi-33-ingreso-usd.xml": [
+    "mx-cfdi"
+  ],
+  "cfdi-40-pago.xml": [
+    "other"
   ]
 }

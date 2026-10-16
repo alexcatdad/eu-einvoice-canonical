@@ -45,6 +45,20 @@ export function parseCertificate(der: Uint8Array): pkijs.Certificate | null {
   }
 }
 
+/** The certificate blocks of a PEM text (linear scan), or the whole text when it has none. */
+function pemBlocks(text: string): string[] {
+  const begin = '-----BEGIN CERTIFICATE-----';
+  const end = '-----END CERTIFICATE-----';
+  const out: string[] = [];
+  for (let from = text.indexOf(begin); from !== -1; ) {
+    const to = text.indexOf(end, from + begin.length);
+    if (to === -1) break;
+    out.push(text.slice(from, to + end.length));
+    from = text.indexOf(begin, to + end.length);
+  }
+  return out.length ? out : [text];
+}
+
 /** Accepts DER bytes, a base64 string or PEM text (several certificates allowed in PEM). */
 export function parseAnchors(anchors: TrustAnchor[] | undefined): pkijs.Certificate[] {
   const out: pkijs.Certificate[] = [];
@@ -54,7 +68,7 @@ export function parseAnchors(anchors: TrustAnchor[] | undefined): pkijs.Certific
       if (c) out.push(c);
       continue;
     }
-    const blocks = a.match(/-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g) ?? [a];
+    const blocks = pemBlocks(a);
     for (const b of blocks) {
       try {
         const bin = atob(b.replace(/-----[A-Z ]+-----/g, '').replace(/\s+/g, ''));

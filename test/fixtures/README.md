@@ -26,10 +26,17 @@ Synthetic documents with fictitious parties. Their numbers are consistent (the E
 | `nlcius-cii.xml`, `fr-ctc-cii.xml`, `en16931-cii.xml`, `cii-unknown.xml` | One-line CII invoices of the same shape for NLCIUS, EXTENDED-CTC-FR, bare EN 16931 and an unrecognised guideline ID |
 | `eslog-1.xml` | Header-only stub with the eSLOG 1.6 root `IzdaniRacunEnostavni`; the eslog parser maps 2.0 only, so it is detected and reported as unsupported |
 
+The CFDI fixtures are synthetic. They use SAT's published test RFCs (EKU9003173C9, URE180429TM6) and made-up UUIDs, seals and certificate numbers; SAT's own sample CFDIs were not copied because their licence is not stated. Amounts follow the CFDI rounding rules, so the EN 16931 BR-CO checks hold.
+
 The eSLOG fixtures follow the segment layout of EDIFACT INVOIC D.01B as eSLOG 2.0 uses it (S_ segments, G_SGn groups). They were written from the published mapping rather than copied from a real file, so group numbers around parties, payment (PAI/FII) and the RFF qualifiers BO (BT-10) and PQ (BT-83) should be checked against a real sender's file when one is available.
 | `zugferd1-comfort.xml` | ZUGFeRD 1.0 COMFORT: two VAT rates, document allowance and charge, line discount, prepayment, GTIN, embedded attachment, BLZ (the test also wraps it in a PDF) |
 | `teappsxml-invoices.xml` | TEAPPSXML 3.0 batch: a sales invoice (row discount, charge, advance payment, an INFO row, Finnish payment reference, e-invoice address) and a credit note with SIGN="-" amounts and no currency element |
 | `mydata-two-invoices.xml` | myDATA InvoicesDoc with a 1.1 sales invoice (MARK, UID, line classifications, two VAT categories) and a 5.1 credit invoice (withholding, correlated MARK, no currency element) |
+| `cfdi-40-ingreso-iva-retenciones.xml` | CFDI 4.0 ingreso: IVA 16 % and 0 % lines, a line discount, ISR 10 % and IVA 10.6667 % retenciones, FormaPago 03, SAT stamp |
+| `cfdi-40-egreso-relacionado.xml` | CFDI 4.0 egreso (credit note) with CfdiRelacionados TipoRelacion 01 pointing at the ingreso above |
+| `cfdi-40-ieps.xml` | CFDI 4.0 ingreso with IEPS as a rate (26.5 %) and as a fixed amount per litre (Cuota), IVA charged on top of IEPS |
+| `cfdi-33-ingreso-usd.xml` | CFDI 3.3 in USD with TipoCambio, foreign buyer (XEXX010101000, ResidenciaFiscal, NumRegIdTrib), MetodoPago PPD, no Base at document level |
+| `cfdi-40-pago.xml` | CFDI 4.0 tipo P with the Pagos 2.0 complement: detected as another document, not converted |
 | `isdoc-6.0.2-invoice.isdoc` | ISDOC 6.0.2 invoice in CZK: IČO/DIČ, two VAT rates, taxed and untaxed deposits, rounding, variable/constant/specific symbols, alternate account, supplement |
 | `isdoc-6.0.2-credit-eur.isdoc` | ISDOC DocumentType 2 with negative amounts in EUR (ForeignCurrencyCode, CurrRate), ParentDocumentID |
 | `ebinterface-6.1-invoice.xml` | ebInterface 6.1 invoice: line and document reductions/surcharges, two VAT rates, GTIN, prepayment, bank transfer, early-payment discount |
@@ -70,3 +77,30 @@ Re-checked against the public corpora (phive-rules `58e8c83`, mustangproject `68
 If you can name the original of a "not verified" file, say so in the table; do not delete the fixture, the tests depend on it.
 
 The known-answer manifest for the public corpora themselves (`test/corpus/expected.json`) is described in `.github/workflows/corpus.yml` and `scripts/corpus-manifest.ts`; those files are fetched at run time and are not stored in this repository.
+
+## Public samples under `real/`
+
+Copied byte for byte (line endings and BOMs included) from public repositories whose own licence permits redistribution. The licence is the one the hosting repository declares; where the repository says the sample comes from somewhere else, that origin is named and its own licence is stated as unverified, because the hosting repository's licence is all that was found. Known answers for each file are in `test/real-samples.test.ts`. A file is listed in `conformance/notes.json` (`publicSamples`) only if it is in this table.
+
+| File | Source (repository @ commit, path) | Licence of the repository | Upstream origin |
+|---|---|---|---|
+| `fatturapa-ade-FPR12-1.xml`, `fatturapa-ade-FPA12-1.xml`, `fatturapa-ade-FPR12-3-lot.xml` | ZUGFeRD/corpus @ `82e886f`, `fatturaPA/official/valid/IT01234567890_FPR01.xml`, `..._FPA01.xml`, `..._FPR03.xml` | Apache-2.0 | The Agenzia delle Entrate specimen invoices (the folder is named `official`); AdE's own licence not verified |
+| `ksef-fa3-pdf-generator.xml` | CIRFMF/ksef-pdf-generator @ `8a18843`, `assets/invoice.xml` | MIT (Ministry of Finance's KSeF programme, CIRF) | Generated demo data, FA (3) |
+| `isdoc-test001.isdoc` | isdoc/isdoc.pdf @ `96f73f6`, `examples/input/test001.isdoc` | Apache-2.0 | isdoc.cz GitHub organisation |
+| `isdoc-priklad.isdoc` | isdoc/dsig-demo @ `c10455d`, `data/priklad.isdoc` | Apache-2.0 | The ISDOC specification's example (every element, internally inconsistent amounts by design) |
+| `ebinterface-4.1-sample.xml`, `ebinterface-4.3-sample.xml` | austriapro/ebinterface-mappings @ `6c90746`, `ebinterface-mappings-zugferd/src/test/resources/ebinterface/rechnung_ebI_4.1_sample_1.xml`, `..._4.3_sample_1.xml` | MIT (austriapro, the ebInterface maintainers) | ebInterface sample instances |
+| `oioubl-2.01-invoice.xml`, `oioubl-2.01-creditnote.xml` | invopop/gobl.dk.oioubl @ `9a1b1d2`, `test/data/parse/happy-path_real.xml`, `credit-note.xml` | Apache-2.0 | OIOUBL 2.01 example documents (invoice A00095678); the Danish authority's licence not verified. The sample's TaxExclusiveAmount equals the VAT amount, as in the source |
+| `mydata-requested-invoice.xml`, `mydata-requested-two-invoices.xml` | firebed/aade-mydata @ `ac43b5f`, `stubs/invoice-with-taxes-on-invoice-level.xml`, `stubs/request-doc-response.xml` | MIT | The library author's reconstruction of AADE retrieval responses (`RequestedDoc`), not files issued by AADE. The second ends with a cancellation marker without a header |
+| `zugferd1-comfort-einfach.pdf` | ZUGFeRD/corpus @ `82e886f`, `ZUGFeRDv1/correct/Intarsys/ZUGFeRD_1p0_COMFORT_Einfach.pdf` | Apache-2.0 | ZUGFeRD 1.0 sample set (Intarsys) |
+| `xrechnung-ubl-01.01a.xml`, `xrechnung-cii-01.01a.xml` | itplr-kosit/xrechnung-testsuite @ `1ce1daf`, `src/test/business-cases/standard/01.01a-INVOICE_ubl.xml`, `..._uncefact.xml` | Apache-2.0 | KoSIT XRechnung test suite |
+| `en16931-ubl-UC1.xml`, `en16931-cii-UC13.xml`, `fr-ctc-ubl-UC12.xml`, `fr-ctc-cii-UC10.xml` | fnfempe/France_RFE @ `97ba0f3`, `FNFE_RFE_INVOICE/Z.example/TEST/{UBL,CII}/{EN16931,EXTENDED-CTC-FR}/UC...` | Apache-2.0 | FNFE-MPE example invoices for the French reform |
+
+### Looked for, not committed
+
+No sample was committed for a format when no licence allowing it could be found. Searched: OpenPEPPOL/peppol-bis-invoice-3 (no licence file), phax/phive-rules (its README limits the Apache licence to the Java code; the test files come from the specification owners), pagero/integration-resources (a large set of Facturae, Finvoice, TEAPPS, Svefaktura, SI-UBL, CIUS-PT and OIOUBL examples, but no licence), VismaSolutionsOy/InvoiceXMLExamples (Finvoice, no licence), austriapro/ebinterface-standards (no licence file), facturae.gob.es (no licence stated), the CIRFMF/ksef-docs repository (MIT, but it holds schemas only; the sample invoices in CIRFMF/ksef-client-java are templates with `#placeholders#` instead of values and were left out).
+
+| Format | Result |
+|---|---|
+| Peppol BIS 3, NLCIUS, CIUS-PT, UBL.BE, Peppol BIS 2, Peppol self-billing, Poland PEF, OIOUBL 3 | not found under a usable licence |
+| Facturae | not found (the only licensed copy is Facturae 3.0, which the parser does not read) |
+| Finvoice, TEAPPSXML, e-arve, eSLOG 2.0, Svefaktura 1.0, FatturaPA semplificata | not found under a usable licence |

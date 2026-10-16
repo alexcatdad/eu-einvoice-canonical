@@ -25,6 +25,8 @@ jobs:
       - run: bun install --frozen-lockfile
       - name: Lint and formatting (Biome)
         run: bun run lint:ci
+      - name: JSON Schemas are up to date
+        run: bun run check:schemas
       - name: Typecheck
         run: bun run typecheck
       - name: Verify the pinned validator bundles

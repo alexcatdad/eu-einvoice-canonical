@@ -12,7 +12,9 @@ import { DOMParser, type Document as XDocument, type Element as XElement, type N
 import type * as pkijs from 'pkijs';
 import type { SignatureInfo } from '../canonical.js';
 import { type C14nOptions, canonicalize } from './c14n.js';
-import { certificateDetails, commonName, evaluateTrust, parseAnchors, parseCertificate, type TrustAnchor } from './trust.js';
+import { assessTrust } from './eu-trust.js';
+import { certificateDetails, commonName, parseAnchors, parseCertificate, type TrustAnchor } from './trust.js';
+import type { TrustSnapshot } from './tsl.js';
 
 const DSIG = 'http://www.w3.org/2000/09/xmldsig#';
 const EXC = 'http://www.w3.org/2001/10/xml-exc-c14n#';
@@ -24,6 +26,12 @@ export interface XmlSigOptions {
   resolve?: (uri: string) => Uint8Array | undefined;
   /** Reported type when the signature is not inside the invoice document. */
   type?: SignatureInfo['type'];
+  /** EU trusted-list snapshot to check the signer against (see eu-trust.ts). */
+  euTrust?: TrustSnapshot;
+  /** Clock for trust evaluation; defaults to the current time. */
+  now?: Date;
+  /** Called with the DER of the signer certificate of every signature that verified. */
+  onSigner?: (info: SignatureInfo, der: Uint8Array) => void;
 }
 
 class Unsupported extends Error {}
@@ -40,16 +48,22 @@ const DIGESTS: Record<string, string> = {
   'http://www.w3.org/2001/04/xmldsig-more#sha384': 'SHA-384',
   'http://www.w3.org/2001/04/xmlenc#sha512': 'SHA-512',
 };
-const SIG_ALGS: Record<string, { kind: 'rsa' | 'ec'; hash: string }> = {
+const SIG_ALGS: Record<string, { kind: 'rsa' | 'rsa-pss' | 'ec'; hash: string }> = {
   [`${DSIG}rsa-sha1`]: { kind: 'rsa', hash: 'SHA-1' },
   'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256': { kind: 'rsa', hash: 'SHA-256' },
   'http://www.w3.org/2001/04/xmldsig-more#rsa-sha384': { kind: 'rsa', hash: 'SHA-384' },
   'http://www.w3.org/2001/04/xmldsig-more#rsa-sha512': { kind: 'rsa', hash: 'SHA-512' },
+  'http://www.w3.org/2007/05/xmldsig-more#sha1-rsa-MGF1': { kind: 'rsa-pss', hash: 'SHA-1' },
+  'http://www.w3.org/2007/05/xmldsig-more#sha256-rsa-MGF1': { kind: 'rsa-pss', hash: 'SHA-256' },
+  'http://www.w3.org/2007/05/xmldsig-more#sha384-rsa-MGF1': { kind: 'rsa-pss', hash: 'SHA-384' },
+  'http://www.w3.org/2007/05/xmldsig-more#sha512-rsa-MGF1': { kind: 'rsa-pss', hash: 'SHA-512' },
   'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha1': { kind: 'ec', hash: 'SHA-1' },
   'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha256': { kind: 'ec', hash: 'SHA-256' },
   'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha384': { kind: 'ec', hash: 'SHA-384' },
   'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512': { kind: 'ec', hash: 'SHA-512' },
 };
+/** RFC 6931: with MGF1 and no explicit parameters the salt is as long as the digest. */
+const PSS_SALT: Record<string, number> = { 'SHA-1': 20, 'SHA-256': 32, 'SHA-384': 48, 'SHA-512': 64 };
 const CURVES: Record<string, string> = { '1.2.840.10045.3.1.7': 'P-256', '1.3.132.0.34': 'P-384', '1.3.132.0.35': 'P-521' };
 
 /** Verifies every top-level ds:Signature in the document. Never throws. */
@@ -155,7 +169,11 @@ async function verifyOne(
       info.certificate = certificateDetails(signer.cert);
     }
     const sigOk = await crypto.subtle.verify(
-      sigAlg.kind === 'rsa' ? { name: 'RSASSA-PKCS1-v1_5' } : { name: 'ECDSA', hash: sigAlg.hash },
+      sigAlg.kind === 'rsa'
+        ? { name: 'RSASSA-PKCS1-v1_5' }
+        : sigAlg.kind === 'rsa-pss'
+          ? { name: 'RSA-PSS', saltLength: PSS_SALT[sigAlg.hash] }
+          : { name: 'ECDSA', hash: sigAlg.hash },
       key,
       sigValue as BufferSource,
       signedBytes as BufferSource,
@@ -173,14 +191,15 @@ async function verifyOne(
     }
     info.verified = true;
     if (signer) {
-      const t = await evaluateTrust(
+      opts.onSigner?.(info, signer.der);
+      await assessTrust(
+        info,
         signer.cert,
         certs.map((c) => c.cert),
         anchors,
-        info.signedAt ? new Date(info.signedAt) : new Date(),
+        info.signedAt ? new Date(info.signedAt) : undefined,
+        opts,
       );
-      info.trust = t.trust;
-      if (t.reason) info.trustReason = t.reason;
     }
     delete info.reason;
     return info;
@@ -329,16 +348,35 @@ async function findByDigest(certs: { cert: pkijs.Certificate; der: Uint8Array }[
   return undefined;
 }
 
-async function importKey(cert: pkijs.Certificate, alg: { kind: 'rsa' | 'ec'; hash: string }): Promise<CryptoKey> {
+async function importKey(cert: pkijs.Certificate, alg: { kind: 'rsa' | 'rsa-pss' | 'ec'; hash: string }): Promise<CryptoKey> {
   const spki = new Uint8Array(cert.subjectPublicKeyInfo.toSchema().toBER());
   if (alg.kind === 'rsa') return crypto.subtle.importKey('spki', spki, { name: 'RSASSA-PKCS1-v1_5', hash: alg.hash }, false, ['verify']);
+  if (alg.kind === 'rsa-pss') {
+    // Some runtimes only import RSA-PSS keys whose SPKI says RSASSA-PSS; the usual rsaEncryption key goes in as JWK.
+    const key = cert.subjectPublicKeyInfo.parsedKey as
+      | { modulus?: { valueBlock: { valueHexView: Uint8Array } }; publicExponent?: { valueBlock: { valueHexView: Uint8Array } } }
+      | undefined;
+    if (!key?.modulus || !key.publicExponent) throw new Unsupported('Unsupported public key in the signer certificate');
+    const part = (v: Uint8Array) =>
+      btoa(String.fromCharCode(...(v[0] === 0 ? v.subarray(1) : v)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    return crypto.subtle.importKey(
+      'jwk',
+      { kty: 'RSA', n: part(key.modulus.valueBlock.valueHexView), e: part(key.publicExponent.valueBlock.valueHexView), ext: true },
+      { name: 'RSA-PSS', hash: alg.hash },
+      false,
+      ['verify'],
+    );
+  }
   const params = cert.subjectPublicKeyInfo.algorithm.algorithmParams as { valueBlock?: { toString(): string } } | undefined;
   const curve = CURVES[params?.valueBlock?.toString() ?? ''];
   if (!curve) throw new Unsupported('Unsupported elliptic curve in the signer certificate');
   return crypto.subtle.importKey('spki', spki, { name: 'ECDSA', namedCurve: curve }, false, ['verify']);
 }
 
-async function keyFromKeyValue(keyInfo: XElement | null, alg: { kind: 'rsa' | 'ec'; hash: string }): Promise<CryptoKey> {
+async function keyFromKeyValue(keyInfo: XElement | null, alg: { kind: 'rsa' | 'rsa-pss' | 'ec'; hash: string }): Promise<CryptoKey> {
   const rsa = child(child(keyInfo, DSIG, 'KeyValue'), DSIG, 'RSAKeyValue');
   if (!rsa || alg.kind !== 'rsa') throw new Unsupported('No signer certificate or supported key in KeyInfo');
   const part = (n: string) =>

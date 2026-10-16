@@ -19,7 +19,8 @@ export type ProbeKey =
   | 'fatturaTipoDocumento'
   | 'isdocDocumentType'
   | 'finvoiceTypeCode'
-  | 'myDataInvoiceType';
+  | 'myDataInvoiceType'
+  | 'myDataRequestedInvoiceType';
 
 const UBL_CBC = 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2';
 
@@ -45,6 +46,8 @@ const TARGETS: Record<ProbeKey, Target> = {
   isdocDocumentType: { path: ['DocumentType'] },
   finvoiceTypeCode: { path: ['InvoiceDetails', 'InvoiceTypeCode'] },
   myDataInvoiceType: { path: ['invoice', 'invoiceHeader', 'invoiceType'] },
+  /** The RequestedDoc wrapper AADE's retrieval services return puts the invoices one level deeper. */
+  myDataRequestedInvoiceType: { path: ['invoicesDoc', 'invoice', 'invoiceHeader', 'invoiceType'] },
 };
 const TARGET_KEYS = Object.keys(TARGETS) as ProbeKey[];
 /** Elements deeper than the deepest target path can never match, so they are not counted. */

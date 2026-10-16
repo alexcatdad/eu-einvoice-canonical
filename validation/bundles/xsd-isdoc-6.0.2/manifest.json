@@ -1,0 +1,30 @@
+{
+  "id": "xsd-isdoc-6.0.2",
+  "title": "ISDOC 6.0.2 XSD",
+  "layer": "schema",
+  "syntax": "isdoc",
+  "version": "6.0.2",
+  "releaseDate": "2026-10-16",
+  "effectiveFrom": "2026-10-16",
+  "effectiveUntil": null,
+  "license": "Permissive notice in the schema: use, copy, modify and distribute without fee, notice kept (SPIS, ICT UNIE, MVČR)",
+  "upstream": "https://isdoc.org/",
+  "note": "Covers the 6.x line: the namespace and structure are shared. releaseDate is the vendoring date.",
+  "format": "xsd",
+  "entries": {
+    "Invoice": "isdoc-invoice-6.0.2.xsd"
+  },
+  "source": [
+    {
+      "url": "https://isdoc.cz/6.0.2/xsd/isdoc-invoice-6.0.2.xsd",
+      "sha256": "fb5de36fe7b5517acb8aa0c7950d91f8e28910e63b8cdcaaf7db0b0f4f0420bb"
+    }
+  ],
+  "files": [
+    {
+      "path": "isdoc-invoice-6.0.2.xsd",
+      "sha256": "fb5de36fe7b5517acb8aa0c7950d91f8e28910e63b8cdcaaf7db0b0f4f0420bb",
+      "bytes": 140710
+    }
+  ]
+}
