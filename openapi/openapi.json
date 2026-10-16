@@ -1,0 +1,793 @@
+{
+  "openapi": "3.1.0",
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "info": {
+    "title": "eu-einvoice-canonical conversion API",
+    "version": "1.0.0",
+    "summary": "Turn a received e-invoice into one canonical JSON model built on EN 16931.",
+    "description": "Send the file you received (UBL or CII XML, a Factur-X PDF, a signed `.p7m`, a ZIP, a Peppol SBDH or SOAP envelope,\nor one of the national formats) and get the canonical JSON back. The service is stateless: nothing is stored, nothing is\nwritten to disk, and every request is independent.\n\nThe response bodies are the published JSON Schemas (`schemas/*.v1.schema.json`, draft 2020-12), referenced here and never\ncopied, so the API and the TypeScript types cannot drift apart. The reference server (`einvoice serve`) implements this\ndocument with the same `convert()`, `inspect()` and `detectXml()` functions as the library and the command line.\n\n## Errors\n\nEvery error is `application/problem+json` (RFC 9457). The `type` URI is one of the six categories the command line reports\nas exit codes 2 to 7; `exitCode` carries that number. Requests that exceed a size or count limit answer 413 with the\n`unsafe-or-malformed` type. A problem about a file that was parsed (partial, validation failed, unsupported) also carries\nthe full `ConvertResult` in `result`, so nothing the converter found is lost.\n\n| Type | Status | Exit code | Meaning |\n| --- | --- | --- | --- |\n| `unsafe-or-malformed` | 400, 413 | 2 | Not XML, a DOCTYPE, an unreadable archive, or a limit exceeded (413). |\n| `unsupported` | 422 | 3 | Well-formed, but not an invoice format this converter reads. |\n| `validation-failed` | 422 | 4 | Converted, but the requested validation reported failures. |\n| `partial` | 422 | 5 | Some documents in the file converted and some did not. |\n| `validator-unavailable` | 503 | 6 | Validation or the trusted-list snapshot was requested and cannot run. |\n| `internal` | 500 | 7 | A bug. Please report it with the file hash. |\n\n## Versioning\n\nThe path prefix `/v1` and the `v1` JSON Schemas are versioned together. Additive changes (new optional fields, new\nformats, new endpoints) stay in v1; a breaking change to a response shape publishes `/v2` next to it.\n",
+    "license": {
+      "name": "0BSD",
+      "url": "https://github.com/alexcatdad/eu-einvoice-canonical/blob/main/LICENSE"
+    },
+    "contact": {
+      "name": "eu-einvoice-canonical",
+      "url": "https://github.com/alexcatdad/eu-einvoice-canonical"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "The reference server started with `einvoice serve`."
+    }
+  ],
+  "tags": [
+    {
+      "name": "Conversion"
+    },
+    {
+      "name": "Registry"
+    },
+    {
+      "name": "Operations"
+    }
+  ],
+  "paths": {
+    "/v1/convert": {
+      "post": {
+        "tags": [
+          "Conversion"
+        ],
+        "operationId": "convert",
+        "summary": "Convert an e-invoice file to canonical JSON",
+        "description": "Unwraps the file, detects the format of every XML document in it, and maps each invoice to the canonical model.\nSend the file as `multipart/form-data` (field `file`) or as the raw request body with its content type.\nSignatures are verified (cryptographic validity) and reported on `source.signatures`.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Validate"
+          },
+          {
+            "$ref": "#/components/parameters/Relations"
+          },
+          {
+            "$ref": "#/components/parameters/Provenance"
+          },
+          {
+            "$ref": "#/components/parameters/EuTrust"
+          },
+          {
+            "$ref": "#/components/parameters/Filename"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/InvoiceFile"
+        },
+        "responses": {
+          "200": {
+            "description": "Every document in the file converted.",
+            "headers": {
+              "Cache-Control": {
+                "$ref": "#/components/headers/CacheControl"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "../schemas/convert-result.v1.schema.json"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "413": {
+            "$ref": "#/components/responses/TooLarge"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/v1/inspect": {
+      "post": {
+        "tags": [
+          "Conversion"
+        ],
+        "operationId": "inspect",
+        "summary": "Unwrap a file and identify every XML document in it",
+        "description": "Like `convert`, without parsing: the envelope steps, SHA-256 and the detected format of each document.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Filename"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/InvoiceFile"
+        },
+        "responses": {
+          "200": {
+            "description": "The file was unwrapped; `documents` may be empty, with the reasons in `skipped`.",
+            "headers": {
+              "Cache-Control": {
+                "$ref": "#/components/headers/CacheControl"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "../schemas/inspect-result.v1.schema.json"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "413": {
+            "$ref": "#/components/responses/TooLarge"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        }
+      }
+    },
+    "/v1/detect": {
+      "post": {
+        "tags": [
+          "Conversion"
+        ],
+        "operationId": "detect",
+        "summary": "Identify the format of one XML document",
+        "description": "Detection only, for raw XML. Use `inspect` for anything that may be wrapped (PDF, ZIP, p7m, SBDH, SOAP).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "text/xml": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The detection. `kind` is `invoice` (with `format` and `details`), `other-document` (a known non-invoice) or `unknown`.",
+            "headers": {
+              "Cache-Control": {
+                "$ref": "#/components/headers/CacheControl"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "../schemas/inspect-result.v1.schema.json#/$defs/Detection"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "413": {
+            "$ref": "#/components/responses/TooLarge"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        }
+      }
+    },
+    "/v1/formats": {
+      "get": {
+        "tags": [
+          "Registry"
+        ],
+        "operationId": "listFormats",
+        "summary": "The format registry",
+        "description": "Every format the converter detects, in detection order, with its parser family, countries and status.",
+        "responses": {
+          "200": {
+            "description": "The registry. The same content is published as `schemas/formats.json`.",
+            "headers": {
+              "Cache-Control": {
+                "$ref": "#/components/headers/CacheControl"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormatList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/schemas/{name}": {
+      "get": {
+        "tags": [
+          "Registry"
+        ],
+        "operationId": "getSchema",
+        "summary": "A JSON Schema of the response models",
+        "description": "The draft 2020-12 JSON Schema for `canonical-invoice`, `convert-result` or `inspect-result` (the v1 files).",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "canonical-invoice",
+                "convert-result",
+                "inspect-result"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The schema document.",
+            "headers": {
+              "Cache-Control": {
+                "$ref": "#/components/headers/CacheControl"
+              }
+            },
+            "content": {
+              "application/schema+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonSchemaDocument"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such schema.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemGeneric"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Operations"
+        ],
+        "operationId": "health",
+        "summary": "Liveness check",
+        "responses": {
+          "200": {
+            "description": "The server is up.",
+            "headers": {
+              "Cache-Control": {
+                "$ref": "#/components/headers/CacheControl"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "Validate": {
+        "name": "validate",
+        "in": "query",
+        "description": "Run the XSD, EN 16931 Schematron and CIUS layers (UBL and CII) and fill `source.validation`. Slower: it loads the validators. When every invoice fails a layer the answer is a `validation-failed` problem that still carries the result.",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "Relations": {
+        "name": "relations",
+        "in": "query",
+        "description": "Fill `lineRoles` and `relations` (headings, descriptions, markups and discounts between lines).",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "Provenance": {
+        "name": "provenance",
+        "in": "query",
+        "description": "Fill `source.provenance` (canonical path to source XPath). Roughly doubles the size of `source`.",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "EuTrust": {
+        "name": "euTrust",
+        "in": "query",
+        "description": "Check signers against the server's snapshot of the EU trusted lists (`source.signatures[].euTrust`). A server started without a snapshot answers 503 `validator-unavailable`.",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "Filename": {
+        "name": "filename",
+        "in": "query",
+        "description": "The name the file had when received. Used as a hint (extension) for the unwrapping; optional.",
+        "schema": {
+          "type": "string",
+          "maxLength": 255
+        }
+      }
+    },
+    "headers": {
+      "CacheControl": {
+        "description": "Always `no-store` for per-request results; `public` for the registry endpoints.",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "requestBodies": {
+      "InvoiceFile": {
+        "required": true,
+        "description": "The file as received. As `multipart/form-data` the file is the part named `file`; otherwise the raw body is the file, whatever its content type. Larger than the server's `maxFileBytes` (50 MiB by default) answers 413.",
+        "content": {
+          "multipart/form-data": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "file"
+              ],
+              "properties": {
+                "file": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "type": "string",
+              "format": "binary"
+            }
+          },
+          "text/xml": {
+            "schema": {
+              "type": "string",
+              "format": "binary"
+            }
+          },
+          "application/pdf": {
+            "schema": {
+              "type": "string",
+              "format": "binary"
+            }
+          },
+          "application/zip": {
+            "schema": {
+              "type": "string",
+              "format": "binary"
+            }
+          },
+          "application/pkcs7-mime": {
+            "schema": {
+              "type": "string",
+              "format": "binary"
+            }
+          },
+          "application/octet-stream": {
+            "schema": {
+              "type": "string",
+              "format": "binary"
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "The request or the file is unsafe or malformed (exit code 2), or a query parameter is invalid.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/ProblemUnsafe"
+                },
+                {
+                  "$ref": "#/components/schemas/ProblemGeneric"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "TooLarge": {
+        "description": "The body, or something unpacked from it, exceeds a limit (`maxFileBytes`, `maxEntries`, `maxUnpackedBytes`...).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemUnsafe"
+            }
+          }
+        }
+      },
+      "Unprocessable": {
+        "description": "The file was read but did not convert cleanly. `type` says why; `result` has everything that was found.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/ProblemUnsupported"
+                },
+                {
+                  "$ref": "#/components/schemas/ProblemValidationFailed"
+                },
+                {
+                  "$ref": "#/components/schemas/ProblemPartial"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Internal": {
+        "description": "An internal error (exit code 7).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemInternal"
+            }
+          }
+        }
+      },
+      "Unavailable": {
+        "description": "Validation or the trusted-list snapshot was requested and cannot run (exit code 6).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemValidatorUnavailable"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Problem": {
+        "type": "object",
+        "description": "An RFC 9457 problem document.",
+        "required": [
+          "type",
+          "title",
+          "status"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "minimum": 400,
+            "maximum": 599
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string"
+          },
+          "exitCode": {
+            "type": "integer",
+            "description": "The exit code the command line reports for the same condition."
+          },
+          "result": {
+            "description": "The conversion result, when a file was parsed before the problem arose.",
+            "$ref": "../schemas/convert-result.v1.schema.json"
+          }
+        }
+      },
+      "ProblemGeneric": {
+        "description": "A problem with no specific category (`about:blank`): unknown route or schema, wrong method, bad query value.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Problem"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "about:blank"
+              }
+            }
+          }
+        ]
+      },
+      "ProblemUnsafe": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Problem"
+          },
+          {
+            "type": "object",
+            "required": [
+              "exitCode"
+            ],
+            "properties": {
+              "type": {
+                "const": "https://alexcatdad.github.io/eu-einvoice-canonical/problems/#unsafe-or-malformed"
+              },
+              "status": {
+                "enum": [
+                  400,
+                  413
+                ]
+              },
+              "exitCode": {
+                "const": 2
+              }
+            }
+          }
+        ]
+      },
+      "ProblemUnsupported": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Problem"
+          },
+          {
+            "type": "object",
+            "required": [
+              "exitCode",
+              "result"
+            ],
+            "properties": {
+              "type": {
+                "const": "https://alexcatdad.github.io/eu-einvoice-canonical/problems/#unsupported"
+              },
+              "status": {
+                "const": 422
+              },
+              "exitCode": {
+                "const": 3
+              }
+            }
+          }
+        ]
+      },
+      "ProblemValidationFailed": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Problem"
+          },
+          {
+            "type": "object",
+            "required": [
+              "exitCode",
+              "result"
+            ],
+            "properties": {
+              "type": {
+                "const": "https://alexcatdad.github.io/eu-einvoice-canonical/problems/#validation-failed"
+              },
+              "status": {
+                "const": 422
+              },
+              "exitCode": {
+                "const": 4
+              }
+            }
+          }
+        ]
+      },
+      "ProblemPartial": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Problem"
+          },
+          {
+            "type": "object",
+            "required": [
+              "exitCode",
+              "result"
+            ],
+            "properties": {
+              "type": {
+                "const": "https://alexcatdad.github.io/eu-einvoice-canonical/problems/#partial"
+              },
+              "status": {
+                "const": 422
+              },
+              "exitCode": {
+                "const": 5
+              }
+            }
+          }
+        ]
+      },
+      "ProblemValidatorUnavailable": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Problem"
+          },
+          {
+            "type": "object",
+            "required": [
+              "exitCode"
+            ],
+            "properties": {
+              "type": {
+                "const": "https://alexcatdad.github.io/eu-einvoice-canonical/problems/#validator-unavailable"
+              },
+              "status": {
+                "const": 503
+              },
+              "exitCode": {
+                "const": 6
+              }
+            }
+          }
+        ]
+      },
+      "ProblemInternal": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Problem"
+          },
+          {
+            "type": "object",
+            "required": [
+              "exitCode"
+            ],
+            "properties": {
+              "type": {
+                "const": "https://alexcatdad.github.io/eu-einvoice-canonical/problems/#internal"
+              },
+              "status": {
+                "const": 500
+              },
+              "exitCode": {
+                "const": 7
+              }
+            }
+          }
+        ]
+      },
+      "FormatInfo": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "family",
+          "countries",
+          "status",
+          "phase",
+          "notes"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "../schemas/canonical-invoice.v1.schema.json#/$defs/FormatId"
+          },
+          "name": {
+            "type": "string"
+          },
+          "family": {
+            "type": "string",
+            "description": "The parser family that maps the format to the canonical model."
+          },
+          "countries": {
+            "type": "array",
+            "description": "ISO 3166 country codes, or `EU` for formats used everywhere.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "current",
+              "legacy",
+              "unverified"
+            ]
+          },
+          "phase": {
+            "type": "integer",
+            "enum": [
+              1,
+              2,
+              3
+            ],
+            "description": "Suggested build order: 1 EN 16931 syntaxes, 2 national formats in active use, 3 legacy."
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "FormatList": {
+        "type": "object",
+        "required": [
+          "formats"
+        ],
+        "properties": {
+          "formats": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormatInfo"
+            }
+          }
+        }
+      },
+      "JsonSchemaDocument": {
+        "type": "object",
+        "required": [
+          "$schema",
+          "$id"
+        ],
+        "properties": {
+          "$schema": {
+            "const": "https://json-schema.org/draft/2020-12/schema"
+          },
+          "$id": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "Health": {
+        "type": "object",
+        "required": [
+          "status",
+          "version",
+          "schemaVersion"
+        ],
+        "properties": {
+          "status": {
+            "const": "ok"
+          },
+          "version": {
+            "type": "string",
+            "description": "The package version (semver)."
+          },
+          "schemaVersion": {
+            "type": "string",
+            "description": "The major version of the JSON Schemas and of this API path prefix, e.g. `v1`."
+          }
+        }
+      }
+    }
+  }
+}

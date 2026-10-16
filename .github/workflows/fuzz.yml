@@ -1,0 +1,72 @@
+name: Fuzz
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: Cases per strategy
+        default: '3000'
+      seed:
+        description: Seed (empty for a random one)
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fuzz-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  fuzz:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - name: Fuzz with a random seed
+        id: fuzz
+        env:
+          FUZZ_RUNS: ${{ inputs.runs || '3000' }}
+          # Five sequential strategies at 14 minutes each stay inside the 90-minute job limit, shrinking included.
+          FUZZ_TIME_LIMIT_MS: '840000'
+          FUZZ_ISOLATE: '1'
+          FUZZ_BUDGET_MS: '10000'
+          INPUT_SEED: ${{ inputs.seed }}
+        run: |
+          FUZZ_SEED="${INPUT_SEED:-$(( (RANDOM << 15 | RANDOM) ))}"
+          export FUZZ_SEED
+          echo "seed=$FUZZ_SEED" >> "$GITHUB_OUTPUT"
+          echo "Seed: $FUZZ_SEED, runs per strategy: $FUZZ_RUNS"
+          bun test test/fuzz --timeout 1200000
+      - name: Upload the shrunk counterexamples
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fuzz-counterexamples-${{ steps.fuzz.outputs.seed }}
+          path: fuzz-failures
+          if-no-files-found: ignore
+      - name: Open an issue with the seed and the minimal reproduction
+        if: failure() && steps.fuzz.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SEED: ${{ steps.fuzz.outputs.seed }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          {
+            echo "The nightly fuzz run found an input that crashes, hangs or reports an internal error."
+            echo
+            echo "- Seed: \`$SEED\`"
+            echo "- Run (counterexamples are in the \`fuzz-counterexamples-$SEED\` artifact): $RUN_URL"
+            echo
+            if [ -f fuzz-failures/summary.md ]; then head -c 50000 fuzz-failures/summary.md; else echo "No counterexample was recorded; see the run log (a hang or crash of the test process)."; fi
+          } > issue.md
+          gh issue create --title "Fuzzing found a failing input (seed $SEED)" --body-file issue.md --label bug || gh issue create --title "Fuzzing found a failing input (seed $SEED)" --body-file issue.md

@@ -751,3 +751,19 @@ export const OTHER_DOCUMENTS: OtherDocumentRule[] = [
 ];
 
 export const FORMATS_BY_ID: Record<FormatId, FormatDef> = Object.fromEntries(FORMATS.map((f) => [f.id, f])) as never;
+
+/** One entry of the format registry as the API and `schemas/formats.json` publish it (no match function). */
+export interface FormatInfo {
+  id: FormatId;
+  name: string;
+  family: ParserFamily;
+  countries: readonly string[];
+  status: FormatStatus;
+  phase: 1 | 2 | 3;
+  notes: string;
+}
+
+/** The registry without the detection functions, in detection order. */
+export function describeFormats(): FormatInfo[] {
+  return FORMATS.map(({ id, name, family, countries, status, phase, notes }) => ({ id, name, family, countries, status, phase, notes }));
+}

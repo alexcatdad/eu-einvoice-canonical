@@ -6,3 +6,4 @@ coverage/
 test/corpus/repos/
 bench/.cache/
 bench/last-quick.json
+fuzz-failures/

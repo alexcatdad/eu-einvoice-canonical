@@ -13,13 +13,25 @@ import type { ParseInput } from './index.js';
 
 export class ParseError extends Error {}
 
+/** A value the canonical model cannot do without: a missing one is a parse error, never a placeholder. */
+export function need<T>(value: T | undefined, what: string): T {
+  if (value === undefined) throw new ParseError(`${what} missing`);
+  return value;
+}
+
 export function parseXml(xml: string): Element {
   const errors: string[] = [];
-  const doc = new DOMParser({
-    onError: (level, msg) => {
-      if (level !== 'warning') errors.push(msg);
-    },
-  }).parseFromString(xml, 'text/xml');
+  let doc: ReturnType<DOMParser['parseFromString']>;
+  try {
+    doc = new DOMParser({
+      onError: (level, msg) => {
+        if (level !== 'warning') errors.push(msg);
+      },
+    }).parseFromString(xml, 'text/xml');
+  } catch (e) {
+    // xmldom throws its own ParseError on fatal errors (mismatched tags) whatever onError does.
+    throw new ParseError(`XML not well-formed: ${e instanceof Error ? e.message : String(e)}`);
+  }
   if (errors.length || !doc.documentElement) throw new ParseError(`XML not well-formed: ${errors[0] ?? 'no root element'}`);
   return doc.documentElement;
 }

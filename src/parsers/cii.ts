@@ -25,7 +25,7 @@ import type {
   VatBreakdown,
 } from '../canonical.js';
 import { toDecimal } from '../values.js';
-import { CREDIT_TYPE_CODES, Ctx, finish, ParseError, parseXml, type Scope, SELF_BILLED_TYPE_CODES, sourceMeta } from './context.js';
+import { CREDIT_TYPE_CODES, Ctx, finish, need, ParseError, parseXml, type Scope, SELF_BILLED_TYPE_CODES, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 
 const NS = {
@@ -209,7 +209,7 @@ export function dateOf(c: Ctx, el: Element | undefined, field: string, bind?: st
 /** `path(i)` gives the canonical path of the i-th identifier, or undefined where it is not wanted. */
 function identifiers(c: Ctx, p: Element | undefined, path: (i: number) => string | undefined): Identifier[] {
   const els = c.nonEmpty([...c.all(p, 'ram:ID'), ...c.all(p, 'ram:GlobalID')]);
-  return els.map((e, i) => c.id(e, undefined, 'schemeID', path(i))!);
+  return els.flatMap((e, i) => c.id(e, undefined, 'schemeID', path(i)) ?? []);
 }
 
 export function party(c: Ctx, p: Element | undefined, s: Scope): Party {
@@ -323,7 +323,7 @@ function allowanceCharges(c: Ctx, parent: Element | undefined, charge: boolean, 
     .map((a, i) => {
       const t = s.in(i);
       return {
-        amount: t.dec(a, 'ram:ActualAmount', 'amount')!,
+        amount: need(t.dec(a, 'ram:ActualAmount', 'amount'), 'SpecifiedTradeAllowanceCharge/ActualAmount'),
         baseAmount: t.dec(a, 'ram:BasisAmount', 'baseAmount'),
         percentage: t.dec(a, 'ram:CalculationPercent', 'percentage'),
         reason: t.text(a, 'ram:Reason', 'reason'),
@@ -432,6 +432,7 @@ function line(c: Ctx, l: Element, s: Scope): Line {
   const objectRef = c.all(lineSettlement, 'ram:AdditionalReferencedDocument').find((d) => c.text(d, 'ram:TypeCode') === '130');
   const baseQty = c.el(net, 'ram:BasisQuantity') ?? c.el(gross, 'ram:BasisQuantity');
   const p = s.in('price');
+  const priceNet = p.dec(net, 'ram:ChargeAmount', 'net');
   const it = s.in('item');
   return {
     id: lineId,
@@ -454,15 +455,16 @@ function line(c: Ctx, l: Element, s: Scope): Line {
     period: period(c, c.el(lineSettlement, 'ram:BillingSpecifiedPeriod'), s.in('period')),
     allowances: allowanceCharges(c, lineSettlement, false, false, s.in('allowances')),
     charges: allowanceCharges(c, lineSettlement, true, false, s.in('charges')),
-    price: net
-      ? {
-          net: p.dec(net, 'ram:ChargeAmount', 'net')!,
-          discount: p.dec(gross, 'ram:AppliedTradeAllowanceCharge/ram:ActualAmount', 'discount'),
-          gross: p.dec(gross, 'ram:ChargeAmount', 'gross'),
-          baseQuantity: p.dec(baseQty, undefined, 'baseQuantity'),
-          baseQuantityUnit: p.attr(baseQty, undefined, 'unitCode', 'baseQuantityUnit'),
-        }
-      : undefined,
+    price:
+      net && priceNet !== undefined
+        ? {
+            net: priceNet,
+            discount: p.dec(gross, 'ram:AppliedTradeAllowanceCharge/ram:ActualAmount', 'discount'),
+            gross: p.dec(gross, 'ram:ChargeAmount', 'gross'),
+            baseQuantity: p.dec(baseQty, undefined, 'baseQuantity'),
+            baseQuantityUnit: p.attr(baseQty, undefined, 'unitCode', 'baseQuantityUnit'),
+          }
+        : undefined,
     vat: tax
       ? {
           categoryCode: s.text(tax, 'ram:CategoryCode', 'vat/categoryCode') ?? '',

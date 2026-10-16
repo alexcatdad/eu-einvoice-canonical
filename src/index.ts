@@ -8,6 +8,7 @@ import { applyRelations } from './relations/rules.js';
 import { signatureFindings, signatureStatus } from './signature/index.js';
 import type { ValidateOptions } from './validation/index.js';
 import { unavailableSummary } from './validation/plan.js';
+import { ValueError } from './values.js';
 
 export * from './canonical.js';
 export { checkTotals, type Finding } from './checks.js';
@@ -16,7 +17,16 @@ export { type Detection, detectXml } from './detect.js';
 export * from './duplicates/index.js';
 export { DEFAULT_LIMITS, decodeXml, type Skipped, type UnwrapLimits, type UnwrapOptions, unwrap, type XmlPayload } from './envelope.js';
 export * from './export/index.js';
-export { FORMATS, FORMATS_BY_ID, type FormatDef, type FormatId, type ParserFamily } from './formats.js';
+export {
+  describeFormats,
+  FORMATS,
+  FORMATS_BY_ID,
+  type FormatDef,
+  type FormatId,
+  type FormatInfo,
+  type FormatStatus,
+  type ParserFamily,
+} from './formats.js';
 export * as matching from './matching/index.js';
 export { IMPLEMENTED_FAMILIES, NotImplementedError, ParseError } from './parsers/index.js';
 export {
@@ -191,7 +201,7 @@ export async function convert(
       return { status: 'ok', invoices, detection, payload: meta };
     } catch (e) {
       if (e instanceof NotImplementedError) return { status: 'unsupported', detection, payload: meta, reason: e.message };
-      if (e instanceof ParseError) return { status: 'error', detection, payload: meta, error: e.message };
+      if (e instanceof ParseError || e instanceof ValueError) return { status: 'error', detection, payload: meta, error: e.message };
       return { status: 'error', detection, payload: meta, error: `Internal error: ${(e as Error).message}` };
     }
   });

@@ -44,7 +44,10 @@ jobs:
           if-no-files-found: ignore
       - name: Known-answer detection sweep over the fixtures
         run: bun run sweep:fixtures
-      - name: Build the browser converter
+      - name: Install TypeDoc (its own package, because it needs the JavaScript TypeScript compiler)
+        run: bun install --frozen-lockfile
+        working-directory: typedoc
+      - name: Build the site (browser converter, API reference, TypeDoc)
         run: bun run build:site
       - name: Performance gate (quick subset against bench/baseline.json)
         run: bun run bench:check
@@ -66,6 +69,24 @@ jobs:
         uses: actions/upload-pages-artifact@v5
         with:
           path: dist
+
+  docker:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build the API image
+        run: docker build -t einvoice-api .
+      - name: Run it read-only and call the API
+        run: |
+          docker run -d --name api --read-only -p 8080:8080 einvoice-api
+          for i in $(seq 1 30); do curl -sf localhost:8080/health && break; sleep 1; done
+          curl -sf localhost:8080/health
+          curl -sf localhost:8080/v1/formats | grep -q peppol-bis3
+          curl -sf -X POST -H 'Content-Type: application/xml' --data-binary @test/fixtures/peppol-bis3-invoice.xml localhost:8080/v1/convert | grep -q '"status":"ok"'
+          curl -sf -X POST -H 'Content-Type: application/xml' --data-binary @test/fixtures/peppol-bis3-invoice.xml 'localhost:8080/v1/convert?euTrust=true' | grep -q '"status":"ok"'
+      - name: Logs
+        if: failure()
+        run: docker logs api
 
   deploy:
     needs: test
