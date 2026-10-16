@@ -317,7 +317,7 @@ export function articleHtml(v: InvoiceView, id = 'einvoice'): string {
   );
 }
 
-const minifiedCss = INVOICE_CSS.replace(/\n\s*/g, '').replace(/\s*([{}:;,>])\s*/g, '$1') + PAGE_CSS;
+const minifiedCss = INVOICE_CSS.replace(/\n\s*/g, '').replace(/\s*([{}:;,>])\s*/g, '$1');
 
 /**
  * Renders an invoice as a self-contained, print-friendly HTML page: inline CSS, no scripts, no external
@@ -332,7 +332,7 @@ export function renderHtml(invoice: CanonicalInvoice, options: RenderHtmlOptions
   return (
     `<!doctype html><html lang="${view.lang}"><head><meta charset="utf-8">` +
     `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">` +
-    `<meta name="viewport" content="width=device-width,initial-scale=1">` +
+    `<meta name="viewport" content="width=device-width,initial-scale=1"><style>${PAGE_CSS}</style>` +
     `<title>${escapeHtml(view.title)}</title></head><body><main>${article}</main></body></html>\n`
   );
 }

@@ -313,7 +313,7 @@ describe('renderHtml escapes untrusted input', () => {
       expect(html).not.toMatch(/<script|<\/script/i);
     });
 
-    test(`${name}: only our own tags and attributes appear`, () => expectOnlyOwnMarkup(html.replace(/<style>.*?<\/style>/s, '')));
+    test(`${name}: only our own tags and attributes appear`, () => expectOnlyOwnMarkup(html.replace(/<style>.*?<\/style>/gs, '')));
   }
 
   test('every field shows up escaped, so nothing is silently dropped', () => {
@@ -373,9 +373,9 @@ describe('review fixes', () => {
     expect(charges.rows[0]![1]).toBe('E Exempt');
   });
 
-  test('the HTML rendering prints on A4 with 15 mm margins; the React stylesheet sets no page rule', () => {
-    expect(renderHtml(peppol)).toContain('@media print{@page{size:A4;margin:15mm}}');
-    expect(renderHtml(peppol, { standalone: false })).toContain('@page{size:A4;margin:15mm}');
+  test('the standalone page prints on A4 with 15 mm margins; the fragment and the React stylesheet set no page rule', () => {
+    expect(renderHtml(peppol)).toContain('<style>@media print{@page{size:A4;margin:15mm}}</style>');
+    expect(renderHtml(peppol, { standalone: false })).not.toContain('@page');
     expect(reactCss()).not.toContain('@page');
   });
 });

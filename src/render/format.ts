@@ -37,7 +37,8 @@ function symbols(locale: string): Symbols {
     const groups = nf
       .formatToParts(1234567890)
       .filter((p) => p.type === 'integer')
-      .map((p) => p.value.length);
+      // Code points, not UTF-16 units: some numbering systems (mathbold, adlm) use supplementary-plane digits.
+      .map((p) => [...p.value].length);
     const primary = groups.length > 1 ? groups[groups.length - 1]! : 3;
     const secondary = groups.length > 2 ? groups[groups.length - 2]! : primary;
     s = {
