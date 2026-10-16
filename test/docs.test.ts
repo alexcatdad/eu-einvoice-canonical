@@ -3,8 +3,10 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, normalize } from 'node:path';
 import pkg from '../package.json' with { type: 'json' };
 import { SITE_URL } from '../site/chrome.js';
+import { converts, UNPARSED_FORMATS } from '../site/coverage.js';
 import { buildDocs, buildLlmsFull, buildLlmsTxt, buildSitemap, PAGES, robotsTxt, slugify } from '../site/docs.js';
 import { FORMATS } from '../src/formats.js';
+import { NotImplementedError, PARSERS } from '../src/parsers/index.js';
 
 const root = join(import.meta.dir, '..');
 const readme = readFileSync(join(root, 'README.md'), 'utf8');
@@ -121,6 +123,48 @@ describe('docs pages from the README', () => {
   test('slugs follow the GitHub rule, so README anchors keep working', () => {
     expect(slugify('Mexico: CFDI (`mx-cfdi`)')).toBe('mexico-cfdi-mx-cfdi');
     expect(slugify('Conversion API (HTTP)')).toBe('conversion-api-http');
+  });
+});
+
+describe('links to the repository and to generated pages', () => {
+  const blob = 'https://github.com/alexcatdad/eu-einvoice-canonical/blob/main/';
+  const all = site.pages.flatMap((p) => [p.html, p.markdown]);
+
+  test('every repository link in every page and markdown twin names a file that exists', () => {
+    const missing = new Set<string>();
+    for (const text of all)
+      for (const m of text.matchAll(/https:\/\/github\.com\/alexcatdad\/eu-einvoice-canonical\/blob\/main\/([^"')\s#]+)/g))
+        if (!existsSync(join(root, m[1] as string))) missing.add(m[1] as string);
+    expect([...missing]).toEqual([]);
+    expect(blob.length).toBeGreaterThan(0);
+  });
+
+  test('the formats index links every format page, not the repository', () => {
+    const index = site.pages.find((p) => p.path === 'docs/formats/index.html');
+    for (const f of FORMATS.filter((f) => !f.id.endsWith('-unknown'))) {
+      expect(index?.html).toContain(`/docs/formats/${f.id}.html"`);
+      expect(index?.markdown).toContain(`${SITE_URL}docs/formats/${f.id}.html`);
+    }
+  });
+});
+
+describe('which formats convert', () => {
+  test('a format listed as unparsed is refused by its parser, and the others are not listed', () => {
+    for (const id of UNPARSED_FORMATS) {
+      const format = FORMATS.find((f) => f.id === id);
+      expect(format).toBeDefined();
+      // biome-ignore lint/suspicious/noExplicitAny: the parsers refuse before they read the payload
+      expect(() => PARSERS[format!.family]({ payload: {} as any, format: format as never, details: {}, fileSha256: '' })).toThrow(
+        NotImplementedError,
+      );
+      expect(converts(format!)).toBe(false);
+    }
+    expect(converts(FORMATS.find((f) => f.id === 'eslog-2')!)).toBe(true);
+  });
+
+  test('a format page says whether the format converts', () => {
+    expect(site.pages.find((p) => p.path === 'docs/formats/eslog-1.html')?.markdown).toContain('not mapped yet');
+    expect(site.pages.find((p) => p.path === 'docs/formats/eslog-2.html')?.markdown).toContain('converts to canonical JSON');
   });
 });
 

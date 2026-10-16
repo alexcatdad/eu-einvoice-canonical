@@ -54,5 +54,12 @@ onLanguageChange(() => {
   const version = document.getElementById('release-version');
   if (releaseTag && version) version.textContent = t('deliv.cliRelease', { tag: releaseTag });
 });
-void showRelease();
+document.getElementById('release-lookup')?.addEventListener('click', (e) => {
+  const button = e.currentTarget as HTMLButtonElement;
+  button.disabled = true;
+  void showRelease().then(() => {
+    if (releaseTag) button.closest('.release-lookup')?.remove();
+    else button.disabled = false;
+  });
+});
 void checkCorpusPage();

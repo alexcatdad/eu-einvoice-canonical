@@ -436,7 +436,9 @@ interface ModelUi {
   phase: 'idle' | 'busy' | 'done' | 'error';
   text: string;
   fraction?: number;
-  /** Puts the invoice back as it was before the model ran. */
+  /** The invoice as it was before the first model run; "Remove model labels" always returns to this. */
+  base?: Snapshot;
+  /** Puts the invoice back as it was before the first model run. */
   undo?: () => void;
 }
 let modelUi: ModelUi | undefined;
@@ -488,19 +490,22 @@ function refreshModelPanel() {
   wireModel();
 }
 
+type Snapshot = ReturnType<typeof snapshotOf>;
 const snapshotOf = (inv: CanonicalInvoice) =>
   structuredClone({ lineRoles: inv.lineRoles, relations: inv.relations, derived: inv.source.derived, warnings: inv.source.warnings });
 
 async function runModel(inv: CanonicalInvoice, spec: EngineSpec) {
   const started = performance.now();
+  const prior = modelUi?.inv === inv ? modelUi : undefined;
   const before = snapshotOf(inv);
-  const restore = () => {
-    inv.lineRoles = before.lineRoles;
-    inv.relations = before.relations;
-    inv.source.derived = before.derived;
-    inv.source.warnings = before.warnings;
+  const base = prior?.base ?? before;
+  const restoreTo = (snap: Snapshot) => () => {
+    inv.lineRoles = structuredClone(snap.lineRoles);
+    inv.relations = structuredClone(snap.relations);
+    inv.source.derived = structuredClone(snap.derived);
+    inv.source.warnings = structuredClone(snap.warnings);
   };
-  const ui: ModelUi = { inv, phase: 'busy', text: t('model.loading', { model: spec.label }) };
+  const ui: ModelUi = { inv, phase: 'busy', text: t('model.loading', { model: spec.label }), base, undo: prior?.undo };
   modelUi = ui;
   refreshModelPanel();
   const paint = () => {
@@ -514,8 +519,8 @@ async function runModel(inv: CanonicalInvoice, spec: EngineSpec) {
     }
   };
   const fail = (reason: string) => {
-    restore();
-    modelUi = { inv, phase: 'error', text: t('model.failed', { reason }) };
+    restoreTo(before)();
+    modelUi = { inv, phase: 'error', text: t('model.failed', { reason }), base, undo: prior?.undo };
     refreshModelPanel();
   };
   try {
@@ -540,7 +545,8 @@ async function runModel(inv: CanonicalInvoice, spec: EngineSpec) {
       inv,
       phase: 'done',
       text: labels || links ? t('model.done', { seconds, labels, links }) : t('model.nothing', { seconds }),
-      undo: labels || links ? restore : undefined,
+      base,
+      undo: labels || links || prior?.undo ? restoreTo(base) : undefined,
     };
     if (current?.items[shownIndex]?.invoice === inv) render(shownIndex);
   } catch (e) {

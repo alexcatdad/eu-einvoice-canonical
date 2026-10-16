@@ -25,7 +25,7 @@ if bun scripts/corpus-page.ts "$tmp/corpus-report.json" "$dest/corpus.html" "$de
   cp "$tmp/corpus-report.json" "$dest/corpus-report.json"
   echo "Real-world results page built from corpus run $run_id."
 else
-  rm -f "$dest/corpus.html"
+  # dist/corpus.html stays the placeholder the site build wrote, so the navigation link never dead-ends.
   echo "Could not render the corpus report: building without the Real-world results page."
 fi
 exit 0

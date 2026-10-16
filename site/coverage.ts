@@ -6,6 +6,15 @@ import { EU_COUNTRIES, FORMATS, type FormatDef, IMPLEMENTED_FAMILIES } from '../
 
 const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+/**
+ * Registry formats whose family has a parser that still refuses them (eslog-1 and ebinterface-2 throw NotImplementedError).
+ * test/docs.test.ts checks this list against the parsers.
+ */
+export const UNPARSED_FORMATS: ReadonlySet<string> = new Set(['eslog-1', 'ebinterface-2']);
+
+/** Whether the converter turns this format into canonical JSON: decided per format id, not per family. */
+export const converts = (f: FormatDef): boolean => IMPLEMENTED_FAMILIES.includes(f.family) && !UNPARSED_FORMATS.has(f.id);
+
 /** Countries outside the EU that the registry covers. */
 export const WORLD_COUNTRIES = ['AE', 'AU', 'JP', 'MY', 'NZ', 'OM', 'SA', 'SG'];
 
@@ -59,9 +68,8 @@ const regions = new Intl.DisplayNames(['en'], { type: 'region' });
 
 /** The country-by-country grid as static English HTML; each chip links to the format's page under `root`. */
 export function coverageHtml(root: string): string {
-  const implemented = new Set<string>(IMPLEMENTED_FAMILIES);
   const chip = (f: FormatDef) => {
-    const ok = implemented.has(f.family);
+    const ok = converts(f);
     return `<li class="fmt ${ok ? 'converts' : 'identifies'}"><a href="${root}docs/formats/${esc(f.id)}.html" title="${esc(f.notes)}">${esc(shortName(f))}<span class="visually-hidden">${ok ? ', converted to canonical JSON' : ', identified, parser still to come'}</span></a></li>`;
   };
   const eu = new Set<string>(EU_COUNTRIES);
