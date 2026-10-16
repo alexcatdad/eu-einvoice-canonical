@@ -9,6 +9,7 @@
  * validation is asked for. The rule sets are pinned bundles under validation/bundles/.
  * 'unavailable' means a layer could not run; 'failed' means it ran and found errors.
  */
+import { SaxesParser, type SaxesTagNS } from 'saxes';
 import type { CheckStatus, ValidationSummary } from '../canonical.js';
 import type { Detection } from '../detect.js';
 import { BundleReaderFor, type BundleSource, defaultReader } from './bundles.js';
@@ -23,6 +24,40 @@ export { emptySummary, planFor, unavailableSummary } from './plan.js';
 export interface ValidateOptions {
   /** Where the bundles come from. Default: validation/bundles next to this package (a file read in Node and Bun, a fetch in browsers). */
   bundles?: BundleSource;
+  /**
+   * The Schematron layers (semantic, profile) are skipped, as 'not-run' with an info finding, for documents with more invoice
+   * lines than this. The official rule sets run through SaxonJS take minutes on very large invoices (about 80 s for the EN 16931
+   * rules on 26,813 lines, longer for Peppol); the schema layer always runs. Default 2000; `Infinity` never skips.
+   */
+  maxSchematronLines?: number;
+}
+
+export const DEFAULT_MAX_SCHEMATRON_LINES = 2000;
+
+/** Line elements, by namespace: UBL InvoiceLine and CreditNoteLine, CII IncludedSupplyChainTradeLineItem. */
+const LINE_ELEMENTS: Record<string, readonly string[]> = {
+  'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2': ['InvoiceLine', 'CreditNoteLine'],
+  'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100': ['IncludedSupplyChainTradeLineItem'],
+};
+
+class Stop extends Error {}
+
+/**
+ * Counts line elements with a namespace-aware parse, so comments, CDATA and odd prefixes cannot inflate or hide the count.
+ * Stops once `limit` is passed. A document that is not well-formed is counted up to the error (the schema layer reports it).
+ */
+export function countLines(xml: string, limit = Number.POSITIVE_INFINITY): number {
+  const parser = new SaxesParser({ xmlns: true, position: false });
+  let n = 0;
+  parser.on('opentag', (tag: SaxesTagNS) => {
+    if (LINE_ELEMENTS[tag.uri ?? '']?.includes(tag.local) && ++n > limit) throw new Stop();
+  });
+  try {
+    parser.write(xml).close();
+  } catch {
+    // Stop, or not well-formed: n is what was counted so far.
+  }
+  return n;
 }
 
 let scopes = 0;
@@ -60,6 +95,10 @@ export async function validate(payload: { xml: string }, detection: Detection, o
   const rootName = detection.probe?.rootName ?? '';
   const { bundles, scope } = readerFor(options.bundles);
 
+  const maxLines = options.maxSchematronLines ?? DEFAULT_MAX_SCHEMATRON_LINES;
+  const lines = Number.isFinite(maxLines) ? countLines(payload.xml, maxLines) : 0;
+  const tooLarge = lines > maxLines;
+
   const runners: Record<Layer, (id: string) => Promise<Finding[]>> = {
     schema: (id) => runSchema(bundles, id, payload.xml, rootName),
     semantic: (id) => runSchematron(bundles, id, 'semantic', payload.xml, scope),
@@ -68,6 +107,18 @@ export async function validate(payload: { xml: string }, detection: Detection, o
   const layers = Object.keys(plan) as Layer[];
   const results = await Promise.all(
     layers.map(async (layer): Promise<{ layer: Layer; status: CheckStatus; findings: Finding[] }> => {
+      if (tooLarge && layer !== 'schema')
+        return {
+          layer,
+          status: 'not-run',
+          findings: [
+            {
+              layer,
+              severity: 'info',
+              message: `Skipped: more than ${maxLines} invoice lines (maxSchematronLines). The Schematron rules would take minutes here; validate with a native Schematron processor or raise the limit.`,
+            },
+          ],
+        };
       try {
         const findings = await runners[layer](plan[layer]!);
         return { layer, status: findings.some((f) => f.severity === 'fatal') ? 'failed' : 'passed', findings };

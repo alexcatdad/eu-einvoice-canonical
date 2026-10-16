@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { describe, test } from 'node:test';
 import { type CanonicalInvoice, convert, type ValidationSummary } from '../src/index.js';
 import { defaultReader } from '../src/validation/bundles.js';
+import { countLines } from '../src/validation/index.js';
 import { fixture, utf8 } from './helpers.js';
 
 const VALID = new URL('./validation-fixtures/peppol-valid-invoice.xml', import.meta.url);
@@ -102,6 +103,42 @@ describe('validation', () => {
     const { v } = await validated(fixture('xrechnung-ubl.xml'), 'xrechnung-ubl.xml');
     assert.equal(v.profile, 'passed');
     assert.equal(v.bundles.profile, 'xrechnung-3.0.2-ubl');
+  });
+
+  slow('Schematron is skipped above maxSchematronLines, the schema still runs', async () => {
+    const lines = countLines(validXml);
+    assert.ok(lines >= 1);
+    const { v } = await validated(utf8(validXml), 'valid.xml', { validation: { maxSchematronLines: lines - 1 } });
+    matches(v, { schema: 'passed', semantic: 'not-run', profile: 'not-run' });
+    assert.deepEqual(v.bundles, { schema: 'xsd-ubl-2.1' });
+    assert.ok(v.findings.some((f) => f.layer === 'semantic' && f.severity === 'info' && /maxSchematronLines/.test(f.message)));
+    const atLimit = (await validated(utf8(validXml), 'valid.xml', { validation: { maxSchematronLines: lines } })).v;
+    matches(atLimit, { semantic: 'passed', profile: 'passed' });
+  });
+
+  test('countLines counts UBL and CII line elements by namespace and stops past the limit', () => {
+    const cac = 'xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"';
+    const ram = 'xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"';
+    assert.equal(countLines(`<Invoice ${cac}><cac:InvoiceLine><x/></cac:InvoiceLine><cac:InvoiceLine/></Invoice>`), 2);
+    assert.equal(
+      countLines(
+        `<CreditNote xmlns:é="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"><é:CreditNoteLine/></CreditNote>`,
+      ),
+      1,
+    );
+    assert.equal(
+      countLines(`<rsm:X xmlns:rsm="r" ${ram}><ram:IncludedSupplyChainTradeLineItem>a</ram:IncludedSupplyChainTradeLineItem></rsm:X>`),
+      1,
+    );
+    // Comments, CDATA, lookalike names and other namespaces do not count.
+    assert.equal(
+      countLines(
+        `<Invoice ${cac}><!-- <cac:InvoiceLine> --><![CDATA[<cac:InvoiceLine>]]><cac:InvoiceLineReference/><InvoiceLine/></Invoice>`,
+      ),
+      0,
+    );
+    assert.equal(countLines(`<Invoice ${cac}>${'<cac:InvoiceLine/>'.repeat(50)}</Invoice>`, 3), 4);
+    assert.equal(countLines(`<Invoice ${cac}><cac:InvoiceLine/><cac:InvoiceLine>`), 2);
   });
 
   slow('layers that do not apply are not-run, not passed', async () => {
