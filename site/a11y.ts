@@ -11,7 +11,7 @@
  */
 import { join, normalize } from 'node:path';
 import { AxeBuilder } from '@axe-core/playwright';
-import { type Browser, chromium, type Page } from 'playwright';
+import { type Browser, type BrowserContextOptions, chromium, type Page } from 'playwright';
 import { BASE } from './site.js';
 
 const dist = join(import.meta.dir, '..', 'dist');
@@ -45,6 +45,14 @@ const PAGES = [
 /** Fonts are the one outside request the site makes on its own. */
 const ALLOWED_HOSTS = new Set(['localhost', 'fonts.googleapis.com', 'fonts.gstatic.com']);
 const problems: string[] = [];
+
+/** A page in a context of its own: axe-core's Playwright runner needs a page from browser.newContext(). */
+async function open(browser: Browser, options: BrowserContextOptions): Promise<Page> {
+  const context = await browser.newContext(options);
+  const page = await context.newPage();
+  page.on('close', () => void context.close());
+  return page;
+}
 
 async function axe(page: Page, label: string) {
   // Scalar's own reference markup is a third-party component; the page around it is checked. Scalar renders a <main>
@@ -92,7 +100,7 @@ function watchRequests(page: Page, label: string) {
 }
 
 async function converter(browser: Browser, scheme: 'light' | 'dark') {
-  const page = await browser.newPage({ colorScheme: scheme, viewport: { width: 1440, height: 900 } });
+  const page = await open(browser, { colorScheme: scheme, viewport: { width: 1440, height: 900 } });
   watchRequests(page, `converter (${scheme})`);
   await page.goto(at(''));
   await page.locator('.stamp').first().waitFor();
@@ -105,7 +113,7 @@ async function converter(browser: Browser, scheme: 'light' | 'dark') {
 }
 
 async function focusVisible(browser: Browser) {
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  const page = await open(browser, { viewport: { width: 1440, height: 900 } });
   await page.goto(at(''));
   await page.locator('.stamp').first().waitFor();
   const seen = new Set<string>();
@@ -136,7 +144,7 @@ try {
   for (const scheme of ['light', 'dark'] as const) {
     await converter(browser, scheme);
     for (const route of PAGES) {
-      const page = await browser.newPage({ colorScheme: scheme, viewport: { width: 1440, height: 900 } });
+      const page = await open(browser, { colorScheme: scheme, viewport: { width: 1440, height: 900 } });
       watchRequests(page, `${route} (${scheme})`);
       await page.goto(at(route));
       await page.waitForLoadState('networkidle');
@@ -146,7 +154,7 @@ try {
   }
   for (const width of [320, 375]) {
     for (const route of ['', ...PAGES]) {
-      const page = await browser.newPage({ viewport: { width, height: 800 } });
+      const page = await open(browser, { viewport: { width, height: 800 } });
       await page.goto(at(route));
       if (route === '') await page.locator('.stamp').first().waitFor();
       else await page.waitForLoadState('networkidle');
