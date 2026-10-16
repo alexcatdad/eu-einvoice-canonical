@@ -158,7 +158,7 @@ function header(v: InvoiceView, id: string): string {
           ['class', 'einvoice-title'],
           ['id', `${id}-title`],
         ],
-        txt(v.title),
+        `${txt(v.docLabel)} ${el('span', [['class', 'einvoice-number']], txt(v.number))}`,
       ),
       v.meta.length ? fieldList('einvoice-meta', v.meta) : '',
     ),

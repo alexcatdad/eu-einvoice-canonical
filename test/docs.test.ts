@@ -120,6 +120,13 @@ describe('docs pages from the README', () => {
     expect(site.pages.every((p) => !p.html.includes('securityscorecards'))).toBe(true);
   });
 
+  test('the README badge row is left out, not shown as bare alt-text links', () => {
+    // A linked image in markdown is `[![alt](src)](href)`; the badge row is the only one in the README.
+    const linkedImage = /\[!\[[^\]]*\]\([^)]*\)\]\(/;
+    expect(site.pages.filter((p) => linkedImage.test(p.markdown)).map((p) => p.path)).toEqual([]);
+    expect(site.pages.filter((p) => p.html.includes('>CodeQL</a>')).map((p) => p.path)).toEqual([]);
+  });
+
   test('slugs follow the GitHub rule, so README anchors keep working', () => {
     expect(slugify('Mexico: CFDI (`mx-cfdi`)')).toBe('mexico-cfdi-mx-cfdi');
     expect(slugify('Conversion API (HTTP)')).toBe('conversion-api-http');

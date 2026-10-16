@@ -43,7 +43,11 @@ describe('renderHtml structure', () => {
   test('is a complete document with a language, a title and a heading', () => {
     expect(html.startsWith('<!doctype html><html lang="en">')).toBe(true);
     expect(html).toContain('<title>Invoice INV-2026-1042</title>');
-    expect(html).toContain('<h1 class="einvoice-title" id="einvoice-title">Invoice INV-2026-1042</h1>');
+    expect(html).toContain(
+      '<h1 class="einvoice-title" id="einvoice-title">Invoice <span class="einvoice-number">INV-2026-1042</span></h1>',
+    );
+    // The registry's format name, with the id kept in the title.
+    expect(html).toContain('<dd><span title="peppol-bis3">Peppol BIS Billing 3.0</span></dd>');
     expect(html).toContain('<main>');
     expect(html.trimEnd().endsWith('</html>')).toBe(true);
   });
@@ -173,13 +177,15 @@ describe('renderHtml structure', () => {
     const cn = plain(renderHtml(creditNote));
     expect(cn).toContain('<article class="einvoice einvoice--credit"');
     expect(cn).toContain('<p class="einvoice-badge">Credit note</p>');
-    expect(cn).toContain(`<h1 class="einvoice-title" id="einvoice-title">Credit note ${creditNote.id}</h1>`);
+    expect(cn).toContain(
+      `<h1 class="einvoice-title" id="einvoice-title">Credit note <span class="einvoice-number">${creditNote.id}</span></h1>`,
+    );
     expect(cn).toContain('<div class="einvoice-due"><dt>Amount credited</dt><dd>SEK 250.00</dd></div>');
   });
 
   test('renders another syntax too', () => {
     const x = plain(renderHtml(xrechnung));
-    expect(x).toContain(`Invoice ${escapeHtml(xrechnung.id)}</h1>`);
+    expect(x).toContain(`Invoice <span class="einvoice-number">${escapeHtml(xrechnung.id)}</span></h1>`);
     expect(x).toContain('€1,190.00');
     expect(headings(x)).toContain('VAT breakdown');
     expect(headings(x)).toContain('Totals');
@@ -190,7 +196,7 @@ describe('renderHtml options', () => {
   test('German and French labels, number and date formats, language attribute', () => {
     const de = plain(renderHtml(peppol, { lang: 'de' }));
     expect(de).toContain('<html lang="de">');
-    expect(de).toContain('>Rechnung INV-2026-1042</h1>');
+    expect(de).toContain('>Rechnung <span class="einvoice-number">INV-2026-1042</span></h1>');
     expect(headings(de)).toContain('Umsatzsteuer-Aufschlüsselung');
     expect(de).toContain('<dt>Zahlbetrag</dt><dd>3.091,00 SEK</dd>');
     expect(de).toContain('<time dateTime="2026-10-15" title="2026-10-15">15.10.2026</time>');
@@ -486,14 +492,14 @@ describe('einvoice render', () => {
   test('html goes to stdout', async () => {
     const t = io();
     expect(await main(['render', '--as', 'html', file], t.sink)).toBe(EXIT.ok);
-    expect(t.out.join('')).toContain('>Invoice INV-2026-1042</h1>');
+    expect(t.out.join('')).toContain('>Invoice <span class="einvoice-number">INV-2026-1042</span></h1>');
   });
 
   test('--lang and --out write a file', async () => {
     const t = io();
     const out = join(dir, 'one.html');
     expect(await main(['render', '--as', 'html', '--lang', 'de', '--out', out, file], t.sink)).toBe(EXIT.ok);
-    expect(readFileSync(out, 'utf8')).toContain('>Rechnung INV-2026-1042</h1>');
+    expect(readFileSync(out, 'utf8')).toContain('>Rechnung <span class="einvoice-number">INV-2026-1042</span></h1>');
     expect(t.out).toEqual([]);
   });
 

@@ -6,6 +6,7 @@
  */
 
 import type { Address, AllowanceCharge, CanonicalInvoice, Identifier, Line, Party, Period, VatInfo } from '../canonical.js';
+import { FORMATS_BY_ID } from '../formats.js';
 import {
   countryName,
   formatAmount,
@@ -454,7 +455,8 @@ export function buildInvoiceView(inv: CanonicalInvoice, lang?: string, options: 
     meta: fields([
       [t('type'), present(inv.typeCode) ? text(inv.typeCode) : undefined],
       [t('currency'), cur],
-      [t('format'), inv.source.format],
+      // The registry's name for the format; the id stays in the title (and in the canonical JSON).
+      [t('format'), text(FORMATS_BY_ID[inv.source.format]?.name ?? inv.source.format, { title: inv.source.format })],
     ]),
     facts,
     due: { label: credit ? t('credited') : t('payable'), value: text(money(tot.payable)) },

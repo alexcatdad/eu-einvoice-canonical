@@ -6,7 +6,8 @@
  * spacing come from custom properties with built-in defaults; set them on any ancestor to theme the invoice:
  *
  *   --einvoice-font, --einvoice-mono, --einvoice-size, --einvoice-ink, --einvoice-muted, --einvoice-rule,
- *   --einvoice-surface, --einvoice-subtle, --einvoice-accent, --einvoice-credit, --einvoice-radius
+ *   --einvoice-surface, --einvoice-subtle, --einvoice-accent, --einvoice-credit, --einvoice-radius,
+ *   --einvoice-space-1 .. --einvoice-space-8 (the spacing scale: 4, 8, 12, 16, 24, 32, 48 and 64px)
  *
  * In a shadcn/ui app, add the class `einvoice-shadcn` (to the invoice or any ancestor) to take these from the
  * shadcn theme tokens (--foreground, --muted-foreground, --border, --background, --muted, --primary,
@@ -31,7 +32,7 @@ export const INVOICE_CSS = `.einvoice-shadcn {
   background: var(--einvoice-surface, #fff);
   max-width: 60rem;
   margin: 0 auto;
-  padding: 2rem;
+  padding: var(--einvoice-space-6, 32px);
   box-sizing: border-box;
   overflow-wrap: anywhere;
   font-variant-numeric: tabular-nums;
@@ -40,8 +41,8 @@ export const INVOICE_CSS = `.einvoice-shadcn {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 1rem 2rem;
-  padding-bottom: 1.25rem;
+  gap: var(--einvoice-space-4, 16px) var(--einvoice-space-6, 32px);
+  padding-bottom: var(--einvoice-space-5, 24px);
   border-bottom: 3px solid var(--einvoice-accent, #1f4fd1);
 }
 .einvoice--credit .einvoice-header {
@@ -49,8 +50,8 @@ export const INVOICE_CSS = `.einvoice-shadcn {
 }
 .einvoice-badge {
   display: inline-block;
-  margin: 0 0 0.4rem;
-  padding: 0.1rem 0.55rem;
+  margin: 0 0 var(--einvoice-space-2, 8px);
+  padding: var(--einvoice-space-1, 4px) var(--einvoice-space-2, 8px);
   border-radius: var(--einvoice-radius, 6px);
   background: var(--einvoice-credit, #b42318);
   color: #fff;
@@ -65,17 +66,21 @@ export const INVOICE_CSS = `.einvoice-shadcn {
   line-height: 1.2;
   font-weight: 700;
 }
+.einvoice-number {
+  display: inline-block;
+  max-width: 100%;
+}
 .einvoice-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0 1rem;
-  margin: 0.4rem 0 0;
+  gap: 0 var(--einvoice-space-4, 16px);
+  margin: var(--einvoice-space-2, 8px) 0 0;
   color: var(--einvoice-muted, #5b5b66);
   font-size: 0.85rem;
 }
 .einvoice-meta > div {
   display: flex;
-  gap: 0.3rem;
+  gap: var(--einvoice-space-1, 4px);
 }
 .einvoice-meta dd {
   margin: 0;
@@ -84,7 +89,7 @@ export const INVOICE_CSS = `.einvoice-shadcn {
 .einvoice-facts {
   display: grid;
   grid-template-columns: auto auto;
-  gap: 0.2rem 1rem;
+  gap: var(--einvoice-space-1, 4px) var(--einvoice-space-4, 16px);
   margin: 0;
   align-content: start;
 }
@@ -103,7 +108,7 @@ export const INVOICE_CSS = `.einvoice-shadcn {
 }
 .einvoice-due dt,
 .einvoice-due dd {
-  padding-top: 0.4rem;
+  padding-top: var(--einvoice-space-2, 8px);
   font-weight: 700;
   color: var(--einvoice-ink, #1b1b1f);
 }
@@ -118,10 +123,10 @@ export const INVOICE_CSS = `.einvoice-shadcn {
 .einvoice-parties {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  gap: 1rem 2rem;
+  gap: var(--einvoice-space-4, 16px) var(--einvoice-space-6, 32px);
 }
 .einvoice-party {
-  margin-top: 1.5rem;
+  margin-top: var(--einvoice-space-6, 32px);
 }
 .einvoice-party-name {
   margin: 0;
@@ -133,16 +138,16 @@ export const INVOICE_CSS = `.einvoice-shadcn {
   color: var(--einvoice-muted, #5b5b66);
 }
 .einvoice-address {
-  margin: 0.3rem 0 0.5rem;
+  margin: var(--einvoice-space-1, 4px) 0 var(--einvoice-space-2, 8px);
   font-style: normal;
 }
 .einvoice-section {
-  margin-top: 1.75rem;
+  margin-top: var(--einvoice-space-6, 32px);
   break-inside: auto;
 }
 .einvoice-h2 {
-  margin: 0 0 0.5rem;
-  padding-bottom: 0.2rem;
+  margin: 0 0 var(--einvoice-space-2, 8px);
+  padding-bottom: var(--einvoice-space-1, 4px);
   border-bottom: 1px solid var(--einvoice-rule, #d5d5dc);
   color: var(--einvoice-muted, #5b5b66);
   font-size: 0.75rem;
@@ -151,18 +156,15 @@ export const INVOICE_CSS = `.einvoice-shadcn {
   text-transform: uppercase;
   break-after: avoid;
 }
-.einvoice-party .einvoice-h2 {
-  margin-bottom: 0.4rem;
-}
 .einvoice-h3 {
-  margin: 0.9rem 0 0.3rem;
+  margin: var(--einvoice-space-4, 16px) 0 var(--einvoice-space-1, 4px);
   font-size: 0.95rem;
   font-weight: 650;
 }
 .einvoice-fields {
   display: grid;
   grid-template-columns: minmax(6rem, 38%) minmax(0, 1fr);
-  gap: 0.15rem 0.9rem;
+  gap: var(--einvoice-space-1, 4px) var(--einvoice-space-4, 16px);
   margin: 0;
 }
 .einvoice-fields > div {
@@ -179,7 +181,7 @@ export const INVOICE_CSS = `.einvoice-shadcn {
   gap: 0;
 }
 .einvoice-party .einvoice-fields dt {
-  margin-top: 0.3rem;
+  margin-top: var(--einvoice-space-1, 4px);
   font-size: 0.8rem;
 }
 .einvoice-fields dd > p,
@@ -200,10 +202,13 @@ export const INVOICE_CSS = `.einvoice-shadcn {
 }
 .einvoice-table th,
 .einvoice-table td {
-  padding: 0.45rem 0.5rem;
+  padding: var(--einvoice-space-2, 8px) var(--einvoice-space-3, 12px);
   border-bottom: 1px solid var(--einvoice-rule, #d5d5dc);
   text-align: left;
   vertical-align: top;
+}
+.einvoice-lines .einvoice-table th:first-child {
+  white-space: nowrap;
 }
 .einvoice-table th {
   background: var(--einvoice-subtle, #f4f4f7);
@@ -216,10 +221,10 @@ export const INVOICE_CSS = `.einvoice-shadcn {
 }
 .einvoice-table td > p,
 .einvoice-table td > ul {
-  margin: 0.15rem 0 0;
+  margin: var(--einvoice-space-1, 4px) 0 0;
 }
 .einvoice-table td > ul {
-  padding-left: 1.1rem;
+  padding-left: var(--einvoice-space-4, 16px);
 }
 .einvoice-table .einvoice-num {
   text-align: right;
@@ -256,7 +261,7 @@ export const INVOICE_CSS = `.einvoice-shadcn {
 .einvoice-total dt,
 .einvoice-total dd {
   margin: 0;
-  padding: 0.2rem 0;
+  padding: var(--einvoice-space-1, 4px) 0;
 }
 .einvoice-total dt {
   color: var(--einvoice-muted, #5b5b66);
@@ -264,7 +269,7 @@ export const INVOICE_CSS = `.einvoice-shadcn {
 .einvoice-total dd {
   text-align: right;
   white-space: nowrap;
-  padding-left: 1rem;
+  padding-left: var(--einvoice-space-4, 16px);
 }
 .einvoice-total--subtotal dt,
 .einvoice-total--subtotal dd {
@@ -274,8 +279,8 @@ export const INVOICE_CSS = `.einvoice-shadcn {
 }
 .einvoice-total--due dt,
 .einvoice-total--due dd {
-  margin-top: 0.35rem;
-  padding: 0.55rem 0;
+  margin-top: var(--einvoice-space-1, 4px);
+  padding: var(--einvoice-space-2, 8px) 0;
   border-top: 2px solid var(--einvoice-ink, #1b1b1f);
   color: var(--einvoice-ink, #1b1b1f);
   font-size: 1.15rem;
@@ -291,13 +296,13 @@ export const INVOICE_CSS = `.einvoice-shadcn {
 .einvoice-note > p,
 .einvoice-terms > ul,
 .einvoice-note > ul {
-  margin: 0 0 0.4rem;
+  margin: 0 0 var(--einvoice-space-2, 8px);
 }
 .einvoice-method {
-  padding: 0.1rem 0 0.4rem;
+  padding: var(--einvoice-space-1, 4px) 0 var(--einvoice-space-2, 8px);
 }
 .einvoice-note {
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--einvoice-space-3, 12px);
 }
 .einvoice-note-subject {
   color: var(--einvoice-muted, #5b5b66);
@@ -306,17 +311,17 @@ export const INVOICE_CSS = `.einvoice-shadcn {
 }
 .einvoice-list {
   margin: 0;
-  padding-left: 1.2rem;
+  padding-left: var(--einvoice-space-4, 16px);
 }
 @media (max-width: 40rem) {
   .einvoice {
-    padding: 1rem;
+    padding: var(--einvoice-space-4, 16px);
   }
   .einvoice-fields {
     grid-template-columns: 1fr;
   }
   .einvoice-fields dt {
-    margin-top: 0.35rem;
+    margin-top: var(--einvoice-space-1, 4px);
   }
 }
 @media print {

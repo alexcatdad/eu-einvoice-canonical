@@ -194,7 +194,8 @@ export function InvoiceHeader(props: PartProps) {
       <div className={ctx.c('einvoice-headline')}>
         {v.credit && <p className={ctx.c('einvoice-badge')}>{v.docLabel}</p>}
         <h1 className={ctx.c('einvoice-title')} id={`${ctx.id}-title`}>
-          {v.title}
+          {`${v.docLabel} `}
+          <span className={ctx.c('einvoice-number')}>{v.number}</span>
         </h1>
         {v.meta.length > 0 && <FieldList fields={v.meta} cls="einvoice-meta" ctx={ctx} />}
       </div>

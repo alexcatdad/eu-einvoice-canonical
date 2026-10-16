@@ -138,7 +138,7 @@ export function renderPerformanceHtml(r: Results): string {
   return `<section class="performance">
   <h2>Performance</h2>
   <p class="wrappers">Documents converted per second by <code>convert()</code> on ${esc(r.runtime)} (${esc(r.platform)}), measured ${esc(r.generatedAt.slice(0, 10))}; peak memory is the resident set of a fresh process that converts the file once. Numbers depend on the machine; the CI gate compares ratios to a calibration loop, not these figures.</p>
-  <div class="table-scroll">
+  <div class="table-scroll" tabindex="0">
   <table class="conformance">
     <thead><tr><th scope="col">Case</th><th scope="col" class="num">Input</th><th scope="col" class="num">Documents/s</th><th scope="col" class="num">Peak memory</th></tr></thead>
     <tbody>${rows.join('')}</tbody>
