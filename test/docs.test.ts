@@ -72,8 +72,7 @@ describe('docs pages from the README', () => {
       expect(p.html).toContain('property="og:description"');
       expect(p.html).toContain('"@type":"TechArticle"');
       expect(p.html).toContain('"@type":"BreadcrumbList"');
-      // The documentation menus list page groups, not content, so their headings carry no ids.
-      const content = p.html.replace(/<aside[\s\S]*?<\/aside>/, '').replace(/<details class="docs-menu">[\s\S]*?<\/details>/, '');
+      const content = p.html;
       expect(content).not.toMatch(/<h[1-6](?=[\s>])(?![^>]*\bid=)[^>]*>/);
       expect(p.html).not.toContain('<script src');
       expect(p.html).not.toContain('<img');

@@ -393,7 +393,7 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 export function renderHtml(r: CorpusReport): string {
   const t = r.totals;
   const date = r.generatedAt.slice(0, 10);
-  const countsTable = (rows: [string, Counts][], label: string, code = false) => `<div class="table-scroll">
+  const countsTable = (rows: [string, Counts][], label: string, code = false) => `<div class="table-scroll" tabindex="0">
   <table class="conformance">
     <thead><tr><th scope="col">${label}</th><th scope="col" class="num">Files</th><th scope="col" class="num">Documents</th><th scope="col" class="num">ok</th><th scope="col" class="num">unsupported</th><th scope="col" class="num">error</th><th scope="col" class="num">not an invoice</th></tr></thead>
     <tbody>${rows
@@ -406,7 +406,7 @@ export function renderHtml(r: CorpusReport): string {
   </div>`;
   const clusters = (list: Cluster[]) =>
     list.length
-      ? `<div class="table-scroll"><table class="conformance"><thead><tr><th scope="col" class="num">Count</th><th scope="col">Message (normalised)</th><th scope="col">Examples</th></tr></thead><tbody>${list
+      ? `<div class="table-scroll" tabindex="0"><table class="conformance"><thead><tr><th scope="col" class="num">Count</th><th scope="col">Message (normalised)</th><th scope="col">Examples</th></tr></thead><tbody>${list
           .map(
             (c) =>
               `<tr><td class="num">${c.count}</td><td>${esc(c.message)}</td><td>${c.examples.map((e) => `<code>${esc(e)}</code>`).join('<br>')}</td></tr>`,
@@ -428,13 +428,13 @@ export function renderHtml(r: CorpusReport): string {
     description: `The converter run over ${t.files} files from public e-invoice sample collections: how many convert, how fast, which warnings and errors are most common.`,
     path: 'corpus.html',
     current: 'realworld',
-    body: `<header class="masthead">
+    body: `<div class="masthead">
   <div class="masthead-text">
     <h1>Real-world results</h1>
     <p class="lede">What the converter does with ${t.files} files from public sample collections. Report of ${esc(date)}${r.commit ? `, commit <code>${esc(r.commit.slice(0, 7))}</code>` : ''}.</p>
   </div>
   <p class="privacy"><a href="./">Back to the converter</a></p>
-</header>
+</div>
 <div class="checklist">
   <ul class="checklist-summary">
     <li>${t.documents} documents (${t.invoices} invoices) from ${Object.keys(r.corpora).length} corpora; ${t.ok} converted, ${t.unsupported} unsupported, ${t.error} errors, ${t.notAnInvoice} not invoices.</li>
@@ -450,11 +450,11 @@ export function renderHtml(r: CorpusReport): string {
   <h2>By corpus</h2>
   ${countsTable(Object.entries(r.corpora).sort(), 'Corpus')}
   <h2>Validation, converted documents</h2>
-  <div class="table-scroll"><table class="conformance"><thead><tr><th scope="col">Layer</th><th scope="col" class="num">Passed</th><th scope="col" class="num">Failed</th><th scope="col" class="num">Not run</th><th scope="col" class="num">Pass rate where run</th></tr></thead><tbody>${layerRows}</tbody></table></div>
+  <div class="table-scroll" tabindex="0"><table class="conformance"><thead><tr><th scope="col">Layer</th><th scope="col" class="num">Passed</th><th scope="col" class="num">Failed</th><th scope="col" class="num">Not run</th><th scope="col" class="num">Pass rate where run</th></tr></thead><tbody>${layerRows}</tbody></table></div>
   <h2>Warnings</h2>
-  <div class="table-scroll"><table class="conformance"><thead><tr><th scope="col">Code</th><th scope="col" class="num">Documents</th></tr></thead><tbody>${r.warnings.top.map((w) => `<tr><th scope="row"><code>${esc(w.code)}</code></th><td class="num">${w.count}</td></tr>`).join('')}</tbody></table></div>
+  <div class="table-scroll" tabindex="0"><table class="conformance"><thead><tr><th scope="col">Code</th><th scope="col" class="num">Documents</th></tr></thead><tbody>${r.warnings.top.map((w) => `<tr><th scope="row"><code>${esc(w.code)}</code></th><td class="num">${w.count}</td></tr>`).join('')}</tbody></table></div>
   <h2>Signatures</h2>
-  ${sigRows ? `<div class="table-scroll"><table class="conformance"><thead><tr><th scope="col">Type</th><th scope="col" class="num">Valid</th><th scope="col" class="num">Invalid</th><th scope="col" class="num">Not checked</th></tr></thead><tbody>${sigRows}</tbody></table></div>` : '<p class="wrappers">No signatures in the corpora.</p>'}
+  ${sigRows ? `<div class="table-scroll" tabindex="0"><table class="conformance"><thead><tr><th scope="col">Type</th><th scope="col" class="num">Valid</th><th scope="col" class="num">Invalid</th><th scope="col" class="num">Not checked</th></tr></thead><tbody>${sigRows}</tbody></table></div>` : '<p class="wrappers">No signatures in the corpora.</p>'}
   <h2>Most common errors</h2>
   ${clusters(r.errors)}
   <p class="wrappers">Report generated ${esc(r.generatedAt)} by the weekly <code>Public corpora</code> workflow, from sample collections cloned at pinned commits (see <code>test/corpus/SOURCES.md</code> for the licences). The files themselves are never published.</p>

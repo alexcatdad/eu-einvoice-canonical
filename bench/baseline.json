@@ -105,23 +105,23 @@
   "bundles": [
     {
       "name": "app.js",
-      "bytes": 25824,
-      "gzipBytes": 9473
+      "bytes": 27801,
+      "gzipBytes": 10048
     },
     {
       "name": "chunks/app.js",
-      "bytes": 875336,
-      "gzipBytes": 248084
+      "bytes": 875749,
+      "gzipBytes": 248301
     },
     {
       "name": "chunks/cades.js",
       "bytes": 1852,
-      "gzipBytes": 1005
+      "gzipBytes": 1007
     },
     {
       "name": "chunks/de.js",
-      "bytes": 16602,
-      "gzipBytes": 6578
+      "bytes": 17680,
+      "gzipBytes": 6944
     },
     {
       "name": "chunks/envelope-cms.js",
@@ -130,63 +130,63 @@
     },
     {
       "name": "chunks/envelope-pdf.js",
-      "bytes": 449468,
-      "gzipBytes": 183538
+      "bytes": 449523,
+      "gzipBytes": 183549
     },
     {
       "name": "chunks/es.js",
-      "bytes": 16747,
-      "gzipBytes": 6450
+      "bytes": 17772,
+      "gzipBytes": 6787
     },
     {
       "name": "chunks/fr.js",
-      "bytes": 17040,
-      "gzipBytes": 6576
+      "bytes": 18139,
+      "gzipBytes": 6949
     },
     {
       "name": "chunks/it.js",
-      "bytes": 16537,
-      "gzipBytes": 6374
+      "bytes": 17571,
+      "gzipBytes": 6709
     },
     {
       "name": "chunks/nl.js",
-      "bytes": 16198,
-      "gzipBytes": 6364
+      "bytes": 17250,
+      "gzipBytes": 6714
     },
     {
       "name": "chunks/pl.js",
-      "bytes": 16448,
-      "gzipBytes": 6770
+      "bytes": 17500,
+      "gzipBytes": 7124
     },
     {
       "name": "chunks/ro.js",
-      "bytes": 16495,
-      "gzipBytes": 6480
+      "bytes": 17539,
+      "gzipBytes": 6838
     },
     {
       "name": "chunks/trust.js",
       "bytes": 914,
-      "gzipBytes": 512
+      "gzipBytes": 513
     },
     {
       "name": "chunks/tsl-load.js",
       "bytes": 3110,
-      "gzipBytes": 1613
+      "gzipBytes": 1616
     },
     {
       "name": "chunks/xmldsig.js",
       "bytes": 210,
-      "gzipBytes": 183
+      "gzipBytes": 185
     },
     {
       "name": "deliverables.js",
       "bytes": 1560,
-      "gzipBytes": 798
+      "gzipBytes": 800
     },
     {
       "name": "eval.js",
       "bytes": 7518,
-      "gzipBytes": 3109
+      "gzipBytes": 3111
     }
   ]
 }

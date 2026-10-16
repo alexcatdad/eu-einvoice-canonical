@@ -101,9 +101,9 @@ function writeDeliverables() {
 function writeProblems() {
   const items = Object.entries(PROBLEMS)
     .map(
-      ([slug, p]) => `<li id="${slug}"><h3>${esc(p.title)} <code>${slug}</code></h3>
+      ([slug, p]) => `<li id="${slug}"><h2>${esc(p.title)} <code>${slug}</code></h2>
         <p>${esc(p.summary)}</p>
-        <p>HTTP ${p.statuses.join(' or ')} · CLI exit code ${p.exitCode} · <code>${esc(PROBLEM_BASE)}#${slug}</code></p></li>`,
+        <p>HTTP status ${p.statuses.join(' or ')}. Command line exit code ${p.exitCode}. Type URI: <code>${esc(PROBLEM_BASE)}#${slug}</code></p></li>`,
     )
     .join('\n      ');
   const body = `<div class="doc-main wide">
@@ -196,7 +196,13 @@ function writeStaticPages() {
   const description = /<meta name="description"[^>]*content="([^"]*)"/.exec(read('index.html'))?.[1] ?? '';
   writeFileSync(
     join(out, 'index.html'),
-    fill(read('index.html'), { path: 'index.html', current: 'converter', i18n: true, jsonld: homeJsonLd(pkg.version, description) }),
+    fill(read('index.html'), {
+      path: 'index.html',
+      current: 'converter',
+      i18n: true,
+      skip: { href: '#converter', key: 'nav.skipConverter' },
+      jsonld: homeJsonLd(pkg.version, description),
+    }),
   );
   writeFileSync(join(out, 'eval.html'), fill(read('eval.html'), { path: 'eval.html', current: 'docs' }));
   writeFileSync(join(out, 'api.html'), fill(read('api.html'), { path: 'api.html', current: 'api', sticky: true, footer: false }));

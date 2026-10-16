@@ -8,10 +8,8 @@ import {
   type ConvertOutcome,
   type ConvertResult,
   convert,
-  EU_COUNTRIES,
   FORMATS,
   type FormatDef,
-  IMPLEMENTED_FAMILIES,
   JournalError,
   type Line,
   type LineRelation,
@@ -24,6 +22,7 @@ import {
   toUbl,
   WriterError,
 } from '../src/index.js';
+import { shortName } from './coverage.js';
 import { currentLang, esc, initLanguage, initSwitcher, onLanguageChange, t } from './i18n.js';
 import { ENGINES, type EngineSpec, geminiNanoAvailability, loadEngine } from './model.js';
 
@@ -45,15 +44,6 @@ const SAMPLES: { file: string; label: string }[] = [
   { file: 'zatca-simplified-signed.xml', label: 'sample.zatca' },
 ];
 const EXAMPLE = SAMPLES[0];
-
-/** Country names come from the browser's own locale data, in the reader's language. */
-function regionName(cc: string): string {
-  try {
-    return new Intl.DisplayNames([currentLang()], { type: 'region' }).of(cc) ?? cc;
-  } catch {
-    return cc;
-  }
-}
 
 /** Message keys for UNCL 4461 payment means codes; an unlisted code is shown as "Code n". */
 const MEANS: Record<string, string> = {
@@ -243,7 +233,10 @@ euBox.addEventListener('change', async () => {
 
 async function run(bytes: Uint8Array, filename: string, isExample = false) {
   lastInput = { bytes, filename, isExample };
-  if (!isExample) resultEl.innerHTML = `<p class="file-meta">${esc(t('result.reading', { name: filename }))}</p>`;
+  if (!isExample) {
+    resultEl.innerHTML = `<p class="empty">${esc(t('result.reading', { name: filename }))}</p>`;
+    announce(t('result.reading', { name: filename }));
+  }
   try {
     const result = await convert(bytes, filename, undefined, { relations: true, euTrust });
     const items = result.outcomes.flatMap((o, i): Item[] =>
@@ -256,7 +249,13 @@ async function run(bytes: Uint8Array, filename: string, isExample = false) {
         : [{ tab: t('tab.document', { n: i + 1 }), outcome: o }],
     );
     current = { result, filename, items, isExample };
+    activeView = 'invoice';
     render(0);
+    const first = items[0];
+    if (first) {
+      const st = stampFor(first);
+      announce(t('sr.done', { name: filename, summary: `${st.title}${st.note ? `, ${st.note}` : ''}` }));
+    }
     if (!isExample)
       resultEl.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
   } catch (e) {
@@ -268,12 +267,26 @@ function showNotice(title: string, detail: string) {
   resultEl.innerHTML = `<div class="notice"><p><strong>${esc(title)}</strong></p><p>${esc(detail)}</p></div>`;
 }
 
+type View = 'invoice' | 'json' | 'checks' | 'lines';
+let activeView: View = 'invoice';
+const VIEW_KEY: Record<View, string> = { invoice: 'view.invoice', json: 'view.json', checks: 'view.checks', lines: 'view.lines' };
+const liveEl = $<HTMLElement>('#live');
+/** Tells screen readers what just happened; the visible result is not a live region. */
+const announce = (text: string) => {
+  liveEl.textContent = '';
+  setTimeout(() => {
+    liveEl.textContent = text;
+  }, 50);
+};
+
 function render(index: number) {
   if (!current) return;
   shownIndex = index;
   const { result, filename, items, isExample } = current;
-  const head = `<div class="result-head"><h2>${esc(filename)}${isExample ? ` <span class="example">${esc(t('result.example'))}</span>` : ''}</h2>
-    <span class="file-meta">${esc(t('result.meta', { hash: result.fileSha256.slice(0, 12), count: items.length }))}</span></div>`;
+  const head = `<div class="result-head"><h2 id="result-title">${esc(t('result.heading'))}</h2>
+    <p class="sheet-sub">${esc(t('result.sub'))}</p>
+    <p class="file-name">${esc(filename)}${isExample ? ` <span class="example">${esc(t('result.example'))}</span>` : ''}</p>
+    <p class="file-meta">${esc(t('result.meta', { hash: result.fileSha256.slice(0, 12), count: items.length }))}</p></div>`;
 
   if (items.length === 0) {
     const reasons =
@@ -282,17 +295,63 @@ function render(index: number) {
     resultEl.innerHTML = `${head}<div class="notice"><p><strong>${esc(t('result.noInvoice'))}</strong></p>${reasons}</div>`;
     return;
   }
-  const tabs =
+  const item = items[index];
+  const views: View[] = item.invoice ? ['invoice', 'json', 'checks', 'lines'] : ['invoice', 'json', 'checks'];
+  if (!views.includes(activeView)) activeView = 'invoice';
+  const docTabs =
     items.length > 1
-      ? `<div class="doc-tabs" role="tablist">${items.map((it, i) => `<button role="tab" type="button" data-tab="${i}" aria-selected="${i === index}">${esc(it.tab)}</button>`).join('')}</div>`
+      ? `<div class="doc-tabs" role="tablist" aria-label="${esc(t('result.heading'))}">${items.map((it, i) => `<button role="tab" type="button" data-tab="${i}" aria-selected="${i === index}">${esc(it.tab)}</button>`).join('')}</div>`
       : '';
-  resultEl.innerHTML = `${head}${tabs}<div class="doc">${sheet(items[index], result)}${jsonPanel(items[index])}</div>`;
+  const panels: Record<View, string> = {
+    invoice: sheet(item),
+    json: jsonPanel(item),
+    checks: checksPanel(item, result),
+    lines: item.invoice ? linesPanel(item.invoice) : '',
+  };
+  const tabs = `<div class="view-tabs" role="tablist" aria-label="${esc(t('view.label'))}">${views
+    .map(
+      (v) =>
+        `<button type="button" role="tab" class="view-tab t-${v}" id="tab-${v}" aria-controls="panel-${v}" aria-selected="${v === activeView}" tabindex="${v === activeView ? 0 : -1}" data-view-tab="${v}">${esc(t(VIEW_KEY[v]))}</button>`,
+    )
+    .join('')}</div>`;
+  const body = views
+    .map(
+      (v) =>
+        `<div role="tabpanel" class="panel p-${v}" id="panel-${v}" aria-labelledby="tab-${v}" tabindex="0"${v === activeView ? '' : ' hidden'}>${panels[v]}</div>`,
+    )
+    .join('');
+  resultEl.innerHTML = `${head}${docTabs}<div class="sheets">${tabs}${body}</div>`;
   resultEl.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach((b) => {
     b.addEventListener('click', () => render(Number(b.dataset.tab)));
   });
-  wireJson(items[index], result);
+  wireViewTabs();
+  wireJson(item, result);
   wireModel();
   if (!isExample) resultEl.querySelector('.stamp')?.classList.add('fresh');
+}
+
+function setView(v: View, focus = false) {
+  activeView = v;
+  for (const b of resultEl.querySelectorAll<HTMLButtonElement>('[data-view-tab]')) {
+    const on = b.dataset.viewTab === v;
+    b.setAttribute('aria-selected', String(on));
+    b.tabIndex = on ? 0 : -1;
+    if (on && focus) b.focus();
+  }
+  for (const p of resultEl.querySelectorAll<HTMLElement>('[role="tabpanel"]')) p.hidden = p.id !== `panel-${v}`;
+}
+
+function wireViewTabs() {
+  const tabs = [...resultEl.querySelectorAll<HTMLButtonElement>('[data-view-tab]')];
+  tabs.forEach((b, i) => {
+    b.addEventListener('click', () => setView(b.dataset.viewTab as View));
+    b.addEventListener('keydown', (e) => {
+      const to = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+      if (to === undefined) return;
+      e.preventDefault();
+      setView(tabs[(to + tabs.length) % tabs.length]!.dataset.viewTab as View, true);
+    });
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -407,7 +466,7 @@ function labelControl(inv: CanonicalInvoice): string {
   const progress = busy
     ? `<progress id="model-progress" max="1"${ui?.fraction !== undefined ? ` value="${ui.fraction}"` : ''} aria-label="${esc(t('model.progressLabel'))}"></progress>`
     : '';
-  const dismiss = ui?.undo ? `<button type="button" class="btn quiet" id="model-dismiss">${esc(t('model.dismiss'))}</button>` : '';
+  const dismiss = ui?.undo ? `<button type="button" class="btn ghost" id="model-dismiss">${esc(t('model.dismiss'))}</button>` : '';
   return `<section class="model" aria-labelledby="model-title">
     <div class="model-head"><h3 id="model-title">${esc(t('model.title'))}</h3>
       <span class="model-tag">${esc(t('model.badge'))}</span><span class="model-tag local">${esc(t('model.local'))}</span></div>
@@ -523,7 +582,7 @@ function stampFor(item: Item): { cls: string; title: string; note: string } {
   return { cls: 'bad', title, note: t('stamp.failed') };
 }
 
-function sheet(item: Item, result: ConvertResult): string {
+function sheet(item: Item): string {
   const o = item.outcome;
   const inv = item.invoice;
   const s = stampFor(item);
@@ -541,8 +600,6 @@ function sheet(item: Item, result: ConvertResult): string {
     return `<article class="sheet">
       <div class="sheet-top"><div><h3 class="doc-title">${esc(t(o.status === 'error' ? 'doc.notConverted' : o.status === 'unsupported' ? 'doc.identified' : 'doc.notInvoice'))}</h3></div>${stamp}</div>
       ${reason ? `<p class="reason">${esc(reason)}</p>` : ''}
-      ${provenance(item)}
-      ${penNotes(item, result)}
     </article>`;
   }
 
@@ -575,7 +632,6 @@ function sheet(item: Item, result: ConvertResult): string {
     [t('total.prepaid'), tot.prepaid && `−${tot.prepaid}`],
     [t('total.rounding'), tot.rounding],
   ];
-  const shown = inv.lines.slice(0, MAX_LINES);
   const pay = inv.payments[0];
 
   return `<article class="sheet">
@@ -591,15 +647,7 @@ function sheet(item: Item, result: ConvertResult): string {
       .map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v!)}</dd></div>`)
       .join('')}</dl>
     <div class="parties">${party(t('party.from'), inv.seller)}${party(t('party.to'), inv.buyer)}</div>
-    ${
-      shown.length
-        ? `<table class="lines">
-      <thead><tr><th scope="col" class="hide-narrow">#</th><th scope="col">${esc(t('line.item'))}</th><th scope="col" class="num">${esc(t('line.qty'))}</th><th scope="col" class="num hide-narrow">${esc(t('line.price'))}</th><th scope="col" class="num">${esc(t('line.net'))}</th></tr></thead>
-      <tbody>${lineRows(inv, shown)}</tbody>
-    </table>${inv.lines.length > MAX_LINES ? `<p class="more-lines">${esc(t('line.more', { count: inv.lines.length - MAX_LINES }))}</p>` : ''}`
-        : `<p class="more-lines">${esc(t('line.none'))}</p>`
-    }
-    ${inv.lines.length ? labelControl(inv) : ''}
+    ${linesTable(inv, MAX_LINES)}
     <div class="sums">
       <div class="payment">${
         pay
@@ -619,9 +667,31 @@ function sheet(item: Item, result: ConvertResult): string {
         <div class="grand"><dt>${esc(t('total.due'))}</dt><dd>${esc(tot.payable)} ${esc(cur)}</dd></div>
       </dl>
     </div>
-    ${provenance(item)}
-    ${penNotes(item, result)}
   </article>`;
+}
+
+function linesTable(inv: CanonicalInvoice, limit: number): string {
+  const shown = inv.lines.slice(0, limit);
+  return shown.length
+    ? `<div class="table-scroll" tabindex="0"><table class="lines">
+      <thead><tr><th scope="col" class="hide-narrow">#</th><th scope="col">${esc(t('line.item'))}</th><th scope="col" class="num">${esc(t('line.qty'))}</th><th scope="col" class="num hide-narrow">${esc(t('line.price'))}</th><th scope="col" class="num">${esc(t('line.net'))}</th></tr></thead>
+      <tbody>${lineRows(inv, shown)}</tbody>
+    </table></div>${inv.lines.length > limit ? `<p class="more-lines">${esc(t('line.more', { count: inv.lines.length - limit }))}</p>` : ''}`
+    : `<p class="more-lines">${esc(t('line.none'))}</p>`;
+}
+
+function linesPanel(inv: CanonicalInvoice): string {
+  return `<div class="lines-view"><h3>${esc(t('view.lines'))}</h3>${linesTable(inv, 200)}${inv.lines.length ? labelControl(inv) : ''}</div>`;
+}
+
+const LAYERS = ['parse', 'schema', 'semantic', 'profile', 'signature', 'clearance'] as const;
+
+function checksPanel(item: Item, result: ConvertResult): string {
+  const v = item.invoice?.source.validation;
+  const layers = v
+    ? `<section class="layers"><h3>${esc(t('val.title'))}</h3><ul>${LAYERS.map((l) => `<li class="${v[l]}"><span>${esc(t(`val.${l}`))}</span><strong>${esc(t(`val.${v[l]}`))}</strong></li>`).join('')}</ul></section>`
+    : '';
+  return `<div class="checks">${layers}${provenance(item)}${penNotes(item, result)}</div>`;
 }
 
 function party(label: string, p: Party): string {
@@ -658,7 +728,7 @@ function provenance(item: Item): string {
     rows.push([t('prov.format'), `${o.detection.format.name}${v ? `, ${v}` : ''}`]);
   }
   const env = o.payload.envelope.map((s) => (ENVELOPE_LABEL[s.kind] ? t(ENVELOPE_LABEL[s.kind]) : '')).filter(Boolean);
-  if (env.length) rows.push([t('prov.unwrapped'), env.join(' → ')]);
+  if (env.length) rows.push([t('prov.unwrapped'), env.join(', ')]);
   rows.push([t('prov.encoding'), o.payload.encoding]);
   if (o.payload.signatures.length)
     rows.push([
@@ -708,12 +778,12 @@ function jsonPanel(item: Item): string {
   const views = item.invoice
     ? `<button type="button" data-view="invoice" aria-pressed="true">${esc(t('json.viewInvoice'))}</button><button type="button" data-view="full" aria-pressed="false">${esc(t('json.viewFull'))}</button>`
     : `<button type="button" data-view="full" aria-pressed="true">${esc(t('json.viewDetection'))}</button>`;
-  return `<section class="json-panel" aria-label="${esc(t('json.panel'))}">
+  return `<div class="json-panel">
     <div class="json-bar"><div class="views">${views}</div>
-      <div class="actions"><button type="button" class="btn quiet" data-act="copy">${esc(t('json.copy'))}</button><button type="button" class="btn" data-act="download">${esc(t('json.download'))}</button>${item.invoice ? `<button type="button" class="btn quiet" data-act="journal">${esc(t('json.journal'))}</button><button type="button" class="btn quiet" data-act="write-ubl">${esc(t('json.writeUbl'))}</button><button type="button" class="btn quiet" data-act="write-cii">${esc(t('json.writeCii'))}</button>` : ''}</div></div>
+      <div class="actions"><button type="button" class="btn secondary" data-act="copy">${esc(t('json.copy'))}</button><button type="button" class="btn" data-act="download">${esc(t('json.download'))}</button>${item.invoice ? `<button type="button" class="btn ghost" data-act="journal">${esc(t('json.journal'))}</button><button type="button" class="btn ghost" data-act="write-ubl">${esc(t('json.writeUbl'))}</button><button type="button" class="btn ghost" data-act="write-cii">${esc(t('json.writeCii'))}</button>` : ''}</div></div>
     ${item.invoice ? `<p class="journal-note">${t('json.journalNote')}</p>` : ''}
-    <pre class="json" tabindex="0" aria-label="${esc(t('json.output'))}"></pre>
-  </section>`;
+    <pre class="json" tabindex="0" role="group" aria-label="${esc(t('json.output'))}"></pre>
+  </div>`;
 }
 
 function wireJson(item: Item, result: ConvertResult) {
@@ -807,89 +877,6 @@ function highlight(json: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Coverage grid, generated from the format registry
-// ---------------------------------------------------------------------------
-
-/** Countries outside the EU that the registry covers; the names come from the browser's locale data. */
-const WORLD_COUNTRIES = ['AE', 'AU', 'JP', 'MY', 'NZ', 'OM', 'SA', 'SG'];
-
-function renderCoverage() {
-  const implemented = new Set<string>(IMPLEMENTED_FAMILIES);
-  const chip = (f: FormatDef) => {
-    const ok = implemented.has(f.family);
-    return `<li class="fmt ${ok ? 'converts' : 'identifies'}"><a href="docs/formats/${esc(f.id)}.html" title="${esc(f.notes)}">${esc(shortName(f))}<span class="visually-hidden">${esc(t(ok ? 'coverage.srConverted' : 'coverage.srIdentified'))}</span></a></li>`;
-  };
-  const eu = new Set<string>(EU_COUNTRIES);
-  const world = (FORMATS as readonly FormatDef[]).filter((f) => f.countries.every((cc) => cc !== 'EU' && !eu.has(cc)));
-  const byName = (a: string, b: string) => regionName(a).localeCompare(regionName(b), currentLang());
-  $<HTMLOListElement>('#countries-world').innerHTML = [...WORLD_COUNTRIES]
-    .sort(byName)
-    .map((cc) => {
-      const formats = world.filter((f) => f.countries.includes(cc));
-      return `<li class="country"><h3><span class="cc">${cc}</span>${esc(regionName(cc))}</h3><ul>${formats.map(chip).join('')}</ul></li>`;
-    })
-    .join('');
-  const national = (FORMATS as readonly FormatDef[]).filter((f) => !f.countries.includes('EU'));
-  const list = $<HTMLOListElement>('#countries');
-  list.innerHTML = [...EU_COUNTRIES]
-    .sort(byName)
-    .map((cc) => {
-      const formats = national.filter((f) => f.countries.includes(cc));
-      const chips = formats.length
-        ? formats.map(chip).join('')
-        : '<li class="fmt converts"><a href="docs/formats/peppol-bis3.html">Peppol BIS 3</a></li>';
-      return `<li class="country"><h3><span class="cc">${cc}</span>${esc(regionName(cc))}</h3><ul>${chips}</ul></li>`;
-    })
-    .join('');
-}
-
-/** Short chip labels; anything not listed falls back to the registry name without its parenthesis. */
-const SHORT_NAMES: Record<string, string> = {
-  'xrechnung-ubl': 'XRechnung UBL',
-  'xrechnung-cii': 'XRechnung CII',
-  'nlcius-ubl': 'NLCIUS UBL',
-  'nlcius-cii': 'NLCIUS CII',
-  'cius-ro': 'CIUS-RO',
-  'cius-pt': 'CIUS-PT',
-  'hr-cius': 'HR-CIUS',
-  'fr-ctc-ubl': 'France CTC UBL',
-  'fr-ctc-cii': 'France CTC CII',
-  'oioubl-3': 'OIOUBL 3',
-  'oioubl-2': 'OIOUBL 2',
-  'pl-pef': 'PEF',
-  ksef: 'KSeF',
-  'ubl-be': 'UBL.BE',
-  facturx: 'Factur-X / ZUGFeRD 2',
-  'zugferd-1': 'ZUGFeRD 1',
-  fatturapa: 'FatturaPA',
-  'fatturapa-semplificata': 'FatturaPA simplified',
-  facturae: 'Facturae',
-  isdoc: 'ISDOC',
-  ebinterface: 'ebInterface',
-  'ebinterface-2': 'ebInterface 2',
-  finvoice: 'Finvoice',
-  teappsxml: 'TEAPPSXML',
-  'e-arve': 'e-arve',
-  'eslog-2': 'eSLOG 2.0',
-  'eslog-1': 'eSLOG 1.6',
-  'svefaktura-1': 'Svefaktura 1.0',
-  'gr-mydata': 'myDATA',
-  'peppol-pint': 'PINT',
-  'pint-sg': 'PINT SG',
-  'pint-aunz': 'PINT A-NZ',
-  'pint-jp': 'PINT JP',
-  'pint-my': 'PINT MY',
-  'pint-ae': 'PINT AE',
-  'pint-om': 'PINT OM',
-  'pint-eu': 'PINT EU',
-  'zatca-ubl': 'ZATCA UBL',
-};
-
-function shortName(f: FormatDef) {
-  return SHORT_NAMES[f.id] ?? f.name.replace(/\s*\(.*?\)\s*/g, ' ').trim();
-}
-
-// ---------------------------------------------------------------------------
 
 function toast(text: string) {
   const t = document.createElement('div');
@@ -901,7 +888,38 @@ function toast(text: string) {
 }
 
 // Start-up runs last, so every table above is initialised.
+/** The samples worth a one-click button; the rest stay in the menu. */
+const CHIP_SAMPLES = [
+  'peppol-bis3-invoice.xml',
+  'xrechnung-ubl.xml',
+  'facturx-en16931.pdf',
+  'IT01234567890_FPR12.xml.p7m',
+  'svefaktura-1.0-descriptors.xml',
+];
+const STRIP = ['peppol-bis3', 'xrechnung-ubl', 'xrechnung-cii', 'facturx', 'fatturapa', 'ksef', 'facturae', 'hr-cius'];
+
+function renderStrip() {
+  const byId = (id: string) => (FORMATS as readonly FormatDef[]).find((f) => f.id === id);
+  const chips = STRIP.map(byId)
+    .filter((f): f is FormatDef => f !== undefined)
+    .map((f) => `<li class="fmt converts"><a href="docs/formats/${esc(f.id)}.html">${esc(shortName(f))}</a></li>`)
+    .join('');
+  const count = (FORMATS as readonly FormatDef[]).filter((f) => !f.id.endsWith('-unknown')).length;
+  $('#format-strip').innerHTML = `${chips}<li class="fmt more"><a href="conformance.html">${esc(t('formats.all', { count }))}</a></li>`;
+}
+
+function fillChips() {
+  const box = $('#sample-chips');
+  box.innerHTML = CHIP_SAMPLES.map((f) => {
+    const sample = SAMPLES.find((s) => s.file === f);
+    return sample ? `<button type="button" class="chip" data-sample="${esc(f)}">${esc(t(sample.label))}</button>` : '';
+  }).join('');
+  for (const b of box.querySelectorAll<HTMLButtonElement>('[data-sample]'))
+    b.addEventListener('click', () => void loadSample(b.dataset.sample!, false));
+}
+
 function fillSamples() {
+  fillChips();
   const chosen = sampleSelect.value;
   while (sampleSelect.options.length > 1) sampleSelect.remove(1);
   for (const s of SAMPLES) sampleSelect.add(new Option(t(s.label), s.file));
@@ -910,10 +928,10 @@ function fillSamples() {
 initLanguage();
 initSwitcher();
 fillSamples();
-renderCoverage();
+renderStrip();
 onLanguageChange(() => {
   fillSamples();
-  renderCoverage();
+  renderStrip();
   if (trustStatus) euStatus.textContent = trustStatus();
   updatePasteSize();
   if (current) render(shownIndex);

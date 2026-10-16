@@ -415,7 +415,7 @@ function renderBody(
   const list = Object.assign([...tokens], { links }) as Token[] & { links: Tokens.Generic['links'] };
   const html = marked
     .parser(list)
-    .replace(/<table>/g, '<div class="table-scroll"><table>')
+    .replace(/<table>/g, '<div class="table-scroll" tabindex="0"><table>')
     .replace(/<\/table>/g, '</table></div>')
     .replace(/<pre>/g, '<pre tabindex="0">');
   return { html, headings };
@@ -430,7 +430,7 @@ function sidebar(pages: DocPage[], current: string): string {
     const lis = items
       .map((p) => `<li><a href="${rel(p.path)}"${p.path === current ? ' aria-current="page"' : ''}>${esc(shortTitle(p))}</a></li>`)
       .join('');
-    return `<h2>${g}</h2><ul>${lis}</ul>`;
+    return `<p class="side-h">${g}</p><ul>${lis}</ul>`;
   }).join('');
   return groups;
 }
@@ -475,7 +475,7 @@ function shell(
     .join('')}</ol></nav>`;
   const h1Id = (p.kind === 'section' && p.path !== 'docs/index.html' ? slugify(p.sections[0] ?? p.title) : slugify(p.title)) || 'top';
   const body = `<div class="docs">
-  <aside class="docs-side"><nav aria-label="Documentation">${side}</nav></aside>
+  <div class="docs-side"><nav aria-label="Documentation">${side}</nav></div>
   <details class="docs-menu"><summary>Documentation menu</summary><nav aria-label="Documentation menu">${side}</nav></details>
   <article class="prose">
     ${crumbs}

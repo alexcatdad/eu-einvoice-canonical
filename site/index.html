@@ -14,51 +14,60 @@
 </head>
 <body>
   <!--site-header-->
-  <header class="masthead">
-  <div class="masthead-text">
-      <h1 data-i18n="meta.title">E-invoice to JSON</h1>
-      <p class="lede" data-i18n-html="masthead.lede">Drop an e-invoice you received. It is unwrapped, identified and mapped to one canonical model built on EN&nbsp;16931. You get the JSON, and the invoice rebuilt from it so you can check the mapping.</p>
-    </div>
-    <p class="privacy" data-i18n-html="masthead.privacy"><strong>Nothing leaves this tab.</strong> The conversion runs in your browser; files are never uploaded.</p>
-  </header>
-
-  <section class="tray" aria-label="Choose a file" data-i18n-attr="aria-label:tray.label">
-    <label class="slot" id="slot">
-      <input type="file" id="file" accept=".xml,.pdf,.p7m,.zip,.xsig,.isdoc,.isdocx,.ubl,.cii,text/xml,application/xml,application/pdf,application/zip">
-      <span class="slot-mouth" aria-hidden="true"></span>
-      <span class="slot-text" data-i18n-html="tray.drop"><strong>Drop an invoice here</strong> or choose a file</span>
-      <span class="slot-hint" data-i18n="tray.hint">XML, Factur-X PDF, signed .p7m, ANAF .zip, .xsig, .isdocx</span>
-    </label>
-    <div class="paste" id="paste-panel">
-      <div class="paste-bar">
-        <label for="pasted" class="paste-title" data-i18n="paste.title">Paste XML</label>
-        <span class="paste-size" id="paste-size" aria-live="polite"></span>
-      </div>
-      <textarea id="pasted" spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="paste-hint" placeholder="&lt;Invoice xmlns=&quot;urn:oasis:names:specification:ubl:schema:xsd:Invoice-2&quot;&gt;…"></textarea>
-      <div class="paste-foot">
-        <p class="paste-hint" id="paste-hint" data-i18n="paste.hint" data-i18n-params='{"shortcut":"Ctrl+V"}'>Press Ctrl+V anywhere on this page to convert at once, or paste into the box.</p>
-        <div class="paste-actions">
-          <button type="button" id="clear-pasted" class="btn quiet" data-i18n="paste.clear">Clear</button>
-          <button type="button" id="convert-pasted" class="btn" data-i18n="tray.pasteButton">Convert pasted XML</button>
-        </div>
-      </div>
-    </div>
-    <div class="options">
-      <label class="field">
-        <span data-i18n="tray.sample">Try a sample</span>
-        <select id="sample">
-          <option value="" data-i18n="tray.samplePlaceholder">Choose a sample invoice</option>
-        </select>
-      </label>
-      <div class="field eu-trust">
-        <label><input type="checkbox" id="eu-trust"> <span data-i18n="trust.label">Check signers against the EU trusted lists</span></label>
-        <span class="trust-status" id="eu-trust-status" aria-live="polite" data-i18n="trust.off">Off. Fetches the lists when switched on; the file is still never uploaded.</span>
-      </div>
-    </div>
-  </section>
-
   <main id="main">
-    <section id="result" class="result" aria-live="polite"></section>
+    <div class="intro">
+      <h1 data-i18n="meta.title">E-invoice to JSON</h1>
+      <p class="privacy" data-i18n-html="masthead.privacy"><strong>Nothing leaves this tab.</strong> The conversion runs in your browser; files are never uploaded.</p>
+    </div>
+
+    <div class="desk" id="converter" tabindex="-1">
+      <section class="sheet-in" aria-labelledby="original-title">
+        <div class="sheet-head">
+          <h2 id="original-title" data-i18n="original.title">Original</h2>
+          <p class="sheet-sub" data-i18n="original.sub">What you gave</p>
+        </div>
+        <label class="slot" id="slot">
+          <input type="file" id="file" accept=".xml,.pdf,.p7m,.zip,.xsig,.isdoc,.isdocx,.ubl,.cii,text/xml,application/xml,application/pdf,application/zip">
+          <span class="slot-text" data-i18n-html="tray.drop"><strong>Drop an invoice here</strong> or choose a file</span>
+          <span class="slot-hint" data-i18n="tray.hint">XML, Factur-X PDF, signed .p7m, ANAF .zip, .xsig, .isdocx</span>
+        </label>
+        <div class="paste" id="paste-panel">
+          <div class="paste-bar">
+            <label for="pasted" class="paste-title" data-i18n="paste.title">Paste XML</label>
+            <span class="paste-size" id="paste-size" aria-live="polite"></span>
+          </div>
+          <textarea id="pasted" spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="paste-hint" placeholder="&lt;Invoice xmlns=&quot;urn:oasis:names:specification:ubl:schema:xsd:Invoice-2&quot;&gt;…"></textarea>
+          <div class="paste-foot">
+            <p class="paste-hint" id="paste-hint" data-i18n="paste.hint" data-i18n-params='{"shortcut":"Ctrl+V"}'>Press Ctrl+V anywhere on this page to convert at once, or paste into the box.</p>
+            <div class="paste-actions">
+              <button type="button" id="clear-pasted" class="btn ghost" data-i18n="paste.clear">Clear</button>
+              <button type="button" id="convert-pasted" class="btn" data-i18n="tray.pasteButton">Convert</button>
+            </div>
+          </div>
+        </div>
+        <fieldset class="samples">
+          <legend class="samples-label" data-i18n="tray.sample">Try a sample</legend>
+          <div class="chips" id="sample-chips"></div>
+          <label class="field">
+            <span data-i18n="tray.sampleMore">More samples</span>
+            <select id="sample">
+              <option value="" data-i18n="tray.samplePlaceholder">Choose a sample invoice</option>
+            </select>
+          </label>
+        </fieldset>
+        <div class="field eu-trust">
+          <label><input type="checkbox" id="eu-trust"> <span data-i18n="trust.label">Check signers against the EU trusted lists</span></label>
+          <span class="trust-status" id="eu-trust-status" aria-live="polite" data-i18n="trust.off">Off. Fetches the lists when switched on; the file is still never uploaded.</span>
+        </div>
+      </section>
+
+      <div class="perf" aria-hidden="true"><i></i><i></i></div>
+
+      <section id="result" class="out" aria-labelledby="result-title">
+        <h2 id="result-title" class="visually-hidden" data-i18n="result.heading">Result</h2>
+        <p class="empty" data-i18n="result.empty">Drop an invoice, paste XML, or try a sample.</p>
+      </section>
+    </div>
 
     <section class="relations" aria-labelledby="relations-title">
       <h2 id="relations-title" data-i18n="relations.title">Lines that talk about other lines</h2>
@@ -70,26 +79,16 @@
     </section>
 
     <section class="coverage" aria-labelledby="coverage-title">
-      <div class="coverage-head">
-        <h2 id="coverage-title" data-i18n="coverage.title">What it reads, country by country</h2>
-        <p data-i18n="coverage.intro">Every EU country also sends Peppol BIS Billing 3.0, which converts fully. The tiles show each country's own formats.</p>
-        <ul class="legend">
-          <li><span class="swatch converts" aria-hidden="true"></span><span data-i18n="coverage.converts">Converted to canonical JSON</span></li>
-          <li><span class="swatch identifies" aria-hidden="true"></span><span data-i18n="coverage.identifies">Identified; parser still to come</span></li>
-        </ul>
-      </div>
-      <ol class="countries" id="countries"></ol>
-      <h3 class="world-title" id="world-title" data-i18n="coverage.worldTitle">Beyond the EU</h3>
-      <p class="world-note" data-i18n="coverage.worldNote">Peppol PINT jurisdictions and Saudi ZATCA, mapped on top of the UBL parser. The PINT Schematron is not bundled, so these get the UBL schema check only.</p>
-      <ol class="countries" id="countries-world" aria-labelledby="world-title"></ol>
-      <p class="wrappers" data-i18n-html="coverage.checklist"><a href="conformance.html">See the conformance checklist</a> for every format: fixtures, parser, real samples, mapping source and validation.</p>
+      <h2 id="coverage-title" data-i18n="formats.title">What it reads</h2>
+      <p data-i18n="formats.body">Peppol BIS 3 from every EU country, and national formats such as XRechnung, Factur-X, FatturaPA and KSeF. It also opens PDF attachments, signed .p7m files, ZIP archives, Peppol SBDH and SOAP envelopes.</p>
+      <ul class="chip-row" id="format-strip"></ul>
       <!--corpus-link-->
-      <p class="wrappers" data-i18n-html="coverage.wrappers">Wrappers it opens: Factur-X and ZUGFeRD PDF attachments, CAdES <code>.p7m</code> (binary or base64), ZIP archives such as ANAF downloads and ISDOCX, Peppol SBDH, SOAP envelopes, and legacy encodings such as ISO-8859-1 and ISO-8859-15.</p>
     </section>
   </main>
 
   <!--site-footer-->
 
+  <p id="live" class="visually-hidden" role="status" aria-live="polite"></p>
   <script type="module" src="app.js"></script>
 </body>
 </html>

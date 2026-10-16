@@ -15,18 +15,18 @@
 <body class="doc-page">
   <!--site-header-->
 
-  <header class="masthead">
+  <main class="doc-main" id="main">
+  <div class="masthead">
     <div class="masthead-text">
       <h1 data-i18n="deliv.title">Deliverables</h1>
       <p class="lede" data-i18n="deliv.lede">The interface is the product: the types, the schemas, the HTTP API, the command line and the evidence behind them. Each one is generated from the same TypeScript sources, so they cannot drift apart.</p>
     </div>
     <p class="privacy" data-i18n-html="deliv.versions" data-i18n-params='{"package":"{{PACKAGE_VERSION}}","schema":"{{SCHEMA_VERSION}}","spec":"{{SPEC_VERSION}}"}'><strong>Versions:</strong> package <code>{{PACKAGE_VERSION}}</code>, JSON Schema <code>{{SCHEMA_VERSION}}</code>, HTTP API <code>/{{SCHEMA_VERSION}}</code>. See <a href="https://github.com/alexcatdad/eu-einvoice-canonical#deliverables-and-versioning">Deliverables and versioning</a> for the compatibility promise.</p>
-  </header>
+  </div>
 
-  <main class="doc-main" id="main">
     <ul class="doc-grid">
       <li class="deliverable">
-        <h3 data-i18n="deliv.libTitle">TypeScript types and library</h3>
+        <h2 class="deliverable-title" data-i18n="deliv.libTitle">TypeScript types and library</h2>
         <p data-i18n-html="deliv.libBody"><code>convert()</code>, <code>inspect()</code>, <code>detectXml()</code> and the <code>CanonicalInvoice</code> model, with the BT/BG ids in the comments. ES modules, no native code; runs in Bun, Node 20+ and browsers.</p>
         <span class="version" data-i18n="deliv.libVersion" data-i18n-params='{"package":"{{PACKAGE_VERSION}}","schema":"{{SCHEMA_VERSION}}","spec":"{{SPEC_VERSION}}"}'>package {{PACKAGE_VERSION}}</span>
         <ul class="links">
@@ -36,7 +36,7 @@
         </ul>
       </li>
       <li class="deliverable">
-        <h3 data-i18n="deliv.apiTitle">HTTP API (OpenAPI 3.1)</h3>
+        <h2 class="deliverable-title" data-i18n="deliv.apiTitle">HTTP API (OpenAPI 3.1)</h2>
         <p data-i18n-html="deliv.apiBody"><code>POST /v1/convert</code>, <code>/v1/inspect</code>, <code>/v1/detect</code>, <code>GET /v1/formats</code>, <code>/v1/schemas/{name}</code>. Errors are RFC 9457 problems in the CLI's exit-code categories. Run it with <code>einvoice serve</code> or the Dockerfile.</p>
         <span class="version" data-i18n="deliv.apiVersion" data-i18n-params='{"package":"{{PACKAGE_VERSION}}","schema":"{{SCHEMA_VERSION}}","spec":"{{SPEC_VERSION}}"}'>API v1 · spec {{SPEC_VERSION}}</span>
         <ul class="links">
@@ -47,7 +47,7 @@
         </ul>
       </li>
       <li class="deliverable">
-        <h3 data-i18n="deliv.cliTitle">Command line</h3>
+        <h2 class="deliverable-title" data-i18n="deliv.cliTitle">Command line</h2>
         <p data-i18n-html="deliv.cliBody">Standalone binaries for linux-x64, darwin-arm64 and windows-x64: <code>detect</code>, <code>inspect</code>, <code>convert</code>, <code>match</code>, <code>duplicates</code>, <code>sweep</code> and <code>serve</code>.</p>
         <span class="version" id="release-version" data-i18n="deliv.cliLatest">latest release</span>
         <ul class="links" id="release-assets">
@@ -55,21 +55,21 @@
         </ul>
       </li>
       <li class="deliverable">
-        <h3 data-i18n="deliv.browserTitle">Browser converter</h3>
+        <h2 class="deliverable-title" data-i18n="deliv.browserTitle">Browser converter</h2>
         <p data-i18n="deliv.browserBody">Drop a file, get the JSON and the rebuilt invoice. Everything runs in the tab; nothing is uploaded.</p>
         <ul class="links">
           <li><a href="./" data-i18n="deliv.browserOpen">Open the converter</a></li>
         </ul>
       </li>
       <li class="deliverable">
-        <h3 data-i18n="deliv.confTitle">Conformance checklist</h3>
+        <h2 class="deliverable-title" data-i18n="deliv.confTitle">Conformance checklist</h2>
         <p data-i18n="deliv.confBody">Per format: fixtures, parser, real samples, mapping source and validation, generated from the code on every build.</p>
         <ul class="links">
           <li><a href="conformance.html" data-i18n="deliv.confLink">Checklist</a></li>
         </ul>
       </li>
       <li class="deliverable">
-        <h3 data-i18n="deliv.corpusTitle">Corpus results</h3>
+        <h2 class="deliverable-title" data-i18n="deliv.corpusTitle">Corpus results</h2>
         <p data-i18n="deliv.corpusBody">Detection and conversion over public sample collections, run weekly and never on a pull request.</p>
         <ul class="links" id="corpus-links">
           <li><a href="corpus.html" id="corpus-page" data-i18n="deliv.corpusPage">Real-world results</a></li>
@@ -80,7 +80,8 @@
 
     <h2 id="schemas" data-i18n="deliv.schemasTitle">JSON Schemas</h2>
     <p data-i18n="deliv.schemasBody">Draft 2020-12, generated from the types, published at stable URLs. Objects are open, so a payload from a newer minor release still validates against an older schema.</p>
-    <div class="table-scroll"><table class="doc-table">
+    <!-- biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable region must be reachable by keyboard -->
+    <div class="table-scroll" tabindex="0"><table class="doc-table">
       <thead><tr><th data-i18n="deliv.thSchema">Schema</th><th data-i18n="deliv.thDescribes">Describes</th><th data-i18n="deliv.thVersion">Version</th><th data-i18n="deliv.thFile">File</th></tr></thead>
       <tbody>
         {{SCHEMA_ROWS}}

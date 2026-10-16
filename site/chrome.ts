@@ -45,8 +45,15 @@ const FAVICON =
 
 const i18nAttr = (i18n: boolean | undefined, key: string) => (i18n ? ` data-i18n="${key}"` : '');
 
-export function header(opts: { root: string; current?: NavId; i18n?: boolean; sticky?: boolean }): string {
+export function header(opts: {
+  root: string;
+  current?: NavId;
+  i18n?: boolean;
+  sticky?: boolean;
+  skip?: { href: string; key: string };
+}): string {
   const { root, current, i18n } = opts;
+  const skip = opts.skip ?? { href: '#main', key: 'nav.skip' };
   const home = root || './';
   const items = NAV.map((n) => {
     const here = n.id === current ? ' aria-current="page"' : '';
@@ -56,7 +63,7 @@ export function header(opts: { root: string; current?: NavId; i18n?: boolean; st
   const lang = i18n
     ? `<div class="lang"><label for="lang-select" data-i18n="lang.label">${esc(text('lang.label'))}</label><select id="lang-select"></select></div>`
     : '';
-  return `<a class="skip" href="#main"${i18nAttr(i18n, 'nav.skip')}>${esc(text('nav.skip'))}</a>
+  return `<a class="skip" href="${skip.href}"${i18nAttr(i18n, skip.key)}>${esc(text(skip.key))}</a>
 <header class="site-header${opts.sticky ? ' sticky' : ''}">
   <div class="site-header-in">
     <a class="brand" href="${home}"${i18nAttr(i18n, 'nav.home')}>${esc(text('nav.home'))}</a>
@@ -165,13 +172,22 @@ ${footer({ root, i18n: o.i18n })}
  */
 export function fill(
   html: string,
-  o: { path: string; current?: NavId; i18n?: boolean; sticky?: boolean; footer?: boolean; type?: 'website' | 'article'; jsonld?: object[] },
+  o: {
+    path: string;
+    current?: NavId;
+    i18n?: boolean;
+    sticky?: boolean;
+    footer?: boolean;
+    skip?: { href: string; key: string };
+    type?: 'website' | 'article';
+    jsonld?: object[];
+  },
 ): string {
   const root = rootOf(o.path);
   const title = /<title[^>]*>([^<]*)<\/title>/.exec(html)?.[1] ?? SITE_NAME;
   const description = /<meta name="description"[^>]*content="([^"]*)"/.exec(html)?.[1] ?? '';
   return html
     .replace('<!--site-seo-->', seoTags({ title, description, path: o.path, type: o.type, jsonld: o.jsonld }))
-    .replace('<!--site-header-->', header({ root, current: o.current, i18n: o.i18n, sticky: o.sticky }))
+    .replace('<!--site-header-->', header({ root, current: o.current, i18n: o.i18n, sticky: o.sticky, skip: o.skip }))
     .replace('<!--site-footer-->', o.footer === false ? '' : footer({ root, i18n: o.i18n }));
 }
