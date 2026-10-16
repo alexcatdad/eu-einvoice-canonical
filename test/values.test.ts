@@ -31,6 +31,7 @@ describe('toIsoDate', () => {
   test('date-time reports the dropped time', () =>
     assert.deepEqual(toIsoDate('2026-10-15T14:30:00'), { date: '2026-10-15', droppedTime: '14:30:00' }));
   test('time-zone suffix is accepted', () => assert.equal(toIsoDate('2026-10-15+02:00').date, '2026-10-15'));
+  test('years before 100 are not shifted to the 1900s', () => assert.equal(toIsoDate('0001-01-01').date, '0001-01-01'));
   for (const bad of ['2026-02-30', '2026-13-01', '15.10.2026', '2026/10/15', '', '20261332']) {
     test(`"${bad}" is rejected`, () => assert.throws(() => toIsoDate(bad)));
   }

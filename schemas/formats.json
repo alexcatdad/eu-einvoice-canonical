@@ -407,7 +407,18 @@
       ],
       "status": "current",
       "phase": 2,
-      "notes": "Austrian format. 4.3-6.1 accepted; 4.0-4.2 no longer supported since 2022; 7.0 announced for Q4 2026."
+      "notes": "Austrian format. 3.0-6.1 parsed; the government portal accepts 4.3-6.1 (4.0-4.2 retired in 2022); 7.0 announced for Q4 2026."
+    },
+    {
+      "id": "ebinterface-2",
+      "name": "ebInterface 1.0-2.2",
+      "family": "ebinterface",
+      "countries": [
+        "AT"
+      ],
+      "status": "legacy",
+      "phase": 3,
+      "notes": "Pre-3.0 ebInterface (2001-2007). Detected and reported as unsupported: no public sample beyond schema-generated instances."
     },
     {
       "id": "finvoice",

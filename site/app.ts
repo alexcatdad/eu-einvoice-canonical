@@ -684,6 +684,7 @@ const SHORT_NAMES: Record<string, string> = {
   facturae: 'Facturae',
   isdoc: 'ISDOC',
   ebinterface: 'ebInterface',
+  'ebinterface-2': 'ebInterface 2',
   finvoice: 'Finvoice',
   teappsxml: 'TEAPPSXML',
   'e-arve': 'e-arve',

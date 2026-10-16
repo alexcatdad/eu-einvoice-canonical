@@ -59,7 +59,9 @@ export function toIsoDate(raw: string): ParsedDate {
   }
   if (!m) throw new ValueError(`Not a date: "${raw}"`);
   const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
-  const probe = new Date(Date.UTC(y, mo - 1, d));
+  const probe = new Date(0);
+  probe.setUTCFullYear(y, mo - 1, d); // Date.UTC would read years 0-99 as 1900-1999
+
   if (probe.getUTCFullYear() !== y || probe.getUTCMonth() !== mo - 1 || probe.getUTCDate() !== d)
     throw new ValueError(`Not a valid calendar date: "${raw}"`);
   const date = `${m[1]}-${m[2]}-${m[3]}` as IsoDate;

@@ -10,7 +10,7 @@
  */
 import type { Element } from '@xmldom/xmldom';
 import type { AllowanceCharge, Attachment, CanonicalInvoice, Decimal, Line, Totals, VatBreakdown, VatInfo } from '../canonical.js';
-import { cmp, toDecimal } from '../values.js';
+import { cmp, sub, toDecimal } from '../values.js';
 import { type DirectDebitEls, dateOf, delivery, party, payment, period, withScheme } from './cii.js';
 import { CREDIT_TYPE_CODES, Ctx, finish, ParseError, parseXml, SELF_BILLED_TYPE_CODES, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
@@ -79,7 +79,7 @@ export function parseZugferd1(input: ParseInput): CanonicalInvoice[] {
   const direct: DirectDebitEls = { remittance: c.el(settlement, 'ram:PaymentReference') };
 
   const taxes = c.all(settlement, 'ram:ApplicableTradeTax');
-  const { totals, vatBreakdown } = totalsAndVat(c, settlement, taxes);
+  const { totals, vatBreakdown } = totalsAndVat(c, settlement, taxes, profile);
 
   const lines = c.all(tx, 'ram:IncludedSupplyChainTradeLineItem').map((l, i) => line(c, l, i));
   if (lines.length === 0) c.warn('NO_LINES', 'The document has no invoice lines');
@@ -258,7 +258,12 @@ function allowanceCharges(c: Ctx, parent: Element | undefined, charge: boolean):
     }));
 }
 
-function totalsAndVat(c: Ctx, settlement: Element | undefined, taxes: Element[]): { totals: Totals; vatBreakdown: VatBreakdown[] } {
+function totalsAndVat(
+  c: Ctx,
+  settlement: Element | undefined,
+  taxes: Element[],
+  profile: string | undefined,
+): { totals: Totals; vatBreakdown: VatBreakdown[] } {
   const m = c.el(settlement, 'ram:SpecifiedTradeSettlementMonetarySummation');
   if (!m) throw new ParseError('SpecifiedTradeSettlementMonetarySummation (BG-22) missing');
   const req = (name: string, bt: string) => {
@@ -272,15 +277,24 @@ function totalsAndVat(c: Ctx, settlement: Element | undefined, taxes: Element[])
     c.warn('NO_LINE_TOTAL', 'LineTotalAmount (BT-106) missing; set to TaxBasisTotalAmount (BT-109)');
     c.derive('/totals/lineNetTotal', 'BT-106 absent; copied from BT-109');
   }
+  const taxInclusive = req('GrandTotalAmount', 'BT-112');
+  const prepaid = c.dec(m, 'ram:TotalPrepaidAmount');
+  let payable = c.dec(m, 'ram:DuePayableAmount');
+  if (payable === undefined) {
+    // The BASIC profile has neither TotalPrepaidAmount nor DuePayableAmount: the grand total is the amount due.
+    if (profile !== 'BASIC') throw new ParseError('BT-115 (DuePayableAmount) missing');
+    payable = sub(taxInclusive, prepaid ?? '0');
+    c.derive('/totals/payable', 'ZUGFeRD 1 BASIC has no DuePayableAmount: GrandTotalAmount - TotalPrepaidAmount');
+  }
   const totals: Totals = {
     lineNetTotal: lineNetTotal ?? taxExclusive,
     allowanceTotal: c.dec(m, 'ram:AllowanceTotalAmount'),
     chargeTotal: c.dec(m, 'ram:ChargeTotalAmount'),
     taxExclusive,
     vatTotal: c.dec(m, 'ram:TaxTotalAmount'),
-    taxInclusive: req('GrandTotalAmount', 'BT-112'),
-    prepaid: c.dec(m, 'ram:TotalPrepaidAmount'),
-    payable: req('DuePayableAmount', 'BT-115'),
+    taxInclusive,
+    prepaid,
+    payable,
   };
   const vatBreakdown = taxes.map((t): VatBreakdown => {
     const taxableAmount = c.dec(t, 'ram:BasisAmount');

@@ -603,9 +603,22 @@ export const FORMATS = [
     countries: ['AT'],
     status: 'current',
     phase: 2,
-    notes: 'Austrian format. 4.3-6.1 accepted; 4.0-4.2 no longer supported since 2022; 7.0 announced for Q4 2026.',
+    notes: 'Austrian format. 3.0-6.1 parsed; the government portal accepts 4.3-6.1 (4.0-4.2 retired in 2022); 7.0 announced for Q4 2026.',
     match: (p) => {
       const m = /^http:\/\/www\.ebinterface\.at\/schema\/(\d+)p(\d+)\/$/.exec(p.rootNs);
+      return m && Number(m[1]) >= 3 && p.rootName === 'Invoice' ? { version: `${m[1]}.${m[2]}` } : null;
+    },
+  },
+  {
+    id: 'ebinterface-2',
+    name: 'ebInterface 1.0-2.2',
+    family: 'ebinterface',
+    countries: ['AT'],
+    status: 'legacy',
+    phase: 3,
+    notes: 'Pre-3.0 ebInterface (2001-2007). Detected and reported as unsupported: no public sample beyond schema-generated instances.',
+    match: (p) => {
+      const m = /^http:\/\/www\.ebinterface\.at\/schema\/([12])p(\d+)\/$/.exec(p.rootNs);
       return m && p.rootName === 'Invoice' ? { version: `${m[1]}.${m[2]}` } : null;
     },
   },

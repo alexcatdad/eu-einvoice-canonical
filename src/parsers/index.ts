@@ -40,8 +40,11 @@ export interface ParseInput {
 export type Parser = (input: ParseInput) => CanonicalInvoice[];
 
 export class NotImplementedError extends Error {
-  constructor(public readonly family: ParserFamily) {
-    super(`No parser yet for the '${family}' family`);
+  constructor(
+    public readonly family: ParserFamily,
+    reason?: string,
+  ) {
+    super(reason ?? `No parser yet for the '${family}' family`);
   }
 }
 
@@ -54,7 +57,7 @@ export const PARSERS: Record<ParserFamily, Parser> = {
   ksef: parseKsef, // KSeF FA(2), FA(3), FA_RR
   facturae: parseFacturae, // Facturae 3.2, 3.2.1, 3.2.2
   isdoc: parseIsdoc, // ISDOC 5.2+ and 6.x (Czechia)
-  ebinterface: parseEbinterface, // ebInterface 4.3 to 6.1 (Austria)
+  ebinterface: parseEbinterface, // ebInterface 3.0 to 6.1 (Austria); 1.0-2.2 unsupported
   finvoice: parseFinvoice, // Finvoice 3.0 (Finland)
   teappsxml: parseTeappsxml, // Finnish TEAPPSXML (INVOICE_CENTER)
   'e-arve': parseEarve, // Estonian e-invoice 1.2 / 1.2.EN

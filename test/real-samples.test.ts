@@ -7,7 +7,7 @@ import { fixture, warningCodes } from './helpers.js';
  * Known answers for the public samples under test/fixtures/real/ (origin and licence of each file:
  * test/fixtures/README.md). Every value was read off the source XML by hand; amounts are compared as the
  * decimal strings the parser returns, which keep the source's own spelling ("336.9", "5096.0").
- * `buyerName` is left out where the sample names no buyer.
+ * `buyerName`, `sellerVatId` and `vatTotal` are left out where the sample has none.
  */
 interface Known {
   format: string;
@@ -15,9 +15,9 @@ interface Known {
   issueDate: string;
   currency: string;
   payable: string;
-  vatTotal: string;
+  vatTotal?: string;
   lines: number;
-  sellerVatId: string;
+  sellerVatId?: string;
   buyerName?: string;
 }
 
@@ -160,6 +160,88 @@ const CASES: { file: string; invoices: Known[]; warnings?: string[] }[] = [
         lines: 2,
         sellerVatId: 'UID12384938',
         buyerName: 'VGB GmbH & Co KG',
+      },
+    ],
+  },
+  {
+    // ebInterface 3.0: VAT in Tax/VAT/Item, lines with TaxRate and a ReductionRate already applied.
+    file: 'ebinterface-3.0-invoice.xml',
+    invoices: [
+      {
+        format: 'ebinterface',
+        id: 'AO/4021XXX',
+        issueDate: '2006-08-24',
+        currency: 'EUR',
+        payable: '6981.88',
+        vatTotal: '1163.65',
+        lines: 4,
+        sellerVatId: 'ATU15184903',
+        buyerName: 'Systeme GmbH',
+      },
+    ],
+  },
+  {
+    file: 'ebinterface-4.0-invoice.xml',
+    invoices: [
+      {
+        format: 'ebinterface',
+        id: '1100',
+        issueDate: '2012-05-25',
+        currency: 'EUR',
+        payable: '300.00',
+        vatTotal: '50.00',
+        lines: 1,
+        sellerVatId: 'ATU62698637',
+        buyerName: 'Fa. Einkäufer GmbH',
+      },
+    ],
+  },
+  {
+    // An unstamped CFDI draft without Serie or Folio: identified by a placeholder, not rejected.
+    file: 'cfdi-40-unstamped-min.xml',
+    warnings: ['MX-NO-ID', 'MX-NO-STAMP'],
+    invoices: [
+      {
+        format: 'mx-cfdi',
+        id: 'UNSTAMPED:AAA010101AAA:2021-12-07T23:59:59',
+        issueDate: '2021-12-07',
+        currency: 'MXN',
+        payable: '1500',
+        lines: 1,
+        buyerName: 'Juanito Bananas De la Sierra',
+      },
+    ],
+  },
+  {
+    // ZUGFeRD 1 BASIC has no DuePayableAmount: the amount due is the grand total.
+    file: 'zugferd1-basic.xml',
+    warnings: ['TEST_DOCUMENT'],
+    invoices: [
+      {
+        format: 'zugferd-1',
+        id: '471102',
+        issueDate: '2013-03-05',
+        currency: 'EUR',
+        payable: '235.62',
+        vatTotal: '37.62',
+        lines: 1,
+        sellerVatId: 'DE123456789',
+        buyerName: 'Kunden AG Mitte',
+      },
+    ],
+  },
+  {
+    // Plain UBL 2.1: no DocumentCurrencyCode and only PayableAmount in LegalMonetaryTotal.
+    file: 'ubl-2.1-trivial.xml',
+    warnings: ['UBL-TOTAL-DERIVED'],
+    invoices: [
+      {
+        format: 'ubl-unknown',
+        id: '123',
+        issueDate: '2011-09-22',
+        currency: 'CAD',
+        payable: '100.00',
+        lines: 1,
       },
     ],
   },

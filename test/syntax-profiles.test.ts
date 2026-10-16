@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import { convert } from '../src/index.js';
-import { fixture, parseOne } from './helpers.js';
+import { fixture, parseOne, utf8, warningCodes } from './helpers.js';
 
 /**
  * Header-plus-totals parse tests for the EN 16931 profiles and legacy variants that have no
@@ -200,5 +200,35 @@ describe('eSLOG 1.6', () => {
       assert.equal(o.detection.details.version, '1.6');
     }
     assert.equal(o.status, 'unsupported');
+  });
+});
+
+describe('UBL outside EN 16931 (ubl-unknown): missing totals are derived', () => {
+  const src = new TextDecoder().decode(fixture('ubl-unknown.xml'));
+  const without = (...tags: string[]) => tags.reduce((x, t) => x.replace(new RegExp(`<cbc:${t} [^>]*>[^<]*</cbc:${t}>`), ''), src);
+
+  test('LegalMonetaryTotal with only PayableAmount: BT-106, BT-109 and BT-112 follow from the lines and VAT', async () => {
+    const inv = await parseOne(utf8(without('LineExtensionAmount', 'TaxExclusiveAmount', 'TaxInclusiveAmount')), 'x.xml');
+    assert.equal(inv.totals.lineNetTotal, '1000.00');
+    assert.equal(inv.totals.taxExclusive, '1000.00');
+    assert.equal(inv.totals.taxInclusive, '1190.00');
+    assert.equal(inv.totals.payable, '1190.00');
+    assert.deepEqual(
+      inv.source.derived.map((d) => d.field).filter((f) => f.startsWith('/totals/')),
+      ['/totals/lineNetTotal', '/totals/taxExclusive', '/totals/taxInclusive'],
+    );
+    assert.equal(warningCodes(inv).filter((c) => c === 'UBL-TOTAL-DERIVED').length, 3);
+  });
+
+  test('without DocumentCurrencyCode the currency comes from PayableAmount', async () => {
+    const inv = await parseOne(utf8(src.replace('<cbc:DocumentCurrencyCode>EUR</cbc:DocumentCurrencyCode>', '')), 'x.xml');
+    assert.equal(inv.currency, 'EUR');
+    assert.ok(inv.source.derived.some((d) => d.field === '/currency'));
+  });
+
+  test('Peppol BIS 2 makes the totals mandatory: a missing one stays an error', async () => {
+    const bis2 = new TextDecoder().decode(fixture('peppol-bis2.xml'));
+    const r = await convert(utf8(bis2.replace(/<cbc:TaxExclusiveAmount [^>]*>[^<]*<\/cbc:TaxExclusiveAmount>/, '')), 'x.xml');
+    assert.equal(r.outcomes[0].status, 'error');
   });
 });

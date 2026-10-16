@@ -302,9 +302,15 @@ describe('CFDI edge cases', () => {
     }
   });
 
-  test('no Serie, Folio or stamp: nothing to identify the invoice by', async () => {
+  test('no Serie, Folio or stamp: an unstamped draft gets a placeholder id from the issuer and the timestamp', async () => {
     const o = await run(base.replace(' Serie="A" Folio="1001"', '').replace(/<cfdi:Complemento>[\s\S]*<\/cfdi:Complemento>/, ''));
-    assert.equal(o.status, 'error');
+    assert.equal(o.status, 'ok');
+    if (o.status === 'ok') {
+      const inv = o.invoices[0];
+      assert.equal(inv.id, 'UNSTAMPED:EKU9003173C9:2026-03-05T10:20:30');
+      assert.ok(warningCodes(inv).includes('MX-NO-ID'));
+      assert.ok(inv.source.derived.some((d) => d.field === '/id' && /placeholder/.test(d.rule)));
+    }
   });
 
   test('a complement other than the stamp is reported, not dropped silently', async () => {
