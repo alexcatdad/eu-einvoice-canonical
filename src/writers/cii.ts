@@ -63,6 +63,8 @@ const dateTime = (tag: string, iso: string | undefined, inner = 'udt:DateTimeStr
 const indicator = (v: boolean) => agg('ChargeIndicator', leaf('udt:Indicator', String(v)));
 
 const IBAN = /^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/;
+/** ISO 9362: four letters of bank, two of country, two of location, optionally three of branch. */
+const BIC = /^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/;
 
 /**
  * Writes the invoice as a CII D16B document. Deterministic: the same invoice gives the same bytes. Throws
@@ -76,7 +78,7 @@ const IBAN = /^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/;
  */
 export function toCii(invoice: CanonicalInvoice, options: CiiOptions = {}): string {
   const cur = invoice.currency;
-  const spec = resolveSpecification(invoice, options.profile, 'en16931');
+  const spec = resolveSpecification(invoice, options.profile, 'en16931', 'cii');
   const typeCode = invoice.kind === 'creditNote' && !CREDIT_TYPE_CODES.has(invoice.typeCode) ? '381' : invoice.typeCode;
   const firstDd = invoice.payments.find((p) => p.directDebit)?.directDebit;
 
@@ -298,7 +300,10 @@ function paymentMeans(p: PaymentInstructions): XmlNode[] {
             IBAN.test(t.accountId.replace(/\s+/g, '')) ? undefined : ram('ProprietaryID', t.accountId),
           )
         : undefined,
-      t?.serviceProviderId !== undefined ? agg('PayeeSpecifiedCreditorFinancialInstitution', ram('BICID', t.serviceProviderId)) : undefined,
+      // BT-86 also carries national labels such as SE:BANKGIRO; only a real BIC belongs in BICID.
+      t?.serviceProviderId !== undefined && BIC.test(t.serviceProviderId)
+        ? agg('PayeeSpecifiedCreditorFinancialInstitution', ram('BICID', t.serviceProviderId))
+        : undefined,
     );
   });
 }

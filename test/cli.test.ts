@@ -338,6 +338,12 @@ describe('einvoice write', () => {
     const notInvoice = await run(['write', '--to', 'ubl', write('not-invoice.json', '{"hello":1}')]);
     expect(notInvoice.code).toBe(2);
     expect(notInvoice.stderr).toMatch(/not a canonical invoice/);
+    const empty = await run(['write', '--to', 'ubl', write('empty.json', '[]')]);
+    expect(empty.code).toBe(2);
+    expect(empty.stderr).toMatch(/holds no invoices/);
+    const partial = await run(['write', '--to', 'cii', write('partial.json', '{"kind":"invoice","id":"x","lines":[],"totals":{}}')]);
+    expect(partial.code).toBe(2);
+    expect(partial.stderr).toMatch(/not a canonical invoice: .*must be a/);
     const broken = await run(['write', '--to', 'ubl', write('broken.json', '{"kind":')]);
     expect(broken.code).toBe(2);
     const other = await run(['write', '--to', 'ubl', fixturePath('sdi-metadata.xml')]);

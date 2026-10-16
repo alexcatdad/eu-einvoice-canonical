@@ -776,23 +776,49 @@ const PROFILE_NAMES: Record<WriterProfile, true> = { 'peppol-bis3': true, xrechn
 
 /** Canonical invoices from JSON (the output of `einvoice convert`: one invoice or an array), or undefined when the bytes are not JSON. */
 function canonicalFromJson(bytes: Uint8Array): CanonicalInvoice[] | undefined {
-  const text = new TextDecoder().decode(bytes).replace(/^﻿/, '');
+  const raw = new TextDecoder().decode(bytes);
+  const text = raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw;
   if (!/^\s*[[{]/.test(text)) return undefined;
   const v: unknown = JSON.parse(text);
   const list = Array.isArray(v) ? v : [v];
-  for (const inv of list) {
-    const o = inv as Partial<CanonicalInvoice> | null;
-    if (
-      !o ||
-      typeof o !== 'object' ||
-      (o.kind !== 'invoice' && o.kind !== 'creditNote') ||
-      typeof o.id !== 'string' ||
-      !Array.isArray(o.lines) ||
-      !o.totals
-    )
-      throw new Error('JSON is not a canonical invoice (expected the output of `einvoice convert`)');
+  if (list.length === 0) throw new Error('JSON holds no invoices');
+  for (const [i, inv] of list.entries()) {
+    const problem = canonicalProblem(inv);
+    if (problem)
+      throw new Error(
+        `JSON is not a canonical invoice${list.length > 1 ? ` (entry ${i})` : ''}: ${problem} (expected the output of \`einvoice convert\`)`,
+      );
   }
   return list as CanonicalInvoice[];
+}
+
+const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
+
+/** What the writers read without checking: the required scalars, the party and totals objects, and every list. Undefined when all are there. */
+function canonicalProblem(inv: unknown): string | undefined {
+  if (!isObject(inv)) return 'not an object';
+  if (inv.kind !== 'invoice' && inv.kind !== 'creditNote') return 'kind must be "invoice" or "creditNote"';
+  for (const k of ['id', 'issueDate', 'currency', 'typeCode', 'specificationId'])
+    if (typeof inv[k] !== 'string') return `${k} must be a string`;
+  for (const k of ['notes', 'precedingInvoices', 'payments', 'allowances', 'charges', 'vatBreakdown', 'attachments', 'lines'])
+    if (!Array.isArray(inv[k])) return `${k} must be a list`;
+  for (const k of ['seller', 'buyer', 'totals']) if (!isObject(inv[k])) return `${k} must be an object`;
+  const totals = inv.totals as Record<string, unknown>;
+  for (const k of ['lineNetTotal', 'taxExclusive', 'taxInclusive', 'payable'])
+    if (typeof totals[k] !== 'string') return `totals.${k} must be a decimal string`;
+  for (const k of ['seller', 'buyer'])
+    if (!Array.isArray((inv[k] as Record<string, unknown>).identifiers)) return `${k}.identifiers must be a list`;
+  for (const [i, line] of (inv.lines as unknown[]).entries()) {
+    if (!isObject(line) || typeof line.id !== 'string' || typeof line.netAmount !== 'string' || !isObject(line.item))
+      return `lines[${i}] needs id, netAmount and item`;
+    if (!Array.isArray(line.allowances) || !Array.isArray(line.charges)) return `lines[${i}] needs allowances and charges lists`;
+    const item = line.item as Record<string, unknown>;
+    if (!Array.isArray(item.classifications) || !Array.isArray(item.attributes))
+      return `lines[${i}].item needs classifications and attributes lists`;
+  }
+  for (const [i, p] of (inv.payments as unknown[]).entries())
+    if (!isObject(p) || !Array.isArray(p.creditTransfers)) return `payments[${i}] needs a creditTransfers list`;
+  return undefined;
 }
 
 /** `einvoice write`: canonical JSON, or any invoice file converted first, written as UBL or CII. */
@@ -805,8 +831,8 @@ async function runWrite(args: Parsed, io: IO, err: (line: string) => void, note:
       outputs.push({ id: inv.id, xml: args.to === 'ubl' ? toUbl(inv, { profile }) : toCii(inv, { profile }) });
       return true;
     } catch (e) {
-      if (!(e instanceof WriterError)) throw e;
-      err(`${label}: invoice ${inv.id}: ${e.message}`);
+      // A WriterError names the value; anything else is a shape the check above did not foresee, which is still the input's fault.
+      err(`${label}: invoice ${inv.id}: ${e instanceof WriterError ? e.message : `cannot be written (${(e as Error).message})`}`);
       return false;
     }
   };

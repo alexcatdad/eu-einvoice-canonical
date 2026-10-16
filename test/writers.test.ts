@@ -21,6 +21,10 @@ import { validate } from '../src/validation/index.js';
 import { vatPointCodeForCii, vatPointCodeForUbl } from '../src/writers/shared.js';
 import { utf8 } from './helpers.js';
 
+const PEPPOL_SPEC = 'urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0';
+const PEPPOL_PROCESS = 'urn:fdc:peppol.eu:2017:poacc:billing:01:1.0';
+const EN_BASE_SPEC = 'urn:cen.eu:en16931:2017';
+
 type Target = 'ubl' | 'cii';
 const TARGETS: Target[] = ['ubl', 'cii'];
 const write = (inv: CanonicalInvoice, target: Target) => (target === 'ubl' ? toUbl(inv) : toCii(inv));
@@ -183,6 +187,41 @@ const LOSSES: Loss[] = [
       eachLine(inv.lines, (l) => {
         l.subLines = undefined;
       }),
+  },
+  {
+    id: 'ubl-specification-is-syntax-specific',
+    target: 'ubl',
+    reason:
+      'A Factur-X / ZUGFeRD profile identifier names a CII syntax; on a UBL document it is replaced by Peppol BIS Billing 3.0 and its business process.',
+    apply: (inv) => {
+      if (/factur-x\.eu/i.test(inv.specificationId)) {
+        inv.specificationId = PEPPOL_SPEC;
+        inv.businessProcess = PEPPOL_PROCESS;
+      }
+    },
+  },
+  {
+    id: 'cii-specification-is-syntax-specific',
+    target: 'cii',
+    reason:
+      'Peppol BIS Billing 3.0 is a UBL specification; on a CII document it is replaced by the EN 16931 base identifier, without a business process.',
+    apply: (inv) => {
+      if (/peppol\.eu:2017:poacc/i.test(inv.specificationId)) {
+        inv.specificationId = EN_BASE_SPEC;
+        inv.businessProcess = undefined;
+      }
+    },
+  },
+  {
+    id: 'cii-bic-only',
+    target: 'cii',
+    reason: 'BT-86 also carries national labels such as SE:BANKGIRO; CII has BICID only, so anything that is not a BIC is not written.',
+    apply: (inv) => {
+      for (const p of inv.payments)
+        for (const t of p.creditTransfers)
+          if (t.serviceProviderId !== undefined && !/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(t.serviceProviderId))
+            t.serviceProviderId = undefined;
+    },
   },
   {
     id: 'cii-attachment-references',
@@ -419,9 +458,6 @@ describe('written documents validate', () => {
 // ---------------------------------------------------------------------------
 // A hand-built invoice that uses every part of the mapping
 // ---------------------------------------------------------------------------
-
-const PEPPOL_SPEC = 'urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0';
-const PEPPOL_PROCESS = 'urn:fdc:peppol.eu:2017:poacc:billing:01:1.0';
 
 function rich(kind: 'invoice' | 'creditNote' = 'invoice'): CanonicalInvoice {
   return {
@@ -810,6 +846,36 @@ describe('writer behaviour', () => {
     assert.ok(!toCii(inv).includes('BusinessProcessSpecifiedDocumentContextParameter'));
     inv.specificationId = '';
     assert.ok(toUbl(inv).includes(PEPPOL_SPEC));
+  });
+
+  test('a specification that exists in one syntax only is not carried into the other', () => {
+    const peppol = rich(); // Peppol BIS Billing 3.0 is UBL
+    const cii = toCii(peppol);
+    assert.ok(cii.includes(`<ram:ID>${EN_BASE_SPEC}</ram:ID>`));
+    assert.ok(!cii.includes('peppol'), 'no Peppol identifier on a CII document');
+    assert.ok(toCii(peppol, { profile: 'peppol-bis3' }).includes(PEPPOL_SPEC), 'an explicit profile is taken as asked');
+
+    const facturx = rich();
+    facturx.specificationId = 'urn:cen.eu:en16931:2017#conformant#urn:factur-x.eu:1p0:extended';
+    facturx.businessProcess = undefined;
+    assert.ok(toCii(facturx).includes('urn:factur-x.eu:1p0:extended'));
+    const ubl = toUbl(facturx);
+    assert.ok(!ubl.includes('factur-x'), 'no Factur-X identifier on a UBL document');
+    assert.ok(ubl.includes(`<cbc:CustomizationID>${PEPPOL_SPEC}</cbc:CustomizationID>`));
+
+    const xr = rich();
+    xr.specificationId = 'urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0';
+    assert.ok(toCii(xr).includes('xrechnung_3.0'), 'XRechnung exists in both syntaxes');
+    assert.ok(toUbl(xr).includes('xrechnung_3.0'));
+  });
+
+  test('a bank identifier that is not a BIC is not written as one', () => {
+    const inv = rich();
+    inv.payments[0].creditTransfers = [{ accountId: '1234567', serviceProviderId: 'SE:BANKGIRO' }];
+    assert.ok(!toCii(inv).includes('BICID'));
+    assert.ok(toUbl(inv).includes('<cbc:ID>SE:BANKGIRO</cbc:ID>'));
+    inv.payments[0].creditTransfers[0].serviceProviderId = 'DEUTDEFF500';
+    assert.ok(toCii(inv).includes('<ram:BICID>DEUTDEFF500</ram:BICID>'));
   });
 
   test('a credit note with a non-credit type code is written as 381 in CII, as is in UBL', () => {

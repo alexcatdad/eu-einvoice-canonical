@@ -138,23 +138,29 @@ export const PROFILES: Record<WriterProfile, { specificationId: string; business
 /** Identifiers that already name an EN 16931 based specification: kept as they are. */
 const EN_SPECIFICATION = /^urn:(cen\.eu:en16931|fdc:peppol\.eu|factur-x\.eu|xoev-de|xeinkauf\.de)/i;
 
+/** Specifications that exist in one syntax only: Peppol BIS Billing is UBL, Factur-X / ZUGFeRD is CII. */
+const OTHER_SYNTAX_ONLY: Record<'ubl' | 'cii', RegExp> = { ubl: /factur-x\.eu/i, cii: /peppol\.eu:2017:poacc/i };
+
 /**
  * BT-24 and BT-23 for the written document. An explicit `profile` wins. Otherwise the invoice's own
- * identifier is kept when it names an EN 16931 based specification (Peppol, XRechnung, NLCIUS, CIUS-RO,
- * Factur-X...), so a document written back in its own syntax stays what it was. Anything else (a national
- * format's synthesised identifier, an empty one) is replaced by `fallback`.
+ * identifier is kept when it names an EN 16931 based specification that exists in the target syntax
+ * (Peppol BIS for UBL, XRechnung and NLCIUS for both, CIUS-RO, the EN 16931 base...), so a document
+ * written back in its own syntax stays what it was. Anything else (a national format's synthesised
+ * identifier, an empty one, a Peppol identifier on a CII document, a Factur-X one on a UBL document) is
+ * replaced by `fallback`, with its business process.
  */
 export function resolveSpecification(
   invoice: { specificationId: string; businessProcess?: string },
   profile: WriterProfile | undefined,
   fallback: WriterProfile,
+  syntax: 'ubl' | 'cii',
 ): { specificationId: string; businessProcess?: string } {
   if (profile !== undefined) {
     const preset = PROFILES[profile];
     if (!preset) throw new WriterError(`Unknown profile "${profile}" (known: ${Object.keys(PROFILES).join(', ')})`);
     return preset;
   }
-  if (EN_SPECIFICATION.test(invoice.specificationId))
+  if (EN_SPECIFICATION.test(invoice.specificationId) && !OTHER_SYNTAX_ONLY[syntax].test(invoice.specificationId))
     return { specificationId: invoice.specificationId, businessProcess: invoice.businessProcess };
   return PROFILES[fallback];
 }

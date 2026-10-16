@@ -78,7 +78,7 @@ function amount(cur: string, name: string, value: string | undefined, what: stri
 export function toUbl(invoice: CanonicalInvoice, options: UblOptions = {}): string {
   const isCn = invoice.kind === 'creditNote';
   const cur = invoice.currency;
-  const spec = resolveSpecification(invoice, options.profile, 'peppol-bis3');
+  const spec = resolveSpecification(invoice, options.profile, 'peppol-bis3', 'ubl');
   const docRef = (tag: string, id: string | undefined) => (id === undefined ? undefined : cac(tag, cbc('ID', id)));
 
   const objectRef = invoice.invoicedObjectId
