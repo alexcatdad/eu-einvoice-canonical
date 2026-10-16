@@ -82,7 +82,7 @@ const USAGE = `Usage:
   einvoice convert <file...> [--out <dir>]   canonical JSON (stdout, or one <invoice-id>.json per invoice in <dir>)
   einvoice export  <file...> --format sie|journal|csv [--accounts mapping.json] [--out <file>]
                                              bookkeeping entries for received invoices (SIE 4I, JSON or CSV)
-  einvoice render  --as html|pdf <file...> [--lang en|de|fr] [--out <file|dir>]
+  einvoice render  --as html|pdf <file...> [--lang en|de|fr|it|es|nl|pl|ro] [--out <file|dir>]
                                              human-readable invoice: a self-contained HTML page or an A4 PDF
                                              (stdout for html; pdf needs --out unless stdout is a binary sink)
   einvoice write   <file...> --to ubl|cii [--profile peppol-bis3|xrechnung|en16931] [--out <dir>]
