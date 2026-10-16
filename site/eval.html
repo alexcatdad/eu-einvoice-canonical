@@ -3,7 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Line labelling evaluation</title>
+  <title>Line labelling evaluation · E-invoice to JSON</title>
+  <meta name="description" content="Scores the plain rules and two in-browser language models (WebLLM Qwen3, Chrome Gemini Nano) on a labelled set of invoice lines: role accuracy, relation precision and recall, time, download size and memory.">
+  <!--site-seo-->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <style>
     main.eval { max-width: 64rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
@@ -17,8 +22,10 @@
   </style>
 </head>
 <body>
-  <main class="eval">
+  <!--site-header-->
+  <main class="eval" id="main">
     <h1>Line labelling evaluation</h1>
+    <p class="eval-links"><a href="docs/line-roles-and-relations.html">How line relations work</a> and why a model is optional. <a href="./">Back to the converter</a>.</p>
     <p>Compares the rules alone with the same rules plus a language model, on the labelled set in <code>src/relations/labelled.ts</code> (the descriptor and Svefaktura fixtures and synthetic discount, freight, labour, nested-heading and ambiguous-percentage cases). Everything runs in this tab; the models are downloaded from their hosts when you press Run, and are cached by the browser afterwards.</p>
     <fieldset>
       <legend>Engines</legend>
@@ -33,6 +40,7 @@
     </table>
     <details id="detail" hidden><summary>Per case</summary><pre id="detail-body"></pre></details>
   </main>
+  <!--site-footer-->
   <script type="module" src="eval.js"></script>
 </body>
 </html>

@@ -316,20 +316,20 @@ describe('line roles and relations', () => {
     expect(r.findings.map((f) => f.code)).toEqual(['ADJUSTMENT_NOT_ON_ORDER']);
   });
 
-  test('the Svefaktura example: three descriptors, an item, its 10 % markup and a second item', async () => {
+  test('the Svefaktura example: three descriptors, an item, its 8 % markup and a second item', async () => {
     const inv = await parseOne('svefaktura-1.0-descriptors.xml');
-    expect(inv.lines[3]!.national).toEqual({ orderReference: 'AVR026226' });
+    expect(inv.lines[3]!.national).toEqual({ orderReference: 'EX-BEST-1042' });
     const r = matchInvoice(inv, [
       po(
         [
-          { id: 'A', description: '19st Aluminiumdörrar (IADP01) (Ändring till 20st)', quantity: '1', unitPrice: '337170', unit: 'st' },
+          { id: 'A', description: '11st Glaspartier (GP-A) (Ändring till 12st)', quantity: '1', unitPrice: '248000', unit: 'st' },
           { id: 'B', description: 'Dörrgångjärn (syntetisk testrad)', quantity: '20', unitPrice: '100', unit: 'st' },
         ],
-        'AVR026226',
+        'EX-BEST-1042',
       ),
     ]);
     expect(r.lines.map((l) => l.status)).toEqual(['ignored', 'ignored', 'ignored', 'matched', 'matched', 'matched']);
-    expect(r.lines[4]).toMatchObject({ method: 'relation', appliesTo: ['4'], poLines: [{ poId: 'AVR026226', lineId: 'A' }] });
+    expect(r.lines[4]).toMatchObject({ method: 'relation', appliesTo: ['4'], poLines: [{ poId: 'EX-BEST-1042', lineId: 'A' }] });
     expect(r.lines[3]).toMatchObject({ method: 'description', similarity: '1.00' });
     expect(r.lines[3]!.variances.total?.status).toBe('exact');
     expect(r.lines[5]!.variances.quantity?.status).toBe('exact');

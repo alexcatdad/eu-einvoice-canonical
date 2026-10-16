@@ -36,11 +36,11 @@ export const LABELLED_CASES: LabelledCase[] = [
   {
     name: 'svefaktura-1.0-descriptors.xml (headings, markup on one line, a line the markup does not cover)',
     lines: [
-      L('1', '24177 - Ribbybergsskolan 20st dörrar', '0.00', '0', '0.00', undefined),
-      L('2', 'Projektering, tillverkning & montage av metallglaspartier.', '0.00', '0', '0.00', undefined),
-      L('3', 'Utförande enligt offert 9633', '0.00', '0', '0.00', undefined),
-      L('4', '19st Aluminiumdörrar (IADP01) (Ändring till 20st)', '1.00', '337170', '337170.00'),
-      L('5', '10% Materialpåslag', '1.00', '33717', '33717.00'),
+      L('1', '4711 - Exempelskolan 12 st glaspartier', '0.00', '0', '0.00', undefined),
+      L('2', 'Projektering, tillverkning & montage av glaspartier i aluminium.', '0.00', '0', '0.00', undefined),
+      L('3', 'Utförande enligt anbud 5150', '0.00', '0', '0.00', undefined),
+      L('4', '11st Glaspartier (GP-A) (Ändring till 12st)', '1.00', '248000', '248000.00'),
+      L('5', '8% Materialpåslag', '1.00', '19840', '19840.00'),
       L('6', 'Dörrgångjärn (syntetisk testrad)', '20.00', '100', '2000.00'),
     ],
     roles: { 1: 'heading', 2: 'description', 3: 'description', 4: 'item', 5: 'surcharge', 6: 'item' },

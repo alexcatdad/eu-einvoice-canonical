@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!--site-seo-->
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='5' y='3' width='22' height='26' rx='2' fill='%23FBF1B8' stroke='%2326358C' stroke-width='2'/%3E%3Cpath d='M10 10h12M10 15h12M10 20h7' stroke='%2326358C' stroke-width='2'/%3E%3C/svg%3E">
   <style>
@@ -72,19 +73,11 @@
     }
     /* style.css centres every <main>; Scalar's own <main> must fill its column. */
     .scalar-app main { max-width: none; margin: 0; padding: 0; }
-    .doc-page .sitenav { position: sticky; top: 0; z-index: 100; max-width: none; background: var(--desk); height: 3.1rem; align-items: center; padding-block: 0; }
   </style>
 </head>
 <body class="doc-page">
-  <nav class="sitenav" aria-label="Site">
-    <a class="sitenav-home" href="./">E-invoice to JSON</a>
-    <a href="deliverables.html">Deliverables</a>
-    <a href="openapi/openapi.yaml">openapi.yaml</a>
-    <a href="openapi/openapi.json">openapi.json</a>
-    <a href="openapi/openapi.bundled.json">bundled</a>
-    <a href="problems/">Error types</a>
-    <a href="api/">TypeScript API</a>
-  </nav>
+  <!--site-header-->
+  <p class="api-files"><a href="openapi/openapi.yaml">openapi.yaml</a> <a href="openapi/openapi.json">openapi.json</a> <a href="openapi/openapi.bundled.json">bundled</a> <a href="problems/">Error types</a> <a href="docs/http-api.html">Guide</a></p>
 
   <!-- Scalar, pinned. It does not follow references to other files, so it reads the self-contained copy of the spec that the site build generates. -->
   <script id="api-reference" data-url="openapi/openapi.bundled.json" data-configuration='{

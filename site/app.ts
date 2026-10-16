@@ -25,7 +25,7 @@ import {
   WriterError,
 } from '../src/index.js';
 import { currentLang, esc, initLanguage, initSwitcher, onLanguageChange, t } from './i18n.js';
-import { ENGINES, loadEngine } from './model.js';
+import { ENGINES, type EngineSpec, geminiNanoAvailability, loadEngine } from './model.js';
 
 const SAMPLES: { file: string; label: string }[] = [
   { file: 'peppol-bis3-invoice.xml', label: 'sample.peppolInvoice' },
@@ -102,13 +102,59 @@ fileInput.addEventListener('change', async () => {
 sampleSelect.addEventListener('change', () => {
   if (sampleSelect.value) void loadSample(sampleSelect.value, false);
 });
-$<HTMLButtonElement>('#convert-pasted').addEventListener('click', () => {
+
+// Paste is a first-class input: a visible editor, and a paste anywhere on the page converts at once.
+const MAC = /Mac|iPhone|iPad/.test(navigator.userAgent);
+if (MAC) $('#paste-hint').setAttribute('data-i18n-params', '{"shortcut":"\u2318V"}');
+const pasteSize = $<HTMLElement>('#paste-size');
+const updatePasteSize = () => {
+  pasteSize.textContent = pasted.value ? t('paste.size', { size: (new Blob([pasted.value]).size / 1024).toFixed(1) }) : '';
+};
+function convertPasted() {
   const text = pasted.value.trim();
   if (!text) {
+    pasteSize.textContent = t('paste.empty');
     pasted.focus();
     return;
   }
   void run(new TextEncoder().encode(text), 'pasted.xml');
+}
+pasted.addEventListener('input', updatePasteSize);
+// Pasting into the box converts straight away; typing and editing do not.
+pasted.addEventListener('paste', () => {
+  setTimeout(() => {
+    updatePasteSize();
+    if (pasted.value.trim()) convertPasted();
+  }, 0);
+});
+$<HTMLButtonElement>('#convert-pasted').addEventListener('click', convertPasted);
+$<HTMLButtonElement>('#clear-pasted').addEventListener('click', () => {
+  pasted.value = '';
+  updatePasteSize();
+  pasted.focus();
+});
+document.addEventListener('paste', async (e) => {
+  const target = e.target as HTMLElement | null;
+  if (
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLSelectElement ||
+    target?.isContentEditable
+  )
+    return;
+  const file = e.clipboardData?.files?.[0];
+  if (file) {
+    e.preventDefault();
+    await run(new Uint8Array(await file.arrayBuffer()), file.name);
+    return;
+  }
+  const text = e.clipboardData?.getData('text/plain')?.trim();
+  if (text) {
+    e.preventDefault();
+    pasted.value = text;
+    updatePasteSize();
+    await run(new TextEncoder().encode(text), 'pasted.xml');
+  }
 });
 
 // Drag and drop anywhere on the page; the slot shows where it lands.
@@ -299,7 +345,11 @@ function lineRows(inv: CanonicalInvoice, lines: Line[]): string {
         role && ROLE_LABEL[role] && !notes.length
           ? `<span class="sub">${esc(t(ROLE_LABEL[role]))}${inv.source.derived.some((d) => d.field === `/lineRoles/${l.id}`) ? ` ${review()}` : ''}</span>`
           : '';
+      const byModel =
+        inv.source.derived.some((d) => d.field === `/lineRoles/${l.id}`) ||
+        rels.some((r) => r.method === 'model' && (r.from === l.id || r.to.includes(l.id)));
       const cls = [
+        byModel ? 'by-model' : '',
         descriptor ? 'descriptor' : '',
         role === 'description' || under.has(l.id) ? 'under' : '',
         role === 'surcharge' || role === 'discount' ? 'adjusts' : '',
@@ -319,35 +369,144 @@ function lineRows(inv: CanonicalInvoice, lines: Line[]): string {
     .join('');
 }
 
-function labelControl(): string {
-  return `<details class="model"><summary>${esc(t('model.summary'))}</summary>
-    <p>${t('model.intro')}</p>
-    <label class="field"><span>${esc(t('model.engine'))}</span><select id="model-engine">${ENGINES.map((e) => `<option value="${e.id}">${esc(e.label)}</option>`).join('')}</select></label>
-    <button type="button" class="btn" id="model-run">${esc(t('model.run'))}</button> <span class="model-status" id="model-status" role="status"></span>
-  </details>`;
+/** Approximate download sizes of the WebLLM models, shown before anything is fetched. */
+const ENGINE_SIZE: Record<string, string> = { 'qwen3-0.6b': '0.5 GB', 'qwen3-1.7b': '1 GB', 'qwen3-4b': '2.5 GB' };
+
+interface ModelUi {
+  inv: CanonicalInvoice;
+  phase: 'idle' | 'busy' | 'done' | 'error';
+  text: string;
+  fraction?: number;
+  /** Puts the invoice back as it was before the model ran. */
+  undo?: () => void;
+}
+let modelUi: ModelUi | undefined;
+let chosenEngine = 'qwen3-1.7b';
+let nanoStatus: string | undefined;
+
+function engineOption(e: EngineSpec, busy: boolean): string {
+  const unavailable = e.kind === 'gemini-nano' && nanoStatus === 'unavailable';
+  const note =
+    e.kind === 'gemini-nano'
+      ? t(unavailable ? 'model.unavailable' : 'model.optBuiltin')
+      : t('model.optSize', { size: ENGINE_SIZE[e.id] ?? '' });
+  return `<label class="engine"><input type="radio" name="model-engine" value="${esc(e.id)}"${e.id === chosenEngine ? ' checked' : ''}${busy || unavailable ? ' disabled' : ''}>
+    <span><strong>${esc(e.label)}</strong><small>${esc(note)}</small></span></label>`;
+}
+
+function labelControl(inv: CanonicalInvoice): string {
+  const ui = modelUi?.inv === inv ? modelUi : undefined;
+  const busy = ui?.phase === 'busy';
+  if (nanoStatus === undefined) {
+    nanoStatus = 'checking';
+    void geminiNanoAvailability().then((a) => {
+      nanoStatus = a;
+      if (a === 'unavailable') refreshModelPanel();
+    });
+  }
+  const progress = busy
+    ? `<progress id="model-progress" max="1"${ui?.fraction !== undefined ? ` value="${ui.fraction}"` : ''} aria-label="${esc(t('model.progressLabel'))}"></progress>`
+    : '';
+  const dismiss = ui?.undo ? `<button type="button" class="btn quiet" id="model-dismiss">${esc(t('model.dismiss'))}</button>` : '';
+  return `<section class="model" aria-labelledby="model-title">
+    <div class="model-head"><h3 id="model-title">${esc(t('model.title'))}</h3>
+      <span class="model-tag">${esc(t('model.badge'))}</span><span class="model-tag local">${esc(t('model.local'))}</span></div>
+    <p>${esc(t('model.explain'))}</p>
+    <fieldset${busy ? ' disabled' : ''}><legend>${esc(t('model.engine'))}</legend>${ENGINES.map((e) => engineOption(e, busy)).join('')}</fieldset>
+    <div class="model-actions">
+      <button type="button" class="btn" id="model-run"${busy ? ' disabled' : ''}>${esc(t('model.run'))}</button>${progress}
+      <span class="model-status${ui?.phase === 'error' ? ' error' : ''}" id="model-status" role="status">${esc(ui?.text ?? '')}</span>${dismiss}
+    </div>
+    <p class="model-learn">${t('model.learn')}</p></section>`;
+}
+
+/** Redraws only the panel (progress and status change while the lines stay put). */
+function refreshModelPanel() {
+  const inv = current?.items[shownIndex]?.invoice;
+  const el = document.querySelector('.model');
+  if (!inv || !el) return;
+  el.outerHTML = labelControl(inv);
+  wireModel();
+}
+
+const snapshotOf = (inv: CanonicalInvoice) =>
+  structuredClone({ lineRoles: inv.lineRoles, relations: inv.relations, derived: inv.source.derived, warnings: inv.source.warnings });
+
+async function runModel(inv: CanonicalInvoice, spec: EngineSpec) {
+  const started = performance.now();
+  const before = snapshotOf(inv);
+  const restore = () => {
+    inv.lineRoles = before.lineRoles;
+    inv.relations = before.relations;
+    inv.source.derived = before.derived;
+    inv.source.warnings = before.warnings;
+  };
+  const ui: ModelUi = { inv, phase: 'busy', text: t('model.loading', { model: spec.label }) };
+  modelUi = ui;
+  refreshModelPanel();
+  const paint = () => {
+    if (modelUi !== ui) return;
+    const status = document.querySelector<HTMLElement>('#model-status');
+    const bar = document.querySelector<HTMLProgressElement>('#model-progress');
+    if (status) status.textContent = ui.text;
+    if (bar) {
+      if (ui.fraction === undefined) bar.removeAttribute('value');
+      else bar.value = ui.fraction;
+    }
+  };
+  const fail = (reason: string) => {
+    restore();
+    modelUi = { inv, phase: 'error', text: t('model.failed', { reason }) };
+    refreshModelPanel();
+  };
+  try {
+    const engine = await loadEngine(spec, (text, fraction) => {
+      ui.text = text;
+      ui.fraction = fraction;
+      paint();
+    });
+    ui.text = t('model.labelling');
+    ui.fraction = undefined;
+    paint();
+    await applyModelLabels(inv, engine.labeller);
+    await engine.dispose();
+    const failed = inv.source.warnings.find(
+      (w) => w.code === 'LINE-MODEL-FAILED' && !before.warnings.some((b) => b.code === w.code && b.message === w.message),
+    );
+    if (failed) return fail(failed.message.replace(/^The language model failed: /, ''));
+    const seconds = ((performance.now() - started) / 1000).toFixed(1);
+    const labels = Object.keys(inv.lineRoles ?? {}).filter((id) => inv.lineRoles?.[id] !== before.lineRoles?.[id]).length;
+    const links = (inv.relations?.length ?? 0) - (before.relations?.length ?? 0);
+    modelUi = {
+      inv,
+      phase: 'done',
+      text: labels || links ? t('model.done', { seconds, labels, links }) : t('model.nothing', { seconds }),
+      undo: labels || links ? restore : undefined,
+    };
+    if (current?.items[shownIndex]?.invoice === inv) render(shownIndex);
+  } catch (e) {
+    fail((e as Error).message);
+  }
 }
 
 function wireModel() {
-  const run = document.querySelector<HTMLButtonElement>('#model-run');
-  if (!run || !current) return;
-  run.addEventListener('click', async () => {
-    const status = $('#model-status');
-    const spec = ENGINES.find((e) => e.id === $<HTMLSelectElement>('#model-engine').value)!;
+  const el = document.querySelector('.model');
+  if (!el || !current) return;
+  for (const r of el.querySelectorAll<HTMLInputElement>('input[name="model-engine"]'))
+    r.addEventListener('change', () => {
+      chosenEngine = r.value;
+    });
+  el.querySelector('#model-run')?.addEventListener('click', () => {
+    const spec = ENGINES.find((e) => e.id === chosenEngine);
     const inv = current?.items[shownIndex]?.invoice;
-    if (!inv) return;
-    run.disabled = true;
-    try {
-      const engine = await loadEngine(spec, (text) => {
-        status.textContent = text;
-      });
-      status.textContent = t('model.labelling');
-      await applyModelLabels(inv, engine.labeller);
-      await engine.dispose();
-      render(shownIndex);
-    } catch (e) {
-      status.textContent = (e as Error).message;
-      run.disabled = false;
-    }
+    if (spec && inv) void runModel(inv, spec);
+  });
+  el.querySelector('#model-dismiss')?.addEventListener('click', () => {
+    const inv = current?.items[shownIndex]?.invoice;
+    if (!inv || modelUi?.inv !== inv) return;
+    modelUi.undo?.();
+    modelUi = { inv, phase: 'idle', text: t('model.removed') };
+    render(shownIndex);
   });
 }
 
@@ -440,7 +599,7 @@ function sheet(item: Item, result: ConvertResult): string {
     </table>${inv.lines.length > MAX_LINES ? `<p class="more-lines">${esc(t('line.more', { count: inv.lines.length - MAX_LINES }))}</p>` : ''}`
         : `<p class="more-lines">${esc(t('line.none'))}</p>`
     }
-    ${inv.lines.length ? labelControl() : ''}
+    ${inv.lines.length ? labelControl(inv) : ''}
     <div class="sums">
       <div class="payment">${
         pay
@@ -658,7 +817,7 @@ function renderCoverage() {
   const implemented = new Set<string>(IMPLEMENTED_FAMILIES);
   const chip = (f: FormatDef) => {
     const ok = implemented.has(f.family);
-    return `<li class="fmt ${ok ? 'converts' : 'identifies'}" title="${esc(f.notes)}">${esc(shortName(f))}<span class="visually-hidden">${esc(t(ok ? 'coverage.srConverted' : 'coverage.srIdentified'))}</span></li>`;
+    return `<li class="fmt ${ok ? 'converts' : 'identifies'}"><a href="docs/formats/${esc(f.id)}.html" title="${esc(f.notes)}">${esc(shortName(f))}<span class="visually-hidden">${esc(t(ok ? 'coverage.srConverted' : 'coverage.srIdentified'))}</span></a></li>`;
   };
   const eu = new Set<string>(EU_COUNTRIES);
   const world = (FORMATS as readonly FormatDef[]).filter((f) => f.countries.every((cc) => cc !== 'EU' && !eu.has(cc)));
@@ -676,7 +835,9 @@ function renderCoverage() {
     .sort(byName)
     .map((cc) => {
       const formats = national.filter((f) => f.countries.includes(cc));
-      const chips = formats.length ? formats.map(chip).join('') : '<li class="fmt converts">Peppol BIS 3</li>';
+      const chips = formats.length
+        ? formats.map(chip).join('')
+        : '<li class="fmt converts"><a href="docs/formats/peppol-bis3.html">Peppol BIS 3</a></li>';
       return `<li class="country"><h3><span class="cc">${cc}</span>${esc(regionName(cc))}</h3><ul>${chips}</ul></li>`;
     })
     .join('');
@@ -754,6 +915,7 @@ onLanguageChange(() => {
   fillSamples();
   renderCoverage();
   if (trustStatus) euStatus.textContent = trustStatus();
+  updatePasteSize();
   if (current) render(shownIndex);
 });
 void loadSample(EXAMPLE.file, true);

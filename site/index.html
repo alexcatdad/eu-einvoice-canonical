@@ -8,15 +8,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!--site-seo-->
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='5' y='3' width='22' height='26' rx='2' fill='%23FBF1B8' stroke='%2326358C' stroke-width='2'/%3E%3Cpath d='M10 10h12M10 15h12M10 20h7' stroke='%2326358C' stroke-width='2'/%3E%3C/svg%3E">
 </head>
 <body>
+  <!--site-header-->
   <header class="masthead">
-    <div class="lang">
-    <label for="lang-select" data-i18n="lang.label">Language</label>
-    <select id="lang-select"></select>
-  </div>
   <div class="masthead-text">
       <h1 data-i18n="meta.title">E-invoice to JSON</h1>
       <p class="lede" data-i18n-html="masthead.lede">Drop an e-invoice you received. It is unwrapped, identified and mapped to one canonical model built on EN&nbsp;16931. You get the JSON, and the invoice rebuilt from it so you can check the mapping.</p>
@@ -31,7 +29,21 @@
       <span class="slot-text" data-i18n-html="tray.drop"><strong>Drop an invoice here</strong> or choose a file</span>
       <span class="slot-hint" data-i18n="tray.hint">XML, Factur-X PDF, signed .p7m, ANAF .zip, .xsig, .isdocx</span>
     </label>
-    <div class="tray-side">
+    <div class="paste" id="paste-panel">
+      <div class="paste-bar">
+        <label for="pasted" class="paste-title" data-i18n="paste.title">Paste XML</label>
+        <span class="paste-size" id="paste-size" aria-live="polite"></span>
+      </div>
+      <textarea id="pasted" spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="paste-hint" placeholder="&lt;Invoice xmlns=&quot;urn:oasis:names:specification:ubl:schema:xsd:Invoice-2&quot;&gt;…"></textarea>
+      <div class="paste-foot">
+        <p class="paste-hint" id="paste-hint" data-i18n="paste.hint" data-i18n-params='{"shortcut":"Ctrl+V"}'>Press Ctrl+V anywhere on this page to convert at once, or paste into the box.</p>
+        <div class="paste-actions">
+          <button type="button" id="clear-pasted" class="btn quiet" data-i18n="paste.clear">Clear</button>
+          <button type="button" id="convert-pasted" class="btn" data-i18n="tray.pasteButton">Convert pasted XML</button>
+        </div>
+      </div>
+    </div>
+    <div class="options">
       <label class="field">
         <span data-i18n="tray.sample">Try a sample</span>
         <select id="sample">
@@ -42,16 +54,20 @@
         <label><input type="checkbox" id="eu-trust"> <span data-i18n="trust.label">Check signers against the EU trusted lists</span></label>
         <span class="trust-status" id="eu-trust-status" aria-live="polite" data-i18n="trust.off">Off. Fetches the lists when switched on; the file is still never uploaded.</span>
       </div>
-      <details class="paste">
-        <summary data-i18n="tray.pasteSummary">Paste XML instead</summary>
-        <textarea id="pasted" spellcheck="false" aria-label="XML to convert" data-i18n-attr="aria-label:tray.pasteLabel" placeholder="&lt;Invoice xmlns=&quot;urn:oasis:names:specification:ubl:schema:xsd:Invoice-2&quot;&gt;…"></textarea>
-        <button type="button" id="convert-pasted" class="btn" data-i18n="tray.pasteButton">Convert pasted XML</button>
-      </details>
     </div>
   </section>
 
-  <main>
+  <main id="main">
     <section id="result" class="result" aria-live="polite"></section>
+
+    <section class="relations" aria-labelledby="relations-title">
+      <h2 id="relations-title" data-i18n="relations.title">Lines that talk about other lines</h2>
+      <p data-i18n="relations.body">Invoices often mix real items with headings, notes and surcharge lines such as “10% material markup”. The converter marks each line as an item, heading, description or surcharge and links them, using rules and exact arithmetic. An optional language model that runs in your browser can label what the rules leave open; its answers are always marked for review.</p>
+      <ul class="links">
+        <li><a href="docs/line-roles-and-relations.html" data-i18n="relations.docs">How line relations work</a></li>
+        <li><a href="eval.html" data-i18n="relations.eval">See how well the models do</a></li>
+      </ul>
+    </section>
 
     <section class="coverage" aria-labelledby="coverage-title">
       <div class="coverage-head">
@@ -72,9 +88,7 @@
     </section>
   </main>
 
-  <footer class="colophon">
-    <p data-i18n-html="footer.colophon">Built on the open-source <a href="https://github.com/alexcatdad/eu-einvoice-canonical">eu-einvoice-canonical</a> library. Use it in your own code with <code>convert(bytes)</code>; the README documents the model. <a href="deliverables.html">Deliverables</a>: types, JSON Schemas, <a href="api.html">HTTP API reference</a>, CLI binaries.</p>
-  </footer>
+  <!--site-footer-->
 
   <script type="module" src="app.js"></script>
 </body>

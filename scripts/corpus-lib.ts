@@ -6,6 +6,8 @@
  * `FileResult`s; scripts/corpus-page.ts renders a downloaded `CorpusReport`. Nothing here reads file
  * content into the report: it holds counts, normalised messages and repository-relative paths.
  */
+
+import { page } from '../site/chrome.js';
 import type { CheckStatus, ConvertResult } from '../src/index.js';
 
 export const LAYERS = ['parse', 'schema', 'semantic', 'profile', 'signature'] as const;
@@ -421,26 +423,19 @@ export function renderHtml(r: CorpusReport): string {
         `<tr><th scope="row">${esc(type)}</th><td class="num good">${s.valid}</td><td class="num ${s.invalid ? 'gap' : ''}">${s.invalid}</td><td class="num">${s.unchecked}</td></tr>`,
     )
     .join('');
-  return `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Real-world results</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-<header class="masthead">
+  return page({
+    title: 'Real-world results · E-invoice to JSON',
+    description: `The converter run over ${t.files} files from public e-invoice sample collections: how many convert, how fast, which warnings and errors are most common.`,
+    path: 'corpus.html',
+    current: 'realworld',
+    body: `<header class="masthead">
   <div class="masthead-text">
     <h1>Real-world results</h1>
     <p class="lede">What the converter does with ${t.files} files from public sample collections. Report of ${esc(date)}${r.commit ? `, commit <code>${esc(r.commit.slice(0, 7))}</code>` : ''}.</p>
   </div>
   <p class="privacy"><a href="./">Back to the converter</a></p>
 </header>
-<main class="checklist">
+<div class="checklist">
   <ul class="checklist-summary">
     <li>${t.documents} documents (${t.invoices} invoices) from ${Object.keys(r.corpora).length} corpora; ${t.ok} converted, ${t.unsupported} unsupported, ${t.error} errors, ${t.notAnInvoice} not invoices.</li>
     <li>${t.filesPerSecond} files per second with validation on (median ${t.msP50} ms, 95th percentile ${t.msP95} ms; ${t.timeouts} timeouts).</li>
@@ -463,9 +458,8 @@ export function renderHtml(r: CorpusReport): string {
   <h2>Most common errors</h2>
   ${clusters(r.errors)}
   <p class="wrappers">Report generated ${esc(r.generatedAt)} by the weekly <code>Public corpora</code> workflow, from sample collections cloned at pinned commits (see <code>test/corpus/SOURCES.md</code> for the licences). The files themselves are never published.</p>
-</main>
-</body>
-</html>`;
+</div>`,
+  });
 }
 
 /** The coverage-section paragraph that links the page and shows the report date. */

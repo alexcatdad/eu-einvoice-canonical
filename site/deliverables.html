@@ -8,23 +8,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!--site-seo-->
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='5' y='3' width='22' height='26' rx='2' fill='%23FBF1B8' stroke='%2326358C' stroke-width='2'/%3E%3Cpath d='M10 10h12M10 15h12M10 20h7' stroke='%2326358C' stroke-width='2'/%3E%3C/svg%3E">
 </head>
 <body class="doc-page">
-  <nav class="sitenav" aria-label="Site" data-i18n-attr="aria-label:nav.label">
-    <a class="sitenav-home" href="./" data-i18n="nav.home">E-invoice to JSON</a>
-    <a href="api.html" data-i18n="nav.api">API reference</a>
-    <a href="api/" data-i18n="nav.typescript">TypeScript API</a>
-    <a href="conformance.html" data-i18n="nav.conformance">Conformance</a>
-    <a href="https://github.com/alexcatdad/eu-einvoice-canonical" data-i18n="nav.source">Source</a>
-  </nav>
+  <!--site-header-->
 
   <header class="masthead">
-    <div class="lang">
-      <label for="lang-select" data-i18n="lang.label">Language</label>
-      <select id="lang-select"></select>
-    </div>
     <div class="masthead-text">
       <h1 data-i18n="deliv.title">Deliverables</h1>
       <p class="lede" data-i18n="deliv.lede">The interface is the product: the types, the schemas, the HTTP API, the command line and the evidence behind them. Each one is generated from the same TypeScript sources, so they cannot drift apart.</p>
@@ -32,7 +23,7 @@
     <p class="privacy" data-i18n-html="deliv.versions" data-i18n-params='{"package":"{{PACKAGE_VERSION}}","schema":"{{SCHEMA_VERSION}}","spec":"{{SPEC_VERSION}}"}'><strong>Versions:</strong> package <code>{{PACKAGE_VERSION}}</code>, JSON Schema <code>{{SCHEMA_VERSION}}</code>, HTTP API <code>/{{SCHEMA_VERSION}}</code>. See <a href="https://github.com/alexcatdad/eu-einvoice-canonical#deliverables-and-versioning">Deliverables and versioning</a> for the compatibility promise.</p>
   </header>
 
-  <main class="doc-main">
+  <main class="doc-main" id="main">
     <ul class="doc-grid">
       <li class="deliverable">
         <h3 data-i18n="deliv.libTitle">TypeScript types and library</h3>
@@ -89,12 +80,12 @@
 
     <h2 id="schemas" data-i18n="deliv.schemasTitle">JSON Schemas</h2>
     <p data-i18n="deliv.schemasBody">Draft 2020-12, generated from the types, published at stable URLs. Objects are open, so a payload from a newer minor release still validates against an older schema.</p>
-    <table class="doc-table">
+    <div class="table-scroll"><table class="doc-table">
       <thead><tr><th data-i18n="deliv.thSchema">Schema</th><th data-i18n="deliv.thDescribes">Describes</th><th data-i18n="deliv.thVersion">Version</th><th data-i18n="deliv.thFile">File</th></tr></thead>
       <tbody>
         {{SCHEMA_ROWS}}
       </tbody>
-    </table>
+    </table></div>
 
     <h2 id="run" data-i18n="deliv.runTitle">Run the API</h2>
     <pre><code>einvoice serve --port 8080 --cors
@@ -104,9 +95,7 @@ curl -X POST --data-binary @invoice.xml -H 'Content-Type: application/xml' \
   'http://localhost:8080/v1/convert?relations=true'</code></pre>
   </main>
 
-  <footer class="colophon">
-    <p data-i18n-html="deliv.footer">Built on the open-source <a href="https://github.com/alexcatdad/eu-einvoice-canonical">eu-einvoice-canonical</a> library. Licensed 0BSD.</p>
-  </footer>
+  <!--site-footer-->
 
   <script type="module" src="deliverables.js"></script>
 </body>

@@ -3,9 +3,11 @@
  *   bun run site/build.ts
  */
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import pkg from '../package.json' with { type: 'json' };
 import { PROBLEM_BASE, PROBLEMS } from '../src/problems.js';
+import { fill, page } from './chrome.js';
+import { buildDocs, buildLlmsFull, buildLlmsTxt, buildSitemap, homeJsonLd, robotsTxt } from './docs.js';
 import en from './i18n/en.json' with { type: 'json' };
 
 const root = join(import.meta.dir, '..');
@@ -45,10 +47,8 @@ if (!build.success) {
   for (const log of build.logs) console.error(log);
   process.exit(1);
 }
-cpSync(join(root, 'site/index.html'), join(out, 'index.html'));
-cpSync(join(root, 'site/eval.html'), join(out, 'eval.html'));
 cpSync(join(root, 'site/style.css'), join(out, 'style.css'));
-cpSync(join(root, 'site/api.html'), join(out, 'api.html'));
+writeStaticPages();
 // Snapshot of the EU trusted lists for the opt-in signer check (refreshed by the trust-lists workflow).
 if (existsSync(join(root, 'trust/eu-trust-snapshot.json')))
   cpSync(join(root, 'trust/eu-trust-snapshot.json'), join(out, 'eu-trust-snapshot.json'));
@@ -62,6 +62,9 @@ for (const file of ['openapi.yaml', 'openapi.json']) cpSync(join(root, 'openapi'
 writeBundledSpec();
 writeDeliverables();
 writeProblems();
+const docPaths = writeDocs();
+writeCorpusStub();
+writeDiscovery(docPaths);
 buildTypeDoc();
 for (const s of SAMPLES) cpSync(join(root, 'test/fixtures', s), join(out, 'samples', s));
 console.log(`Built ${out} (${build.outputs.map((o) => `${o.path.split('/').pop()} ${(o.size / 1024).toFixed(0)} KB`).join(', ')})`);
@@ -86,12 +89,12 @@ function writeDeliverables() {
   rows.push(
     `<tr><td><code>formats</code></td>${cell('deliv.schemaFormats')}<td><code>v1</code></td><td><a href="schemas/formats.json">formats.json</a></td></tr>`,
   );
-  const page = readFileSync(join(root, 'site/deliverables.html'), 'utf8')
+  const html = readFileSync(join(root, 'site/deliverables.html'), 'utf8')
     .replaceAll('{{PACKAGE_VERSION}}', esc(pkg.version))
     .replaceAll('{{SCHEMA_VERSION}}', 'v1')
     .replaceAll('{{SPEC_VERSION}}', esc(spec.info.version))
     .replace('{{SCHEMA_ROWS}}', rows.join('\n        '));
-  writeFileSync(join(out, 'deliverables.html'), page);
+  writeFileSync(join(out, 'deliverables.html'), fill(html, { path: 'deliverables.html', current: 'deliverables', i18n: true }));
 }
 
 /** One page for the problem type URIs (`<base>#<slug>`), from the same catalogue the server uses. */
@@ -103,35 +106,23 @@ function writeProblems() {
         <p>HTTP ${p.statuses.join(' or ')} · CLI exit code ${p.exitCode} · <code>${esc(PROBLEM_BASE)}#${slug}</code></p></li>`,
     )
     .join('\n      ');
-  const page = `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Error types · E-invoice to JSON</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../style.css">
-</head>
-<body class="doc-page">
-  <nav class="sitenav" aria-label="Site">
-    <a class="sitenav-home" href="../">E-invoice to JSON</a>
-    <a href="../api.html">API reference</a>
-    <a href="../deliverables.html">Deliverables</a>
-  </nav>
-  <main class="doc-main" style="max-width:80rem;margin-inline:auto;padding-inline:1rem">
-    <h2>Error types</h2>
+  const body = `<div class="doc-main wide">
+    <h1>Error types</h1>
     <p>Every error of the conversion API is an <a href="https://www.rfc-editor.org/rfc/rfc9457">RFC 9457</a> problem. The <code>type</code> is one of these URIs. They are the command line's exit codes 2 to 7, so a script and a service client see the same categories. Requests over a size or count limit answer 413 with the first type.</p>
     <ul class="problem-list">
       ${items}
     </ul>
-  </main>
-</body>
-</html>
-`;
+  </div>`;
+  const html = page({
+    title: 'Error types · E-invoice to JSON',
+    description: 'The problem type URIs of the e-invoice conversion API (RFC 9457), with HTTP status and command line exit code for each.',
+    path: 'problems/index.html',
+    body,
+    current: 'api',
+    bodyClass: 'doc-page',
+  });
   mkdirSync(join(out, 'problems'), { recursive: true });
-  writeFileSync(join(out, 'problems/index.html'), page);
+  writeFileSync(join(out, 'problems/index.html'), html);
 }
 
 /** TypeDoc needs the JavaScript TypeScript compiler, so it lives in its own package (typedoc/). Skipped when not installed. */
@@ -197,4 +188,66 @@ function writeBundledSpec() {
     );
   };
   writeFileSync(join(out, 'openapi/openapi.bundled.json'), `${JSON.stringify(rewrite(spec), null, 2)}\n`);
+}
+
+/** The hand-written pages: the shared header, footer and SEO tags are filled in; everything else is the file as written. */
+function writeStaticPages() {
+  const read = (f: string) => readFileSync(join(root, 'site', f), 'utf8');
+  const description = /<meta name="description"[^>]*content="([^"]*)"/.exec(read('index.html'))?.[1] ?? '';
+  writeFileSync(
+    join(out, 'index.html'),
+    fill(read('index.html'), { path: 'index.html', current: 'converter', i18n: true, jsonld: homeJsonLd(pkg.version, description) }),
+  );
+  writeFileSync(join(out, 'eval.html'), fill(read('eval.html'), { path: 'eval.html', current: 'docs' }));
+  writeFileSync(join(out, 'api.html'), fill(read('api.html'), { path: 'api.html', current: 'api', sticky: true, footer: false }));
+}
+
+/** Docs pages, their markdown twins, and the docs/*.md extras; returns every page path for the sitemap. */
+function writeDocs(): string[] {
+  const extras: Record<string, string> = {};
+  for (const f of readdirSync(join(root, 'docs')).filter((f) => f.endsWith('.md'))) extras[f] = readFileSync(join(root, 'docs', f), 'utf8');
+  const site = buildDocs({
+    readme: readFileSync(join(root, 'README.md'), 'utf8'),
+    extras,
+    packageVersion: pkg.version,
+    date: new Date().toISOString().slice(0, 10),
+  });
+  for (const p of site.pages) {
+    mkdirSync(dirname(join(out, p.path)), { recursive: true });
+    writeFileSync(join(out, p.path), p.html);
+    writeFileSync(join(out, p.path.replace(/\.html$/, '.md')), p.markdown);
+  }
+  writeFileSync(join(out, 'llms.txt'), buildLlmsTxt(site, pkg.version));
+  writeFileSync(join(out, 'llms-full.txt'), buildLlmsFull(site));
+  return site.pages.map((p) => p.path);
+}
+
+/** A placeholder for the Real-world results page, which CI replaces when a corpus report exists, so the navigation never dead-ends. */
+function writeCorpusStub() {
+  writeFileSync(
+    join(out, 'corpus.html'),
+    page({
+      title: 'Real-world results · E-invoice to JSON',
+      description: 'The converter run over public e-invoice sample collections: how many files convert, how fast, and where it warns.',
+      path: 'corpus.html',
+      current: 'realworld',
+      body: `<div class="doc-main wide"><h1>Real-world results</h1><p>No corpus report is part of this build. The page is rendered from the latest corpus run when the site is published from <code>main</code>. Until then, see the <a href="conformance.html">conformance checklist</a> for what each format is tested with.</p></div>`,
+    }),
+  );
+}
+
+function writeDiscovery(docPaths: string[]) {
+  const date = new Date().toISOString().slice(0, 10);
+  const pages = [
+    'index.html',
+    ...docPaths,
+    'conformance.html',
+    'corpus.html',
+    'api.html',
+    'deliverables.html',
+    'eval.html',
+    'problems/index.html',
+  ];
+  writeFileSync(join(out, 'sitemap.xml'), buildSitemap(pages, date));
+  writeFileSync(join(out, 'robots.txt'), robotsTxt());
 }
