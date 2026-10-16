@@ -78,6 +78,11 @@ import { href } from '../lib/nav';
     --scalar-color-orange: var(--warn);
     --scalar-color-blue: var(--ink);
   }
+  /* Scalar marks <body> with its own light-mode or dark-mode class and colours it; the site's theme stays in charge. */
+  body:is(.light-mode, .dark-mode) {
+    background-color: var(--sl-color-bg);
+    color: var(--sl-color-text);
+  }
   .main-pane:has(.api-reference) .sl-container {
     max-width: none;
   }

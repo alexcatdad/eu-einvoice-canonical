@@ -32,7 +32,9 @@ const translated = isTranslated(routeOf(Astro.url.pathname));
   }
   @media (max-width: 24rem) {
     .site-title {
-      font-size: 1rem;
+      gap: var(--space-1);
+      font-size: 0.9375rem;
+      font-variation-settings: 'wdth' 100;
     }
   }
 </style>

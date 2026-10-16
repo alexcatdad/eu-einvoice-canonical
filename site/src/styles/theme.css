@@ -188,22 +188,25 @@ h1,
 }
 
 /* Docs: the content column is a white original on the desk. */
-.main-pane .content-panel:has(.sl-markdown-content) {
+:root[data-has-sidebar] .main-pane .content-panel {
   background: var(--paper);
   border-inline: 1px solid var(--rule);
 }
-.main-pane .content-panel:first-child {
+:root[data-has-sidebar] .main-pane .content-panel:first-child {
   border-top: 1px solid var(--rule);
 }
-.main-pane .content-panel:last-child {
+:root[data-has-sidebar] .main-pane .content-panel:last-child {
   border-bottom: 1px solid var(--rule);
 }
 @media (min-width: 50rem) {
   .main-frame .main-pane {
     padding: var(--space-5) var(--space-5) var(--space-7);
   }
-  .main-pane .content-panel:first-child {
+  :root[data-has-sidebar] .main-pane .content-panel:first-child {
     border-radius: var(--r) var(--r) 0 0;
+  }
+  :root[data-has-sidebar] .main-pane .content-panel:last-child {
+    border-radius: 0 0 var(--r) var(--r);
   }
 }
 .sl-markdown-content a:not(:where(.not-content *)) {
@@ -232,8 +235,10 @@ starlight-theme-select select,
   min-height: var(--control-h);
 }
 site-search button[data-open-modal] {
+  min-width: var(--control-h);
   min-height: var(--control-h);
-  border-color: var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: var(--r);
   background: var(--paper);
   color: var(--muted);
 }
@@ -304,6 +309,11 @@ site-search button[data-open-modal] {
   background: var(--paper);
   border: 1px solid var(--rule);
   border-radius: var(--r);
+}
+.table-scroll > table {
+  /* Starlight lets a content table scroll by itself; inside .table-scroll the focusable box scrolls instead. */
+  display: table;
+  overflow: visible;
 }
 .table-scroll:focus-visible {
   outline: 3px solid var(--ink);

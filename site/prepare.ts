@@ -47,7 +47,9 @@ const write = (path: string, text: string) => {
   writeFileSync(path, text);
 };
 
-// Clean the outputs, never the fetched corpus report.
+// Clean the outputs, never the fetched corpus report. Astro's content cache goes too: it keeps rendered pages across
+// config changes (code block plugins, for one).
+rmSync(join(site, 'node_modules/.astro'), { recursive: true, force: true });
 rmSync(content, { recursive: true, force: true });
 rmSync(pub, { recursive: true, force: true });
 mkdirSync(gen, { recursive: true });

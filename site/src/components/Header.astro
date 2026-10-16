@@ -47,7 +47,10 @@ const items = NAV.map((n) => ({ ...n, current: n.match(route) }));
     <div class="wide-only"><ThemeSelect /></div>
     <a class="github wide-only" href={REPO_URL} {...i18n('nav.github')}>{text('nav.github')}</a>
     <details class="site-menu">
-      <summary>Menu</summary>
+      <summary>
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+        <span class="menu-label">Menu</span>
+      </summary>
       <div class="site-menu-panel">
         <nav aria-label={text('nav.label')}>
           <ul>
@@ -70,6 +73,21 @@ const items = NAV.map((n) => ({ ...n, current: n.match(route) }));
 </div>
 
 <script>
+  // The navigation folds into the menu whenever it does not fit on the row, whatever the language and the width (the
+  // labels are three times longer in Dutch than in English). The 64rem media query below is the fallback without script.
+  for (const header of document.querySelectorAll<HTMLElement>('.header')) {
+    const list = header.querySelector<HTMLElement>('.site-nav ul');
+    if (!list) continue;
+    const fit = () => {
+      header.removeAttribute('data-compact');
+      const nav = list.parentElement!;
+      if (getComputedStyle(nav).display === 'none') return;
+      if (list.scrollWidth > nav.clientWidth + 1 || header.scrollWidth > header.clientWidth + 1) header.setAttribute('data-compact', '');
+    };
+    new ResizeObserver(fit).observe(header);
+    new MutationObserver(fit).observe(list, { subtree: true, childList: true, characterData: true });
+    fit();
+  }
   // The phone menu closes on Escape and on a click outside it, like a menu would.
   for (const menu of document.querySelectorAll<HTMLDetailsElement>('details.site-menu')) {
     document.addEventListener('click', (e) => {
@@ -99,6 +117,10 @@ const items = NAV.map((n) => ({ ...n, current: n.match(route) }));
   .site-nav {
     flex: 1 1 auto;
     min-width: 0;
+  }
+  .site-nav ul {
+    flex-wrap: nowrap;
+    white-space: nowrap;
   }
   .site-nav ul,
   .site-menu ul {
@@ -179,6 +201,14 @@ const items = NAV.map((n) => ({ ...n, current: n.match(route) }));
     cursor: pointer;
     list-style: none;
   }
+  .site-menu summary svg {
+    display: none;
+  }
+  @media (max-width: 40rem) {
+    .site-menu summary svg {
+      display: block;
+    }
+  }
   .site-menu summary::-webkit-details-marker {
     display: none;
   }
@@ -207,6 +237,13 @@ const items = NAV.map((n) => ({ ...n, current: n.match(route) }));
     font-weight: 700;
     border-bottom-color: var(--pink-edge);
   }
+  .header[data-compact] .site-nav,
+  .header[data-compact] .wide-only {
+    display: none;
+  }
+  .header[data-compact] .site-menu {
+    display: block;
+  }
   @media (max-width: 64rem) {
     .site-nav,
     .wide-only {
@@ -216,13 +253,27 @@ const items = NAV.map((n) => ({ ...n, current: n.match(route) }));
       display: block;
     }
   }
-  /* Phones: the language select is drawn as a short code (EN, DE...) over a transparent native select. */
+  /* Phones: the language select is drawn as a short code (EN, DE...) over a transparent native select, and the menu as
+     an icon, so the row fits at 320px. */
   @media (max-width: 40rem) {
     .header {
       gap: var(--space-2);
     }
     .right-group {
-      gap: var(--space-2);
+      gap: var(--space-1);
+    }
+    .site-menu summary {
+      justify-content: center;
+      min-width: var(--control-h);
+      padding: 0;
+    }
+    .menu-label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
     }
     .lang label {
       position: absolute;

@@ -915,3 +915,27 @@ pre.json {
 .slot-hint {
   display: block;
 }
+.field select {
+  width: 100%;
+  max-width: 100%;
+}
+.chips button {
+  white-space: normal;
+}
+/* The title sits right on top of the privacy note, as on a form's letterhead. */
+.main-pane:has(.converter) .content-panel:first-child {
+  padding-bottom: 0;
+}
+.main-pane:has(.converter) .content-panel + .content-panel {
+  padding-top: var(--space-3);
+}
+.out {
+  scroll-margin-top: calc(var(--sl-nav-height) + var(--space-4));
+}
+/* Four sheet tabs on one row down to 320px. */
+@media (max-width: 400px) {
+  .view-tab {
+    padding-inline: var(--space-2);
+    font-size: 0.9375rem;
+  }
+}

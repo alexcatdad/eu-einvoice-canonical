@@ -62,14 +62,7 @@ export default defineConfig({
         { tag: 'link', attrs: { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: true } },
         { tag: 'link', attrs: { rel: 'stylesheet', href: FONTS } },
       ],
-      expressiveCode: {
-        themes: ['github-dark-default', 'github-light-default'],
-        styleOverrides: {
-          codeFontFamily: "'IBM Plex Mono', ui-monospace, monospace",
-          uiFontFamily: "'Archivo', system-ui, sans-serif",
-          borderRadius: '3px',
-        },
-      },
+      // Code blocks: see ec.config.mjs.
       // Edit links come from each page's frontmatter: README.md, docs/*.md or src/formats.ts.
       editLink: { baseUrl: `${REPO}/blob/main/` },
       credits: false,

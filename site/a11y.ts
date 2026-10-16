@@ -47,8 +47,11 @@ const ALLOWED_HOSTS = new Set(['localhost', 'fonts.googleapis.com', 'fonts.gstat
 const problems: string[] = [];
 
 async function axe(page: Page, label: string) {
-  // Scalar's own reference markup is a third-party component; the page around it is checked.
-  const result = await new AxeBuilder({ page }).exclude('[data-scalar-client]').analyze();
+  // Scalar's own reference markup is a third-party component; the page around it is checked. Scalar renders a <main>
+  // of its own inside the page's, so the two landmark rules about <main> cannot pass there.
+  let builder = new AxeBuilder({ page }).exclude('[data-scalar-client]');
+  if (label.startsWith('api-reference/')) builder = builder.disableRules(['landmark-main-is-top-level', 'landmark-no-duplicate-main']);
+  const result = await builder.analyze();
   for (const v of result.violations)
     problems.push(
       `${label}: ${v.id} (${v.impact}) ${v.help}: ${v.nodes
@@ -61,6 +64,24 @@ async function axe(page: Page, label: string) {
 async function noSideways(page: Page, label: string) {
   const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   if (over > 0) problems.push(`${label}: scrolls sideways by ${over}px`);
+  // The page clips sideways overflow (overflow-x: clip), so also look for anything that sticks out and is cut off,
+  // leaving out what sits in a box that scrolls on its own (tables, code).
+  const cut = await page.evaluate(() => {
+    const width = document.documentElement.clientWidth;
+    const inScroller = (el: Element) => {
+      for (let p = el.parentElement; p && p !== document.body; p = p.parentElement)
+        if (/(auto|scroll|hidden|clip)/.test(getComputedStyle(p).overflowX)) return true;
+      return false;
+    };
+    return [...document.body.querySelectorAll('*')]
+      .filter((el) => {
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && r.right > width + 1 && getComputedStyle(el).visibility !== 'hidden' && !inScroller(el);
+      })
+      .slice(0, 5)
+      .map((el) => `${el.tagName.toLowerCase()}.${[...el.classList].join('.')}`);
+  });
+  if (cut.length) problems.push(`${label}: cut off at the right edge: ${cut.join(', ')}`);
 }
 
 function watchRequests(page: Page, label: string) {

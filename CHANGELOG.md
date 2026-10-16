@@ -28,6 +28,8 @@ This file was reconstructed from the git history. Numbers in brackets are pull r
 
 ### Changed
 
+- The site is an Astro build: Starlight docs generated from the README (with Pagefind search, the TypeScript API from starlight-typedoc and the HTTP API from a self-hosted Scalar), the converter as a React island on the library's `<Invoice>` component and shadcn/ui, old page addresses redirected, and an accessibility gate in CI
+
 - Supply-chain hardening: pinned actions, least-privilege permissions, attestations, SBOM and OpenSSF Scorecard [#37]
 - Dependency updates for GitHub Actions and the Docker base image [#38, #40]
 - Performance speed-ups found by the benchmarks [#36]

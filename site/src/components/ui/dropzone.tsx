@@ -30,8 +30,10 @@ export function Dropzone({
   });
   // react-dropzone hides its input with display: none; this one stays focusable and is hidden visually only.
   const { style: _hidden, ...input } = getInputProps({ accept }) as React.InputHTMLAttributes<HTMLInputElement>;
+  // Its root gets role="presentation", which a <label> may not carry; the label keeps its own semantics.
+  const { role: _presentation, ...root } = getRootProps({ className: cn('slot', isDragActive && 'dragging', className) });
   return (
-    <label {...getRootProps({ className: cn('slot', isDragActive && 'dragging', className) })}>
+    <label {...root}>
       <input {...input} className="visually-hidden" />
       {children}
     </label>
