@@ -303,8 +303,6 @@
   "repos/phive-rules/phive-rules-peppol-pint/src/test/resources/external/test-files/pint-aunz/1.1.3/billing/PINT_AUNZ_negative_invoice.xml": [
     "pint-aunz"
   ],
-  "repos/phive-rules/phive-rules-pint-eu/src/test/resources/external/test-files/pint-eu/1.0.0/sales-order-example.xml": ["pint-eu"],
-  "repos/phive-rules/phive-rules-pint-eu/src/test/resources/external/test-files/pint-eu/1.0.1/vat-category-O.xml": ["pint-eu"],
   "repos/phive-rules/phive-rules-peppol-pint/src/test/resources/external/test-files/pint-jp/1.0.2/Japan PINT Invoice UBL Example1-minimum.xml": [
     "pint-jp"
   ],

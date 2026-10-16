@@ -16,6 +16,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      actions: write # to start CI on the new branch: pushes made with GITHUB_TOKEN trigger no workflows
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -29,6 +30,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git diff --quiet -- trust/eu-trust-snapshot.json && exit 0
+          # fetchedAt changes on every run; only open a pull request when the lists themselves changed.
+          if [ "$(git show HEAD:trust/eu-trust-snapshot.json | jq -cS 'del(.fetchedAt)')" = "$(jq -cS 'del(.fetchedAt)' trust/eu-trust-snapshot.json)" ]; then
+            echo 'Only fetchedAt changed; nothing to propose.'
+            exit 0
+          fi
           branch="trust-lists/$(date -u +%Y-%m-%d)"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -37,3 +43,4 @@ jobs:
           git commit -m "Refresh the EU trust-list snapshot"
           git push origin "$branch"
           gh pr create --title "Refresh the EU trust-list snapshot" --body "Fetched and signature-verified by the trust-lists workflow."
+          gh workflow run ci.yml --ref "$branch"
