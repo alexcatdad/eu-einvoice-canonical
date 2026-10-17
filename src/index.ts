@@ -36,6 +36,18 @@ export {
 export * as matching from './matching/index.js';
 export { IMPLEMENTED_FAMILIES, NotImplementedError, ParseError } from './parsers/index.js';
 export {
+  ANNOTATION_KINDS,
+  AnnotationInputError,
+  type AnnotationIssue,
+  type AnnotationValidation,
+  buildLineAnnotationInput,
+  LINE_ANNOTATION_SCHEMA,
+  type LineAnnotationIdentity,
+  type LineAnnotationInput,
+  type LineAnnotations,
+  validateLineAnnotations,
+} from './relations/annotations.js';
+export {
   applyModelLabels,
   buildModelInput,
   buildPrompt,

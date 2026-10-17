@@ -14,6 +14,7 @@ import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, write
 import { dirname, join } from 'node:path';
 import pkg from '../package.json' with { type: 'json' };
 import { type CorpusReport, describeReport, linkHtml, renderHtml } from '../scripts/corpus-lib.js';
+import { ANNOTATION_ASSET_PATH, ANNOTATION_ASSETS } from './annotation-assets.js';
 import { buildDocs, buildLlmsFull, buildLlmsTxt, robotsTxt, sidebar } from './docs.js';
 import { MOVED } from './site.js';
 
@@ -100,6 +101,12 @@ write(join(gen, 'redirects.json'), `${JSON.stringify(redirects, null, 2)}\n`);
 // ---------------------------------------------------------------------------
 // Static files
 // ---------------------------------------------------------------------------
+
+for (const file of ANNOTATION_ASSETS) {
+  const destination = join(pub, ANNOTATION_ASSET_PATH, file);
+  mkdirSync(dirname(destination), { recursive: true });
+  cpSync(join(root, ANNOTATION_ASSET_PATH, file), destination);
+}
 
 for (const s of SAMPLE_FILES) cpSync(join(root, 'test/fixtures', s), join(pub, 'samples', s));
 cpSync(join(site, 'favicon.svg'), join(pub, 'favicon.svg'));

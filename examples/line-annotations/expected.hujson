@@ -1,0 +1,10 @@
+// Saved synthetic expectation for the offline demo, not a live model response.
+{
+  "id": "H1002", // Preserve the source invoice ID.
+  "lines": [
+    { "id": "7", "kind": "goods", "targets": [] },
+    { "id": "19", "kind": "goods", "targets": [] },
+    // Commissioning is separately supplied labour for BOTH units; it stays a separate line.
+    { "id": "31", "kind": "labour", "targets": ["7", "19"] },
+  ],
+}

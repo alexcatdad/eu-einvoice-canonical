@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import pkg from '../package.json' with { type: 'json' };
+import { ANNOTATION_ASSET_PATH, ANNOTATION_ASSETS } from '../site/annotation-assets.js';
 import { converts, UNPARSED_FORMATS } from '../site/coverage.js';
 import { buildDocs, buildLlmsFull, buildLlmsTxt, PAGES, robotsTxt, sidebar, slugify } from '../site/docs.js';
 import { BASE, MOVED, route, SITE_URL } from '../site/site.js';
@@ -26,6 +27,7 @@ const SITE_ROUTES = [
   'api/',
   'llms.txt',
   'llms-full.txt',
+  ...ANNOTATION_ASSETS.map((file) => `${ANNOTATION_ASSET_PATH}/${file}`),
 ];
 
 describe('docs pages from the README', () => {

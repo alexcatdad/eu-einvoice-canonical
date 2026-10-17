@@ -1,0 +1,10 @@
+{
+  // These settings belong to this model example, not the canonical library.
+  "model": "mistral-medium-3.5-128b",
+  "reasoning_effort": "high",
+  "temperature": 0.7,
+  "top_p": 0.95,
+  "max_completion_tokens": 16384,
+  // Comments and trailing commas are removed with Tailscale HuJSON before use.
+  "includeExamples": true,
+}

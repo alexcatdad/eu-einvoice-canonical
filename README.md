@@ -341,6 +341,8 @@ relations: [
 
 An optional language model can label what the rules leave as plain items (freight, labour, discount in Swedish and other languages) and propose links. It runs in the browser only (`site/model.ts`: WebLLM with Qwen3, or Chrome's Gemini Nano), is held to a JSON schema, never overrides a rule and marks everything `method: 'model'`, `confidence: 'review'`. `applyModelLabels(invoice, labeller)` merges its output. The [evaluation page](https://alexcatdad.github.io/eu-einvoice-canonical/eval/) (`site/eval.ts`) scores the rules and the models on the labelled set in `src/relations/labelled.ts` and records accuracy, time, download size and memory.
 
+For a separate, provider-independent consumer example, see [canonical line annotations](docs/LINE-ANNOTATIONS.md). It uses HuJSON for human-edited assets, standard JSON for model requests, and strict validation of complete annotation responses. It preserves the source invoice and represents unresolved roles and subjects separately; it does not replace the existing relation rules.
+
 ## JSON Schema
 
 Consumers that are not written in TypeScript can validate and generate code from the output with three JSON Schemas (draft 2020-12), generated from the types and published with the site:
