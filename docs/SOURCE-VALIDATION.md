@@ -94,7 +94,7 @@ The Saxon browser runtime is unmodified. Its worker DOM host is an experimental 
 
 Compiled stylesheets cross the worker boundary as JSON text and are parsed inside the engine worker. This avoids a reproduced Chromium structured-clone failure on deeply nested BIS 2 stylesheet objects; stylesheet contents and validation rules are unchanged.
 
-The lightweight startup example does not automatically load the engines. User-loaded documents and selected examples request validation; the Checks panel also provides an explicit run action. A browser pass has the same source scope as the library, not a broader compliance claim.
+The lightweight startup example does not automatically load the engines. User-loaded documents and selected examples request validation; changing the Validation rules selector reruns the current document. A browser pass has the same source scope as the library, not a broader compliance claim.
 
 ## Updating a suite
 

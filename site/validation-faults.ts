@@ -6,13 +6,18 @@ const base = process.env.VALIDATION_SITE_URL ?? 'http://localhost:4291/eu-einvoi
 const fixture = async (name: string) => Bun.file(new URL(`../test/fixtures/${name}`, import.meta.url)).text();
 const browser = await chromium.launch();
 try {
-  for (const fault of ['startup-race', 'manifest', 'wasm', 'cancel', 'budget', 'race']) {
+  for (const fault of ['coordinator', 'startup-race', 'manifest', 'wasm', 'cancel', 'budget', 'race']) {
     const context = await browser.newContext();
     let intercepted = 0;
     let release: (() => void) | undefined;
     const blocked = new Promise<void>((resolve) => {
       release = resolve;
     });
+    if (fault === 'coordinator')
+      await context.route('**/validation/runtime/validator.js', async (route) => {
+        intercepted++;
+        await route.abort();
+      });
     if (fault === 'startup-race')
       await context.route('**/samples/peppol-bis3-invoice.xml', async (route) => {
         intercepted++;
@@ -41,7 +46,9 @@ try {
       await page.locator('#pasted').fill(await fixture(fault === 'startup-race' ? 'xrechnung-cii.xml' : 'peppol-bis3-invoice.xml'));
       await page.locator('.paste-actions button').last().click();
       await page.locator('.validation-progress').waitFor();
-      if (fault === 'startup-race') {
+      if (fault === 'coordinator') {
+        await page.waitForFunction(() => !document.querySelector('.validation-progress button'));
+      } else if (fault === 'startup-race') {
         await page.waitForFunction(() => !document.querySelector('.validation-progress'), undefined, { timeout: 15000 });
         const response = page.waitForResponse('**/samples/peppol-bis3-invoice.xml');
         release?.();
@@ -74,6 +81,21 @@ try {
         assert.match(await page.locator('.checks').innerText(), fault === 'manifest' ? /manifest does not match/ : /Validator unavailable/);
       }
       await page.waitForFunction(() => !document.querySelector('.validation-progress button'));
+      if (['coordinator', 'cancel', 'budget'].includes(fault)) {
+        await page.locator('.t-json').click();
+        const invoice = JSON.parse(await page.locator('pre.json').innerText());
+        assert.equal(invoice.source.validation.result, 'incomplete', `${fault}: failure must survive canonical export`);
+        assert.equal(invoice.source.validation.completeness, 'incomplete');
+        assert.equal(invoice.source.validation.schema, 'unavailable');
+        assert.equal(invoice.source.validation.reasons.schema, 'unavailable');
+        await page.getByRole('button', { name: 'Full result', exact: true }).click();
+        const outcome = JSON.parse(await page.locator('pre.json').innerText());
+        assert.equal(outcome.validation.result, 'incomplete', `${fault}: failure must survive outcome export`);
+        assert.equal(outcome.validation.completeness, 'incomplete');
+        assert.ok(outcome.validation.findings.some((finding: { message: string }) => finding.message.includes('Validator unavailable')));
+        await page.locator('.t-checks').click();
+        assert.match(await page.locator('.checks').innerText(), /Validation coverage: incomplete/);
+      }
       // UI completion and Playwright's worker-close notification are separate asynchronous signals.
       await Promise.all(
         page.workers().map((worker) =>

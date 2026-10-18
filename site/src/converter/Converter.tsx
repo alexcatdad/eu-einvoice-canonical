@@ -20,6 +20,7 @@ import {
   WriterError,
 } from '../../../src/index.ts';
 import { Invoice } from '../../../src/react/index.ts';
+import { unavailableSummary } from '../../../src/validation/plan';
 import { shortName } from '../../coverage';
 import { currentLang, initLanguage, initSwitcher, t } from '../../i18n';
 import { Button } from '../components/ui/button';
@@ -159,6 +160,30 @@ export default function Converter() {
           void (async () => {
             setValidationBusy(true);
             setValidationState(t('val.running'));
+            const finishPending = (reason: string) => {
+              if (generation !== runId.current) return;
+              for (const outcome of result.outcomes) {
+                if (outcome.status === 'not-an-invoice' || outcome.validation) continue;
+                outcome.validation = unavailableSummary(outcome.detection, reason, suite);
+                if (outcome.status === 'ok')
+                  for (const invoice of outcome.invoices) {
+                    const before = invoice.source.validation;
+                    invoice.source.validation = structuredClone(outcome.validation);
+                    if (before) {
+                      invoice.source.validation.signature = before.signature;
+                      invoice.source.validation.findings.push(...before.findings.filter((finding) => finding.layer === 'signature'));
+                    }
+                  }
+              }
+              setShown({ result, filename, items, isExample });
+            };
+            let currentJob: { cancel: () => void } | undefined;
+            validationJob.current = {
+              cancel: () => {
+                currentJob?.cancel();
+                finishPending('Local validation cancelled');
+              },
+            };
             try {
               const [{ startValidation }, extracted] = await Promise.all([import('../../validation/client'), unwrap(bytes, filename)]);
               for (let n = 0; n < result.outcomes.length; n++) {
@@ -166,7 +191,7 @@ export default function Converter() {
                 const outcome = result.outcomes[n]!;
                 if (outcome.status === 'not-an-invoice') continue;
                 const job = startValidation(extracted.payloads[n]!.xml, outcome.detection, BASE, undefined, suite);
-                validationJob.current = job;
+                currentJob = job;
                 const summary = await job.promise;
                 if (generation !== runId.current) return;
                 outcome.validation = summary;
@@ -183,7 +208,11 @@ export default function Converter() {
               }
               setValidationState('');
             } catch (error) {
-              if (generation === runId.current) setValidationState(error instanceof Error ? error.message : String(error));
+              if (generation === runId.current) {
+                const reason = error instanceof Error ? error.message : String(error);
+                finishPending(reason);
+                setValidationState(reason);
+              }
             } finally {
               if (generation === runId.current) {
                 validationJob.current = undefined;
@@ -493,8 +522,8 @@ export default function Converter() {
                 <Button
                   variant="ghost"
                   onClick={() => {
-                    ++runId.current;
                     validationJob.current?.cancel();
+                    ++runId.current;
                     validationJob.current = undefined;
                     setValidationBusy(false);
                     setValidationState(t('val.cancelled'));
