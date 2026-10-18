@@ -1,6 +1,6 @@
 /** One reviewed inventory controls which local validation artifacts may be distributed. */
 import { createHash } from 'node:crypto';
-import { cpSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve, sep } from 'node:path';
 
 interface DistributionDecision {
@@ -138,7 +138,19 @@ export function prepareCliSidecars(root: string, output: string): void {
   const inputs = ['validation', 'src', 'scripts', 'schemas', 'trust', 'node_modules'].map((name) => physicalPath(join(root, name)));
   if (contains(target, project) || inputs.some((input) => contains(input, target) || contains(target, input)))
     throw new Error('CLI output overlaps project inputs');
-  for (const name of ['validation', 'runtime', 'node_modules']) rmSync(join(target, name), { recursive: true, force: true });
+  const sidecars = ['validation', 'runtime', 'node_modules'];
+  const marker = join(target, '.einvoice-cli-output');
+  const ownership = 'eu-einvoice-canonical CLI sidecars v1\n';
+  const marked = lstatSync(marker, { throwIfNoEntry: false });
+  if (marked) {
+    if (!marked.isFile() || readFileSync(marker, 'utf8') !== ownership) throw new Error('Invalid CLI output ownership marker');
+  } else {
+    if (sidecars.some((name) => lstatSync(join(target, name), { throwIfNoEntry: false })))
+      throw new Error('CLI output contains unowned sidecars; choose a fresh output directory');
+    mkdirSync(target, { recursive: true });
+    writeFileSync(marker, ownership, { flag: 'wx' });
+  }
+  for (const name of sidecars) rmSync(join(target, name), { recursive: true, force: true });
 }
 
 /** npm's explicit files list is reviewed in Git; prepack checks it and never rewrites it. */

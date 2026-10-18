@@ -10,18 +10,22 @@ const temp = mkdtempSync(join(tmpdir(), 'einvoice-cli-package-'));
 let binary = process.argv[2] ? resolve(process.argv[2]) : join(temp, 'build', process.platform === 'win32' ? 'einvoice.exe' : 'einvoice');
 try {
   if (!process.argv[2]) {
-    // Simulate reusing a multi-platform release directory from an older distribution.
+    const build = () => {
+      const result = Bun.spawnSync(['bun', 'scripts/build-cli.ts', '--outfile', binary], {
+        cwd: root,
+        stdout: 'inherit',
+        stderr: 'inherit',
+      });
+      assert.equal(result.exitCode, 0, 'CLI package build failed');
+    };
+    build();
+    // Reuse a builder-owned multi-platform directory with stale assets from a prior build.
     for (const directory of ['validation/licenses', 'runtime/licenses', 'node_modules/stale-package']) {
       mkdirSync(join(dirname(binary), directory), { recursive: true });
       writeFileSync(join(dirname(binary), directory, 'excluded-old-file'), 'stale sidecar');
     }
     writeFileSync(join(dirname(binary), 'einvoice-other-platform'), 'other platform executable');
-    const build = Bun.spawnSync(['bun', 'scripts/build-cli.ts', '--outfile', binary], {
-      cwd: root,
-      stdout: 'inherit',
-      stderr: 'inherit',
-    });
-    assert.equal(build.exitCode, 0, 'CLI package build failed');
+    build();
     for (const directory of ['validation/licenses', 'runtime/licenses', 'node_modules/stale-package'])
       assert.equal(existsSync(join(dirname(binary), directory, 'excluded-old-file')), false, `stale ${directory} survived rebuild`);
     assert.equal(readFileSync(join(dirname(binary), 'einvoice-other-platform'), 'utf8'), 'other platform executable');

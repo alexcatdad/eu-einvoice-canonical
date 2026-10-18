@@ -94,7 +94,7 @@ export function finishSummary(summary: ValidationSummary): ValidationSummary {
 
 /** Conservative acceptance for requested source validation; old or absent receipts cannot establish completeness. */
 export function validationPassed(summary?: ValidationSummary): boolean {
-  return summary?.result === 'valid' && summary.completeness === 'complete';
+  return summary?.result === 'valid' && summary.completeness === 'complete' && summary.receipt?.policy === 'source-conformance-v1';
 }
 
 export function plannedSummary(

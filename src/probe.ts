@@ -86,7 +86,7 @@ class Stop extends Error {}
  */
 let last: { xml: string; probe: XmlProbe | null } | undefined;
 
-/** Drops the kept result so an idle process does not hold on to the last document; `convert` and `inspect` call it when done. */
+/** Drops the kept result so an idle process does not hold on to the last document; public processing entry points call it when done. */
 export function clearProbeCache(): void {
   last = undefined;
 }

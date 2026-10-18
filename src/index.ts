@@ -81,6 +81,8 @@ export async function validateSource(payload: { xml: string }, options: Validate
     return await (await loadValidation()).validate(payload, detection, options);
   } catch (error) {
     return unavailableSummary(detection, error instanceof Error ? error.message : String(error), options.suite, options.scope);
+  } finally {
+    clearProbeCache();
   }
 }
 export * as values from './values.js';

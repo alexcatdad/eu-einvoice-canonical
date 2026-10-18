@@ -12,7 +12,6 @@
 import { SaxesParser, type SaxesTagNS } from 'saxes';
 import type { CheckStatus, ValidationSummary } from '../canonical.js';
 import type { Detection } from '../detect.js';
-import { sha256Hex } from '../hash.js';
 import { BundleReaderFor, type BundleSource, defaultReader } from './bundles.js';
 import { unsupportedCfdiExtension } from './cfdi.js';
 import { emptySummary, finishSummary, type Layer, planFor, plannedSummary, type ValidationSuite } from './plan.js';
@@ -247,7 +246,7 @@ export async function validate(payload: { xml: string }, detection: Detection, o
           summary.receipt!.artifacts[layer] = {
             id,
             version: manifest.version,
-            manifestSha256: await sha256Hex(new TextEncoder().encode(JSON.stringify(manifest))),
+            manifestSha256: await bundles.manifestSha256(id),
           };
           const findings = await runners[layer](id);
           return { layer, status: findings.some((f) => f.severity === 'fatal') ? 'failed' : 'passed', findings };

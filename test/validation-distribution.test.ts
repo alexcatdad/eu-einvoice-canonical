@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { assertNpmBundleFiles, copyPublishedBundles, prepareCliSidecars } from '../scripts/validation-distribution.js';
 
 const temporary: string[] = [];
@@ -143,6 +144,7 @@ test('npm cannot omit the license, notice or distribution metadata', () => {
 test('reusing a CLI output removes stale sidecars while preserving binaries and local sources', () => {
   const root = fixture();
   const output = join(root, 'dist/release');
+  prepareCliSidecars(root, output);
   for (const directory of ['validation/licenses', 'runtime/licenses', 'node_modules/stale-package']) {
     mkdirSync(join(output, directory), { recursive: true });
     writeFileSync(join(output, directory, 'held.txt'), 'old excluded bytes');
@@ -152,6 +154,56 @@ test('reusing a CLI output removes stale sidecars while preserving binaries and 
   for (const directory of ['validation', 'runtime', 'node_modules']) expect(existsSync(join(output, directory))).toBe(false);
   expect(readFileSync(join(output, 'einvoice-other-platform'), 'utf8')).toBe('existing binary');
   expect(readFileSync(join(root, 'validation/bundles/held/source.sch'), 'utf8')).toBe('held source');
+});
+
+test('CLI output initialization refuses unowned sidecars before deleting any shared files', () => {
+  const root = fixture();
+  const output = join(root, 'shared-output');
+  for (const directory of ['validation', 'runtime', 'node_modules']) {
+    mkdirSync(join(output, directory), { recursive: true });
+    writeFileSync(join(output, directory, 'keep.txt'), `unrelated ${directory}`);
+  }
+  expect(() => prepareCliSidecars(root, output)).toThrow('CLI output contains unowned sidecars');
+  for (const directory of ['validation', 'runtime', 'node_modules'])
+    expect(readFileSync(join(output, directory, 'keep.txt'), 'utf8')).toBe(`unrelated ${directory}`);
+});
+
+test('the public CLI builder rejects a shared output before compilation or replacement', () => {
+  const output = mkdtempSync(join(tmpdir(), 'cli-shared-output-'));
+  temporary.push(output);
+  mkdirSync(join(output, 'runtime'));
+  writeFileSync(join(output, 'runtime/keep.txt'), 'another application runtime');
+  writeFileSync(join(output, 'einvoice'), 'existing executable');
+  const built = Bun.spawnSync([
+    'bun',
+    fileURLToPath(new URL('../scripts/build-cli.ts', import.meta.url)),
+    '--outfile',
+    join(output, 'einvoice'),
+  ]);
+  expect(built.exitCode).not.toBe(0);
+  expect(new TextDecoder().decode(built.stderr)).toContain('CLI output contains unowned sidecars');
+  expect(readFileSync(join(output, 'runtime/keep.txt'), 'utf8')).toBe('another application runtime');
+  expect(readFileSync(join(output, 'einvoice'), 'utf8')).toBe('existing executable');
+});
+
+test('a damaged ownership marker cannot authorize sidecar deletion', () => {
+  const root = fixture();
+  const output = join(root, 'dist/release');
+  prepareCliSidecars(root, output);
+  mkdirSync(join(output, 'runtime'));
+  writeFileSync(join(output, 'runtime/keep.txt'), 'previous runtime');
+  writeFileSync(join(output, '.einvoice-cli-output'), 'unknown owner');
+  expect(() => prepareCliSidecars(root, output)).toThrow('Invalid CLI output ownership marker');
+  expect(readFileSync(join(output, 'runtime/keep.txt'), 'utf8')).toBe('previous runtime');
+});
+
+test('dangling shared sidecar links are rejected without changing the output directory', () => {
+  const root = fixture();
+  const output = join(root, 'shared-output');
+  mkdirSync(output);
+  symlinkSync(join(root, 'missing-runtime'), join(output, 'runtime'), 'dir');
+  expect(() => prepareCliSidecars(root, output)).toThrow('CLI output contains unowned sidecars');
+  expect(existsSync(join(output, '.einvoice-cli-output'))).toBe(false);
 });
 
 test('CLI sidecar cleanup cannot target the project or its source directories', () => {
