@@ -75,6 +75,8 @@ if (!checked.ok) {
 
 This is a deliberately limited reference: ordinary type-380 invoices with nonempty, unique top-level line IDs. It rejects credit notes, corrective documents, preceding-invoice references, nested lines, national extensions, other taxes and withholdings. A text-only line with a substituted zero is accepted only when its `TEXT_LINE` warning identifies the canonical amount field and that value is marked `defaulted`; older untraced output remains rejected. The source line ID `invoice` is reserved by the compact target syntax and is rejected. These are example boundaries, not limitations of the library's conversion support. Unsupported inputs need an explicit policy before extending the example.
 
+Warnings are forwarded only when their canonical `field` belongs to the selected input. Warnings about omitted fields, or without a canonical field reference, remain on the original invoice; their messages can contain payment, party or attachment details and are not sent by this consumer.
+
 ## Canonical evidence metadata
 
 `source.valueOrigins` is an optional map from canonical JSON Pointers to origin states. It is available without enabling XML provenance. Values and line order remain unchanged.

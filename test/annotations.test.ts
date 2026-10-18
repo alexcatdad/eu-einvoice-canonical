@@ -34,6 +34,18 @@ const output = (): LineAnnotations => ({
 });
 
 describe('canonical field selection', () => {
+  test('does not disclose warnings about omitted or unidentified fields', () => {
+    const doc = invoice();
+    doc.source.warnings = [
+      { code: 'SF-OCR-CONFLICT', message: 'Payment references PRIVATE-REF-1 and PRIVATE-REF-2 conflict' },
+      { code: 'EE-ATTACHMENT-MIME', message: 'Attachment PRIVATE-FILE.pdf has no MIME type', field: '/attachments/0/filename' },
+      { code: 'SOURCE-NOTE', message: 'Quantity was normalized', field: '/lines/0/quantity' },
+    ];
+    const input = buildLineAnnotationInput(doc);
+    expect(input.source.warnings).toEqual([{ code: 'SOURCE-NOTE', message: 'Quantity was normalized', field: '/lines/0/quantity' }]);
+    expect(JSON.stringify(input)).not.toContain('PRIVATE-');
+    expect(doc.source.warnings).toHaveLength(3);
+  });
   test('preserves separate text, identifiers, real header names, amounts and source evidence', () => {
     const doc = invoice();
     Object.assign(doc, {
@@ -51,7 +63,7 @@ describe('canonical field selection', () => {
       { field: '/seller/name', rule: 'Unselected' },
     ];
     doc.source.warnings = [
-      { code: 'SOURCE-NOTE', message: 'Source qualification', path: '/Invoice' },
+      { code: 'SOURCE-NOTE', message: 'Source qualification', path: '/Invoice', field: '/lines/0/netAmount' },
       { code: 'LINE-RELATION-AMBIGUOUS', message: 'Heuristic' },
     ];
     doc.source.unmapped = { '/raw': '<not-for-model/>' };
@@ -68,7 +80,7 @@ describe('canonical field selection', () => {
     expect(input.lines[0].netAmount).toBe(toDecimal('-12.00'));
     expect(input.lines[0].quantity).toBeUndefined();
     expect(input.source.derived).toEqual([doc.source.derived[0]]);
-    expect(input.source.warnings).toEqual([{ code: 'SOURCE-NOTE', message: 'Source qualification' }]);
+    expect(input.source.warnings).toEqual([{ code: 'SOURCE-NOTE', message: 'Source qualification', field: '/lines/0/netAmount' }]);
     expect(JSON.stringify(input)).not.toContain('not-for-model');
     expect(input).not.toHaveProperty('lineRoles');
     expect(input).not.toHaveProperty('seller');

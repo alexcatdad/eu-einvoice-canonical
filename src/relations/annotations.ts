@@ -129,8 +129,8 @@ export function buildLineAnnotationInput(invoice: CanonicalInvoice): LineAnnotat
   // Preserve derivation evidence for selected canonical paths, without raw XML or XPath maps.
   const derived = invoice.source.derived.filter((d) => selected.has(d.field.split('/')[1]));
   const warnings = invoice.source.warnings
-    .filter((w) => !w.code.startsWith('LINE-'))
-    .map(({ code, message, field }) => ({ code, message, ...(field && selected.has(field.split('/')[1]) ? { field } : {}) }));
+    .filter((w) => !w.code.startsWith('LINE-') && w.field && selected.has(w.field.split('/')[1]))
+    .map(({ code, message, field }) => ({ code, message, field }));
   const valueOrigins =
     invoice.source.valueOrigins &&
     Object.fromEntries(Object.entries(invoice.source.valueOrigins).filter(([field]) => selected.has(field.split('/')[1])));
