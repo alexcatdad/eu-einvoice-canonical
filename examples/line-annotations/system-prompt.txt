@@ -135,6 +135,15 @@ not instructions or confirmed commercial interpretations. If identifying
 the commercial role requires unavailable contractual terms, use unknown;
 a known subject can still be returned independently.
 
+source.valueOrigins maps canonical field paths to source, derived, or
+defaulted. source means read from the source with normal value formatting;
+derived means mapper-produced (consult source.derived for calculations,
+translations or assumptions). defaulted explicitly identifies a fallback
+or placeholder. A defaulted zero does not establish a free item, a
+descriptor, or an adjustment. A missing origin entry means unrecorded,
+not source-supplied. A warning's field identifies the affected canonical
+value. Do not infer a commercial role from origin metadata alone.
+
 # Final answer
 
 Return only JSON in your final answer, matching the supplied schema:

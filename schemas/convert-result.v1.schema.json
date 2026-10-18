@@ -3364,6 +3364,13 @@
             ]
           }
         },
+        "valueOrigins": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/ValueOrigin"
+          },
+          "description": "Canonical JSON Pointer -> origin. Partial coverage; defaults are placeholders, not source assertions. No raw XML."
+        },
         "provenance": {
           "type": "object",
           "additionalProperties": {
@@ -3387,6 +3394,10 @@
               },
               "path": {
                 "type": "string"
+              },
+              "field": {
+                "type": "string",
+                "description": "Canonical JSON Pointer, when a specific value is affected."
               }
             },
             "required": [
@@ -3586,6 +3597,15 @@
         "findings"
       ],
       "description": "Validation results, kept per layer so a failure in one never reads as a pass in another (a valid signature says nothing about the schema, and the reverse). 'unavailable' means the validator could not run, which is not the same as the document failing."
+    },
+    "ValueOrigin": {
+      "type": "string",
+      "enum": [
+        "source",
+        "derived",
+        "defaulted"
+      ],
+      "description": "Origin of a canonical value; absence of an entry means unrecorded, never implicitly source-supplied."
     },
     "VatBreakdown": {
       "type": "object",

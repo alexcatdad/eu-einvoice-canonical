@@ -49,7 +49,11 @@ const INPUT_FIELDS = [
   'vatBreakdown',
 ] as const satisfies readonly (keyof CanonicalInvoice)[];
 export type LineAnnotationInput = Pick<CanonicalInvoice, (typeof INPUT_FIELDS)[number]> & {
-  source: { derived: SourceMeta['derived']; warnings: { code: string; message: string }[] };
+  source: {
+    derived: SourceMeta['derived'];
+    valueOrigins?: SourceMeta['valueOrigins'];
+    warnings: Pick<SourceMeta['warnings'][number], 'code' | 'message' | 'field'>[];
+  };
 };
 
 /** Scope errors are explicit; no IDs, amounts or source structure are repaired. */
@@ -104,7 +108,16 @@ export function buildLineAnnotationInput(invoice: CanonicalInvoice): LineAnnotat
     )
       unsupported(`/lines/${i}`, 'Nested, corrective and nationally extended lines are outside this reference scope.');
   });
-  if (invoice.source.warnings.some((w) => w.code === 'TEXT_LINE'))
+  if (
+    invoice.source.warnings.some(
+      (w) =>
+        w.code === 'TEXT_LINE' &&
+        !invoice.lines.some(
+          (line, i) =>
+            w.field === `/lines/${i}/netAmount` && line.netAmount === '0' && invoice.source.valueOrigins?.[w.field] === 'defaulted',
+        ),
+    )
+  )
     unsupported(
       '/source/warnings',
       'A text-only source line received a synthetic zero amount; explicit value-origin handling is required.',
@@ -115,8 +128,13 @@ export function buildLineAnnotationInput(invoice: CanonicalInvoice): LineAnnotat
   const selected = new Set<string>(INPUT_FIELDS);
   // Preserve derivation evidence for selected canonical paths, without raw XML or XPath maps.
   const derived = invoice.source.derived.filter((d) => selected.has(d.field.split('/')[1]));
-  const warnings = invoice.source.warnings.filter((w) => !w.code.startsWith('LINE-')).map(({ code, message }) => ({ code, message }));
-  return structuredClone({ ...fields, source: { derived, warnings } }) as LineAnnotationInput;
+  const warnings = invoice.source.warnings
+    .filter((w) => !w.code.startsWith('LINE-'))
+    .map(({ code, message, field }) => ({ code, message, ...(field && selected.has(field.split('/')[1]) ? { field } : {}) }));
+  const valueOrigins =
+    invoice.source.valueOrigins &&
+    Object.fromEntries(Object.entries(invoice.source.valueOrigins).filter(([field]) => selected.has(field.split('/')[1])));
+  return structuredClone({ ...fields, source: { derived, warnings, ...(valueOrigins ? { valueOrigins } : {}) } }) as LineAnnotationInput;
 }
 
 /** Validate atomically, without filtering or repair. Success is structural validity, not commercial correctness. */

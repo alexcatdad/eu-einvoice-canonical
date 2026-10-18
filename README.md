@@ -94,6 +94,8 @@ const traced = await convert(bytes, 'invoice.xml', undefined, { provenance: true
 
 ### Field provenance in a parser
 
+Canonical output can also carry `source.valueOrigins`, a partial map of canonical field paths to `source`, `derived` or `defaulted`, without enabling XPath provenance. Missing entries mean unrecorded origins. `source.warnings[].field` can identify the affected canonical value. See [Canonical evidence metadata](docs/LINE-ANNOTATIONS.md#canonical-evidence-metadata) for coverage and how consumers distinguish an explicit zero from a substituted one.
+
 XPaths use the qualified names as written in the document, with a positional predicate only where siblings share a name; attributes end in `/@name`. Values built from several nodes list them joined with ` | `. Values the mapper computed, defaulted or translated (code mappings, sums) have no entry and are listed in `source.derived` or `source.warnings` instead.
 
 Parsers get this from `Ctx` in `src/parsers/context.ts`: construct it with `new Ctx(ns, input.provenance)`, take a scope for a canonical path (`const s = c.in('')`, `s.in('seller')`, `s.in('lines').in(i)`), and read through the scope with the field key as the last argument: `s.text(node, 'cbc:ID', 'id')`, `s.dec(m, 'cbc:PayableAmount', 'payable')`, `s.id(el, 'cbc:EndpointID', 'endpoint')` (records `/value` and `/schemeId`). Use `c.mark(path, el)` / `c.markAll(path, els)` for values assembled by hand, and `c.nonEmpty(els)` before mapping to arrays so indexes match the output. Entries for values that did not survive into the output are pruned by `finish()`.

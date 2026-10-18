@@ -76,7 +76,7 @@ export function parseSvefaktura(input: ParseInput): CanonicalInvoice[] {
   let typeCode = s.text(root, 'InvoiceTypeCode', 'typeCode');
   if (!typeCode) {
     typeCode = '380';
-    c.derive('/typeCode', 'No InvoiceTypeCode in the document; defaulted to 380');
+    c.derive('/typeCode', 'No InvoiceTypeCode in the document; defaulted to 380', 'defaulted');
   }
 
   const legal = c.el(root, 'LegalTotal');
@@ -501,6 +501,7 @@ function line(c: Ctx, l: Element, s: Scope): Line {
   const netAmount = s.dec(l, 'LineExtensionAmount', 'netAmount');
   const lineId = s.text(l, 'ID', 'id') ?? '';
   if (netAmount === undefined) throw new ParseError(`Line ${lineId || '?'}: LineExtensionAmount missing`);
+  c.valueOrigins[s.path('netAmount')] = 'source';
   const it = s.in('item');
   const description = it.text(itemEl, 'Description', 'name');
   if (!description) c.warn('SF-NO-ITEM-NAME', `Line ${lineId}: no Item/Description (BT-153 is mandatory in EN 16931)`);

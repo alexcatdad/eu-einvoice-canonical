@@ -85,6 +85,7 @@ export function xpathOf(el: Element): string {
 export class Ctx {
   readonly warnings: SourceMeta['warnings'] = [];
   readonly derived: SourceMeta['derived'] = [];
+  readonly valueOrigins: NonNullable<SourceMeta['valueOrigins']> = {};
   readonly unmapped: SourceMeta['unmapped'] = {};
   private readonly cache = new Map<string, Step[]>();
   /** Canonical JSON path -> source XPath; present only when provenance was asked for. */
@@ -228,12 +229,13 @@ export class Ctx {
     return schemeId ? { value, schemeId } : { value };
   }
 
-  warn(code: string, message: string, path?: string) {
-    this.warnings.push(path ? { code, message, path } : { code, message });
+  warn(code: string, message: string, path?: string, field?: string) {
+    this.warnings.push({ code, message, ...(path ? { path } : {}), ...(field ? { field } : {}) });
   }
 
-  derive(field: string, rule: string) {
+  derive(field: string, rule: string, origin: 'derived' | 'defaulted' = 'derived') {
     this.derived.push({ field, rule });
+    this.valueOrigins[field] = origin;
   }
 }
 
@@ -317,6 +319,7 @@ export function sourceMeta(input: ParseInput, root: Element, ctx: Ctx, extra: Pa
     signatures: payload.signatures,
     unmapped: ctx.unmapped,
     derived: ctx.derived,
+    valueOrigins: ctx.valueOrigins,
     warnings: ctx.warnings,
     ...(ctx.provenance ? { provenance: ctx.provenance } : {}),
     ...extra,
@@ -330,6 +333,13 @@ export const SELF_BILLED_TYPE_CODES = new Set(['389', '261', '527']);
 
 export function finish(inv: CanonicalInvoice): CanonicalInvoice {
   const out = compact(inv);
+  const origins = out.source.valueOrigins;
+  if (origins) {
+    // Older derivation notes may describe a whole collection or use a wildcard.
+    // They remain explanatory notes, never an origin assertion about an individual value.
+    for (const path of Object.keys(origins)) if (!existsAt(out, path)) delete origins[path];
+    if (!Object.keys(origins).length) delete out.source.valueOrigins;
+  }
   const prov = out.source.provenance;
   if (prov) {
     // Reads whose value was dropped on the way (filtered, emptied) must not leave entries behind.

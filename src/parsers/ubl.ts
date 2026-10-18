@@ -52,7 +52,7 @@ export function parseUbl(input: ParseInput): CanonicalInvoice[] {
   let typeCode = s.text(root, isCn ? 'cbc:CreditNoteTypeCode' : 'cbc:InvoiceTypeCode', 'typeCode');
   if (!typeCode) {
     typeCode = isCn ? '381' : '380';
-    c.derive('/typeCode', `No type code in the document; defaulted to ${typeCode} from the root element`);
+    c.derive('/typeCode', `No type code in the document; defaulted to ${typeCode} from the root element`, 'defaulted');
   }
   // A UBL document outside the EN 16931 CIUSes (ubl-unknown: plain UBL 2.0/2.1, Peru, Jordan, EHF payment
   // requests...) is not bound by their mandatory fields, so what can be derived is derived instead of rejected.
@@ -461,6 +461,7 @@ function line(c: Ctx, l: Element, isCn: boolean, s: Scope, sub = false): Line {
   const objectRef = c.all(l, 'cac:DocumentReference').find((r) => c.text(r, 'cbc:DocumentTypeCode') === '130');
   const netAmount = s.dec(l, 'cbc:LineExtensionAmount', 'netAmount');
   if (netAmount === undefined) throw new ParseError(`Line ${c.text(l, 'cbc:ID') ?? '?'}: LineExtensionAmount (BT-131) missing`);
+  c.valueOrigins[s.path('netAmount')] = 'source';
   const subLines = [...c.all(l, 'cac:SubInvoiceLine'), ...c.all(l, 'cac:SubCreditNoteLine')].map((e, i) =>
     line(c, e, isCn, s.in('subLines').in(i), true),
   );

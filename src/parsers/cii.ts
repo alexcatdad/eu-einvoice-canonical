@@ -52,7 +52,7 @@ export function parseCii(input: ParseInput): CanonicalInvoice[] {
   let typeCode = s.text(doc, 'ram:TypeCode', 'typeCode');
   if (!typeCode) {
     typeCode = '380';
-    c.derive('/typeCode', 'No TypeCode in the document; defaulted to 380');
+    c.derive('/typeCode', 'No TypeCode in the document; defaulted to 380', 'defaulted');
   }
   const currency = s.text(settlement, 'ram:InvoiceCurrencyCode', 'currency');
   if (!currency) throw new ParseError('Invoice currency (BT-5) missing');
@@ -459,9 +459,16 @@ function line(c: Ctx, l: Element, s: Scope): Line {
   const tax = c.el(lineSettlement, 'ram:ApplicableTradeTax');
   const lineId = s.text(docLine, 'ram:LineID', 'id') ?? '';
   let netAmount = s.dec(lineSettlement, 'ram:SpecifiedTradeSettlementLineMonetarySummation/ram:LineTotalAmount', 'netAmount');
+  if (netAmount !== undefined) c.valueOrigins[s.path('netAmount')] = 'source';
   if (netAmount === undefined && textOnly(c, l, docLine, qtyEl, net, gross)) {
     netAmount = toDecimal('0');
-    c.warn('TEXT_LINE', `Line ${lineId || '?'} carries only a note and no amounts; its amount is recorded as 0`);
+    c.valueOrigins[s.path('netAmount')] = 'defaulted';
+    c.warn(
+      'TEXT_LINE',
+      `Line ${lineId || '?'} carries only a note and no amounts; its amount is recorded as 0`,
+      undefined,
+      s.path('netAmount'),
+    );
   }
   if (netAmount === undefined) throw new ParseError(`Line ${lineId || '?'}: LineTotalAmount (BT-131) missing`);
   const objectRef = c.all(lineSettlement, 'ram:AdditionalReferencedDocument').find((d) => c.text(d, 'ram:TypeCode') === '130');

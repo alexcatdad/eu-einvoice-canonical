@@ -71,9 +71,41 @@ if (!checked.ok) {
 }
 ```
 
-`buildLineAnnotationInput` copies the selected fields and rejects unsupported scope with `AnnotationInputError.issues`. It preserves decimal strings, source signs, absent optional values, line order and separate names/descriptions/notes. It uses `purchaseOrderRef` and `invoicePeriod`, retains related header references, and includes mapper derivations for selected canonical paths plus source warnings. Legacy relation heuristics and their warnings are excluded. Raw XML, unmapped source payloads, XPath maps, attachments, party and payment details are not part of this view; the original invoice retains them.
+`buildLineAnnotationInput` copies the selected fields and rejects unsupported scope with `AnnotationInputError.issues`. It preserves decimal strings, source signs, absent optional values, line order and separate names/descriptions/notes. It uses `purchaseOrderRef` and `invoicePeriod`, retains related header references, and includes mapper derivations, value origins and warning field references for selected canonical paths. Legacy relation heuristics and their warnings are excluded. Raw XML, unmapped source payloads, XPath maps, attachments, party and payment details are not part of this view; the original invoice retains them.
 
-This is a deliberately limited reference: ordinary type-380 invoices with nonempty, unique top-level line IDs. It rejects credit notes, corrective documents, preceding-invoice references, nested lines, national extensions, other taxes, withholdings and text-only lines whose absent source amount was represented as zero. The source line ID `invoice` is reserved by the compact target syntax and is rejected. These are example boundaries, not limitations of the library's conversion support. Unsupported inputs need an explicit policy before extending the example.
+This is a deliberately limited reference: ordinary type-380 invoices with nonempty, unique top-level line IDs. It rejects credit notes, corrective documents, preceding-invoice references, nested lines, national extensions, other taxes and withholdings. A text-only line with a substituted zero is accepted only when its `TEXT_LINE` warning identifies the canonical amount field and that value is marked `defaulted`; older untraced output remains rejected. The source line ID `invoice` is reserved by the compact target syntax and is rejected. These are example boundaries, not limitations of the library's conversion support. Unsupported inputs need an explicit policy before extending the example.
+
+## Canonical evidence metadata
+
+`source.valueOrigins` is an optional map from canonical JSON Pointers to origin states. It is available without enabling XML provenance. Values and line order remain unchanged.
+
+```json
+{
+  "valueOrigins": {
+    "/lines/0/netAmount": "defaulted",
+    "/lines/1/netAmount": "source",
+    "/totals/taxExclusive": "derived"
+  }
+}
+```
+
+- `source`: the instrumented parser read the value from the source; ordinary decimal normalization still applies.
+- `derived`: the mapper produced the value. Consult the corresponding `source.derived` explanation; older derivations can include assumptions as well as calculations and code mappings.
+- `defaulted`: an explicitly identified fallback or placeholder. A substituted zero is not evidence of a free item or of a descriptive role.
+- No entry: origin is unrecorded. Never infer that it was source-supplied, and do not fill absent values with zero.
+
+Coverage is intentionally explicit: line net amounts in UBL, CII, Svefaktura and ZUGFeRD 1; Finvoice sub-line amounts; KSeF RR line amounts; assumed document types in UBL, CII and Svefaktura; and existing derivation records that identify surviving scalar fields. Collection-level and descriptive derivation paths remain explanatory notes. Other fields may have no origin entry. `source.warnings[].field`, when supplied, identifies the affected canonical value separately from an optional source `path`.
+
+| Research requirement | Consumer contract |
+|---|---|
+| Names, descriptions, notes, references and financial context | Already canonical; retained as separate fields in the selected input |
+| Explicit zero versus an absent amount represented as zero | Origin metadata distinguishes these without changing amounts |
+| Calculated or otherwise mapper-produced values | Origin plus existing derivation explanations |
+| Warnings associated with a particular value | Optional canonical `field` reference, retained for selected fields |
+| Missing or unrecorded evidence | Remains missing or unrecorded; no source-origin assumption |
+| Arithmetic matches, repeated identifiers and adjacency | Not promoted to commercial roles or subject relationships |
+
+The schema additions are optional and preserve the v1 contract for existing JSON consumers. Their presence establishes data provenance, not model accuracy or commercial correctness.
 
 ## Output meanings
 

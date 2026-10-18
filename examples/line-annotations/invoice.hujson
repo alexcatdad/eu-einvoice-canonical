@@ -157,6 +157,12 @@
     "signatures": [],
     "unmapped": {},
     "derived": [],
+    // Origins use canonical positions, not the opaque source line IDs.
+    "valueOrigins": {
+      "/lines/0/netAmount": "source",
+      "/lines/1/netAmount": "source",
+      "/lines/2/netAmount": "source",
+    },
     "warnings": [],
     "provenance": {
       "/id": "/Invoice/cbc:ID",
