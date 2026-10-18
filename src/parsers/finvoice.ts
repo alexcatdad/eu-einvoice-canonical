@@ -395,6 +395,7 @@ function lineRows(c: Ctx, root: Element): { lines: Line[]; informationalRows: nu
       return;
     }
     const where = `InvoiceRow ${index + 1}`;
+    const lineIndex = lines.length;
     const explicitId = c.text(r, 'RowPositionIdentifier') ?? c.text(r, 'RowIdentifier');
     if (!explicitId) idDerived = true;
     let net = dec(c, r, 'RowVatExcludedAmount');
@@ -403,7 +404,7 @@ function lineRows(c: Ctx, root: Element): { lines: Line[]; informationalRows: nu
       const vat = dec(c, r, 'RowVatAmount');
       if (gross === undefined || vat === undefined) throw new ParseError(`${where}: RowVatExcludedAmount missing`);
       net = sub(gross, vat);
-      c.derive(`/lines/${index}/netAmount`, `${where}: RowVatExcludedAmount absent; RowAmount minus RowVatAmount`);
+      c.derive(`/lines/${lineIndex}/netAmount`, `${where}: RowVatExcludedAmount absent; RowAmount minus RowVatAmount`);
     }
 
     const qtyEl = c.el(r, 'InvoicedQuantity');
@@ -417,7 +418,7 @@ function lineRows(c: Ctx, root: Element): { lines: Line[]; informationalRows: nu
       const priceUnit = c.attr(r, 'UnitPriceAmount', 'UnitPriceUnitCode') ?? '';
       const cents = /^(snt|c|cent|cents)\//i.test(priceUnit);
       price = { net: cents ? centsToUnit(rawPrice) : rawPrice };
-      if (cents) c.derive(`/lines/${index}/price/net`, `${where}: unit price stated in cents (${priceUnit}); divided by 100`);
+      if (cents) c.derive(`/lines/${lineIndex}/price/net`, `${where}: unit price stated in cents (${priceUnit}); divided by 100`);
     }
 
     const discountAmount = dec(c, r, 'RowDiscountAmount');
@@ -426,6 +427,7 @@ function lineRows(c: Ctx, root: Element): { lines: Line[]; informationalRows: nu
 
     const subLines: Line[] = c.all(r, 'SubInvoiceRow').map((s, si) => {
       const subNet = dec(c, s, 'SubRowVatExcludedAmount') ?? dec(c, s, 'SubRowAmount');
+      c.valueOrigins[`/lines/${lineIndex}/subLines/${si}/netAmount`] = subNet === undefined ? 'defaulted' : 'source';
       const subQty = c.el(s, 'SubInvoicedQuantity');
       return {
         id: `${explicitId ?? index + 1}.${si + 1}`,

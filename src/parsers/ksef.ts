@@ -189,7 +189,9 @@ export function parseKsef(input: ParseInput): CanonicalInvoice[] {
   const exemption = !isRR ? exemptionText(c, body) : undefined;
   const rowEls = c.all(body, isRR ? 'FakturaRRWiersz' : 'FaWiersz');
   const hasBefore = rowEls.some((r) => c.text(r, 'StanPrzed') === '1');
-  const lines = rowEls.map((r) => (isRR ? rrLine(c, r, isCorrection, hasBefore) : faLine(c, r, isCorrection, hasBefore, exemption)));
+  const lines = rowEls.map((r, i) =>
+    isRR ? rrLine(c, r, isCorrection, hasBefore, i) : faLine(c, r, isCorrection, hasBefore, exemption, i),
+  );
 
   let totals: Totals;
   let vatBreakdown: VatBreakdown[];
@@ -484,7 +486,7 @@ function stateOf(c: Ctx, r: Element, isCorrection: boolean, hasBefore: boolean):
   return hasBefore ? 'after' : 'delta';
 }
 
-function faLine(c: Ctx, r: Element, isCorrection: boolean, hasBefore: boolean, exemption: string | undefined): Line {
+function faLine(c: Ctx, r: Element, isCorrection: boolean, hasBefore: boolean, exemption: string | undefined, index: number): Line {
   const unitText = c.text(r, 'P_8A');
   const code = c.text(r, 'P_12');
   const xii = c.text(r, 'P_12_XII');
@@ -502,7 +504,7 @@ function faLine(c: Ctx, r: Element, isCorrection: boolean, hasBefore: boolean, e
   if (net === undefined) {
     if (gross !== undefined && lineVat !== undefined) {
       net = sub(gross, lineVat);
-      c.derive(`/lines/${lineNo}/netAmount`, 'P_11A (gross) minus P_11Vat');
+      c.derive(`/lines/${index}/netAmount`, 'P_11A (gross) minus P_11Vat');
     } else if (gross !== undefined) {
       net = gross;
       c.warn(
@@ -557,7 +559,7 @@ function faLine(c: Ctx, r: Element, isCorrection: boolean, hasBefore: boolean, e
   } as Line;
 }
 
-function rrLine(c: Ctx, r: Element, isCorrection: boolean, hasBefore: boolean): Line {
+function rrLine(c: Ctx, r: Element, isCorrection: boolean, hasBefore: boolean, index: number): Line {
   const unitText = c.text(r, 'P_6A');
   const rate = c.text(r, 'P_9');
   const gtin = c.text(r, 'GTIN');
@@ -575,12 +577,14 @@ function rrLine(c: Ctx, r: Element, isCorrection: boolean, hasBefore: boolean): 
     if (v) national[tag === 'P_10' ? 'refundAmount' : tag === 'P_11' ? 'valueWithRefund' : tag] = v;
   }
   const priceNet = c.dec(r, 'P_7');
+  const netAmount = c.dec(r, 'P_8');
+  c.valueOrigins[`/lines/${index}/netAmount`] = netAmount === undefined ? 'defaulted' : 'source';
   return {
     id: c.text(r, 'NrWierszaFa') ?? '',
     quantity: c.dec(r, 'P_6B'),
     unitCode: unitText ? UNITS[unitText.toLowerCase()] : undefined,
     unitText,
-    netAmount: c.dec(r, 'P_8') ?? (AMOUNT_ZERO as never),
+    netAmount: netAmount ?? (AMOUNT_ZERO as never),
     allowances: [],
     charges: [],
     price: priceNet !== undefined ? { net: priceNet } : undefined,

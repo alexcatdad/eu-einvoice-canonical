@@ -10,6 +10,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import pkg from '../package.json' with { type: 'json' };
+import { ANNOTATION_ASSET_PATH, ANNOTATION_ASSETS } from './annotation-assets.js';
 import { buildDocs } from './docs.js';
 import { BASE, MOVED, SITE_URL } from './site.js';
 
@@ -38,6 +39,12 @@ const decode = (s: string) => s.replace(/&(?:amp|quot|#39);/g, (e) => ENTITIES[e
 export function checkSite(dist: string, root: string): CheckResult {
   const problems: string[] = [];
   const files = new Set(walk(dist));
+  for (const asset of ANNOTATION_ASSETS) {
+    const path = `${ANNOTATION_ASSET_PATH}/${asset}`;
+    if (!files.has(path)) problems.push(`annotation asset ${path} is missing`);
+    else if (!readFileSync(join(dist, path)).equals(readFileSync(join(root, path))))
+      problems.push(`annotation asset ${path} differs from its source`);
+  }
   const html = [...files].filter((f) => f.endsWith('.html'));
   const ids = new Map<string, Set<string>>();
   const text = new Map<string, string>();

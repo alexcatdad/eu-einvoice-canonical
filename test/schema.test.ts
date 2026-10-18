@@ -34,6 +34,19 @@ describe('JSON Schema', () => {
     expect(validateResult({ fileSha256: 'x', outcomes: 'nope', skipped: [] })).toBe(false);
   });
 
+  test('value origins survive JSON serialization, remain optional and reject unknown states', async () => {
+    const result = await convert(fixture('en16931-cii.xml'), 'synthetic.xml');
+    const outcome = result.outcomes[0];
+    if (outcome.status !== 'ok') throw new Error('Synthetic fixture did not convert');
+    const wire = JSON.parse(JSON.stringify(outcome.invoices[0]));
+    expect(wire.source.valueOrigins['/lines/0/netAmount']).toBe('source');
+    expect(validateInvoice(wire)).toBe(true);
+    wire.source.valueOrigins['/lines/0/netAmount'] = 'probably-source';
+    expect(validateInvoice(wire)).toBe(false);
+    delete wire.source.valueOrigins;
+    expect(validateInvoice(wire)).toBe(true);
+  });
+
   for (const name of fixtures) {
     test(`converted output of ${name} validates`, async () => {
       for (const options of [{}, { relations: true, provenance: true }]) {

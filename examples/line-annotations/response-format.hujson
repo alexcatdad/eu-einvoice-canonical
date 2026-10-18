@@ -1,0 +1,65 @@
+// Generated from LINE_ANNOTATION_SCHEMA. Cross-field validation is also required.
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "line_annotations_v1",
+    "strict": true,
+    "schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "goods",
+                  "labour",
+                  "freight",
+                  "other_item",
+                  "item_unknown",
+                  "descriptor",
+                  "adjustment",
+                  "unknown"
+                ]
+              },
+              "targets": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "targets"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "id",
+        "lines"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

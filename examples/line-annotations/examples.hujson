@@ -1,0 +1,41 @@
+// Illustrative canonical-field excerpts and their annotations. These abbreviated teaching inputs are not complete CanonicalInvoice objects.
+[
+  {
+    "input": {
+      "id": "EXAMPLE-01", "kind": "invoice", "currency": "EUR",
+      "lines": [
+        {"id":"10","quantity":"1","netAmount":"200.00","item":{"name":"Circulation pump P-100","description":"Pump supplied for the heating circuit."}},
+        {"id":"20","quantity":"1","netAmount":"150.00","item":{"name":"Circulation pump P-200","description":"Pump supplied for the cooling circuit."}},
+        {"id":"30","quantity":"2","unitCode":"HUR","netAmount":"100.00","item":{"name":"Installation","description":"Two technician-hours installing pumps P-100 and P-200. Billed separately from the pumps."}},
+        {"id":"40","netAmount":"0.00","item":{"name":"Serial number","description":"The supplied P-100 pump has serial number SN-4821."}},
+        {"id":"50","quantity":"1","netAmount":"0.00","item":{"name":"Spare seal kit","description":"One additional seal kit supplied free of charge."}}
+      ]
+    },
+    "output": {"id":"EXAMPLE-01","lines":[{"id":"10","kind":"goods","targets":[]},{"id":"20","kind":"goods","targets":[]},{"id":"30","kind":"labour","targets":["10","20"]},{"id":"40","kind":"descriptor","targets":["10"]},{"id":"50","kind":"goods","targets":[]}]}
+  },
+  {
+    "input": {
+      "id":"EXAMPLE-02","kind":"invoice","currency":"EUR",
+      "lines":[
+        {"id":"10","quantity":"1","netAmount":"200.00","item":{"name":"Replacement pump","description":"One replacement pump supplied."}},
+        {"id":"20","quantity":"-1","netAmount":"-30.00","item":{"name":"Returned seal kit","description":"Credit for one previously supplied seal kit returned by the customer."}},
+        {"id":"30","netAmount":"-10.00","item":{"name":"Pump price correction","description":"Reduction of the replacement pump price on invoice line 10."}},
+        {"id":"40","netAmount":"-5.00","item":{"name":"Invoice-wide concession","description":"Additional reduction of EUR 5 against the entire invoice."}}
+      ]
+    },
+    "output":{"id":"EXAMPLE-02","lines":[{"id":"10","kind":"goods","targets":[]},{"id":"20","kind":"goods","targets":[]},{"id":"30","kind":"adjustment","targets":["10"]},{"id":"40","kind":"adjustment","targets":["invoice"]}]}
+  },
+  {
+    "input": {
+      "id":"EXAMPLE-03","kind":"invoice","currency":"EUR",
+      "lines":[
+        {"id":"10","quantity":"1","netAmount":"100.00","item":{"name":"Isolation valve","description":"Serial V-101."}},
+        {"id":"20","quantity":"1","netAmount":"100.00","item":{"name":"Isolation valve","description":"Serial V-102."}},
+        {"id":"30","netAmount":"0.00","item":{"name":"Inspection result","description":"One of the supplied valves passed inspection. The result does not identify its serial number. Inspection was included in the purchase price."}},
+        {"id":"40","netAmount":"12.00","item":{"name":"Contract amount","description":"Amount under clause 6 of agreement AC-17, relating to invoice line 10."}},
+        {"id":"50","netAmount":"0.00","item":{"name":"Pressure-test certificate","description":"This certificate covers one valve. Its header identifies serial V-101; its results table identifies serial V-102. Testing was included in the purchase price."}}
+      ]
+    },
+    "output":{"id":"EXAMPLE-03","lines":[{"id":"10","kind":"goods","targets":[]},{"id":"20","kind":"goods","targets":[]},{"id":"30","kind":"descriptor","targets":null},{"id":"40","kind":"unknown","targets":["10"]},{"id":"50","kind":"descriptor","targets":null}]}
+  }
+]

@@ -94,6 +94,8 @@ const traced = await convert(bytes, 'invoice.xml', undefined, { provenance: true
 
 ### Field provenance in a parser
 
+Canonical output can also carry `source.valueOrigins`, a partial map of canonical field paths to `source`, `derived` or `defaulted`, without enabling XPath provenance. Missing entries mean unrecorded origins. `source.warnings[].field` can identify the affected canonical value. See [Canonical evidence metadata](docs/LINE-ANNOTATIONS.md#canonical-evidence-metadata) for coverage and how consumers distinguish an explicit zero from a substituted one.
+
 XPaths use the qualified names as written in the document, with a positional predicate only where siblings share a name; attributes end in `/@name`. Values built from several nodes list them joined with ` | `. Values the mapper computed, defaulted or translated (code mappings, sums) have no entry and are listed in `source.derived` or `source.warnings` instead.
 
 Parsers get this from `Ctx` in `src/parsers/context.ts`: construct it with `new Ctx(ns, input.provenance)`, take a scope for a canonical path (`const s = c.in('')`, `s.in('seller')`, `s.in('lines').in(i)`), and read through the scope with the field key as the last argument: `s.text(node, 'cbc:ID', 'id')`, `s.dec(m, 'cbc:PayableAmount', 'payable')`, `s.id(el, 'cbc:EndpointID', 'endpoint')` (records `/value` and `/schemeId`). Use `c.mark(path, el)` / `c.markAll(path, els)` for values assembled by hand, and `c.nonEmpty(els)` before mapping to arrays so indexes match the output. Entries for values that did not survive into the output are pruned by `finish()`.
@@ -340,6 +342,8 @@ relations: [
 - `method` says how a relation was found (`rule`, `arithmetic` or `model`); `confidence` is `proven`, `likely` or `review`, and is absent for structural rules that cannot be wrong.
 
 An optional language model can label what the rules leave as plain items (freight, labour, discount in Swedish and other languages) and propose links. It runs in the browser only (`site/model.ts`: WebLLM with Qwen3, or Chrome's Gemini Nano), is held to a JSON schema, never overrides a rule and marks everything `method: 'model'`, `confidence: 'review'`. `applyModelLabels(invoice, labeller)` merges its output. The [evaluation page](https://alexcatdad.github.io/eu-einvoice-canonical/eval/) (`site/eval.ts`) scores the rules and the models on the labelled set in `src/relations/labelled.ts` and records accuracy, time, download size and memory.
+
+For a separate, provider-independent consumer example, see [canonical line annotations](docs/LINE-ANNOTATIONS.md). It uses HuJSON for human-edited assets, standard JSON for model requests, and strict validation of complete annotation responses. It preserves the source invoice and represents unresolved roles and subjects separately; it does not replace the existing relation rules.
 
 ## JSON Schema
 

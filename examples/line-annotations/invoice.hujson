@@ -1,0 +1,244 @@
+// Complete synthetic canonical invoice. Financial values remain decimal strings.
+{
+  "kind": "invoice",
+  "typeCode": "380",
+  "id": "H1002",
+  "issueDate": "2026-10-15",
+  "selfBilled": false,
+  "currency": "SEK",
+  "dueDate": "2026-11-14",
+  "buyerReference": "4025:ANNA",
+  "notes": [],
+  "businessProcess": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+  "specificationId": "urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0",
+  "precedingInvoices": [],
+  "seller": {
+    "name": "Synthetic Meridian Supplies AB",
+    "identifiers": [],
+    "vatId": "SE556000000101",
+    "nationalTaxIds": [],
+    "endpoint": {
+      "value": "5560000001",
+      "schemeId": "0007"
+    },
+    "address": {
+      "city": "Stockholm",
+      "countryCode": "SE"
+    }
+  },
+  "buyer": {
+    "name": "Synthetic Harbor Buyer AB",
+    "identifiers": [],
+    "nationalTaxIds": [],
+    "endpoint": {
+      "value": "2120000001",
+      "schemeId": "0007"
+    },
+    "address": {
+      "city": "Uppsala",
+      "countryCode": "SE"
+    }
+  },
+  "additionalParties": [],
+  "payments": [
+    {
+      "meansCode": "30",
+      "creditTransfers": [
+        {
+          "accountId": "1234567",
+          "serviceProviderId": "SE:BANKGIRO"
+        }
+      ]
+    }
+  ],
+  "paymentSchedule": [],
+  "allowances": [],
+  "charges": [],
+  "totals": {
+    "lineNetTotal": "1000.00",
+    "taxExclusive": "1000.00",
+    "vatTotal": "250.00",
+    "taxInclusive": "1250.00",
+    "payable": "1250.00"
+  },
+  "vatBreakdown": [
+    {
+      "taxableAmount": "1000.00",
+      "taxAmount": "250.00",
+      "categoryCode": "S",
+      "rate": "25"
+    }
+  ],
+  "otherTaxes": [],
+  "withholdings": [],
+  "attachments": [],
+  "lines": [
+    {
+      "id": "7",
+      "quantity": "1",
+      "unitCode": "H87",
+      "netAmount": "420.00",
+      "allowances": [],
+      "charges": [],
+      "price": {
+        "net": "420.00"
+      },
+      "vat": {
+        "categoryCode": "S",
+        "rate": "25"
+      },
+      "item": {
+        "name": "Air handling unit AHU-201",
+        "description": "Serial AHU-201; floor 1.",
+        "classifications": [],
+        "attributes": []
+      }
+    },
+    {
+      "id": "19",
+      "quantity": "1",
+      "unitCode": "H87",
+      "netAmount": "460.00",
+      "allowances": [],
+      "charges": [],
+      "price": {
+        "net": "460.00"
+      },
+      "vat": {
+        "categoryCode": "S",
+        "rate": "25"
+      },
+      "item": {
+        "name": "Air handling unit AHU-202",
+        "description": "Serial AHU-202; floor 2.",
+        "classifications": [],
+        "attributes": []
+      }
+    },
+    {
+      "id": "31",
+      "quantity": "2",
+      "unitCode": "HUR",
+      "netAmount": "120.00",
+      "allowances": [],
+      "charges": [],
+      "price": {
+        "net": "60.00"
+      },
+      "vat": {
+        "categoryCode": "S",
+        "rate": "25"
+      },
+      "item": {
+        "name": "Commissioning visit",
+        "description": "Start-up and airflow balancing of AHU-201 and AHU-202; 2 technician-hours.",
+        "classifications": [],
+        "attributes": []
+      }
+    }
+  ],
+  "clearance": [],
+  "extensions": {},
+  "source": {
+    "format": "peppol-bis3",
+    "formatVersion": "2017",
+    "syntaxDocumentType": "Invoice",
+    "rootNamespace": "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2",
+    "envelope": [
+      {
+        "kind": "xml",
+        "name": "H1002-ubl.xml"
+      }
+    ],
+    "fileSha256": "82cf3cf787f0f9806bca6a8a104f203fd2df2368e68d29281022fb8f23e85027",
+    "payloadSha256": "82cf3cf787f0f9806bca6a8a104f203fd2df2368e68d29281022fb8f23e85027",
+    "encoding": "utf-8",
+    "filename": "H1002-ubl.xml",
+    "signatures": [],
+    "unmapped": {},
+    "derived": [],
+    // Origins use canonical positions, not the opaque source line IDs.
+    "valueOrigins": {
+      "/lines/0/netAmount": "source",
+      "/lines/1/netAmount": "source",
+      "/lines/2/netAmount": "source",
+    },
+    "warnings": [],
+    "provenance": {
+      "/id": "/Invoice/cbc:ID",
+      "/issueDate": "/Invoice/cbc:IssueDate",
+      "/typeCode": "/Invoice/cbc:InvoiceTypeCode",
+      "/currency": "/Invoice/cbc:DocumentCurrencyCode",
+      "/dueDate": "/Invoice/cbc:DueDate",
+      "/seller/name": "/Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName",
+      "/seller/vatId": "/Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme/cbc:CompanyID",
+      "/seller/endpoint/value": "/Invoice/cac:AccountingSupplierParty/cac:Party/cbc:EndpointID",
+      "/seller/endpoint/schemeId": "/Invoice/cac:AccountingSupplierParty/cac:Party/cbc:EndpointID/@schemeID",
+      "/seller/address/city": "/Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cbc:CityName",
+      "/seller/address/countryCode": "/Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cac:Country/cbc:IdentificationCode",
+      "/lines/0/netAmount": "/Invoice/cac:InvoiceLine[1]/cbc:LineExtensionAmount",
+      "/lines/0/price/net": "/Invoice/cac:InvoiceLine[1]/cac:Price/cbc:PriceAmount",
+      "/lines/0/id": "/Invoice/cac:InvoiceLine[1]/cbc:ID",
+      "/lines/0/quantity": "/Invoice/cac:InvoiceLine[1]/cbc:InvoicedQuantity",
+      "/lines/0/unitCode": "/Invoice/cac:InvoiceLine[1]/cbc:InvoicedQuantity/@unitCode",
+      "/lines/0/vat/categoryCode": "/Invoice/cac:InvoiceLine[1]/cac:Item/cac:ClassifiedTaxCategory/cbc:ID",
+      "/lines/0/vat/rate": "/Invoice/cac:InvoiceLine[1]/cac:Item/cac:ClassifiedTaxCategory/cbc:Percent",
+      "/lines/0/item/name": "/Invoice/cac:InvoiceLine[1]/cac:Item/cbc:Name",
+      "/lines/0/item/description": "/Invoice/cac:InvoiceLine[1]/cac:Item/cbc:Description",
+      "/lines/1/netAmount": "/Invoice/cac:InvoiceLine[2]/cbc:LineExtensionAmount",
+      "/lines/1/price/net": "/Invoice/cac:InvoiceLine[2]/cac:Price/cbc:PriceAmount",
+      "/lines/1/id": "/Invoice/cac:InvoiceLine[2]/cbc:ID",
+      "/lines/1/quantity": "/Invoice/cac:InvoiceLine[2]/cbc:InvoicedQuantity",
+      "/lines/1/unitCode": "/Invoice/cac:InvoiceLine[2]/cbc:InvoicedQuantity/@unitCode",
+      "/lines/1/vat/categoryCode": "/Invoice/cac:InvoiceLine[2]/cac:Item/cac:ClassifiedTaxCategory/cbc:ID",
+      "/lines/1/vat/rate": "/Invoice/cac:InvoiceLine[2]/cac:Item/cac:ClassifiedTaxCategory/cbc:Percent",
+      "/lines/1/item/name": "/Invoice/cac:InvoiceLine[2]/cac:Item/cbc:Name",
+      "/lines/1/item/description": "/Invoice/cac:InvoiceLine[2]/cac:Item/cbc:Description",
+      "/lines/2/netAmount": "/Invoice/cac:InvoiceLine[3]/cbc:LineExtensionAmount",
+      "/lines/2/price/net": "/Invoice/cac:InvoiceLine[3]/cac:Price/cbc:PriceAmount",
+      "/lines/2/id": "/Invoice/cac:InvoiceLine[3]/cbc:ID",
+      "/lines/2/quantity": "/Invoice/cac:InvoiceLine[3]/cbc:InvoicedQuantity",
+      "/lines/2/unitCode": "/Invoice/cac:InvoiceLine[3]/cbc:InvoicedQuantity/@unitCode",
+      "/lines/2/vat/categoryCode": "/Invoice/cac:InvoiceLine[3]/cac:Item/cac:ClassifiedTaxCategory/cbc:ID",
+      "/lines/2/vat/rate": "/Invoice/cac:InvoiceLine[3]/cac:Item/cac:ClassifiedTaxCategory/cbc:Percent",
+      "/lines/2/item/name": "/Invoice/cac:InvoiceLine[3]/cac:Item/cbc:Name",
+      "/lines/2/item/description": "/Invoice/cac:InvoiceLine[3]/cac:Item/cbc:Description",
+      "/totals/vatTotal": "/Invoice/cac:TaxTotal/cbc:TaxAmount",
+      "/totals/lineNetTotal": "/Invoice/cac:LegalMonetaryTotal/cbc:LineExtensionAmount",
+      "/totals/taxExclusive": "/Invoice/cac:LegalMonetaryTotal/cbc:TaxExclusiveAmount",
+      "/totals/taxInclusive": "/Invoice/cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount",
+      "/totals/payable": "/Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount",
+      "/vatBreakdown/0/taxableAmount": "/Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount",
+      "/vatBreakdown/0/taxAmount": "/Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount",
+      "/vatBreakdown/0/categoryCode": "/Invoice/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:ID",
+      "/vatBreakdown/0/rate": "/Invoice/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:Percent",
+      "/buyerReference": "/Invoice/cbc:BuyerReference",
+      "/businessProcess": "/Invoice/cbc:ProfileID",
+      "/specificationId": "/Invoice/cbc:CustomizationID",
+      "/buyer/name": "/Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName",
+      "/buyer/endpoint/value": "/Invoice/cac:AccountingCustomerParty/cac:Party/cbc:EndpointID",
+      "/buyer/endpoint/schemeId": "/Invoice/cac:AccountingCustomerParty/cac:Party/cbc:EndpointID/@schemeID",
+      "/buyer/address/city": "/Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:CityName",
+      "/buyer/address/countryCode": "/Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cac:Country/cbc:IdentificationCode",
+      "/payments/0/meansCode": "/Invoice/cac:PaymentMeans/cbc:PaymentMeansCode",
+      "/payments/0/creditTransfers/0/accountId": "/Invoice/cac:PaymentMeans/cac:PayeeFinancialAccount/cbc:ID",
+      "/payments/0/creditTransfers/0/serviceProviderId": "/Invoice/cac:PaymentMeans/cac:PayeeFinancialAccount/cac:FinancialInstitutionBranch/cbc:ID"
+    },
+    "specificationId": "urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0",
+    "profileId": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+    "validation": {
+      "parse": "passed",
+      "schema": "passed",
+      "semantic": "passed",
+      "profile": "passed",
+      "signature": "not-run",
+      "clearance": "not-run",
+      "bundles": {
+        "schema": "xsd-ubl-2.1",
+        "semantic": "en16931-ubl-1.3.17",
+        "profile": "peppol-bis3-3.0.20-ubl"
+      },
+      "findings": []
+    }
+  }
+}

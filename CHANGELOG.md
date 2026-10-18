@@ -8,6 +8,7 @@ This file was reconstructed from the git history. Numbers in brackets are pull r
 
 ### Added
 
+- Optional canonical value-origin metadata and canonical field references on warnings, preserved by the line-annotation consumer. Traced text-only lines distinguish substituted zero amounts from source-supplied values.
 - Writers: canonical JSON back to Peppol BIS 3 UBL 2.1 and EN 16931 CII D16B (`toUbl`, `toCii`) [#42]
 - Human-readable rendering: `renderHtml`, `renderPdf` and `einvoice render` [#39]
 - Site internationalisation: English, German, French, Italian, Spanish, Dutch, Polish and Romanian [#41]
@@ -36,6 +37,7 @@ This file was reconstructed from the git history. Numbers in brackets are pull r
 
 ### Fixed
 
+- Finvoice, KSeF and TEAPPSXML derivation paths use canonical line positions rather than source row numbers, including after informational rows are omitted.
 - CodeQL high alerts: linear `<think>` stripping and JSON span, single-run whitespace in `NOTE_LINE`, stable comment stripping [#32]
 
 ## [1.2.0] - 2026-10-15

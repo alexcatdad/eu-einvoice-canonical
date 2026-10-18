@@ -37,6 +37,7 @@ const PAGES = [
   'docs/formats/',
   'docs/formats/peppol-bis3/',
   'docs/supply-chain/',
+  'docs/line-annotations/',
   'api/',
   'conformance/',
   'corpus/',

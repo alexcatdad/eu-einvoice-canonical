@@ -346,9 +346,16 @@ function line(c: Ctx, l: Element, index: number): Line {
   const tax = c.el(lineSettlement, 'ram:ApplicableTradeTax');
   const lineId = c.text(docLine, 'ram:LineID') ?? '';
   let netAmount = c.dec(lineSettlement, 'ram:SpecifiedTradeSettlementMonetarySummation/ram:LineTotalAmount');
+  if (netAmount !== undefined) c.valueOrigins[`/lines/${index}/netAmount`] = 'source';
   if (netAmount === undefined && textOnly(c, l, docLine, qtyEl, net, gross)) {
     netAmount = toDecimal('0');
-    c.warn('TEXT_LINE', `Line ${lineId || '?'} carries only a note and no amounts; its amount is recorded as 0`);
+    c.valueOrigins[`/lines/${index}/netAmount`] = 'defaulted';
+    c.warn(
+      'TEXT_LINE',
+      `Line ${lineId || '?'} carries only a note and no amounts; its amount is recorded as 0`,
+      undefined,
+      `/lines/${index}/netAmount`,
+    );
   }
   if (netAmount === undefined) throw new ParseError(`Line ${lineId || '?'}: LineTotalAmount (BT-131) missing`);
   const baseQty = c.el(net, 'ram:BasisQuantity') ?? c.el(gross, 'ram:BasisQuantity');

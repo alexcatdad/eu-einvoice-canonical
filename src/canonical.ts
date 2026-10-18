@@ -766,6 +766,9 @@ export interface ValidationSummary {
   findings: { layer: string; ruleId?: string; severity: 'fatal' | 'warning' | 'info'; message: string; path?: string }[];
 }
 
+/** Origin of a canonical value; absence of an entry means unrecorded, never implicitly source-supplied. */
+export type ValueOrigin = 'source' | 'derived' | 'defaulted';
+
 export interface SourceMeta {
   format: FormatId;
   formatVersion?: string; // '1.2', '3.2.2', 'FA (3)', '6.1'...
@@ -786,10 +789,18 @@ export interface SourceMeta {
   signatures: SignatureInfo[];
   unmapped: Record<string, string>; // XPath -> value
   derived: { field: string; rule: string }[]; // values the mapper inferred
+  /** Canonical JSON Pointer -> origin. Partial coverage; defaults are placeholders, not source assertions. No raw XML. */
+  valueOrigins?: Record<string, ValueOrigin>;
   /** Optional field-level provenance: canonical path -> source XPath (e.g. '/totals/payable' -> '/Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount'). */
   provenance?: Record<string, string>;
   validation?: ValidationSummary;
-  warnings: { code: string; message: string; path?: string }[];
+  warnings: {
+    code: string;
+    message: string;
+    path?: string;
+    /** Canonical JSON Pointer, when a specific value is affected. */
+    field?: string;
+  }[];
 }
 
 // ---------------------------------------------------------------------------
