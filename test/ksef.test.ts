@@ -364,7 +364,7 @@ describe('KSeF: variants', () => {
     const xml = text('ksef-fa3.xml').replace('<P_11>100.00</P_11>', '<P_11A>123.00</P_11A><P_11Vat>23.00</P_11Vat>');
     const inv = await parseOne(utf8(xml), 'gross.xml');
     assert.equal(inv.lines[0].netAmount, '100.00');
-    assert.ok(inv.source.derived.some((d) => d.field === '/lines/1/netAmount'));
+    assert.ok(inv.source.derived.some((d) => d.field === '/lines/0/netAmount'));
   });
 
   test('a malformed amount is an error naming the element', async () => {
