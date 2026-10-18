@@ -60,7 +60,8 @@ const controls: Control[] = JSON.parse(readFileSync(new URL('../conformance/vali
   (entry: Control) => entry.id.startsWith('france-rfe-'),
 );
 for (const control of controls) {
-  test(`${control.id}: independent profile, schema, semantic and France rule controls`, async () => {
+  // Each control runs several complete validation pipelines sequentially, including under CI coverage.
+  test(`${control.id}: independent profile, schema, semantic and France rule controls`, { timeout: 60_000 }, async () => {
     let xml = readFileSync(new URL(`../${control.fixture}`, import.meta.url), 'utf8');
     for (const [from, to] of control.prepare ?? []) {
       assert.ok(xml.includes(from));
