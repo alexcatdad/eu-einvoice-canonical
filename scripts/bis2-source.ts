@@ -123,7 +123,8 @@ export function inlineBis2Includes(mainBytes: Uint8Array, fragments: Record<stri
     const bytes = fragments[include.href];
     if (!bytes || hash(bytes) !== include.sha256) throw new Error('BIS2 include fragment hash mismatch');
     const fragment = new TextDecoder('utf-8', { fatal: true }).decode(bytes).replace(/^<\?xml[^?]*\?>/, '');
-    const withoutComments = fragment.replace(/<!--[\s\S]*?-->/g, '').trim();
+    // Preserve token separation when ignoring comments for this shape check; emitted source stays unchanged.
+    const withoutComments = fragment.replace(/<!--[\s\S]*?-->/g, ' ').trim();
     if (
       !/^<pattern\b[^>]*>[\s\S]*<\/pattern>$/.test(withoutComments) ||
       (fragment.match(/<pattern\b/g) ?? []).length !== 1 ||

@@ -4,6 +4,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium, firefox, webkit } from 'playwright';
 import { approvedBundleIds, loadDistribution } from '../scripts/validation-distribution.js';
+import { detectXml } from '../src/detect.js';
 
 const root = join(import.meta.dir, '..');
 const base = process.env.VALIDATION_SITE_URL!;
@@ -67,6 +68,31 @@ for (const [name, engine] of Object.entries({ chromium, firefox, webkit })) {
     }
     for (const file of ['NOTICE', 'distribution.json', ...Object.keys(policy.licenseFiles).map((file) => `licenses/${file}`)])
       assert.equal((await page.request.get(`${base}validation/${file}`)).status(), 200, `${name}: ${file}`);
+    const redirected: string[] = [];
+    await page.context().route('https://untrusted.invalid/**', async (route) => {
+      redirected.push(route.request().url());
+      await route.abort();
+    });
+    const receipt = await page.evaluate(
+      ({ url, xml, detection }) =>
+        new Promise<{ value?: { result: string }; error?: string }>((resolve, reject) => {
+          const worker = new Worker(url, { type: 'module' });
+          const timer = setTimeout(() => {
+            worker.terminate();
+            reject(new Error('Worker origin control timed out'));
+          }, 30_000);
+          worker.onmessage = ({ data }) => {
+            clearTimeout(timer);
+            worker.terminate();
+            resolve(data);
+          };
+          worker.postMessage({ xml, detection, base: 'https://untrusted.invalid/' });
+        }),
+      { url: `${base}validation/runtime/validator.js`, xml: valid, detection: JSON.parse(JSON.stringify(detectXml(valid))) },
+    );
+    assert.deepEqual(redirected, [], `${name}: message cannot redirect validation asset requests`);
+    assert.equal(receipt.value?.result, 'valid', `${name}: worker uses its own packaged assets`);
+    console.log(`${name}: untrusted message base ignored; local worker validation passed`);
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();

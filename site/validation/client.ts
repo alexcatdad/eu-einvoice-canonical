@@ -41,7 +41,7 @@ export function startValidation(
       else resolve(data.value);
     };
     worker.onerror = (event) => stop(event.message || 'Local validation worker failed');
-    worker.postMessage({ xml, detection: JSON.parse(JSON.stringify(detection)), base: new URL(base, location.origin).href, suite });
+    worker.postMessage({ xml, detection: JSON.parse(JSON.stringify(detection)), suite });
   });
   return { promise, cancel: () => stop('Local validation cancelled') };
 }
