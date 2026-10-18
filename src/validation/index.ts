@@ -26,6 +26,8 @@ export interface ValidateOptions {
   scope?: 'full-source' | 'schema';
   /** Runtime adapters for local browser workers; default engines run in Node/Bun. */
   runners?: {
+    /** Adapter-declared engine names and versions. Omitted identities stay absent from receipts. */
+    engines?: { schema?: string; schematron?: string };
     schema: (bundles: BundleReaderFor, id: string, xml: string, rootName: string) => Promise<Finding[]>;
     schematron: (bundles: BundleReaderFor, id: string, layer: 'semantic' | 'profile', xml: string, scope: string) => Promise<Finding[]>;
   };
@@ -43,8 +45,9 @@ export interface ValidateOptions {
 
 export const DEFAULT_MAX_SCHEMATRON_LINES = 2000;
 
-/** Line elements, by namespace: UBL InvoiceLine and CreditNoteLine, CII IncludedSupplyChainTradeLineItem. */
+/** Line elements for formats with Schematron rules, matched by namespace. */
 const LINE_ELEMENTS: Record<string, readonly string[]> = {
+  'http://isdoc.cz/namespace/2013': ['InvoiceLine'],
   'urn:sfti:CommonAggregateComponents:1:0': ['InvoiceLine'],
   'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2': ['InvoiceLine', 'CreditNoteLine'],
   'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100': ['IncludedSupplyChainTradeLineItem'],
@@ -151,7 +154,7 @@ export async function validate(payload: { xml: string }, detection: Detection, o
     maxSchematronLines: Number.isFinite(options.maxSchematronLines ?? DEFAULT_MAX_SCHEMATRON_LINES)
       ? (options.maxSchematronLines ?? DEFAULT_MAX_SCHEMATRON_LINES)
       : 'unlimited',
-    engines: { schema: 'xmllint-wasm@5.3.0', schematron: 'saxon-js@2.7.0' },
+    engines: options.runners ? { ...options.runners.engines } : { schema: 'xmllint-wasm@5.3.0', schematron: 'saxon-js@2.7.0' },
     artifacts: {},
   };
   summary.parse =

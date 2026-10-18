@@ -54,6 +54,7 @@ host.onmessage = async ({ data }) => {
         },
       },
       runners: {
+        engines: { schema: 'xmllint-wasm@5.3.0', schematron: 'saxon-js@2.7.0' },
         schema: async (bundles, id, xml, rootName) => {
           const manifest = await bundles.manifest(id);
           const entry = manifest.entries?.[rootName];

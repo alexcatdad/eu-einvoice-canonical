@@ -764,7 +764,8 @@ export interface ValidationSummary {
     suite: string;
     policy: 'source-conformance-v1';
     maxSchematronLines: number | 'unlimited';
-    engines: { schema: string; schematron: string };
+    /** Configured engine identities; custom adapters may leave unknown identities absent. */
+    engines: { schema?: string; schematron?: string };
     /** Manifest content digest identifies the complete artifact list, versions and effective dates. */
     artifacts: Partial<Record<'schema' | 'semantic' | 'profile', { id: string; version: string; manifestSha256: string }>>;
   };

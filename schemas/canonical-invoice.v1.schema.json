@@ -3123,10 +3123,7 @@
                   "type": "string"
                 }
               },
-              "required": [
-                "schema",
-                "schematron"
-              ]
+              "description": "Configured engine identities; custom adapters may leave unknown identities absent."
             },
             "artifacts": {
               "type": "object",

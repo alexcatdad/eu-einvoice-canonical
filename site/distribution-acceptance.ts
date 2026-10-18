@@ -60,6 +60,10 @@ for (const [name, engine] of Object.entries({ chromium, firefox, webkit })) {
       await page.locator('.json-panel .views button').first().click();
       const invoice = JSON.parse(await page.locator('pre.json').innerText());
       assert.equal(invoice.source.validation.result, entry.result, `${name}: exported ${entry.id}`);
+      assert.deepEqual(invoice.source.validation.receipt.engines, {
+        schema: 'xmllint-wasm@5.3.0',
+        schematron: 'saxon-js@2.7.0',
+      });
       console.log(`${name}: ${entry.id}: ${entry.result}`);
     }
     for (const [id, decision] of Object.entries(policy.bundles)) {
