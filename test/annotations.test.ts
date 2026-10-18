@@ -34,6 +34,25 @@ const output = (): LineAnnotations => ({
 });
 
 describe('canonical field selection', () => {
+  test('handles a large invoice of traced text-only lines within a bounded processing budget', () => {
+    const doc = invoice();
+    const line = { ...doc.lines[0], netAmount: toDecimal('0') };
+    doc.lines = Array.from({ length: 32_000 }, (_, i) => ({ ...line, id: String(i) }));
+    doc.source.valueOrigins = Object.fromEntries(doc.lines.map((_, i) => [`/lines/${i}/netAmount`, 'defaulted']));
+    doc.source.warnings = doc.lines.map((_, i) => ({ code: 'TEXT_LINE', message: 'Amount absent', field: `/lines/${i}/netAmount` }));
+    const started = performance.now();
+    const input = buildLineAnnotationInput(doc);
+    expect(performance.now() - started).toBeLessThan(3_000);
+    expect(input.lines).toHaveLength(32_000);
+    expect(input.source.warnings).toHaveLength(32_000);
+  }, 60_000);
+  test.each(['0.00', '0.0', '-0.00'])('accepts a traced text-only zero spelled %s without rewriting it', (amount) => {
+    const doc = invoice();
+    doc.lines[0].netAmount = toDecimal(amount);
+    doc.source.valueOrigins = { '/lines/0/netAmount': 'defaulted' };
+    doc.source.warnings = [{ code: 'TEXT_LINE', message: 'Amount absent', field: '/lines/0/netAmount' }];
+    expect(String(buildLineAnnotationInput(doc).lines[0].netAmount)).toBe(amount);
+  });
   test('does not disclose warnings about omitted or unidentified fields', () => {
     const doc = invoice();
     doc.source.warnings = [

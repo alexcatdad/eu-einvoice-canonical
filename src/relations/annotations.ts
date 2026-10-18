@@ -1,6 +1,7 @@
 /** Optional model annotations, separate from the canonical invoice and legacy relation rules. */
 import { z } from 'zod';
 import type { CanonicalInvoice, SourceMeta } from '../canonical.js';
+import { isZero } from '../values.js';
 
 export const ANNOTATION_KINDS = [
   'goods',
@@ -97,7 +98,10 @@ export function buildLineAnnotationInput(invoice: CanonicalInvoice): LineAnnotat
     unsupported('/kind', 'This reference supports ordinary invoices (380), not credit notes or corrective documents.');
   if (Object.keys(invoice.extensions).length || invoice.otherTaxes.length || invoice.withholdings.length)
     unsupported('/extensions', 'National extensions, other taxes and withholdings need a dedicated interpretation policy.');
+  const defaultedZeroFields = new Set<string>();
   invoice.lines.forEach((line, i) => {
+    const amountField = `/lines/${i}/netAmount`;
+    if (invoice.source.valueOrigins?.[amountField] === 'defaulted' && isZero(line.netAmount)) defaultedZeroFields.add(amountField);
     if (
       line.subLines?.length ||
       line.correctionState ||
@@ -108,16 +112,7 @@ export function buildLineAnnotationInput(invoice: CanonicalInvoice): LineAnnotat
     )
       unsupported(`/lines/${i}`, 'Nested, corrective and nationally extended lines are outside this reference scope.');
   });
-  if (
-    invoice.source.warnings.some(
-      (w) =>
-        w.code === 'TEXT_LINE' &&
-        !invoice.lines.some(
-          (line, i) =>
-            w.field === `/lines/${i}/netAmount` && line.netAmount === '0' && invoice.source.valueOrigins?.[w.field] === 'defaulted',
-        ),
-    )
-  )
+  if (invoice.source.warnings.some((w) => w.code === 'TEXT_LINE' && (!w.field || !defaultedZeroFields.has(w.field))))
     unsupported(
       '/source/warnings',
       'A text-only source line received a synthetic zero amount; explicit value-origin handling is required.',
