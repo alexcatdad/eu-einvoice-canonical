@@ -37,7 +37,7 @@ This file was reconstructed from the git history. Numbers in brackets are pull r
 
 ### Fixed
 
-- Finvoice derivation paths use canonical line positions after informational rows are omitted.
+- Finvoice, KSeF and TEAPPSXML derivation paths use canonical line positions rather than source row numbers, including after informational rows are omitted.
 - CodeQL high alerts: linear `<think>` stripping and JSON span, single-run whitespace in `NOTE_LINE`, stable comment stripping [#32]
 
 ## [1.2.0] - 2026-10-15

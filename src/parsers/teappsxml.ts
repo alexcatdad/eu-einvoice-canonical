@@ -594,7 +594,7 @@ function rowsOf(c: Ctx, inv: Element): Line[] {
       );
       return;
     }
-    lines.push(rowLine(c, r, i));
+    lines.push(rowLine(c, r, i, lines.length));
   });
   return lines;
 }
@@ -621,10 +621,10 @@ const ROW_HANDLED = [
   'FREE_TEXT',
 ];
 
-function rowLine(c: Ctx, r: Element, index: number): Line {
+function rowLine(c: Ctx, r: Element, index: number, canonicalIndex: number): Line {
   const rowNumber = c.text(r, 'ROW_NUMBER');
   const lineId = rowNumber ?? String(index + 1);
-  if (!rowNumber) c.derive(`/lines/${index}/id`, 'ROW_NUMBER absent; position among the ROW elements');
+  if (!rowNumber) c.derive(`/lines/${canonicalIndex}/id`, 'ROW_NUMBER absent; position among the ROW elements');
   const netAmount = amount(c, r, 'ROW_TOTAL', 'EXCLUDED');
   if (netAmount === undefined) throw new ParseError(`Row ${lineId}: ROW_TOTAL (BT-131) missing`);
   const article = c.el(r, 'ARTICLE');
@@ -636,7 +636,7 @@ function rowLine(c: Ctx, r: Element, index: number): Line {
   if (netPrice === undefined) {
     netPrice = amount(c, r, 'PRICE_PER_UNIT_WITH_DISCOUNT', 'EXCLUDED') ?? grossPrice;
     if (netPrice !== undefined)
-      c.derive(`/lines/${index}/price/net`, 'PRICE_PER_UNIT_NET absent; taken from the discounted or the plain unit price');
+      c.derive(`/lines/${canonicalIndex}/price/net`, 'PRICE_PER_UNIT_NET absent; taken from the discounted or the plain unit price');
   }
   const prQty = priceEl ? numAttr(c, priceEl, 'PR_QTY') : undefined;
   const at = `/INVOICE_CENTER/.../ROWS/ROW[${lineId}]`;

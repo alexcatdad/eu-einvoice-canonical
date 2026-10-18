@@ -3,6 +3,30 @@ import assert from 'node:assert/strict';
 import { buildLineAnnotationInput, convert } from '../src/index.js';
 import { fixture, parseOne, utf8 } from './helpers.js';
 
+test('TEAPPSXML price origins use canonical indexes after informational rows are omitted', async () => {
+  const xml = new TextDecoder()
+    .decode(fixture('teappsxml-invoices.xml'))
+    .replace('<ROWS>', '<ROWS><ROW ROW_TYPE="INFO"><ARTICLE_NAME>Information only</ARTICLE_NAME></ROW>')
+    .replace('<PRICE_PER_UNIT_NET><AMOUNT SIGN="+" VAT="EXCLUDED">75.00</AMOUNT></PRICE_PER_UNIT_NET>', '');
+  const result = await convert(utf8(xml), 'synthetic.xml');
+  const outcome = result.outcomes[0];
+  if (outcome.status !== 'ok') throw new Error(JSON.stringify(outcome));
+  const invoice = outcome.invoices[0];
+  expect(invoice.source.valueOrigins?.['/lines/0/price/net']).toBe('derived');
+  expect(invoice.source.valueOrigins?.['/lines/1/price/net']).not.toBe('derived');
+});
+
+test('KSeF derived net amounts use canonical positions rather than source line numbers', async () => {
+  const xml = new TextDecoder()
+    .decode(fixture('ksef-fa3-vat-multirate.xml'))
+    .replace('<P_11>1000.00</P_11>', '<P_11A>1230.00</P_11A><P_11Vat>230.00</P_11Vat>');
+  const invoice = await parseOne(utf8(xml), 'synthetic.xml');
+  assert.equal(invoice.lines[0].netAmount, '1000.00');
+  assert.equal(invoice.lines[1].netAmount, '200.00');
+  expect(invoice.source.valueOrigins?.['/lines/0/netAmount']).toBe('derived');
+  expect(invoice.source.valueOrigins?.['/lines/1/netAmount']).not.toBe('derived');
+});
+
 test('conversion identifies a text-only CII amount as defaulted without changing its value', async () => {
   const first = '<ram:IncludedSupplyChainTradeLineItem>';
   const note = `${first}<ram:AssociatedDocumentLineDocument><ram:LineID>NOTE</ram:LineID><ram:IncludedNote><ram:Content>Installation details</ram:Content></ram:IncludedNote></ram:AssociatedDocumentLineDocument></ram:IncludedSupplyChainTradeLineItem>`;
