@@ -1,3 +1,12 @@
+# Build with a reviewed validation inventory; held local artifacts never enter the final image.
+FROM oven/bun:1.4.3-slim AS validation-assets
+WORKDIR /build
+COPY scripts/validation-distribution.ts ./scripts/validation-distribution.ts
+COPY validation ./validation
+RUN bun scripts/validation-distribution.ts /build /published-validation/bundles \
+    && cp validation/NOTICE validation/distribution.json /published-validation/ \
+    && cp -R validation/licenses /published-validation/licenses
+
 # The conversion API (openapi/openapi.yaml) as a container:
 #   docker build -t einvoice-api .
 #   docker run --rm -p 8080:8080 einvoice-api
@@ -10,7 +19,7 @@ RUN bun install --frozen-lockfile --production --ignore-scripts
 
 COPY src ./src
 COPY schemas ./schemas
-COPY validation ./validation
+COPY --from=validation-assets /published-validation ./validation
 COPY trust ./trust
 
 USER bun

@@ -26,6 +26,8 @@ import {
   toSie4,
   toUbl,
   type UnwrapLimits,
+  type ValidateOptions,
+  validationPassed,
   WriterError,
   type WriterProfile,
 } from './index.js';
@@ -66,8 +68,10 @@ export interface IO {
 }
 
 export interface Deps {
-  /** The validation module, once it exists. Absent means `--validate` is a no-op with a message. */
+  /** Optional additional canonical checks, run after the built-in source validation. */
   validator?: Validator | null;
+  /** Source-validation options, including a local bundle source. */
+  validation?: ValidateOptions;
   /** Fetches a trusted list by URL. Default: the global fetch. Tests inject one so nothing touches the network. */
   fetch?: (url: string) => Promise<Uint8Array>;
   /** Clock for snapshot dates. */
@@ -484,7 +488,6 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     if (args.validate) {
       if (args.command !== 'convert') note(`--validate only applies to convert; ignored for ${args.command}`);
       else if (deps.validator) validator = deps.validator;
-      else note('--validate: the validation module is not available in this build; documents are converted without validation');
     }
 
     let mapping = BAS_EXAMPLE_MAPPING;
@@ -572,16 +575,26 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
         continue;
       }
 
-      const r = await convert(bytes, filename, args.limits, euTrust ? { euTrust, now: deps.now } : {});
+      const r = await convert(bytes, filename, args.limits, {
+        ...(euTrust ? { euTrust, now: deps.now } : {}),
+        validate: args.validate && args.command === 'convert',
+        validation: deps.validation,
+      });
       for (const o of r.outcomes) {
         if (o.status === 'ok') {
-          let valid = true;
+          let failure: number | undefined;
           for (const inv of o.invoices) {
+            if (args.validate && args.command === 'convert' && !validationPassed(inv.source.validation)) {
+              const summary = inv.source.validation;
+              if (failure !== EXIT.validation) failure = summary?.result === 'invalid' ? EXIT.validation : EXIT.validatorUnavailable;
+              for (const finding of summary?.findings ?? []) err(`${label}: invoice ${inv.id}: ${finding.message}`);
+              err(`${label}: invoice ${inv.id}: source validation ${summary?.result ?? 'incomplete'}`);
+            }
             if (validator) {
               const problems = await validator.validate(inv);
               for (const m of problems) err(`${label}: invoice ${inv.id}: ${m}`);
               if (problems.length) {
-                valid = false;
+                failure = EXIT.validation;
                 continue;
               }
             }
@@ -591,7 +604,7 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
               } catch (e) {
                 if (!(e instanceof JournalError)) throw e;
                 err(`${label}: invoice ${inv.id}: ${e.message}`);
-                valid = false;
+                failure = EXIT.validation;
                 continue;
               }
             }
@@ -602,8 +615,8 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
               written++;
             }
           }
-          if (valid) tally.good();
-          else tally.fail(EXIT.validation);
+          if (failure === undefined) tally.good();
+          else tally.fail(failure);
         } else if (o.status === 'not-an-invoice') {
           err(`${label}: not an invoice (${o.detection.kind === 'other-document' ? o.detection.label : 'unknown'})`);
           tally.fail(EXIT.unsupported);

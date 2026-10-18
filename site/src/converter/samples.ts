@@ -1,5 +1,6 @@
 /** The sample invoices the converter offers (copied to public/samples/ by site/prepare.ts, from SAMPLE_FILES). */
 export const SAMPLES: { file: string; label: string }[] = [
+  { file: 'peppol-bis3-reverse-charge.xml', label: 'sample.annotations' },
   { file: 'peppol-bis3-invoice.xml', label: 'sample.peppolInvoice' },
   { file: 'peppol-bis3-creditnote.xml', label: 'sample.peppolCredit' },
   { file: 'xrechnung-ubl.xml', label: 'sample.xrechnungUbl' },
@@ -18,10 +19,11 @@ export const SAMPLES: { file: string; label: string }[] = [
 ];
 
 /** Converted when the page opens, so the result side is never empty. */
-export const EXAMPLE = SAMPLES[0]!.file;
+export const EXAMPLE = 'peppol-bis3-invoice.xml';
 
 /** The samples worth a one-click button; the rest stay in the menu. */
 export const CHIP_SAMPLES = [
+  'peppol-bis3-reverse-charge.xml',
   'peppol-bis3-invoice.xml',
   'xrechnung-ubl.xml',
   'facturx-en16931.pdf',

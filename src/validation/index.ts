@@ -12,16 +12,26 @@
 import { SaxesParser, type SaxesTagNS } from 'saxes';
 import type { CheckStatus, ValidationSummary } from '../canonical.js';
 import type { Detection } from '../detect.js';
+import { sha256Hex } from '../hash.js';
 import { BundleReaderFor, type BundleSource, defaultReader } from './bundles.js';
-import { emptySummary, type Layer, planFor } from './plan.js';
-import { NotApplicable, runSchema } from './schema.js';
-import { runSchematron } from './schematron.js';
+import { unsupportedCfdiExtension } from './cfdi.js';
+import { emptySummary, finishSummary, type Layer, planFor, plannedSummary, type ValidationSuite } from './plan.js';
 import type { Finding } from './types.js';
+import { unsupportedUblExtension } from './ubl-extensions.js';
 
 export type { BundleManifest, BundleReader, BundleSource } from './bundles.js';
-export { emptySummary, planFor, unavailableSummary } from './plan.js';
+export type { ValidationSuite } from './plan.js';
+export { emptySummary, planFor, unavailableSummary, validationPassed } from './plan.js';
 
 export interface ValidateOptions {
+  scope?: 'full-source' | 'schema';
+  /** Runtime adapters for local browser workers; default engines run in Node/Bun. */
+  runners?: {
+    schema: (bundles: BundleReaderFor, id: string, xml: string, rootName: string) => Promise<Finding[]>;
+    schematron: (bundles: BundleReaderFor, id: string, layer: 'semantic' | 'profile', xml: string, scope: string) => Promise<Finding[]>;
+  };
+  /** Peppol defaults to its coherent May 2026 release; the legacy option replays the previous mixed configuration. */
+  suite?: ValidationSuite;
   /** Where the bundles come from. Default: validation/bundles next to this package (a file read in Node and Bun, a fetch in browsers). */
   bundles?: BundleSource;
   /**
@@ -36,6 +46,7 @@ export const DEFAULT_MAX_SCHEMATRON_LINES = 2000;
 
 /** Line elements, by namespace: UBL InvoiceLine and CreditNoteLine, CII IncludedSupplyChainTradeLineItem. */
 const LINE_ELEMENTS: Record<string, readonly string[]> = {
+  'urn:sfti:CommonAggregateComponents:1:0': ['InvoiceLine'],
   'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2': ['InvoiceLine', 'CreditNoteLine'],
   'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100': ['IncludedSupplyChainTradeLineItem'],
 };
@@ -60,6 +71,39 @@ export function countLines(xml: string, limit = Number.POSITIVE_INFINITY): numbe
   return n;
 }
 
+/** TEAPPS batches may carry a separate declaration in every frame; the header probe keeps only the first. */
+function supportedTeappsFrames(xml: string): boolean {
+  const parser = new SaxesParser({ xmlns: true, position: false });
+  const stack: { local: string; uri: string }[] = [];
+  let text: string | null = null;
+  let supported = true;
+  const path = ['INVOICE_CENTER', 'CONTENT_FRAME', 'BLOCK_RULES', 'FORMAT_VERSION'];
+  parser.on('opentag', (tag: SaxesTagNS) => {
+    stack.push({ local: tag.local, uri: tag.uri ?? '' });
+    if (stack.length === path.length && stack.every((entry, i) => entry.local === path[i] && entry.uri === '')) text = '';
+  });
+  parser.on('text', (value) => {
+    if (text !== null) text += value;
+  });
+  parser.on('cdata', (value) => {
+    if (text !== null) text += value;
+  });
+  parser.on('closetag', () => {
+    if (text !== null && stack.length === path.length) {
+      supported = text.trim() === '3.0';
+      text = null;
+      if (!supported) throw new Stop();
+    }
+    stack.pop();
+  });
+  try {
+    parser.write(xml).close();
+  } catch {
+    /* Malformed XML is diagnosed by XSD; a mismatched version stops early. */
+  }
+  return supported;
+}
+
 let scopes = 0;
 const scopeOf = new WeakMap<object, string>();
 
@@ -81,17 +125,89 @@ function readerFor(source: BundleSource | undefined): { bundles: BundleReaderFor
  * belong to other checks.
  */
 export async function validate(payload: { xml: string }, detection: Detection, options: ValidateOptions = {}): Promise<ValidationSummary> {
-  const summary = emptySummary();
-  summary.parse = detection.kind === 'unknown' && !detection.probe ? 'failed' : 'passed';
+  if (
+    options.suite !== undefined &&
+    options.suite !== 'peppol-2026-05' &&
+    options.suite !== 'legacy-peppol-3.0.20-en-1.3.17' &&
+    options.suite !== 'facturx-1.09.2' &&
+    options.suite !== 'cii-d16b' &&
+    options.suite !== 'e-arve-1.2.EN' &&
+    options.suite !== 'e-arve-1.2' &&
+    options.suite !== 'france-rfe-1.4.0.04' &&
+    options.suite !== 'france-rfe-1.4.0.04-facturx'
+  ) {
+    const rejected = emptySummary();
+    rejected.parse = detection.kind === 'unknown' && !detection.probe ? 'failed' : 'passed';
+    rejected.required = ['schema'];
+    rejected.reasons = { schema: 'unsupported' };
+    rejected.findings.push({ layer: 'schema', severity: 'info', message: `Unsupported validation suite: ${options.suite}` });
+    return finishSummary(rejected);
+  }
+  const summary = plannedSummary(detection, options.suite, options.scope);
+  const suite =
+    options.suite ?? (detection.kind === 'invoice' && detection.format.id === 'peppol-bis3' ? 'peppol-2026-05' : 'source-pinned');
+  summary.receipt = {
+    suite,
+    policy: 'source-conformance-v1',
+    maxSchematronLines: Number.isFinite(options.maxSchematronLines ?? DEFAULT_MAX_SCHEMATRON_LINES)
+      ? (options.maxSchematronLines ?? DEFAULT_MAX_SCHEMATRON_LINES)
+      : 'unlimited',
+    engines: { schema: 'xmllint-wasm@5.3.0', schematron: 'saxon-js@2.7.0' },
+    artifacts: {},
+  };
+  summary.parse =
+    (detection.kind === 'unknown' && !detection.probe) || detection.probe?.hasDoctype || detection.probe?.error ? 'failed' : 'passed';
   if (summary.parse === 'failed') {
     summary.findings.push({
       layer: 'parse',
       severity: 'fatal',
-      message: detection.kind === 'unknown' ? detection.reason : 'Not well-formed XML',
+      message: detection.probe?.hasDoctype
+        ? 'DOCTYPE is not allowed in source validation'
+        : detection.kind === 'unknown'
+          ? detection.reason
+          : 'Not well-formed XML',
     });
-    return summary;
+    return finishSummary(summary);
   }
-  const plan = planFor(detection);
+  const plan = planFor(detection, options.suite);
+  if (detection.kind === 'invoice' && detection.format.id === 'teappsxml' && !supportedTeappsFrames(payload.xml)) {
+    delete plan.schema;
+    delete summary.bundles.schema;
+    summary.reasons!.schema = 'unsupported';
+    summary.findings.push({
+      layer: 'schema',
+      severity: 'info',
+      message: 'Unsupported TEAPPSXML frame version; every frame must declare 3.0',
+    });
+  }
+  if (detection.kind === 'invoice' && detection.format.id === 'mx-cfdi' && unsupportedCfdiExtension(payload.xml)) {
+    delete plan.schema;
+    delete summary.bundles.schema;
+    summary.reasons!.schema = 'unsupported';
+    summary.findings.push({
+      layer: 'schema',
+      severity: 'info',
+      message: 'Unsupported CFDI complement or Addenda schema; the local closure covers only core 3.3/4.0 and TimbreFiscalDigital 1.1',
+    });
+  }
+  if (
+    options.scope !== 'schema' &&
+    detection.kind === 'invoice' &&
+    detection.format.family === 'ubl' &&
+    unsupportedUblExtension(payload.xml, plan.schema)
+  ) {
+    if (!summary.required!.includes('profile')) summary.required!.push('profile');
+    summary.reasons!.profile = 'unsupported';
+    summary.findings.push({
+      layer: 'profile',
+      severity: 'info',
+      message: 'UBL extension contract is not covered by the selected local schema and rule closure',
+    });
+  }
+  if (options.scope === 'schema') {
+    delete plan.semantic;
+    delete plan.profile;
+  }
   const rootName = detection.probe?.rootName ?? '';
   const { bundles, scope } = readerFor(options.bundles);
 
@@ -100,39 +216,59 @@ export async function validate(payload: { xml: string }, detection: Detection, o
   const tooLarge = lines > maxLines;
 
   const runners: Record<Layer, (id: string) => Promise<Finding[]>> = {
-    schema: (id) => runSchema(bundles, id, payload.xml, rootName),
-    semantic: (id) => runSchematron(bundles, id, 'semantic', payload.xml, scope),
-    profile: (id) => runSchematron(bundles, id, 'profile', payload.xml, scope),
+    schema: async (id) => (options.runners?.schema ?? (await import('./schema.js')).runSchema)(bundles, id, payload.xml, rootName),
+    semantic: async (id) =>
+      (options.runners?.schematron ?? (await import('./schematron.js')).runSchematron)(bundles, id, 'semantic', payload.xml, scope),
+    profile: async (id) =>
+      (options.runners?.schematron ?? (await import('./schematron.js')).runSchematron)(bundles, id, 'profile', payload.xml, scope),
   };
   const layers = Object.keys(plan) as Layer[];
   const results = await Promise.all(
-    layers.map(async (layer): Promise<{ layer: Layer; status: CheckStatus; findings: Finding[] }> => {
-      if (tooLarge && layer !== 'schema')
-        return {
-          layer,
-          status: 'not-run',
-          findings: [
-            {
-              layer,
-              severity: 'info',
-              message: `Skipped: more than ${maxLines} invoice lines (maxSchematronLines). The Schematron rules would take minutes here; validate with a native Schematron processor or raise the limit.`,
-            },
-          ],
-        };
-      try {
-        const findings = await runners[layer](plan[layer]!);
-        return { layer, status: findings.some((f) => f.severity === 'fatal') ? 'failed' : 'passed', findings };
-      } catch (e) {
-        if (e instanceof NotApplicable) return { layer, status: 'not-run', findings: [{ layer, severity: 'info', message: e.message }] };
-        const reason = e instanceof Error ? e.message : String(e);
-        return { layer, status: 'unavailable', findings: [{ layer, severity: 'info', message: `Validator unavailable: ${reason}` }] };
-      }
-    }),
+    layers.map(
+      async (
+        layer,
+      ): Promise<{ layer: Layer; status: CheckStatus; reason?: 'size-limit' | 'unsupported' | 'unavailable'; findings: Finding[] }> => {
+        if (tooLarge && layer !== 'schema')
+          return {
+            layer,
+            status: 'not-run',
+            reason: 'size-limit',
+            findings: [
+              {
+                layer,
+                severity: 'info',
+                message: `Skipped: more than ${maxLines} invoice lines (maxSchematronLines). The Schematron rules would take minutes here; validate with a native Schematron processor or raise the limit.`,
+              },
+            ],
+          };
+        try {
+          const id = plan[layer]!;
+          const manifest = await bundles.manifest(id);
+          summary.receipt!.artifacts[layer] = {
+            id,
+            version: manifest.version,
+            manifestSha256: await sha256Hex(new TextEncoder().encode(JSON.stringify(manifest))),
+          };
+          const findings = await runners[layer](id);
+          return { layer, status: findings.some((f) => f.severity === 'fatal') ? 'failed' : 'passed', findings };
+        } catch (e) {
+          if (e instanceof Error && e.name === 'NotApplicable')
+            return { layer, status: 'not-run', reason: 'unsupported', findings: [{ layer, severity: 'info', message: e.message }] };
+          const reason = e instanceof Error ? e.message : String(e);
+          return {
+            layer,
+            status: 'unavailable',
+            reason: 'unavailable',
+            findings: [{ layer, severity: 'info', message: `Validator unavailable: ${reason}` }],
+          };
+        }
+      },
+    ),
   );
   for (const r of results) {
     summary[r.layer] = r.status;
-    if (r.status !== 'not-run') summary.bundles[r.layer] = plan[r.layer];
+    if (r.reason) summary.reasons![r.layer] = r.reason;
     summary.findings.push(...r.findings);
   }
-  return summary;
+  return finishSummary(summary);
 }

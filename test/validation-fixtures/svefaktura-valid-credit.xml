@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Svefaktura 1.0 invoice with descriptor lines and a percentage surcharge. Modelled on a Swedish construction-style invoice; every party, number and amount is fictitious. -->
+<Invoice xmlns="urn:sfti:documents:BasicInvoice:1:0" xmlns:cac="urn:sfti:CommonAggregateComponents:1:0" xmlns:cbc="urn:oasis:names:tc:ubl:CommonBasicComponents:1:0">
+  <ID>SF-CREDIT-2026-31</ID>
+  <cbc:IssueDate>2026-10-05</cbc:IssueDate>
+  <InvoiceTypeCode>381</InvoiceTypeCode>
+  <InvoiceCurrencyCode>SEK</InvoiceCurrencyCode>
+  <LineItemCountNumeric>6</LineItemCountNumeric>
+  <cac:BuyerParty>
+    <cac:Party>
+      <cac:PartyName><cbc:Name>Exempelkommunen</cbc:Name></cac:PartyName>
+      <cac:Address>
+        <cbc:StreetName>Provgatan 3</cbc:StreetName>
+        <cbc:CityName>Exempelstad</cbc:CityName>
+        <cbc:PostalZone>70000</cbc:PostalZone>
+        <cac:Country><cac:IdentificationCode>SE</cac:IdentificationCode></cac:Country>
+      </cac:Address>
+    </cac:Party>
+  </cac:BuyerParty>
+  <cac:SellerParty>
+    <cac:Party>
+      <cac:PartyName><cbc:Name>Exempelglas AB</cbc:Name></cac:PartyName>
+      <cac:Address>
+        <cbc:StreetName>Exempelvägen 1</cbc:StreetName>
+        <cbc:CityName>Stockholm</cbc:CityName>
+        <cbc:PostalZone>11122</cbc:PostalZone>
+        <cac:Country><cac:IdentificationCode>SE</cac:IdentificationCode></cac:Country>
+      </cac:Address>
+      <cac:PartyTaxScheme>
+        <cac:CompanyID>SE559999999901</cac:CompanyID>
+        <cac:TaxScheme><cac:ID>VAT</cac:ID></cac:TaxScheme>
+      </cac:PartyTaxScheme>
+    </cac:Party>
+  </cac:SellerParty>
+  <cac:PaymentMeans>
+    <cac:PaymentMeansTypeCode>1</cac:PaymentMeansTypeCode>
+    <cbc:DuePaymentDate>2026-11-04</cbc:DuePaymentDate>
+  </cac:PaymentMeans>
+  <cac:TaxTotal>
+    <cbc:TotalTaxAmount amountCurrencyID="SEK">0.00</cbc:TotalTaxAmount>
+    <cac:TaxSubTotal>
+      <cbc:TaxableAmount amountCurrencyID="SEK">269840.00</cbc:TaxableAmount>
+      <cbc:TaxAmount amountCurrencyID="SEK">0.00</cbc:TaxAmount>
+      <cac:TaxCategory>
+        <cac:ID>E</cac:ID>
+        <cbc:Percent>0.00</cbc:Percent>
+        <cac:TaxScheme><cac:ID>VAT</cac:ID></cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubTotal>
+  </cac:TaxTotal>
+  <cac:LegalTotal>
+    <cbc:LineExtensionTotalAmount amountCurrencyID="SEK">269840.00</cbc:LineExtensionTotalAmount>
+    <cbc:TaxExclusiveTotalAmount amountCurrencyID="SEK">269840.00</cbc:TaxExclusiveTotalAmount>
+    <cbc:TaxInclusiveTotalAmount amountCurrencyID="SEK">269840.00</cbc:TaxInclusiveTotalAmount>
+  </cac:LegalTotal>
+  <cac:InvoiceLine>
+    <cac:ID>1</cac:ID>
+    <cbc:InvoicedQuantity quantityUnitCode=" ">0.00</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount amountCurrencyID="SEK">0.00</cbc:LineExtensionAmount>
+    <cac:OrderLineReference>
+      <cac:OrderReference><cac:BuyersID>EX-BEST-1042</cac:BuyersID></cac:OrderReference>
+    </cac:OrderLineReference>
+    <cac:Item>
+      <cbc:Description>4711 - Exempelskolan 12 st glaspartier</cbc:Description>
+      <cac:BasePrice><cbc:PriceAmount amountCurrencyID="SEK">0</cbc:PriceAmount></cac:BasePrice>
+    </cac:Item>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cac:ID>2</cac:ID>
+    <cbc:InvoicedQuantity quantityUnitCode=" ">0.00</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount amountCurrencyID="SEK">0.00</cbc:LineExtensionAmount>
+    <cac:OrderLineReference>
+      <cac:OrderReference><cac:BuyersID>EX-BEST-1042</cac:BuyersID></cac:OrderReference>
+    </cac:OrderLineReference>
+    <cac:Item>
+      <cbc:Description>Projektering, tillverkning &amp; montage av glaspartier i aluminium.</cbc:Description>
+      <cac:BasePrice><cbc:PriceAmount amountCurrencyID="SEK">0</cbc:PriceAmount></cac:BasePrice>
+    </cac:Item>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cac:ID>3</cac:ID>
+    <cbc:InvoicedQuantity quantityUnitCode=" ">0.00</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount amountCurrencyID="SEK">0.00</cbc:LineExtensionAmount>
+    <cac:OrderLineReference>
+      <cac:OrderReference><cac:BuyersID>EX-BEST-1042</cac:BuyersID></cac:OrderReference>
+    </cac:OrderLineReference>
+    <cac:Item>
+      <cbc:Description>Utförande enligt anbud 5150</cbc:Description>
+      <cac:BasePrice><cbc:PriceAmount amountCurrencyID="SEK">0</cbc:PriceAmount></cac:BasePrice>
+    </cac:Item>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cac:ID>4</cac:ID>
+    <cbc:InvoicedQuantity quantityUnitCode="st">1.00</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount amountCurrencyID="SEK">248000.00</cbc:LineExtensionAmount>
+    <cac:OrderLineReference>
+      <cac:OrderReference><cac:BuyersID>EX-BEST-1042</cac:BuyersID></cac:OrderReference>
+    </cac:OrderLineReference>
+    <cac:Item>
+      <cbc:Description>11st Glaspartier (GP-A) (Ändring till 12st)</cbc:Description>
+      <cac:TaxCategory><cac:ID>E</cac:ID><cbc:Percent>0.00</cbc:Percent><cac:TaxScheme><cac:ID>VAT</cac:ID></cac:TaxScheme></cac:TaxCategory>
+      <cac:BasePrice><cbc:PriceAmount amountCurrencyID="SEK">248000</cbc:PriceAmount></cac:BasePrice>
+    </cac:Item>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cac:ID>5</cac:ID>
+    <cbc:InvoicedQuantity quantityUnitCode="st">1.00</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount amountCurrencyID="SEK">19840.00</cbc:LineExtensionAmount>
+    <cac:OrderLineReference>
+      <cac:OrderReference><cac:BuyersID>EX-BEST-1042</cac:BuyersID></cac:OrderReference>
+    </cac:OrderLineReference>
+    <cac:Item>
+      <cbc:Description>8% Materialpåslag</cbc:Description>
+      <cac:TaxCategory><cac:ID>E</cac:ID><cbc:Percent>0.00</cbc:Percent><cac:TaxScheme><cac:ID>VAT</cac:ID></cac:TaxScheme></cac:TaxCategory>
+      <cac:BasePrice><cbc:PriceAmount amountCurrencyID="SEK">19840</cbc:PriceAmount></cac:BasePrice>
+    </cac:Item>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cac:ID>6</cac:ID>
+    <cbc:InvoicedQuantity quantityUnitCode="st">20.00</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount amountCurrencyID="SEK">2000.00</cbc:LineExtensionAmount>
+    <cac:OrderLineReference>
+      <cac:OrderReference><cac:BuyersID>EX-BEST-1042</cac:BuyersID></cac:OrderReference>
+    </cac:OrderLineReference>
+    <cac:Item>
+      <cbc:Description>Dörrgångjärn (syntetisk testrad)</cbc:Description>
+      <cac:TaxCategory><cac:ID>E</cac:ID><cbc:Percent>0.00</cbc:Percent><cac:TaxScheme><cac:ID>VAT</cac:ID></cac:TaxScheme></cac:TaxCategory>
+      <cac:BasePrice><cbc:PriceAmount amountCurrencyID="SEK">100</cbc:PriceAmount></cac:BasePrice>
+    </cac:Item>
+  </cac:InvoiceLine>
+  <RequisitionistDocumentReference><cac:ID>SYNTHETIC-BUYER-REF</cac:ID></RequisitionistDocumentReference>
+  <InitialInvoiceDocumentReference><cac:ID>SF-ORIGINAL-2026</cac:ID></InitialInvoiceDocumentReference>
+</Invoice>

@@ -20,12 +20,13 @@ describe('validation plan when the validators cannot be loaded', () => {
     assert.equal(s.signature, 'not-run');
   });
 
-  test('a format without validators keeps every layer not-run', () => {
-    const detection = detectXml('<Invoice xmlns="urn:sfti:documents:BasicInvoice:1:0"/>');
+  test('an unsupported source version keeps every layer not-run and remains incomplete', () => {
+    const detection = detectXml('<Finvoice Version="9.9"/>');
     const s = unavailableSummary(detection, 'import failed');
     assert.equal(s.parse, 'passed');
     for (const layer of ['schema', 'semantic', 'profile'] as const) assert.equal(s[layer], 'not-run', layer);
     assert.deepEqual(s.findings, []);
+    assert.equal(s.result, 'incomplete');
   });
 
   test('input that is not XML reports parse failed', () => {

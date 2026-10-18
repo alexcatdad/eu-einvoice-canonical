@@ -1,0 +1,80 @@
+National validation artifact permissions and attribution
+=======================================================
+
+Facturae 3.0, 3.1, 3.2, 3.2.1 and 3.2.2
+--------------------------------------
+Origin: Ministerio de Hacienda y Administraciones Públicas - Ministerio de
+Industria, Energía y Turismo. Official source files, their stated dates and
+original source hashes are recorded in each bundle manifest. Remote XMLDSIG
+import locations are localized for offline validation; validation constraints
+are unchanged. W3C notices remain in the XMLDSIG schema.
+
+The portal's reuse notice permits commercial and noncommercial reproduction,
+distribution and necessary transformation of its documents. Reuse must preserve
+meaning, source attribution, supplied update dates and reuse metadata. It must
+not imply the Ministries' participation, sponsorship or endorsement. Reuse is
+at the recipient's risk, without a guarantee of accuracy or continuing access.
+The notice also refers to the Spanish public-sector information reuse regime
+and its general reuse conditions. This application is not an official
+administrative service and is not endorsed by the issuing Ministries.
+
+Permission source: https://www.facturae.gob.es/aviso-legal
+Reviewed 2026-10-18. Retrieved-page SHA256:
+4375f357f85de92010bb8671a5da3dd8dd97ea535ea3f320aee52ae4c38edcfd
+This note summarizes the document-reuse terms, not the separate rights in the
+portal's design, software or trademarks. The portal HTML is not redistributed.
+
+Croatian UBL/HR schemas and HR-CIUS-EXT rules
+------------------------------------------
+Source: Republika Hrvatska, Ministarstvo financija, Porezna uprava.
+https://porezna.gov.hr/fiskalizacija
+Exact downloads: /fiskalizacija/api/dokumenti/197 (rules) and /198 (schemas).
+The authority site permits transmission of its contents without separate
+permission when the source is acknowledged. Its statement is:
+Sadržaji s ovih stranica se mogu prenositi bez posebne dozvole uz navođenje izvora
+Reviewed 2026-10-18. Retrieved-page SHA256:
+c407be2e28d73b28dd503071677765c2ac30297fb8ff894b53c51a5c3defae68
+
+Original schema bytes, rule source and code lists are retained. The compiled
+rule representation inlines the original code-list include without changing
+assertion predicates or messages. OASIS notices in UBL components remain
+applicable and are preserved. Compilation and local validation do not imply
+endorsement, legal clearance or authority acceptance.
+
+ISDOC schema releases with explicit permission
+---------------------------------------------
+The original copyright and permission notices are retained in all schemas for
+versions 5.2.2, 5.2.3, 5.3, 5.3.1, 6.0.1 and 6.0.2. Those notices permit copying,
+modification and distribution of the schema and its documentation for any
+purpose without fee, provided the copyright and permission paragraphs remain.
+The publisher names may not be used to endorse derived products without prior
+permission. XMLDSIG notices are preserved. This qualification does not extend
+to other ISDOC versions or to separate native Schematron artifacts.
+https://isdoc.cz/
+
+NLCIUS and the Dutch G-account extension
+--------------------------------------
+Copyright (c) 2017 Stichting Simplerinvoicing. The pinned Dutch authority
+repository MIT license is retained in each bundle's licenses/MIT.txt. The
+native CII rules and the EN16931 material in the G-account suite also carry
+EUPL-1.2 notices; the full license is retained in licenses/EUPL-1.2.txt.
+Original Schematron sources are included. The G-account bundle also includes
+the original compiled XSLT and its Schematron include closure. The standalone
+native UBL/CII patterns are wrapped in namespace-declaring schema elements by
+scripts/build-validation-bundles.ts, without changing their rules. No generic
+EN rule set is substituted for the G-account publisher's modified suite.
+https://github.com/peppolautoriteit-nl/validation/tree/4e93ae8681f413fef627a338ad84ce465a153ee8
+
+Romanian CIUS-RO 1.0.9 integrated UBL rules
+----------------------------------------
+The authority's integrated top-level schema and included EN16931 material state
+EUPL-1.2. Full license text, original source closure and derived source are
+retained beside the compiled artifact. The documented build adapter expands
+publisher patterns and retains attribute rule contexts. It does not change the
+publisher's national replacement of BR-27 or add a second generic EN suite.
+https://mfinante.gov.ro/static/10/eFactura/ro16931-ubl-1.0.9.zip
+
+For all compiled bundles, the repository's build-validation-bundles.ts and its
+referenced adapters provide the build instructions and transformations. Original
+and derived file hashes are recorded in bundle manifests. Corresponding source
+files and license notices must accompany redistribution of these bundles.

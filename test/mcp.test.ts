@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -91,6 +91,19 @@ describe('MCP server', () => {
   test('explain_finding knows the totals rules', async () => {
     expect((await call('explain_finding', { ruleId: 'br-co-15' })).summary).toContain('BT-112');
     expect((await call('explain_finding', { ruleId: 'XYZ-1' })).data.explanation).toBeNull();
+  });
+
+  test('validate_invoice retains source findings when mapping fails', async () => {
+    const xml = readFileSync(new URL('./validation-fixtures/svefaktura-valid-invoice.xml', import.meta.url), 'utf8').replace(
+      '2026-10-05',
+      'not-a-date',
+    );
+    const r = await call('validate_invoice', { xml });
+    expect(r.data.reports).toHaveLength(1);
+    expect(r.data.reports[0].validation.schema).toBe('failed');
+    expect(r.data.reports[0].validation.result).toBe('invalid');
+    expect(r.data.reports[0].conversionStatus).toBe('error');
+    expect(r.summary).toContain('invalid');
   });
 
   test('schema resources are readable', async () => {

@@ -4,7 +4,7 @@
  *
  * @module eu-einvoice-canonical
  */
-import type { CanonicalInvoice } from './canonical.js';
+import type { CanonicalInvoice, ValidationSummary } from './canonical.js';
 import { checkTotals } from './checks.js';
 import { type Detection, detectXml } from './detect.js';
 import { type Skipped, type UnwrapLimits, type UnwrapOptions, unwrap, type XmlPayload } from './envelope.js';
@@ -72,7 +72,17 @@ export {
   type TrustSnapshot,
   trustAnchorsFromSnapshot,
 } from './signature/index.js';
-export type { ValidateOptions } from './validation/index.js';
+export type { ValidateOptions, ValidationSuite } from './validation/index.js';
+export { validationPassed } from './validation/plan.js';
+/** Validate recognized source XML independently of canonical mapping. */
+export async function validateSource(payload: { xml: string }, options: ValidateOptions = {}): Promise<ValidationSummary> {
+  const detection = detectXml(payload.xml);
+  try {
+    return await (await loadValidation()).validate(payload, detection, options);
+  } catch (error) {
+    return unavailableSummary(detection, error instanceof Error ? error.message : String(error), options.suite, options.scope);
+  }
+}
 export * as values from './values.js';
 export { type CiiOptions, toCii } from './writers/cii.js';
 export { WriterError, type WriterProfile } from './writers/shared.js';
@@ -109,11 +119,12 @@ export async function inspect(
   return { fileSha256, documents, skipped };
 }
 
-export type ConvertOutcome =
+export type ConvertOutcome = (
   | { status: 'ok'; invoices: CanonicalInvoice[]; detection: Detection; payload: Omit<XmlPayload, 'xml'> }
   | { status: 'not-an-invoice'; detection: Detection; payload: Omit<XmlPayload, 'xml'> }
   | { status: 'unsupported'; detection: Detection; payload: Omit<XmlPayload, 'xml'>; reason: string }
-  | { status: 'error'; detection: Detection; payload: Omit<XmlPayload, 'xml'>; error: string };
+  | { status: 'error'; detection: Detection; payload: Omit<XmlPayload, 'xml'>; error: string }
+) & { validation?: ValidationSummary };
 
 export interface ConvertResult {
   fileSha256: string;
@@ -140,14 +151,9 @@ export interface ConvertOptions extends UnwrapOptions {
   validation?: ValidateOptions;
 }
 
-/**
- * Loaded on demand through a specifier the bundler cannot follow, so the validators never end up
- * in a bundle that only converts. If the validation/ directory is not next to the bundle the
- * import fails and every layer reports 'unavailable'.
- */
+/** Loaded lazily: compiled CLI includes the module, while browser hosts supply worker adapters. */
 async function loadValidation(): Promise<typeof import('./validation/index.js')> {
-  const specifier = ['.', 'validation', 'index.js'].join('/');
-  return import(/* @vite-ignore */ specifier);
+  return import(/* @vite-ignore */ './validation/index.js');
 }
 
 /** The smallest document that is detected as Peppol BIS 3 UBL, so every validator layer has something to run on. */
@@ -208,6 +214,7 @@ export async function convert(
         if (options.relations) applyRelations(inv);
         const sigs = inv.source.signatures;
         inv.source.validation ??= {
+          result: 'not-requested',
           parse: 'passed',
           schema: 'not-run',
           semantic: 'not-run',
@@ -239,10 +246,12 @@ export async function convert(
     }
     await Promise.all(
       outcomes.map(async (outcome, i) => {
-        if (outcome.status !== 'ok') return;
+        if (outcome.status === 'not-an-invoice') return;
         const summary = validation
           ? await validation.validate(payloads[i], outcome.detection, options.validation)
-          : unavailableSummary(outcome.detection, loadError);
+          : unavailableSummary(outcome.detection, loadError, options.validation?.suite, options.validation?.scope);
+        outcome.validation = summary;
+        if (outcome.status !== 'ok') return;
         for (const inv of outcome.invoices) {
           // Keep the signature layer and its findings, which the conversion already filled in.
           const before = inv.source.validation;

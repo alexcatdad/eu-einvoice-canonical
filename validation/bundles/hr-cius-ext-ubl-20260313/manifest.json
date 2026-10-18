@@ -1,0 +1,63 @@
+{
+  "layer": "profile",
+  "syntax": "ubl",
+  "effectiveUntil": null,
+  "license": "Croatian Tax Administration site permission to transmit contents with source attribution; original source and OASIS component notices retained. See validation/licenses/NATIONAL-NOTICES.txt.",
+  "id": "hr-cius-ext-ubl-20260313",
+  "title": "Official Croatian CIUS2025+EXT2025 UBL native rules (2026-03-13)",
+  "version": "1.0.0 (2026-03-13)",
+  "releaseDate": "2026-03-13",
+  "effectiveFrom": "2026-03-15",
+  "upstream": "https://porezna.gov.hr/fiskalizacija/bezgotovinski-racuni/eracun",
+  "note": "Official authority package197 published2026-03-13 effective2026-03-15. Publisher instructs execution after EN16931. Relative codelist closure included. Native XSL functions preserved. The sole codelist include is deterministically inlined without changing71main+2codelist assertions; no abstract patterns exist. Original closure and derived SCH hashes retained.",
+  "format": "sef",
+  "entry": "HR-CIUS-EXT-UBL.sef.json.gz",
+  "source": [
+    {
+      "url": "https://porezna.gov.hr/fiskalizacija/api/dokumenti/197",
+      "sha256": "d6250b00b1cd385c835e3dd4c3abc71a683e9b890f04f41c0ae1e04f3c3e790c"
+    },
+    {
+      "url": "https://porezna.gov.hr/fiskalizacija/api/dokumenti/197#HRUBLSchematron_13032026-2%2FHRUBLSchematron%2FHR-CIUS-EXT-EN16931-UBL.sch",
+      "sha256": "ec80647ffab65bb7d0c91f96aaa30fd1f9b50d8b59f1bee96d01cfed54d4bcc2"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Schematron/schematron/77dcd36c53d12ed786c144ece3b2af7694abdc56/trunk/schematron/code/iso_dsdl_include.xsl",
+      "sha256": "43ff20a1afd89d8a744d1c0b8df94ac5559ffa6a820d1ffbf508d6431ee4fdd9"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Schematron/schematron/77dcd36c53d12ed786c144ece3b2af7694abdc56/trunk/schematron/code/iso_abstract_expand.xsl",
+      "sha256": "c5267f124abf23eeb6669884e40a98607c055bfaa1f39e73b7d578feceeb6e46"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Schematron/schematron/77dcd36c53d12ed786c144ece3b2af7694abdc56/trunk/schematron/code/iso_schematron_skeleton_for_saxon.xsl",
+      "sha256": "95f3195d9f437ea8ff5f75d1a27f4e68ae20b236fe0d4a217bb4209f498a10a3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Schematron/schematron/77dcd36c53d12ed786c144ece3b2af7694abdc56/trunk/schematron/code/iso_svrl_for_xslt2.xsl",
+      "sha256": "0588d617924a0686255f6d182633d434c7986d561be8fcc3b363907d3f671b26"
+    }
+  ],
+  "files": [
+    {
+      "path": "derived-source.sch",
+      "sha256": "df85a912913a7f78ae8d5573877c608bb05c404bb81c2abfcce26e4a5ddf4793",
+      "bytes": 72436
+    },
+    {
+      "path": "HR-CIUS-EXT-UBL.sef.json.gz",
+      "sha256": "4859b85c4da625d5ae05e9d549b4fae2fbd059f9cf8b2b2749eabc0eb1119965",
+      "bytes": 51297
+    },
+    {
+      "path": "original-codelist.sch",
+      "sha256": "9ea60aedc68eb46be421f277df7462780d16d1528e7f9a9bdd9ef2ac9123a41a",
+      "bytes": 31486
+    },
+    {
+      "path": "original-source.sch",
+      "sha256": "ec80647ffab65bb7d0c91f96aaa30fd1f9b50d8b59f1bee96d01cfed54d4bcc2",
+      "bytes": 41048
+    }
+  ]
+}

@@ -16,9 +16,54 @@
     {
       "url": "https://github.com/itplr-kosit/xrechnung-schematron/releases/download/v2.6.0/xrechnung-3.0.2-schematron-2.6.0.zip",
       "sha256": "ca5e07afd04e72cd283d581590ffff3a15f4aac9d2f40c993345d78e67ea22b4"
+    },
+    {
+      "url": "https://github.com/itplr-kosit/xrechnung-schematron/releases/download/v2.6.0/xrechnung-3.0.2-schematron-2.6.0.zip#schematron%2Fcii%2FXRechnung-CII-validation.sch",
+      "sha256": "53bb5c0664fc603bbaaddeed26eb59525a05d3359d1a63f148876b2f2eedde1d"
+    },
+    {
+      "url": "https://github.com/itplr-kosit/xrechnung-schematron/releases/download/v2.6.0/xrechnung-3.0.2-schematron-2.6.0.zip#schematron%2Fcommon.sch",
+      "sha256": "7443d2f4c12d3e1ffa6b38f7f83cea89a9b03343f31f726083018d8985492a12"
+    },
+    {
+      "url": "https://github.com/itplr-kosit/xrechnung-schematron/releases/download/v2.6.0/xrechnung-3.0.2-schematron-2.6.0.zip#schematron%2Fcii%2FXRechnung-CII-validation.xsl",
+      "sha256": "30e64d8bddf0bebded89e2bedab0b4856f0c4f1e852bd303e1957a7d627c0e6c"
+    },
+    {
+      "url": "https://github.com/itplr-kosit/xrechnung-schematron/releases/download/v2.6.0/xrechnung-3.0.2-schematron-2.6.0.zip#LICENSE",
+      "sha256": "57e93bb611b8aeb93ff0f23b271a23291217b0016f6e66297dfd5e9467538a5f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fnfempe/France_RFE/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d/LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
     }
   ],
   "files": [
+    {
+      "path": "licenses/Apache-2.0.txt",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "bytes": 11357
+    },
+    {
+      "path": "source/LICENSE",
+      "sha256": "57e93bb611b8aeb93ff0f23b271a23291217b0016f6e66297dfd5e9467538a5f",
+      "bytes": 12850
+    },
+    {
+      "path": "source/schematron/cii/XRechnung-CII-validation.sch",
+      "sha256": "53bb5c0664fc603bbaaddeed26eb59525a05d3359d1a63f148876b2f2eedde1d",
+      "bytes": 54795
+    },
+    {
+      "path": "source/schematron/cii/XRechnung-CII-validation.xsl",
+      "sha256": "30e64d8bddf0bebded89e2bedab0b4856f0c4f1e852bd303e1957a7d627c0e6c",
+      "bytes": 206354
+    },
+    {
+      "path": "source/schematron/common.sch",
+      "sha256": "7443d2f4c12d3e1ffa6b38f7f83cea89a9b03343f31f726083018d8985492a12",
+      "bytes": 4614
+    },
     {
       "path": "XRechnung-CII-validation.sef.json.gz",
       "sha256": "a3c5889edd41d096b4ef88a45857e9f21f9e9c267fb4129095625ede12392618",

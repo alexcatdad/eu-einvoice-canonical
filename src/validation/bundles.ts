@@ -43,8 +43,13 @@ export interface BundleSource {
 const isNodeLike = () => typeof process !== 'undefined' && !!process.versions?.node;
 
 export function defaultReader(baseUrl?: string | URL): BundleReader {
-  const base = new URL(baseUrl ?? '../../validation/bundles/', import.meta.url);
+  let base = new URL(baseUrl ?? '../../validation/bundles/', import.meta.url);
   return async (bundleId, path) => {
+    if (!baseUrl && (import.meta.url.includes('/$bunfs/') || import.meta.url.includes('/~BUN/')) && isNodeLike()) {
+      const urlModule = 'node:url';
+      const { pathToFileURL } = await import(urlModule);
+      base = new URL('./validation/bundles/', pathToFileURL(process.execPath));
+    }
     const url = new URL(`${bundleId}/${path}`, base);
     if (url.protocol === 'file:' && isNodeLike()) {
       // Computed specifiers keep browser bundlers from pulling in node:fs.

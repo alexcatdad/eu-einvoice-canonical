@@ -92,13 +92,14 @@ describe('einvoice convert', () => {
     for (const n of names) expect(JSON.parse(readFileSync(join(out, n), 'utf8')).id).toBeDefined();
     expect(names.some((n) => /-2\.json$/.test(n))).toBe(true);
   });
-  test('--validate is a no-op with a message', async () => {
-    const r = await run(['convert', '--validate', peppol]);
-    expect(r.code).toBe(0);
-    expect(r.stderr).toMatch(/validation module is not available/);
-    expect(JSON.parse(r.stdout)).toHaveLength(1);
-    const q = await run(['convert', '--validate', '--quiet', peppol]);
-    expect(q.stderr).toBe('');
+  test('--validate rejects incorrect source totals even with --quiet', async () => {
+    const xml = readFileSync(new URL('./validation-fixtures/peppol-valid-invoice.xml', import.meta.url), 'utf8').replace(
+      '<cbc:TaxInclusiveAmount currencyID="SEK">250.00',
+      '<cbc:TaxInclusiveAmount currencyID="SEK">260.00',
+    );
+    const r = await run(['convert', '--validate', '--quiet', '-'], xml);
+    expect(r.code).toBe(EXIT.validation);
+    expect(JSON.parse(r.stdout)[0].source.validation.semantic).toBe('failed');
   });
 });
 
@@ -146,7 +147,8 @@ describe('exit codes', () => {
   });
 });
 
-describe('validator seam (in process)', () => {
+describe('requested source validation (in process)', () => {
+  const valid = new URL('./validation-fixtures/peppol-valid-invoice.xml', import.meta.url).pathname;
   const io = () => {
     const out: string[] = [];
     const errs: string[] = [];
@@ -155,17 +157,17 @@ describe('validator seam (in process)', () => {
   };
   test('4: validation failed', async () => {
     const { i, errs } = io();
-    const code = await main(['convert', '--validate', peppol], i, { validator: { validate: async () => ['BR-01 missing'] } });
+    const code = await main(['convert', '--validate', valid], i, { validator: { validate: async () => ['BR-01 missing'] } });
     expect(code).toBe(EXIT.validation);
     expect(errs.join('\n')).toMatch(/BR-01 missing/);
   });
   test('0: validation passed', async () => {
     const { i } = io();
-    expect(await main(['convert', '--validate', peppol], i, { validator: { validate: async () => [] } })).toBe(0);
+    expect(await main(['convert', '--validate', valid], i)).toBe(0);
   });
   test('6: validator unavailable', async () => {
     const { i, errs } = io();
-    const code = await main(['convert', '--validate', peppol], i, {
+    const code = await main(['convert', '--validate', valid], i, {
       validator: {
         validate: async () => {
           throw new ValidatorUnavailable('rules not installed');
@@ -174,6 +176,22 @@ describe('validator seam (in process)', () => {
     });
     expect(code).toBe(EXIT.validatorUnavailable);
     expect(errs[0]).toMatch(/validator unavailable/);
+  });
+  test('6: one missing required bundle preserves JSON and fails even in quiet mode', async () => {
+    const { i, out, errs } = io();
+    const code = await main(['convert', '--validate', '--quiet', valid], i, {
+      validation: {
+        bundles: {
+          read: async (id, path) => {
+            if (id.startsWith('peppol-')) throw new Error('unavailable');
+            return new Uint8Array(readFileSync(new URL(`../validation/bundles/${id}/${path}`, import.meta.url)));
+          },
+        },
+      },
+    });
+    expect(code).toBe(EXIT.validatorUnavailable);
+    expect(JSON.parse(out.join(''))[0].source.validation.result).toBe('incomplete');
+    expect(errs.join('\n')).toContain('incomplete');
   });
 });
 

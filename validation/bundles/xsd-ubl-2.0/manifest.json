@@ -1,0 +1,96 @@
+{
+  "id": "xsd-ubl-2.0",
+  "title": "OASIS UBL 2.0 XSD Invoice/CreditNote",
+  "layer": "schema",
+  "syntax": "ubl",
+  "version": "2.0",
+  "releaseDate": "2006-12-12",
+  "effectiveFrom": "2006-12-12",
+  "effectiveUntil": null,
+  "license": "OASIS IPR policy: original copyright and permission notices retained in every XSD file.",
+  "upstream": "https://docs.oasis-open.org/ubl/os-UBL-2.0/",
+  "note": "Exact original OASIS Standard2.0 archive, without later Errata01. Common code-list schemas are included unchanged. National OIOUBL business rules are separate.",
+  "format": "xsd",
+  "entries": {
+    "Invoice": "maindoc/UBL-Invoice-2.0.xsd",
+    "CreditNote": "maindoc/UBL-CreditNote-2.0.xsd"
+  },
+  "source": [
+    {
+      "url": "https://docs.oasis-open.org/ubl/os-UBL-2.0.zip",
+      "sha256": "d3eb3356d425bcf16c786d705ebaed99d7da8e581e1a0bcefc4855d734c0ddc9"
+    }
+  ],
+  "files": [
+    {
+      "path": "common/CCTS_CCT_SchemaModule-2.0.xsd",
+      "bytes": 45999,
+      "sha256": "d5fcf183b62d1e23021f1f62a5b129c9e1ef1fc7c451cf3d2f23e3fe5a8efbfd"
+    },
+    {
+      "path": "common/CodeList_CurrencyCode_ISO_7_04.xsd",
+      "bytes": 51780,
+      "sha256": "30743c1fd484c8650450a88717e243365424eee6024b5c05b3e9f7dd172417fa"
+    },
+    {
+      "path": "common/CodeList_LanguageCode_ISO_7_04.xsd",
+      "bytes": 82127,
+      "sha256": "42a5fd3eeae2f19160e1628e12a70a5af367046a42a407e632292acd57b6519e"
+    },
+    {
+      "path": "common/CodeList_MIMEMediaTypeCode_IANA_7_04.xsd",
+      "bytes": 38005,
+      "sha256": "75c66ec37c476bbf45e0a2872faf4d60d0e4782f65a608d05e2da4670c22b467"
+    },
+    {
+      "path": "common/CodeList_UnitCode_UNECE_7_04.xsd",
+      "bytes": 328811,
+      "sha256": "dd38afee99a3070bd4e6a26b6dc4db396fe36592d219f4a45cf8257e8edead67"
+    },
+    {
+      "path": "common/UBL-CommonAggregateComponents-2.0.xsd",
+      "bytes": 960026,
+      "sha256": "018f2ddf065a02e365c4a4b1ca5d8bc2a377788fd73ddbcbf13b8ed91495d467"
+    },
+    {
+      "path": "common/UBL-CommonBasicComponents-2.0.xsd",
+      "bytes": 116148,
+      "sha256": "53f31a7dfea0a9dab5225ae569765a5fb1f1ca4bb365d716eb85c6d002830f8b"
+    },
+    {
+      "path": "common/UBL-CommonExtensionComponents-2.0.xsd",
+      "bytes": 10671,
+      "sha256": "6e089271a6ae484c084fe569ab11ca4434b3bdbcd69bbd52b8858f9ac31f04b4"
+    },
+    {
+      "path": "common/UBL-CoreComponentParameters-2.0.xsd",
+      "bytes": 3125,
+      "sha256": "71d225fa2447265e226056c74afa160566676bfcc82a00d94450d604910c1653"
+    },
+    {
+      "path": "common/UBL-ExtensionContentDatatype-2.0.xsd",
+      "bytes": 3640,
+      "sha256": "4bd6be3323da3e6df1484176eb4466073bdc2c2d7eae177424bc7d1672e18beb"
+    },
+    {
+      "path": "common/UBL-QualifiedDatatypes-2.0.xsd",
+      "bytes": 98700,
+      "sha256": "aefba83d2c732e48426a357092277f31157a4acf0b90220623c450094d07ab89"
+    },
+    {
+      "path": "common/UnqualifiedDataTypeSchemaModule-2.0.xsd",
+      "bytes": 70676,
+      "sha256": "a3992fc6a722d1152d213202048708c6055d338c347e0eb3f14e83a447b3729e"
+    },
+    {
+      "path": "maindoc/UBL-CreditNote-2.0.xsd",
+      "bytes": 41235,
+      "sha256": "db189260133771b2b07ee001b6ecc2f498ed01635fa9126f3b523858b5f124bd"
+    },
+    {
+      "path": "maindoc/UBL-Invoice-2.0.xsd",
+      "bytes": 47684,
+      "sha256": "82ddf05b378e63a8438e770b9c0bc674e98a224d2313538dada2b9d4ff30b3ed"
+    }
+  ]
+}

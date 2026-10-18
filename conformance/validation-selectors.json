@@ -1,0 +1,493 @@
+[
+  {
+    "selector": "fatturapa-FPR12",
+    "control": "xsd-fatturapa-1.2.2"
+  },
+  {
+    "selector": "fatturapa-FPA12",
+    "control": "xsd-fatturapa-1.2.2",
+    "prepare": [
+      ["versione=\"FPR12\"", "versione=\"FPA12\""],
+      ["<FormatoTrasmissione>FPR12</FormatoTrasmissione>", "<FormatoTrasmissione>FPA12</FormatoTrasmissione>"]
+    ]
+  },
+  {
+    "selector": "fatturapa-FSM10",
+    "control": "xsd-fatturapa-semplificata-1.0"
+  },
+  {
+    "selector": "ksef-fa2",
+    "control": "xsd-ksef-fa2"
+  },
+  {
+    "selector": "ksef-fa3",
+    "control": "xsd-ksef-fa3"
+  },
+  {
+    "selector": "ksef-fa-rr",
+    "control": "xsd-ksef-fa-rr"
+  },
+  {
+    "selector": "facturae-3.0",
+    "control": "facturae-3.0"
+  },
+  {
+    "selector": "facturae-3.1",
+    "control": "facturae-3.1"
+  },
+  {
+    "selector": "facturae-3.2",
+    "control": "xsd-facturae-3.2"
+  },
+  {
+    "selector": "facturae-3.2.1",
+    "control": "xsd-facturae-3.2.1"
+  },
+  {
+    "selector": "facturae-3.2.2",
+    "control": "xsd-facturae-3.2.2"
+  },
+  {
+    "selector": "isdoc-6.0.2",
+    "control": "isdoc-native"
+  },
+  {
+    "selector": "ebinterface-4.0",
+    "control": "ebinterface-4.0"
+  },
+  {
+    "selector": "ebinterface-4.1",
+    "control": "ebinterface-4.1"
+  },
+  {
+    "selector": "ebinterface-4.2",
+    "control": "ebinterface-4.2"
+  },
+  {
+    "selector": "ebinterface-4.3",
+    "control": "xsd-ebinterface-4.3"
+  },
+  {
+    "selector": "ebinterface-5.0",
+    "control": "xsd-ebinterface-5.0"
+  },
+  {
+    "selector": "ebinterface-6.0",
+    "control": "xsd-ebinterface-6.0"
+  },
+  {
+    "selector": "ebinterface-6.1",
+    "control": "xsd-ebinterface-6.1"
+  },
+  {
+    "selector": "finvoice-1.3",
+    "control": "finvoice-1.3"
+  },
+  {
+    "selector": "finvoice-2.0",
+    "control": "finvoice-2.0"
+  },
+  {
+    "selector": "finvoice-2.01",
+    "control": "finvoice-2.01"
+  },
+  {
+    "selector": "finvoice-3.0",
+    "control": "xsd-finvoice-3.0"
+  },
+  {
+    "selector": "teappsxml-3.0",
+    "control": "teapps"
+  },
+  {
+    "selector": "e-arve-1.2.EN",
+    "control": "xsd-earve-1.2"
+  },
+  {
+    "selector": "eslog-2.00",
+    "control": "xsd-eslog-2.0"
+  },
+  {
+    "selector": "cfdi-3.3",
+    "control": "xsd-cfdi-3.3"
+  },
+  {
+    "selector": "cfdi-4.0",
+    "control": "xsd-cfdi-4.0"
+  },
+  {
+    "selector": "facturx-1.09.2-basicwl-1",
+    "control": "facturx-1.09.2-basicwl"
+  },
+  {
+    "selector": "facturx-1.09.2-en16931-1",
+    "control": "facturx-1.09.2-en16931"
+  },
+  {
+    "selector": "facturx-1.09.2-extended-1",
+    "control": "facturx-1.09.2-extended"
+  },
+  {
+    "selector": "facturx-1.09.2-basicwl-2",
+    "control": "facturx-1.09.2-basicwl",
+    "prepare": [["urn:factur-x.eu:1p0:basicwl", "urn:zugferd.de:2p0:basicwl"]]
+  },
+  {
+    "selector": "facturx-1.09.2-extended-2",
+    "control": "facturx-1.09.2-extended",
+    "prepare": [["urn:factur-x.eu:1p0:extended", "urn:zugferd.de:2p0:extended"]]
+  },
+  {
+    "selector": "cius-ro-1.0.1-invoice",
+    "control": "ciusro-valid-invoice"
+  },
+  {
+    "selector": "cius-ro-1.0.1-creditnote",
+    "control": "ciusro-valid-invoice-selector-creditnote"
+  },
+  {
+    "selector": "cius-pt-2.1.1-invoice",
+    "control": "cius-pt-2.1.1"
+  },
+  {
+    "selector": "cius-pt-2.1.1-creditnote",
+    "control": "cius-pt-2.1.1-selector-creditnote"
+  },
+  {
+    "selector": "hr-cius-2025-invoice",
+    "control": "hr-cius-2026"
+  },
+  {
+    "selector": "hr-cius-2025-creditnote",
+    "control": "hr-cius-2026-selector-creditnote"
+  },
+  {
+    "selector": "nlcius-gaccount-1.0-invoice",
+    "control": "gaccount"
+  },
+  {
+    "selector": "nlcius-gaccount-1.0-creditnote",
+    "control": "gaccount-selector-creditnote"
+  },
+  {
+    "selector": "selfbilling-3.0-invoice",
+    "control": "selfbilling"
+  },
+  {
+    "selector": "selfbilling-3.0-creditnote",
+    "control": "selfbilling-valid-credit"
+  },
+  {
+    "selector": "pint-shared-invoice",
+    "control": "pint-shared-only"
+  },
+  {
+    "selector": "pint-shared-creditnote",
+    "control": "pint-shared-only-selector-creditnote"
+  },
+  {
+    "selector": "peppol-peppol-2026-05-invoice",
+    "control": "peppol-2026"
+  },
+  {
+    "selector": "peppol-peppol-2026-05-creditnote",
+    "control": "peppol-2026-selector-creditnote"
+  },
+  {
+    "selector": "peppol-legacy-peppol-3.0.20-en-1.3.17-invoice",
+    "control": "peppol-legacy-replay"
+  },
+  {
+    "selector": "peppol-legacy-peppol-3.0.20-en-1.3.17-creditnote",
+    "control": "peppol-legacy-replay-selector-creditnote"
+  },
+  {
+    "selector": "xrechnung-3.0-ubl-invoice",
+    "control": "xrechnung-ubl"
+  },
+  {
+    "selector": "xrechnung-3.0-ubl-creditnote",
+    "control": "xrechnung-ubl-selector-creditnote"
+  },
+  {
+    "selector": "nlcius-1.0-ubl-invoice",
+    "control": "nlcius-ubl"
+  },
+  {
+    "selector": "nlcius-1.0-ubl-creditnote",
+    "control": "nlcius-ubl-selector-creditnote"
+  },
+  {
+    "selector": "oioubl-3.0-invoice",
+    "control": "oioubl3-invoice"
+  },
+  {
+    "selector": "oioubl-3.0-creditnote",
+    "control": "oioubl3-creditnote"
+  },
+  {
+    "selector": "oioubl-2.1-invoice",
+    "control": "oioubl2-invoice"
+  },
+  {
+    "selector": "oioubl-2.1-creditnote",
+    "control": "oioubl2-creditnote"
+  },
+  {
+    "selector": "oioubl-2.02-invoice",
+    "control": "oioubl-2.02"
+  },
+  {
+    "selector": "oioubl-2.02-creditnote",
+    "control": "oioubl-2.02-selector-creditnote"
+  },
+  {
+    "selector": "svefaktura-1.0",
+    "control": "svefaktura"
+  },
+  {
+    "selector": "ubl-2.1-invoice",
+    "control": "peppol-2026"
+  },
+  {
+    "selector": "ubl-2.1-creditnote",
+    "control": "peppol-2026-selector-creditnote"
+  },
+  {
+    "selector": "en16931-ubl-invoice",
+    "control": "xrechnung-ubl"
+  },
+  {
+    "selector": "en16931-ubl-creditnote",
+    "control": "xrechnung-ubl-selector-creditnote"
+  },
+  {
+    "selector": "en16931-cii",
+    "control": "xrechnung-cii"
+  },
+  {
+    "selector": "xrechnung-3.0-cii",
+    "control": "xrechnung-cii"
+  },
+  {
+    "selector": "nlcius-1.0-cii",
+    "control": "nlcius-cii"
+  },
+  {
+    "selector": "cii-d16b-explicit-en16931",
+    "control": "cii-d16b-explicit-en16931"
+  },
+  {
+    "selector": "cii-d16b-explicit-unknown",
+    "control": "cii-d16b-explicit-unknown"
+  },
+  {
+    "selector": "cii-d16b-xrechnung-cii",
+    "control": "xrechnung-cii"
+  },
+  {
+    "selector": "cii-d16b-nlcius-cii",
+    "control": "nlcius-cii"
+  },
+  {
+    "selector": "france-rfe-1.4.0.04-ubl-en16931-invoice",
+    "control": "france-rfe-1.4.0.04-ubl-en16931-invoice"
+  },
+  {
+    "selector": "france-rfe-1.4.0.04-ubl-en16931-creditnote",
+    "control": "france-rfe-1.4.0.04-ubl-en16931-creditnote"
+  },
+  {
+    "selector": "france-rfe-1.4.0.04-ubl-extended-ctc-fr-invoice",
+    "control": "france-rfe-1.4.0.04-ubl-extended-ctc-fr-invoice"
+  },
+  {
+    "selector": "france-rfe-1.4.0.04-ubl-extended-ctc-fr-creditnote",
+    "control": "france-rfe-1.4.0.04-ubl-extended-ctc-fr-creditnote"
+  },
+  {
+    "selector": "france-rfe-1.4.0.04-cii-en16931",
+    "control": "france-rfe-1.4.0.04-cii-en16931"
+  },
+  {
+    "selector": "france-rfe-1.4.0.04-cii-extended-ctc-fr",
+    "control": "france-rfe-1.4.0.04-cii-extended-ctc-fr"
+  },
+  {
+    "selector": "france-rfe-1.4.0.04-facturx-basicwl",
+    "control": "france-rfe-1.4.0.04-facturx-basicwl"
+  },
+  {
+    "selector": "france-rfe-1.4.0.04-facturx-basicwl-zugferd",
+    "control": "france-rfe-1.4.0.04-facturx-basicwl-zugferd"
+  },
+  {
+    "selector": "france-rfe-1.4.0.04-facturx-en16931",
+    "control": "france-rfe-1.4.0.04-facturx-en16931"
+  },
+  {
+    "selector": "france-rfe-1.4.0.04-facturx-extended",
+    "control": "france-rfe-1.4.0.04-facturx-extended"
+  },
+  {
+    "selector": "france-rfe-1.4.0.04-facturx-extended-zugferd",
+    "control": "france-rfe-1.4.0.04-facturx-extended-zugferd"
+  },
+  {
+    "selector": "pint-sg-1.4.1-invoice",
+    "control": "pint-specialization-sg-invoice"
+  },
+  {
+    "selector": "pint-sg-1.4.1-creditnote",
+    "control": "pint-specialization-sg-creditnote"
+  },
+  {
+    "selector": "pint-aunz-1.1.3-invoice",
+    "control": "pint-specialization-aunz-invoice"
+  },
+  {
+    "selector": "pint-aunz-1.1.3-creditnote",
+    "control": "pint-specialization-aunz-creditnote"
+  },
+  {
+    "selector": "pint-jp-1.1.3-invoice",
+    "control": "pint-specialization-jp-invoice"
+  },
+  {
+    "selector": "pint-my-1.3.1-invoice",
+    "control": "pint-specialization-my-invoice"
+  },
+  {
+    "selector": "pint-my-1.3.1-creditnote",
+    "control": "pint-specialization-my-creditnote"
+  },
+  {
+    "selector": "pint-ae-1.0.4-invoice",
+    "control": "pint-specialization-ae-invoice"
+  },
+  {
+    "selector": "pint-ae-1.0.4-creditnote",
+    "control": "pint-specialization-ae-creditnote"
+  },
+  {
+    "selector": "pint-om-1.0.1-invoice",
+    "control": "pint-specialization-om-invoice"
+  },
+  {
+    "selector": "pint-om-1.0.1-creditnote",
+    "control": "pint-specialization-om-creditnote"
+  },
+  {
+    "selector": "pint-eu-1.1.1-invoice",
+    "control": "pint-specialization-eu-invoice"
+  },
+  {
+    "selector": "pint-eu-1.1.1-creditnote",
+    "control": "pint-specialization-eu-creditnote"
+  },
+  {
+    "selector": "pint-aunz-sb-1.1.3-invoice",
+    "control": "pint-specialization-aunz-sb-invoice"
+  },
+  {
+    "selector": "pint-aunz-sb-1.1.3-creditnote",
+    "control": "pint-specialization-aunz-sb-creditnote"
+  },
+  {
+    "selector": "pint-jp-sb-1.1.3-invoice",
+    "control": "pint-specialization-jp-sb-invoice"
+  },
+  {
+    "selector": "pint-my-sb-1.3.1-invoice",
+    "control": "pint-specialization-my-sb-invoice"
+  },
+  {
+    "selector": "pint-my-sb-1.3.1-creditnote",
+    "control": "pint-specialization-my-sb-creditnote"
+  },
+  {
+    "selector": "pint-ae-sb-1.0.4-invoice",
+    "control": "pint-specialization-ae-sb-invoice"
+  },
+  {
+    "selector": "pint-ae-sb-1.0.4-creditnote",
+    "control": "pint-specialization-ae-sb-creditnote"
+  },
+  {
+    "selector": "pint-om-sb-1.0.1-invoice",
+    "control": "pint-specialization-om-sb-invoice"
+  },
+  {
+    "selector": "pint-om-sb-1.0.1-creditnote",
+    "control": "pint-specialization-om-sb-creditnote"
+  },
+  {
+    "selector": "pint-jp-ntr-1.1.3-invoice",
+    "control": "pint-specialization-jp-ntr-invoice"
+  },
+  {
+    "selector": "ebinterface-3.0",
+    "control": "xsd-ebinterface-3.0"
+  },
+  {
+    "selector": "ebinterface-3.02",
+    "control": "xsd-ebinterface-3.02"
+  },
+  {
+    "selector": "e-arve-1.2",
+    "control": "xsd-e-arve-1.2"
+  },
+  {
+    "selector": "isdoc-6.0.1",
+    "control": "isdoc-6.0.1"
+  },
+  {
+    "selector": "isdoc-5.3.1",
+    "control": "xsd-isdoc-5.3.1"
+  },
+  {
+    "selector": "ublbe-1.31-invoice",
+    "control": "ublbe-1.31-invoice"
+  },
+  {
+    "selector": "ublbe-1.31-creditnote",
+    "control": "ublbe-1.31-creditnote"
+  },
+  {
+    "selector": "isdoc-5.3",
+    "control": "xsd-isdoc-5.3"
+  },
+  {
+    "selector": "isdoc-5.2.3",
+    "control": "xsd-isdoc-5.2.3"
+  },
+  {
+    "selector": "isdoc-5.2.2",
+    "control": "xsd-isdoc-5.2.2"
+  },
+  {
+    "selector": "isdoc-5.2.1",
+    "control": "xsd-isdoc-5.2.1"
+  },
+  {
+    "selector": "isdoc-5.2",
+    "control": "xsd-isdoc-5.2"
+  },
+  {
+    "selector": "isdoc-5.1",
+    "control": "xsd-isdoc-5.1"
+  },
+  {
+    "selector": "peppol-bis2-4a-3.7.0-invoice",
+    "control": "peppol-bis2-invoice"
+  },
+  {
+    "selector": "peppol-bis2-5a-3.7.0-creditnote",
+    "control": "peppol-bis2-creditnote"
+  },
+  {
+    "selector": "peppol-bis2-5a-3.7.0-invoice",
+    "control": "peppol-bis2-invoice",
+    "prepare": [["peppol4a:ver2.0", "peppol5a:ver2.0"], ["bii04:ver2.0", "bii05:ver2.0"]]
+  }
+]

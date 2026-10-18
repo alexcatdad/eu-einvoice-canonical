@@ -1,0 +1,55 @@
+{
+  "id": "xsd-isdoc-6.0.1",
+  "title": "ISDOC6.0.1 official invoice XSD closure",
+  "layer": "schema",
+  "syntax": "isdoc",
+  "version": "6.0.1",
+  "releaseDate": "2014-05-26",
+  "effectiveFrom": "2014-05-26",
+  "effectiveUntil": null,
+  "license": "Embedded ICT UNIE/SPIS permission to use, copy, modify and distribute the schema/documentation without fee, provided copyright and permission notices remain. XMLDSIG notices preserved.",
+  "upstream": "https://isdoc.cz/",
+  "note": "Official historical6.0.1 package linked by ISDOC authority. Exact namespace2013+version6.0.1; complete signed/unsigned invoice and common-document XSD closure preserved unchanged. Date identifies package publication, not independently verified legal activation.",
+  "format": "xsd",
+  "entries": {
+    "Invoice": "isdoc-invoice-dsig-6.0.1.xsd"
+  },
+  "source": [
+    {
+      "url": "https://isdoc.cz/fileadmin/isdoc/6.0/isdoc-schema-6.0.1-20140526.zip",
+      "sha256": "a369324a5910db65d5143ba6a62f97dc5aa360477351ab3a606b81b4d9aad021"
+    }
+  ],
+  "files": [
+    {
+      "path": "isdoc-commondocument-6.0.1.xsd",
+      "sha256": "4b9329261d0425082f14bf9dbfe88d351c9498cc7d04f3739b6d89eab517a75e",
+      "bytes": 36595
+    },
+    {
+      "path": "isdoc-commondocument-dsig-6.0.1.xsd",
+      "sha256": "93674d878218127f108518074345082072f79740f1dd0ccf65b479a138e486df",
+      "bytes": 1733
+    },
+    {
+      "path": "isdoc-invoice-6.0.1.xsd",
+      "sha256": "3ea488b0d544f1acf293df981b58138ac6e885fb3a7d5abf07c9b3b936b1b841",
+      "bytes": 140575
+    },
+    {
+      "path": "isdoc-invoice-dsig-6.0.1.xsd",
+      "sha256": "3fadd472fd4f9ae723afaaf3294c89798bcd28ddb1c995440adc638c90d8f27b",
+      "bytes": 1701
+    },
+    {
+      "path": "isdoc-manifest-6.0.1.xsd",
+      "sha256": "b479d15128925a4358bf77129ed229182e91aa77888f9d792235e156fe51f54b",
+      "bytes": 2309
+    },
+    {
+      "path": "xmldsig-core-schema.xsd",
+      "sha256": "f6bf098b267d72a15a5cbb91af33711508811525fbab603b62ada677e5f6721b",
+      "bytes": 10750
+    }
+  ]
+}

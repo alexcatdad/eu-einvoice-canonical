@@ -1,0 +1,136 @@
+{
+  "id": "nlcius-gaccount-1.0.2.13-ubl",
+  "title": "Dutch G-account1.0.2.13 integrated EN16931+NLCIUS+extension suite",
+  "layer": "profile",
+  "syntax": "ubl",
+  "version": "1.0.2.13",
+  "releaseDate": "2026-10-18",
+  "effectiveFrom": "2026-10-18",
+  "effectiveUntil": null,
+  "license": "MIT repository license and EUPL-1.2 EN16931 source notices, see validation/NOTICE",
+  "upstream": "https://github.com/peppolautoriteit-nl/validation/tree/4e93ae8681f413fef627a338ad84ce465a153ee8",
+  "note": "Authority combined suite includes NLCIUS2.0.3.13 and EN1.3.16 with modified syntax allowing multiple PaymentMeans/PaymentTerms. Run instead of generic EN, not after it. Date is vendoring date, exact release date unresolved.",
+  "format": "sef",
+  "entry": "NLCIUS-GACCOUNT.sef.json.gz",
+  "source": [
+    {
+      "url": "https://codeload.github.com/peppolautoriteit-nl/validation/zip/4e93ae8681f413fef627a338ad84ce465a153ee8#validation-4e93ae8681f413fef627a338ad84ce465a153ee8%2Fxsl%2Fsi-ubl-2.0-ext-gaccount.xsl",
+      "sha256": "a7cb27c91419bdb6c9548998ca2263692314875c9e5719c17ba55448999375a9"
+    },
+    {
+      "url": "https://codeload.github.com/peppolautoriteit-nl/validation/zip/4e93ae8681f413fef627a338ad84ce465a153ee8",
+      "sha256": "9dbba53c78f8ccca931b3d9cffbefac93eae519abeddf7190ca1e66286cb95da"
+    },
+    {
+      "url": "https://codeload.github.com/peppolautoriteit-nl/validation/zip/4e93ae8681f413fef627a338ad84ce465a153ee8#validation-4e93ae8681f413fef627a338ad84ce465a153ee8%2FLICENSE.txt",
+      "sha256": "21810c25c34d5d1dee5e111762249963904aa38e32779e67f28a51976b7525c3"
+    },
+    {
+      "url": "https://codeload.github.com/peppolautoriteit-nl/validation/zip/4e93ae8681f413fef627a338ad84ce465a153ee8#validation-4e93ae8681f413fef627a338ad84ce465a153ee8%2Fschematron%2Fsi-ubl-2.0-ext-gaccount.sch",
+      "sha256": "974417d30ea86e312781bafde70a6705755844fbbd678b0c29716f7e6ca42541"
+    },
+    {
+      "url": "https://codeload.github.com/peppolautoriteit-nl/validation/zip/4e93ae8681f413fef627a338ad84ce465a153ee8#validation-4e93ae8681f413fef627a338ad84ce465a153ee8%2Fschematron%2Fsi-ubl-2.0%2Fsi-ubl-2.0-nlcius.sch",
+      "sha256": "218d3ddc898915506f71d44bb3fe3977acbb953ec93143b27e56fc0eae68cda5"
+    },
+    {
+      "url": "https://codeload.github.com/peppolautoriteit-nl/validation/zip/4e93ae8681f413fef627a338ad84ce465a153ee8#validation-4e93ae8681f413fef627a338ad84ce465a153ee8%2Fschematron%2Fsi-ubl-2.0%2FCenPC434%2Fabstract%2FEN16931-model.sch",
+      "sha256": "f43fe3fb10a89978280c972521488fa9223fffec604fdb08d2b3231b74f28c56"
+    },
+    {
+      "url": "https://codeload.github.com/peppolautoriteit-nl/validation/zip/4e93ae8681f413fef627a338ad84ce465a153ee8#validation-4e93ae8681f413fef627a338ad84ce465a153ee8%2Fschematron%2Fsi-ubl-2.0-ext-gaccount%2FEN16931-syntax-modified.sch",
+      "sha256": "1039b0c5be405b0cf7c001936a7434217c5a6875c8203a3463ff2f7cd8e138f8"
+    },
+    {
+      "url": "https://codeload.github.com/peppolautoriteit-nl/validation/zip/4e93ae8681f413fef627a338ad84ce465a153ee8#validation-4e93ae8681f413fef627a338ad84ce465a153ee8%2Fschematron%2Fsi-ubl-2.0%2FCenPC434%2Fcodelist%2FEN16931-UBL-codes.sch",
+      "sha256": "8b40ee8a553be0603b90688e6a0f77ae40871fabfa9d67e4afb1a6a1ccbb4b11"
+    },
+    {
+      "url": "https://codeload.github.com/peppolautoriteit-nl/validation/zip/4e93ae8681f413fef627a338ad84ce465a153ee8#validation-4e93ae8681f413fef627a338ad84ce465a153ee8%2Fschematron%2Fsi-ubl-2.0%2FCenPC434%2FUBL%2FEN16931-UBL-model.sch",
+      "sha256": "908ba03ba0ebdeb940c777b831aab591f822eb1c81ceb09b690f633fae6909c9"
+    },
+    {
+      "url": "https://codeload.github.com/peppolautoriteit-nl/validation/zip/4e93ae8681f413fef627a338ad84ce465a153ee8#validation-4e93ae8681f413fef627a338ad84ce465a153ee8%2Fschematron%2Fsi-ubl-2.0%2FCenPC434%2FUBL%2FEN16931-UBL-syntax.sch",
+      "sha256": "77891eb5f2d4b52b6d6f9f8edaaad2c618ed23e563c3563d67aab59d593ae1bf"
+    },
+    {
+      "url": "https://codeload.github.com/peppolautoriteit-nl/validation/zip/4e93ae8681f413fef627a338ad84ce465a153ee8#validation-4e93ae8681f413fef627a338ad84ce465a153ee8%2Ftools%2Fbuild_all_linux.sh",
+      "sha256": "67f7fcd2a8af1f02c1eac4a09c284a4cb8b80d3e7938f4da6dede5eca88cafaf"
+    },
+    {
+      "url": "https://codeload.github.com/peppolautoriteit-nl/validation/zip/4e93ae8681f413fef627a338ad84ce465a153ee8#validation-4e93ae8681f413fef627a338ad84ce465a153ee8%2FREADME.md",
+      "sha256": "05937e43688cf158965b28c0b9251fa89c416a0dddccca356947f023e2cb9ce1"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ConnectingEurope/eInvoicing-EN16931/validation-1.3.16/LICENSE.txt",
+      "sha256": "fc22ec1dcd8bee4636a395fb332e2308cde870fb3fdc71a2e260b919877cdef5"
+    }
+  ],
+  "files": [
+    {
+      "path": "licenses/EUPL-1.2.txt",
+      "sha256": "fc22ec1dcd8bee4636a395fb332e2308cde870fb3fdc71a2e260b919877cdef5",
+      "bytes": 13871
+    },
+    {
+      "path": "licenses/MIT.txt",
+      "sha256": "21810c25c34d5d1dee5e111762249963904aa38e32779e67f28a51976b7525c3",
+      "bytes": 1083
+    },
+    {
+      "path": "NLCIUS-GACCOUNT.sef.json.gz",
+      "sha256": "690ed650d0603de3b654f203c62193234d75e12492bab4c33b19e874d8e48a4b",
+      "bytes": 214242
+    },
+    {
+      "path": "original-source.xslt",
+      "sha256": "a7cb27c91419bdb6c9548998ca2263692314875c9e5719c17ba55448999375a9",
+      "bytes": 1092576
+    },
+    {
+      "path": "source/README.md",
+      "sha256": "05937e43688cf158965b28c0b9251fa89c416a0dddccca356947f023e2cb9ce1",
+      "bytes": 6999
+    },
+    {
+      "path": "source/schematron/si-ubl-2.0-ext-gaccount.sch",
+      "sha256": "974417d30ea86e312781bafde70a6705755844fbbd678b0c29716f7e6ca42541",
+      "bytes": 5733
+    },
+    {
+      "path": "source/schematron/si-ubl-2.0-ext-gaccount/EN16931-syntax-modified.sch",
+      "sha256": "1039b0c5be405b0cf7c001936a7434217c5a6875c8203a3463ff2f7cd8e138f8",
+      "bytes": 122893
+    },
+    {
+      "path": "source/schematron/si-ubl-2.0/CenPC434/abstract/EN16931-model.sch",
+      "sha256": "f43fe3fb10a89978280c972521488fa9223fffec604fdb08d2b3231b74f28c56",
+      "bytes": 52495
+    },
+    {
+      "path": "source/schematron/si-ubl-2.0/CenPC434/codelist/EN16931-UBL-codes.sch",
+      "sha256": "8b40ee8a553be0603b90688e6a0f77ae40871fabfa9d67e4afb1a6a1ccbb4b11",
+      "bytes": 32879
+    },
+    {
+      "path": "source/schematron/si-ubl-2.0/CenPC434/UBL/EN16931-UBL-model.sch",
+      "sha256": "908ba03ba0ebdeb940c777b831aab591f822eb1c81ceb09b690f633fae6909c9",
+      "bytes": 72769
+    },
+    {
+      "path": "source/schematron/si-ubl-2.0/CenPC434/UBL/EN16931-UBL-syntax.sch",
+      "sha256": "77891eb5f2d4b52b6d6f9f8edaaad2c618ed23e563c3563d67aab59d593ae1bf",
+      "bytes": 77830
+    },
+    {
+      "path": "source/schematron/si-ubl-2.0/si-ubl-2.0-nlcius.sch",
+      "sha256": "218d3ddc898915506f71d44bb3fe3977acbb953ec93143b27e56fc0eae68cda5",
+      "bytes": 16043
+    },
+    {
+      "path": "source/tools/build_all_linux.sh",
+      "sha256": "67f7fcd2a8af1f02c1eac4a09c284a4cb8b80d3e7938f4da6dede5eca88cafaf",
+      "bytes": 1502
+    }
+  ]
+}

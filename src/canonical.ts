@@ -755,6 +755,22 @@ export type CheckStatus = 'passed' | 'failed' | 'not-run' | 'unavailable';
  * the validator could not run, which is not the same as the document failing.
  */
 export interface ValidationSummary {
+  /** Overall result covers parse and required source-conformance layers; signature and clearance remain independent. */
+  result?: 'valid' | 'invalid' | 'incomplete' | 'not-requested';
+  completeness?: 'complete' | 'incomplete';
+  required?: ('schema' | 'semantic' | 'profile')[];
+  reasons?: Partial<Record<'schema' | 'semantic' | 'profile', 'not-applicable' | 'unsupported' | 'size-limit' | 'unavailable'>>;
+  receipt?: {
+    suite: string;
+    policy: 'source-conformance-v1';
+    maxSchematronLines: number | 'unlimited';
+    engines: { schema: string; schematron: string };
+    /** Manifest content digest identifies the complete artifact list, versions and effective dates. */
+    artifacts: Partial<Record<'schema' | 'semantic' | 'profile', { id: string; version: string; manifestSha256: string }>>;
+  };
+  /** Requested conformance scope; excludes signature trust and authority clearance. */
+  scope?: 'full-source' | 'schema';
+
   parse: CheckStatus;
   schema: CheckStatus; // XSD
   semantic: CheckStatus; // EN 16931 Schematron or the national format's own rules
@@ -829,12 +845,12 @@ export interface LineRelation {
   type: LineRelationType;
   /** Percentage stated in the line text, for `markup` and `discount`. */
   rate?: Percentage;
-  /** How it was found. Only `model` is a guess by a language model; `rule` and `arithmetic` are deterministic. */
+  /** How it was found: deterministic rules, arithmetic, or a language model. The method does not establish correctness. */
   method: 'rule' | 'arithmetic' | 'model';
   /**
    * `proven`: the arithmetic matches exactly and uniquely. `likely`: stated in the text or structure of the
-   * invoice. `review`: only a hint (shared ids, model output); do not act on it without a human.
-   * Absent for structural rules that cannot be wrong, such as a heading over the lines that follow it.
+   * invoice. `review`: only a hint (inferred headings, shared ids, model output); do not act on it without a human.
+   * An absent confidence is unspecified, not a guarantee of correctness. Deterministic rules can still infer incorrectly.
    */
   confidence?: 'proven' | 'likely' | 'review';
 }

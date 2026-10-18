@@ -15,7 +15,7 @@ concurrency:
 jobs:
   library:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 45
     permissions:
       contents: read
     steps:
@@ -26,6 +26,8 @@ jobs:
         with:
           bun-version: 1.4.2
       - run: bun install --frozen-lockfile
+      - name: Restore pinned local-only validation artifacts for qualification
+        run: bun run restore:local-validation
       - name: Library checks (same command locally and in CI)
         run: bun run check:lib
       - name: HuJSON consumer example (no model requests)
@@ -40,7 +42,7 @@ jobs:
 
   site:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 45
     permissions:
       contents: read
       actions: read
@@ -59,7 +61,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: scripts/fetch-corpus-report.sh
-      - name: Site build, typecheck and performance gate
+      - name: Restore pinned local-only validation artifacts for qualification
+        run: bun run restore:local-validation
+      - name: Local qualification site build, typecheck and performance gate
+        env:
+          VALIDATION_ASSETS: local
         run: bun run check:site
       - name: Upload the quick benchmark run
         if: always()
@@ -68,11 +74,18 @@ jobs:
           name: bench-quick
           path: bench/last-quick.json
           if-no-files-found: ignore
-      - name: Install the headless browser
+      - name: Install the browser engines
         working-directory: site
-        run: bunx playwright install --with-deps --only-shell chromium
+        run: bunx playwright install --with-deps chromium firefox webkit
       - name: Accessibility and privacy gate
         run: bun run check:a11y
+      - name: Local source validation browser gate
+        working-directory: site
+        run: bun run check:validation
+      - name: Rebuild the distributable site from the approved inventory
+        run: bun run build:site
+      - name: Verify distributable inventory and browser results
+        run: bun site/check-validation.ts distribution-acceptance.ts
       - name: Upload the site
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5

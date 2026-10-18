@@ -1,0 +1,645 @@
+{
+  "version": 1,
+  "noticeSha256": "5f2dab3325538b614c3b02195775e25ca9bd6cc5c9991246de44caa6866a3c84",
+  "licenseFiles": {
+    "Apache-2.0.txt": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "EUPL-1.1.pdf": "641d72f7d261ddf08ceaa5db47a3356e528f1137b42dc796499a1364e7ca8461",
+    "EUPL-1.2.txt": "fc22ec1dcd8bee4636a395fb332e2308cde870fb3fdc71a2e260b919877cdef5",
+    "ISO-Schematron-MIT.txt": "8bf0d41dfe94883bd811f1acb02793ed2727a224ac0c7aaf8b74ec744c888586",
+    "NATIONAL-NOTICES.txt": "cc70a540cec819bf3e3ca52440f8832df5507d0f194f20adf07bbbd16eaf994b",
+    "evidence.json": "1fde06d0fa407c1fc80edab5652eea1f154e03eb22d222f862f38e989aeb1190",
+    "metadata.json": "77eb079f4dbc65ab2e9b19ca3209a14efa15184fbb7957466d1e18616113f530"
+  },
+  "bundles": {
+    "cius-pt-ubl-2.1.1": {
+      "publish": false,
+      "basis": "Official eSPap technical package has no located explicit grant; website access returned redirect loop in this bounded review. No broader permission established.",
+      "evidence": ["https://www.espap.gov.pt/", "https://www.espap.gov.pt/Imagens/Documento.ashx?id=267"]
+    },
+    "cius-ro-ubl-1.0.9": {
+      "publish": true,
+      "basis": "Authority integrated top-level SCH has explicit EUPL-1.2 grant; it includes native Romanian rules.",
+      "evidence": ["https://mfinante.gov.ro/static/10/eFactura/ro16931-ubl-1.0.9.zip"],
+      "manifestSha256": "a961d7eba065aec1d1a380a599c1585477a92066ed0843ee1fdc363264f8001c"
+    },
+    "en16931-cii-1.3.16": {
+      "publish": true,
+      "basis": "Explicit EUPL-1.2 source license; corresponding source and full license retained.",
+      "evidence": ["https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/tag/validation-1.3.16"],
+      "manifestSha256": "8ee14f532586231443785fc72cdf6dcf7cf884a427e1353a8bb1ab5b3d187a09"
+    },
+    "en16931-cii-1.3.17": {
+      "publish": true,
+      "basis": "Explicit EUPL-1.2 source license; corresponding source and full license retained.",
+      "evidence": ["https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/tag/validation-1.3.17"],
+      "manifestSha256": "952cb2ff23098f587ca788eaf9c0486b11f689d641f4a7809df17e3e14d7ad06"
+    },
+    "en16931-ubl-1.3.16": {
+      "publish": true,
+      "basis": "Explicit EUPL-1.2 source license; corresponding source and full license retained.",
+      "evidence": ["https://docs.peppol.eu/poacc/billing/3.0/upcoming/release-notes/"],
+      "manifestSha256": "a5e4412ab17ef190356d77e7fb2e6ad387a78a06d6bccd9fabd03630d71618de"
+    },
+    "en16931-ubl-1.3.17": {
+      "publish": true,
+      "basis": "Explicit EUPL-1.2 source license; corresponding source and full license retained.",
+      "evidence": ["https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/tag/validation-1.3.17"],
+      "manifestSha256": "5c72c3673a7dfe6dd2839a5c0ae5ab00b6703c8a4c6878d437701bb60d152f73"
+    },
+    "facturx-1.09.2-basicwl": {
+      "publish": true,
+      "basis": "FNFE-MPE Apache-2.0 grant with incorporated EN16931 EUPL-1.2 and UN/CEFACT notices preserved.",
+      "evidence": ["https://github.com/fnfempe/France_RFE/tree/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d"],
+      "manifestSha256": "3b42a85940b66349033cecd360a830f32163b13b8e157a266bc4cc4381e46d60"
+    },
+    "facturx-1.09.2-en16931": {
+      "publish": true,
+      "basis": "FNFE-MPE Apache-2.0 grant with incorporated EN16931 EUPL-1.2 and UN/CEFACT notices preserved.",
+      "evidence": ["https://github.com/fnfempe/France_RFE/tree/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d"],
+      "manifestSha256": "a72fb551bef1e8e1af50bcbd06eb9ef39f8bf5f4d4d85df1fe66d7a2df709c43"
+    },
+    "facturx-1.09.2-extended": {
+      "publish": true,
+      "basis": "FNFE-MPE Apache-2.0 grant with incorporated EN16931 EUPL-1.2 and UN/CEFACT notices preserved.",
+      "evidence": ["https://github.com/fnfempe/France_RFE/tree/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d"],
+      "manifestSha256": "05a99fb5217fd9c9bb1671c3753de486ae76ca35f53205192bd8f560357975d6"
+    },
+    "france-rfe-cii-1.4.0.04": {
+      "publish": true,
+      "basis": "FNFE-MPE Apache-2.0 grant with incorporated EN16931 EUPL-1.2 and UN/CEFACT notices preserved.",
+      "evidence": ["https://github.com/fnfempe/France_RFE/tree/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d"],
+      "manifestSha256": "57d9e6a56e986232fa3121360bb2e3ae1c9e3dd9433a32d1e15b1b29cedeb1ea"
+    },
+    "france-rfe-en16931-ubl-1.3.16": {
+      "publish": true,
+      "basis": "FNFE-MPE Apache-2.0 grant with incorporated EN16931 EUPL-1.2 and UN/CEFACT notices preserved.",
+      "evidence": ["https://github.com/fnfempe/France_RFE/tree/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d"],
+      "manifestSha256": "ad1b225b1e62525aa2da664c47f7cb52c8acc374929a5b8a01f38ec4f89ed2e4"
+    },
+    "france-rfe-extended-cii-1.4.0.04": {
+      "publish": true,
+      "basis": "FNFE-MPE Apache-2.0 grant with incorporated EN16931 EUPL-1.2 and UN/CEFACT notices preserved.",
+      "evidence": ["https://github.com/fnfempe/France_RFE/tree/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d"],
+      "manifestSha256": "b81f126a1d5c2db2fd00c9eee87e1190e192187e370bdb9aa81bdb7a0f3832a0"
+    },
+    "france-rfe-extended-ubl-1.4.0.04": {
+      "publish": true,
+      "basis": "FNFE-MPE Apache-2.0 grant with incorporated EN16931 EUPL-1.2 and UN/CEFACT notices preserved.",
+      "evidence": ["https://github.com/fnfempe/France_RFE/tree/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d"],
+      "manifestSha256": "819eb64723aab4e96d9cd6255a0d9c0a5f385be87dda0a8b34452b8f1a4dea03"
+    },
+    "france-rfe-ubl-1.4.0.04": {
+      "publish": true,
+      "basis": "FNFE-MPE Apache-2.0 grant with incorporated EN16931 EUPL-1.2 and UN/CEFACT notices preserved.",
+      "evidence": ["https://github.com/fnfempe/France_RFE/tree/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d"],
+      "manifestSha256": "ea90d939bebfea5114ee936d44771db22d76e8ab51bc20acd24e2cc8bd85a3cb"
+    },
+    "hr-cius-ext-ubl-20260313": {
+      "publish": true,
+      "basis": "Authority fiscalization site expressly permits transmission of site contents without separate permission with source attribution. Applied to its directly linked schema/rule downloads; compiling the unchanged rules is a representation change, not an asserted general derivative-work grant.",
+      "evidence": ["https://porezna.gov.hr/fiskalizacija", "https://porezna.gov.hr/fiskalizacija/api/dokumenti/197"],
+      "manifestSha256": "2e598ab9d2ff1d04372f13dd35055f96306bd0e9fdb46382874db7b0e8239b43"
+    },
+    "isdoc-6.0.1-rules": {
+      "publish": false,
+      "basis": "Native Schematron lacks an express license. Official build.xml generates native rules from documentation; schema grant includes documentation, but exact release provenance and scope over native output are not fully qualified in this bounded review.",
+      "evidence": [
+        "https://isdoc.cz/",
+        "https://github.com/isdoc/schema/blob/b58634614c3201e1ac0c673a5e4a11b639bd4c38/build.xml",
+        "https://isdoc.cz/fileadmin/isdoc/6.0/isdoc-schema-6.0.1-20140526.zip"
+      ]
+    },
+    "isdoc-6.0.2-rules": {
+      "publish": false,
+      "basis": "Native Schematron lacks an express license. Official build.xml generates native rules from documentation; schema grant includes documentation, but exact release provenance and scope over native output are not fully qualified in this bounded review.",
+      "evidence": [
+        "https://isdoc.cz/",
+        "https://github.com/isdoc/schema/blob/b58634614c3201e1ac0c673a5e4a11b639bd4c38/build.xml",
+        "https://isdoc.cz/6.0.2/sch/isdoc-6.0.2.sch"
+      ]
+    },
+    "nlcius-cii-1.0.3.13": {
+      "publish": true,
+      "basis": "Native CII explicit EUPL-1.2 notice plus repository MIT notice.",
+      "evidence": [
+        "https://raw.githubusercontent.com/peppolautoriteit-nl/validation/4e93ae8681f413fef627a338ad84ce465a153ee8/LICENSE.txt",
+        "https://raw.githubusercontent.com/peppolautoriteit-nl/validation/4e93ae8681f413fef627a338ad84ce465a153ee8/schematron/nlcius-cii/NLCIUS-CII-validation.sch"
+      ],
+      "manifestSha256": "ca5db758efd58e088a138b12a47d05125a16023d3433b286c45b77e44bb1bc71"
+    },
+    "nlcius-gaccount-1.0.2.13-ubl": {
+      "publish": true,
+      "basis": "Pinned Dutch authority repository MIT grant plus embedded EUPL-1.2 EN16931 terms.",
+      "evidence": [
+        "https://raw.githubusercontent.com/peppolautoriteit-nl/validation/4e93ae8681f413fef627a338ad84ce465a153ee8/LICENSE.txt",
+        "https://codeload.github.com/peppolautoriteit-nl/validation/zip/4e93ae8681f413fef627a338ad84ce465a153ee8#validation-4e93ae8681f413fef627a338ad84ce465a153ee8%2Fxsl%2Fsi-ubl-2.0-ext-gaccount.xsl"
+      ],
+      "manifestSha256": "555bcf0d0229cbcb8a2df693296436d06bc2d63b64e0e9ba65c765e54005f448"
+    },
+    "nlcius-ubl-2.0.3.13": {
+      "publish": true,
+      "basis": "Pinned Dutch authority repository MIT license covers native UBL source.",
+      "evidence": [
+        "https://raw.githubusercontent.com/peppolautoriteit-nl/validation/4e93ae8681f413fef627a338ad84ce465a153ee8/LICENSE.txt",
+        "https://raw.githubusercontent.com/peppolautoriteit-nl/validation/4e93ae8681f413fef627a338ad84ce465a153ee8/schematron/si-ubl-2.0/si-ubl-2.0-nlcius.sch"
+      ],
+      "manifestSha256": "ccbed89928bced2a094f3cf7abebc9d158e464fc216e8a951ef3826e03c8955a"
+    },
+    "oioubl-2.02-creditnote-1.11.1": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://git.erst.dk/openebusiness/common/-/tree/244631323b2fb56eda3bf7475bc050e65ad84b38/resources/Schematrons/OIOUBL"]
+    },
+    "oioubl-2.02-invoice-1.11.1": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://git.erst.dk/openebusiness/common/-/tree/244631323b2fb56eda3bf7475bc050e65ad84b38/resources/Schematrons/OIOUBL"]
+    },
+    "oioubl2-creditnote-1.15.2": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://nemhandel.dk/vejledning-oioubl-dokumentationsoversigt"]
+    },
+    "oioubl2-invoice-1.15.2": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://nemhandel.dk/vejledning-oioubl-dokumentationsoversigt"]
+    },
+    "oioubl3-creditnote-3.2.4": {
+      "publish": true,
+      "basis": "Package grant: Danish Business Authority EUPL-1.1; incorporated CEN EN16931 EUPL-1.2 and OASIS notices preserved.",
+      "evidence": ["https://oioubl-demo.nemhandel.dk/oioubl/dokumentation/License_and_Copyright_Statement.html"],
+      "manifestSha256": "05a30fcec146dd8f5b36443efbd674ad4721bf6e83704bed3c35571879f945ee"
+    },
+    "oioubl3-en16931-creditnote-3.2.4": {
+      "publish": true,
+      "basis": "Package grant: Danish Business Authority EUPL-1.1; incorporated CEN EN16931 EUPL-1.2 and OASIS notices preserved.",
+      "evidence": ["https://oioubl-demo.nemhandel.dk/oioubl/dokumentation/License_and_Copyright_Statement.html"],
+      "manifestSha256": "43a3125fa5ad76f83716866ef5c8e18cbae7760249620fb29aacb60c4cb3c26a"
+    },
+    "oioubl3-en16931-invoice-3.2.4": {
+      "publish": true,
+      "basis": "Package grant: Danish Business Authority EUPL-1.1; incorporated CEN EN16931 EUPL-1.2 and OASIS notices preserved.",
+      "evidence": ["https://oioubl-demo.nemhandel.dk/oioubl/dokumentation/License_and_Copyright_Statement.html"],
+      "manifestSha256": "cacb5ade6842243fe44d087cf5aacde8f703915bfda6d2762634b72389c60104"
+    },
+    "oioubl3-invoice-3.2.4": {
+      "publish": true,
+      "basis": "Package grant: Danish Business Authority EUPL-1.1; incorporated CEN EN16931 EUPL-1.2 and OASIS notices preserved.",
+      "evidence": ["https://oioubl-demo.nemhandel.dk/oioubl/dokumentation/License_and_Copyright_Statement.html"],
+      "manifestSha256": "dd791fc231970a78cb018c1525d2bbebbc0d5ece96a8a1988750dc3f07352107"
+    },
+    "peppol-bis2-bii-creditnote-3.7.0": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://github.com/OpenPEPPOL/peppol-bis/tree/cdfda5919926022218439e4b5a14d40dd2557e10"]
+    },
+    "peppol-bis2-bii-invoice-3.7.0": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://github.com/OpenPEPPOL/peppol-bis/tree/cdfda5919926022218439e4b5a14d40dd2557e10"]
+    },
+    "peppol-bis2-creditnote-3.7.0": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://github.com/OpenPEPPOL/peppol-bis/tree/cdfda5919926022218439e4b5a14d40dd2557e10"]
+    },
+    "peppol-bis2-invoice-3.7.0": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://github.com/OpenPEPPOL/peppol-bis/tree/cdfda5919926022218439e4b5a14d40dd2557e10"]
+    },
+    "peppol-bis3-3.0.20-ubl": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://github.com/OpenPEPPOL/peppol-bis-invoice-3/releases/tag/v3.0.20"]
+    },
+    "peppol-bis3-3.0.21-ubl": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poacc/billing/3.0/upcoming/release-notes/"]
+    },
+    "peppol-selfbilling-3.0.2-ubl": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poacc/self-billing/3.0/"]
+    },
+    "pint-ae-1.0.4": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poac/ae/pint-ae/"]
+    },
+    "pint-ae-sb-shared-1.0.4": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poac/ae/pint-ae-sb/"]
+    },
+    "pint-ae-shared-1.0.4": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poac/ae/pint-ae/"]
+    },
+    "pint-aunz-1.1.3": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poac/aunz/pint-aunz/"]
+    },
+    "pint-aunz-sb-1.1.3": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poac/aunz/pint-aunz-sb/"]
+    },
+    "pint-aunz-sb-shared-1.1.3": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poac/aunz/pint-aunz-sb/"]
+    },
+    "pint-eu-1.1.1": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poac/eu/pint-eu/"]
+    },
+    "pint-jp-1.1.3": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poac/jp/pint-jp/"]
+    },
+    "pint-jp-ntr-1.1.3": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poac/jp/pint-jp-ntr/"]
+    },
+    "pint-jp-ntr-shared-1.1.3": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poac/jp/pint-jp-ntr/"]
+    },
+    "pint-jp-sb-1.1.3": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poac/jp/pint-jp-sb/"]
+    },
+    "pint-jp-sb-shared-1.1.3": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poac/jp/pint-jp-sb/"]
+    },
+    "pint-my-1.3.1": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poac/my/pint-my/"]
+    },
+    "pint-my-sb-1.3.1": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poac/my/pint-my-sb/"]
+    },
+    "pint-my-sb-shared-1.3.1": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poac/my/pint-my-sb/"]
+    },
+    "pint-om-1.0.1": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poac/om/pint-om/"]
+    },
+    "pint-om-sb-1.0.1": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poac/om/pint-om-sb/"]
+    },
+    "pint-om-sb-shared-1.0.1": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poac/om/pint-om-sb/"]
+    },
+    "pint-sg-1.4.1": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poac/sg/pint-sg/"]
+    },
+    "pint-shared-1.1.3": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://docs.peppol.eu/poac/pint/pint/"]
+    },
+    "selfbilling-ubl-en16931-1.3.16": {
+      "publish": true,
+      "basis": "Explicit EUPL-1.2 source license; corresponding source and full license retained.",
+      "evidence": ["https://docs.peppol.eu/poacc/self-billing/3.0/"],
+      "manifestSha256": "91dba2a2876d70ecf691a559e03a46df2c62652bbb9fb09850e77b3ba2b0bc68"
+    },
+    "svefaktura-1.0-rules-20161025": {
+      "publish": false,
+      "basis": "SFTI-specific schemas/rules have no located grant; official archive and site ownership page do not state redistribution terms. OASIS notices cover only OASIS components, not the full SFTI derivative bundle.",
+      "evidence": [
+        "https://sfti.se/sfti/omwebbplatsen.44444.html",
+        "https://sfti.se/download/18.3a0a1c2218723106f76484f0/1680520279996/Svefaktura1_Arkiv%202023-02-23.zip#Schematronregler%20f%C2%94r%20Svefaktura%201.0%202016-10-25.xml"
+      ]
+    },
+    "ublbe-1.31-rules": {
+      "publish": false,
+      "basis": "Artifact redistribution permission has not been established; excluded pending qualification.",
+      "evidence": ["https://www.ubl.be/version-information/"]
+    },
+    "xrechnung-3.0.2-cii": {
+      "publish": true,
+      "basis": "KoSIT Apache-2.0 grant; corresponding source and full license retained.",
+      "evidence": ["https://github.com/itplr-kosit/xrechnung-schematron/releases/tag/v2.6.0"],
+      "manifestSha256": "62b44f42a52c0969a43fa77ccaed86a2765ee8b4cd2f8fca3b0a14a8e906428e"
+    },
+    "xrechnung-3.0.2-ubl": {
+      "publish": true,
+      "basis": "KoSIT Apache-2.0 grant; corresponding source and full license retained.",
+      "evidence": ["https://github.com/itplr-kosit/xrechnung-schematron/releases/tag/v2.6.0"],
+      "manifestSha256": "a71d98b91b0d6096fde1deaa5907e9c8fd739909fbc14ce3206f2e8737705c57"
+    },
+    "xsd-cfdi-3.3": {
+      "publish": false,
+      "basis": "Official SAT schemas/catalogues carry no explicit redistribution grant located; publication for mandatory invoice validation alone is not used as proof of redistribution terms.",
+      "evidence": ["https://www.sat.gob.mx/sitio_internet/cfd/3/cfdv33.xsd"]
+    },
+    "xsd-cfdi-4.0": {
+      "publish": false,
+      "basis": "Official SAT schemas/catalogues carry no explicit redistribution grant located; publication for mandatory invoice validation alone is not used as proof of redistribution terms.",
+      "evidence": ["https://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd"]
+    },
+    "xsd-cii-d16b": {
+      "publish": true,
+      "basis": "Embedded OASIS or UN/CEFACT copying and derivative-work permission; original notices retained.",
+      "evidence": ["https://unece.org/trade/uncefact/xml-schemas"],
+      "manifestSha256": "840fc91dd74182a6e15bf755ce4649cd3df902e53e6b250936c9f074bebf0cd7"
+    },
+    "xsd-cii-d22b-france-rfe-1.4.0.04": {
+      "publish": true,
+      "basis": "FNFE-MPE Apache-2.0 grant with incorporated EN16931 EUPL-1.2 and UN/CEFACT notices preserved.",
+      "evidence": ["https://github.com/fnfempe/France_RFE/tree/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d"],
+      "manifestSha256": "e76446916265e2337bff273c0795e38ba43c7c64e81f716e4439e2ec33983fa0"
+    },
+    "xsd-e-arve-1.2": {
+      "publish": false,
+      "basis": "Exact XSD statement License rules: no is ambiguous; ITL publication pages identify scope but give no clearer copyright/redistribution grant. Hold does not mean forbidden use.",
+      "evidence": [
+        "https://itl.ee/e-arve-kirjeldus/",
+        "https://itl.ee/en/estonian-ict-cluster/real-time-economy/e-invoice-specification/",
+        "https://wp.itl.ee/files/EE_einvoice_1.2.zip"
+      ]
+    },
+    "xsd-earve-1.2": {
+      "publish": false,
+      "basis": "Exact XSD statement License rules: no is ambiguous; ITL publication pages identify scope but give no clearer copyright/redistribution grant. Hold does not mean forbidden use.",
+      "evidence": [
+        "https://itl.ee/e-arve-kirjeldus/",
+        "https://itl.ee/en/estonian-ict-cluster/real-time-economy/e-invoice-specification/",
+        "https://wp.itl.ee/files/IoB/uued/e-invoice_ver1.2.EN.xsd"
+      ]
+    },
+    "xsd-ebinterface-3.0": {
+      "publish": false,
+      "basis": "Official WKO page makes the standard free for implementation, including historical releases, but no redistribution license was found in the owning repository or exact XSDs. Free implementation is not treated as an unrestricted artifact redistribution grant.",
+      "evidence": ["https://www.wko.at/netzwerke/was-ist-ebinterface", "https://github.com/austriapro/ebinterface-standards"]
+    },
+    "xsd-ebinterface-3.02": {
+      "publish": false,
+      "basis": "Official WKO page makes the standard free for implementation, including historical releases, but no redistribution license was found in the owning repository or exact XSDs. Free implementation is not treated as an unrestricted artifact redistribution grant.",
+      "evidence": ["https://www.wko.at/netzwerke/was-ist-ebinterface", "https://github.com/austriapro/ebinterface-standards"]
+    },
+    "xsd-ebinterface-4.0": {
+      "publish": false,
+      "basis": "Official WKO page makes the standard free for implementation, including historical releases, but no redistribution license was found in the owning repository or exact XSDs. Free implementation is not treated as an unrestricted artifact redistribution grant.",
+      "evidence": ["https://www.wko.at/netzwerke/was-ist-ebinterface", "https://github.com/austriapro/ebinterface-standards"]
+    },
+    "xsd-ebinterface-4.1": {
+      "publish": false,
+      "basis": "Official WKO page makes the standard free for implementation, including historical releases, but no redistribution license was found in the owning repository or exact XSDs. Free implementation is not treated as an unrestricted artifact redistribution grant.",
+      "evidence": ["https://www.wko.at/netzwerke/was-ist-ebinterface", "https://github.com/austriapro/ebinterface-standards"]
+    },
+    "xsd-ebinterface-4.2": {
+      "publish": false,
+      "basis": "Official WKO page makes the standard free for implementation, including historical releases, but no redistribution license was found in the owning repository or exact XSDs. Free implementation is not treated as an unrestricted artifact redistribution grant.",
+      "evidence": ["https://www.wko.at/netzwerke/was-ist-ebinterface", "https://github.com/austriapro/ebinterface-standards"]
+    },
+    "xsd-ebinterface-4.3": {
+      "publish": false,
+      "basis": "Official WKO page makes the standard free for implementation, including historical releases, but no redistribution license was found in the owning repository or exact XSDs. Free implementation is not treated as an unrestricted artifact redistribution grant.",
+      "evidence": ["https://www.wko.at/netzwerke/was-ist-ebinterface", "https://github.com/austriapro/ebinterface-standards"]
+    },
+    "xsd-ebinterface-5.0": {
+      "publish": false,
+      "basis": "Official WKO page makes the standard free for implementation, including historical releases, but no redistribution license was found in the owning repository or exact XSDs. Free implementation is not treated as an unrestricted artifact redistribution grant.",
+      "evidence": ["https://www.wko.at/netzwerke/was-ist-ebinterface", "https://github.com/austriapro/ebinterface-standards"]
+    },
+    "xsd-ebinterface-6.0": {
+      "publish": false,
+      "basis": "Official WKO page makes the standard free for implementation, including historical releases, but no redistribution license was found in the owning repository or exact XSDs. Free implementation is not treated as an unrestricted artifact redistribution grant.",
+      "evidence": ["https://www.wko.at/netzwerke/was-ist-ebinterface", "https://github.com/austriapro/ebinterface-standards"]
+    },
+    "xsd-ebinterface-6.1": {
+      "publish": false,
+      "basis": "Official WKO page makes the standard free for implementation, including historical releases, but no redistribution license was found in the owning repository or exact XSDs. Free implementation is not treated as an unrestricted artifact redistribution grant.",
+      "evidence": ["https://www.wko.at/netzwerke/was-ist-ebinterface", "https://github.com/austriapro/ebinterface-standards"]
+    },
+    "xsd-eslog-2.0": {
+      "publish": false,
+      "basis": "Published use permission found; redistribution scope remains unqualified.",
+      "evidence": ["https://epos.si/eslog", "https://epos.si/assets/docs/e-SLOG-2.0-08-2020-EN.zip"]
+    },
+    "xsd-facturae-3.0": {
+      "publish": true,
+      "basis": "Facturae portal reuse notice expressly grants commercial/noncommercial reproduction, distribution and necessary transformation of its documents.",
+      "evidence": ["https://www.facturae.gob.es/aviso-legal"],
+      "manifestSha256": "44ec1e989194a37814845d350bc688f3f7d90f4374a13afd25af0a346e603b6c"
+    },
+    "xsd-facturae-3.1": {
+      "publish": true,
+      "basis": "Facturae portal reuse notice expressly grants commercial/noncommercial reproduction, distribution and necessary transformation of its documents.",
+      "evidence": ["https://www.facturae.gob.es/aviso-legal"],
+      "manifestSha256": "c94b9d24426d752f0fa8655470e7df83305afb6a352c94e556048b96f5a23a13"
+    },
+    "xsd-facturae-3.2": {
+      "publish": true,
+      "basis": "Facturae portal reuse notice expressly grants commercial/noncommercial reproduction, distribution and necessary transformation of its documents.",
+      "evidence": ["https://www.facturae.gob.es/aviso-legal"],
+      "manifestSha256": "985cc3153d6cd6a01ebe803aaddee79e4459b43c6553f6040eaed7bfb68684d4"
+    },
+    "xsd-facturae-3.2.1": {
+      "publish": true,
+      "basis": "Facturae portal reuse notice expressly grants commercial/noncommercial reproduction, distribution and necessary transformation of its documents.",
+      "evidence": ["https://www.facturae.gob.es/aviso-legal"],
+      "manifestSha256": "e09e8ce384f62145b933a4a4e1c90fe504810db3e682cbd4deb41aac15783ef6"
+    },
+    "xsd-facturae-3.2.2": {
+      "publish": true,
+      "basis": "Facturae portal reuse notice expressly grants commercial/noncommercial reproduction, distribution and necessary transformation of its documents.",
+      "evidence": ["https://www.facturae.gob.es/aviso-legal"],
+      "manifestSha256": "6477f4cc76c81b4d34aad9aeb08923876df42f66656f6fa80782c7d286738e69"
+    },
+    "xsd-facturx-1.09.2-basicwl": {
+      "publish": true,
+      "basis": "FNFE-MPE Apache-2.0 grant with incorporated EN16931 EUPL-1.2 and UN/CEFACT notices preserved.",
+      "evidence": ["https://github.com/fnfempe/France_RFE/tree/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d"],
+      "manifestSha256": "b554437b973a956233809c2219f0d92b3414ab89d642aa416d8ff0ddf477a5ff"
+    },
+    "xsd-facturx-1.09.2-en16931": {
+      "publish": true,
+      "basis": "FNFE-MPE Apache-2.0 grant with incorporated EN16931 EUPL-1.2 and UN/CEFACT notices preserved.",
+      "evidence": ["https://github.com/fnfempe/France_RFE/tree/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d"],
+      "manifestSha256": "da3622df3ba2f3af164f8f4c309ed3735ac7c7ae55488f6c00a60949242ccd52"
+    },
+    "xsd-facturx-1.09.2-extended": {
+      "publish": true,
+      "basis": "FNFE-MPE Apache-2.0 grant with incorporated EN16931 EUPL-1.2 and UN/CEFACT notices preserved.",
+      "evidence": ["https://github.com/fnfempe/France_RFE/tree/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d"],
+      "manifestSha256": "a3785173efc9b4781a6b22ce0eaf7bf54e4a6f0b946915661a8b04bc8c74a3f2"
+    },
+    "xsd-fatturapa-1.2.2": {
+      "publish": false,
+      "basis": "Official FatturaPA copyright page requires prior written consent to copy, reproduce, transfer, publish or distribute site contents beyond personal storage. No artifact-specific override located; third-party MIT wrapper does not establish authority schema rights.",
+      "evidence": [
+        "https://www.fatturapa.gov.it/it/copyright/index.html",
+        "https://www.fatturapa.gov.it/export/documenti/fatturapa/v1.2.2/Schema_del_file_xml_FatturaPA_v1.2.2.xsd"
+      ]
+    },
+    "xsd-fatturapa-semplificata-1.0": {
+      "publish": false,
+      "basis": "Official FatturaPA copyright page requires prior written consent to copy, reproduce, transfer, publish or distribute site contents beyond personal storage. No artifact-specific override located; third-party MIT wrapper does not establish authority schema rights.",
+      "evidence": [
+        "https://www.fatturapa.gov.it/it/copyright/index.html",
+        "https://raw.githubusercontent.com/Slamdunk/php-validatore-fattura-elettronica/da1986196bf8a9e993fcd33a059cf08aaca1bf36/xsd/Schema_VFSM10.xsd"
+      ]
+    },
+    "xsd-finvoice-1.3": {
+      "publish": false,
+      "basis": "Published use permission found; redistribution scope remains unqualified.",
+      "evidence": ["https://www.finanssiala.fi/en/topics/finvoice-standard/"]
+    },
+    "xsd-finvoice-2.0": {
+      "publish": false,
+      "basis": "Published use permission found; redistribution scope remains unqualified.",
+      "evidence": ["https://www.finanssiala.fi/en/topics/finvoice-standard/"]
+    },
+    "xsd-finvoice-2.01": {
+      "publish": false,
+      "basis": "Published use permission found; redistribution scope remains unqualified.",
+      "evidence": ["https://www.finanssiala.fi/en/topics/finvoice-standard/"]
+    },
+    "xsd-finvoice-3.0": {
+      "publish": false,
+      "basis": "Published use permission found; redistribution scope remains unqualified.",
+      "evidence": ["https://www.finanssiala.fi/en/topics/finvoice-standard/"]
+    },
+    "xsd-hr-cius-ubl-20260415": {
+      "publish": true,
+      "basis": "Authority fiscalization site expressly permits transmission of site contents without separate permission with source attribution. Applied to its directly linked schema/rule downloads; compiling the unchanged rules is a representation change, not an asserted general derivative-work grant.",
+      "evidence": ["https://porezna.gov.hr/fiskalizacija", "https://porezna.gov.hr/fiskalizacija/api/dokumenti/198"],
+      "manifestSha256": "fdfb7e7f011dd3b59ac84ab4adc93f016dc1c253507f5c07385c6ec4a2d6d8cf"
+    },
+    "xsd-isdoc-5.1": {
+      "publish": false,
+      "basis": "Exact early invoice XSD contains copyright but no permission grant; later schema releases are expressly licensed but no retrospective grant was established.",
+      "evidence": ["https://isdoc.cz/", "https://isdoc.cz/fileadmin/isdoc/ISDOC_v_5.1.zip"]
+    },
+    "xsd-isdoc-5.2": {
+      "publish": false,
+      "basis": "Exact early invoice XSD contains copyright but no permission grant; later schema releases are expressly licensed but no retrospective grant was established.",
+      "evidence": ["https://isdoc.cz/", "https://isdoc.cz/fileadmin/isdoc/xsd/isdoc-5.2-schema-20091025_CZ_EN.zip"]
+    },
+    "xsd-isdoc-5.2.1": {
+      "publish": false,
+      "basis": "Exact early invoice XSD contains copyright but no permission grant; later schema releases are expressly licensed but no retrospective grant was established.",
+      "evidence": ["https://isdoc.cz/", "https://isdoc.cz/fileadmin/isdoc/isdoc-schema-5.2.1-20100318.zip"]
+    },
+    "xsd-isdoc-5.2.2": {
+      "publish": true,
+      "basis": "Exact XSD headers expressly permit use, copying, modification and distribution of schema/documentation for any purpose without fee in perpetuity.",
+      "evidence": ["https://isdoc.cz/", "https://isdoc.cz/fileadmin/isdoc/isdoc-schema-5.2.2-20101207.zip"],
+      "manifestSha256": "087d0ab1c8b289e74d47bd0eaf871d779f73d978ddd8b89a847b9fc59ee68d45"
+    },
+    "xsd-isdoc-5.2.3": {
+      "publish": true,
+      "basis": "Exact XSD headers expressly permit use, copying, modification and distribution of schema/documentation for any purpose without fee in perpetuity.",
+      "evidence": ["https://isdoc.cz/", "https://isdoc.cz/fileadmin/isdoc/isdoc-schema-5.2.3-20110214.zip"],
+      "manifestSha256": "4bc7c07d0e498598fd7c97cf1916c43daac72007d25c64119a791bc471ea8eb7"
+    },
+    "xsd-isdoc-5.3": {
+      "publish": true,
+      "basis": "Exact XSD headers expressly permit use, copying, modification and distribution of schema/documentation for any purpose without fee in perpetuity.",
+      "evidence": ["https://isdoc.cz/", "https://isdoc.cz/fileadmin/isdoc/isdoc-schema-5.3-20110214.zip"],
+      "manifestSha256": "9abbc710136e697abf90ba4306d29335ae3da365097497e9777acb0685b393a2"
+    },
+    "xsd-isdoc-5.3.1": {
+      "publish": true,
+      "basis": "Exact XSD headers expressly permit use, copying, modification and distribution of schema/documentation for any purpose without fee in perpetuity.",
+      "evidence": ["https://isdoc.cz/", "https://isdoc.cz/fileadmin/isdoc/isdoc-schema-5.3.1-20111230.zip"],
+      "manifestSha256": "b7464875f222a9983bcc415b85aab92c3cda7b69e3aae0fce9f3758386019aae"
+    },
+    "xsd-isdoc-6.0.1": {
+      "publish": true,
+      "basis": "Exact XSD headers expressly permit use, copying, modification and distribution of schema/documentation for any purpose without fee in perpetuity.",
+      "evidence": ["https://isdoc.cz/", "https://isdoc.cz/fileadmin/isdoc/6.0/isdoc-schema-6.0.1-20140526.zip"],
+      "manifestSha256": "d0a0ce5e9bfac24a16b7f2e4e4d1ba03723893e31c9977a53ea29fd78d7d7014"
+    },
+    "xsd-isdoc-6.0.2": {
+      "publish": true,
+      "basis": "Exact XSD headers expressly permit use, copying, modification and distribution of schema/documentation for any purpose without fee in perpetuity.",
+      "evidence": ["https://isdoc.cz/", "https://isdoc.cz/6.0.2/xsd/isdoc-invoice-6.0.2.xsd"],
+      "manifestSha256": "3fd11731cab2452ca4f852a8bb78d7cc02c090a95994f63e2f4936d60fe7cb96"
+    },
+    "xsd-ksef-fa-rr": {
+      "publish": false,
+      "basis": "MF public-information reuse page supports broad reuse with attribution and change notices, but its stated scope is BIP MF; exact CRD-hosted XSD/dependency closure scope remains unresolved. Do not assign a generic MF website CC license to these bytes.",
+      "evidence": [
+        "https://www.gov.pl/web/finanse/ponowne-wykorzystywanie",
+        "https://ksef.podatki.gov.pl/informacje-ogolne-ksef-20/struktura-logiczna-fa-3/",
+        "https://crd.gov.pl/wzor/2026/03/06/14189/schemat.xsd"
+      ]
+    },
+    "xsd-ksef-fa2": {
+      "publish": false,
+      "basis": "MF public-information reuse page supports broad reuse with attribution and change notices, but its stated scope is BIP MF; exact CRD-hosted XSD/dependency closure scope remains unresolved. Do not assign a generic MF website CC license to these bytes.",
+      "evidence": [
+        "https://www.gov.pl/web/finanse/ponowne-wykorzystywanie",
+        "https://ksef.podatki.gov.pl/informacje-ogolne-ksef-20/struktura-logiczna-fa-3/",
+        "https://crd.gov.pl/wzor/2023/06/29/12648/schemat.xsd"
+      ]
+    },
+    "xsd-ksef-fa3": {
+      "publish": false,
+      "basis": "MF public-information reuse page supports broad reuse with attribution and change notices, but its stated scope is BIP MF; exact CRD-hosted XSD/dependency closure scope remains unresolved. Do not assign a generic MF website CC license to these bytes.",
+      "evidence": [
+        "https://www.gov.pl/web/finanse/ponowne-wykorzystywanie",
+        "https://ksef.podatki.gov.pl/informacje-ogolne-ksef-20/struktura-logiczna-fa-3/",
+        "https://crd.gov.pl/wzor/2025/06/25/13775/schemat.xsd"
+      ]
+    },
+    "xsd-svefaktura-1.0-20081227": {
+      "publish": false,
+      "basis": "SFTI-specific schemas/rules have no located grant; official archive and site ownership page do not state redistribution terms. OASIS notices cover only OASIS components, not the full SFTI derivative bundle.",
+      "evidence": [
+        "https://sfti.se/sfti/omwebbplatsen.44444.html",
+        "https://sfti.se/download/18.3a0a1c2218723106f76484f0/1680520279996/Svefaktura1_Arkiv%202023-02-23.zip#XML-Schema%20f%C2%94r%20Svefaktura%201.0.zip"
+      ]
+    },
+    "xsd-teappsxml-3.0": {
+      "publish": false,
+      "basis": "No schema-specific exception located. Tieto legal notice generally limits copying to personal noncommercial extracts and requires written permission for other distribution.",
+      "evidence": [
+        "https://www.tieto.com/en/privacy/legal-notice/",
+        "https://www.tieto.com/siteassets/04-indtech/teappsxml/teappsxmlv30_schema_invoices.xsd"
+      ]
+    },
+    "xsd-ubl-2.0": {
+      "publish": true,
+      "basis": "Embedded OASIS or UN/CEFACT copying and derivative-work permission; original notices retained.",
+      "evidence": ["https://docs.oasis-open.org/ubl/os-UBL-2.0/"],
+      "manifestSha256": "bfb5b7628008b29364c0975fed82878fc1dc1e9cdf5603036415320f3654fb40"
+    },
+    "xsd-ubl-2.1": {
+      "publish": true,
+      "basis": "Embedded OASIS or UN/CEFACT copying and derivative-work permission; original notices retained.",
+      "evidence": ["https://docs.oasis-open.org/ubl/os-UBL-2.1/"],
+      "manifestSha256": "a6ee694333ca1423f813a15a637ce1bdaa3aea7e2ebfe2e3b0df7dfcec9e3f50"
+    }
+  }
+}

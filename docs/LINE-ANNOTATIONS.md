@@ -15,7 +15,7 @@ These files are included in the Pages deployment and copied unchanged from the s
 - [Complete synthetic canonical invoice](https://alexcatdad.github.io/eu-einvoice-canonical/examples/line-annotations/invoice.hujson)
 - [Expected synthetic annotations](https://alexcatdad.github.io/eu-einvoice-canonical/examples/line-annotations/expected.hujson)
 
-The [source example](https://github.com/alexcatdad/eu-einvoice-canonical/tree/main/examples/line-annotations) contains the runnable consumer and HuJSON helper. The existing browser converter and line-labelling evaluation still use their original browser-model integration; these downloads are a separate consumer reference.
+The [source example](https://github.com/alexcatdad/eu-einvoice-canonical/tree/main/examples/line-annotations) contains the runnable consumer and HuJSON helper. In the [browser converter](https://alexcatdad.github.io/eu-einvoice-canonical/), choose **Peppol invoice (annotation example)** and open **Lines** to inspect, copy or download the selected canonical input. Paste a complete annotation response into the same panel to validate its structure and identifiers, then download the result marked `unreviewed`. The original invoice is unchanged. Editing the response clears its validation result; changing invoices clears the imported view. The converter makes no model request. The separate line-labelling evaluation retains its original browser-model integration.
 
 ## Run the saved example
 

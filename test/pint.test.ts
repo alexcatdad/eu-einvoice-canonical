@@ -39,9 +39,9 @@ describe('PINT detection', () => {
   test('CreditNote root is detected as well', () =>
     assert.equal(detect(ublHeader('urn:peppol:pint:billing-1@sg-1', { root: 'CreditNote' })).format.id, 'pint-sg'));
 
-  test('PINT gets the UBL schema layer only: the PINT Schematron is not bundled', () => {
-    const plan = planFor(detect(ublHeader('urn:peppol:pint:billing-1@sg-1')));
-    assert.deepEqual(plan, { schema: 'xsd-ubl-2.1' });
+  test('PINT gets its shared rules without claiming a jurisdiction profile', () => {
+    const plan = planFor(detect(ublHeader('urn:peppol:pint:billing-1')));
+    assert.deepEqual(plan, { schema: 'xsd-ubl-2.1', semantic: 'pint-shared-1.1.3' });
   });
 });
 

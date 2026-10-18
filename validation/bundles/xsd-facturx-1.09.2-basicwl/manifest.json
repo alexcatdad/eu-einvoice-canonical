@@ -1,0 +1,65 @@
+{
+  "releaseDate": "2026-08-04",
+  "effectiveFrom": "2026-09-01",
+  "effectiveUntil": null,
+  "syntax": "cii",
+  "version": "1.09.2",
+  "upstream": "https://github.com/fnfempe/France_RFE/tree/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d",
+  "license": "Apache-2.0; official FNFE-MPE France_RFE repository LICENSE",
+  "id": "xsd-facturx-1.09.2-basicwl",
+  "title": "Factur-X 1.09.2 BASICWL restricted CII D22B schema",
+  "layer": "schema",
+  "format": "xsd",
+  "entries": {
+    "CrossIndustryInvoice": "Factur-X_BASICWL.xsd"
+  },
+  "source": [
+    {
+      "url": "https://raw.githubusercontent.com/fnfempe/France_RFE/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d/FNFE_RFE_INVOICE/Factur-X/BASICWL/1xsd/Factur-X_1.09.2_BASICWL_urn_un_unece_uncefact_data_standard_QualifiedDataType_100.xsd",
+      "sha256": "5d72dd3f0df511b2994ea41b199685f9cc538e9ce57d50c84d21988fe1455c6e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fnfempe/France_RFE/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d/FNFE_RFE_INVOICE/Factur-X/BASICWL/1xsd/Factur-X_1.09.2_BASICWL_urn_un_unece_uncefact_data_standard_ReusableAggregateBusinessInformationEntity_100.xsd",
+      "sha256": "17d5300dcb6d7c1d7ac70c4d28c89fd3b778abb820129ac320b9010d4dc6bed3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fnfempe/France_RFE/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d/FNFE_RFE_INVOICE/Factur-X/BASICWL/1xsd/Factur-X_1.09.2_BASICWL_urn_un_unece_uncefact_data_standard_UnqualifiedDataType_100.xsd",
+      "sha256": "2f4686c41172611f7fc2347a7103a12c01746da17a5f7eded53254ceeff2469f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fnfempe/France_RFE/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d/FNFE_RFE_INVOICE/Factur-X/BASICWL/1xsd/Factur-X_BASICWL.xsd",
+      "sha256": "6cd8f22081b659ebeb0a86a741ed454d1771460b822579a55b43f5f0cdd81356"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fnfempe/France_RFE/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d/LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    }
+  ],
+  "files": [
+    {
+      "path": "Factur-X_1.09.2_BASICWL_urn_un_unece_uncefact_data_standard_QualifiedDataType_100.xsd",
+      "sha256": "5d72dd3f0df511b2994ea41b199685f9cc538e9ce57d50c84d21988fe1455c6e",
+      "bytes": 3115
+    },
+    {
+      "path": "Factur-X_1.09.2_BASICWL_urn_un_unece_uncefact_data_standard_ReusableAggregateBusinessInformationEntity_100.xsd",
+      "sha256": "17d5300dcb6d7c1d7ac70c4d28c89fd3b778abb820129ac320b9010d4dc6bed3",
+      "bytes": 10855
+    },
+    {
+      "path": "Factur-X_1.09.2_BASICWL_urn_un_unece_uncefact_data_standard_UnqualifiedDataType_100.xsd",
+      "sha256": "2f4686c41172611f7fc2347a7103a12c01746da17a5f7eded53254ceeff2469f",
+      "bytes": 1724
+    },
+    {
+      "path": "Factur-X_BASICWL.xsd",
+      "sha256": "6cd8f22081b659ebeb0a86a741ed454d1771460b822579a55b43f5f0cdd81356",
+      "bytes": 1626
+    },
+    {
+      "path": "licenses/Apache-2.0.txt",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "bytes": 11357
+    }
+  ]
+}

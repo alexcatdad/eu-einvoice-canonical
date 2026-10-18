@@ -15,6 +15,42 @@
     {
       "url": "https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/download/validation-1.3.17/en16931-cii-1.3.17.zip",
       "sha256": "e5f3235824b6b38454b1d54cf3f14e01efb5b33971fbefc4e64997d0ef619e89"
+    },
+    {
+      "url": "https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/download/validation-1.3.17/en16931-cii-1.3.17.zip#schematron%2Fabstract%2FEN16931-CII-model.sch",
+      "sha256": "0b3e3e54380ee473b674c22051d63b8e06e7e8113470ea2d1de13052a97ff41c"
+    },
+    {
+      "url": "https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/download/validation-1.3.17/en16931-cii-1.3.17.zip#schematron%2Fabstract%2FEN16931-CII-syntax.sch",
+      "sha256": "a4e3ef691ae2178d52034062015f89453fe8f065451465d3069e946ef0fca6ca"
+    },
+    {
+      "url": "https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/download/validation-1.3.17/en16931-cii-1.3.17.zip#schematron%2FCII%2FEN16931-CII-model.sch",
+      "sha256": "864f96dff4819b39e0bdbda76c5396c78aee26d0f12676bb0b689df3230965ed"
+    },
+    {
+      "url": "https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/download/validation-1.3.17/en16931-cii-1.3.17.zip#schematron%2FCII%2FEN16931-CII-syntax.sch",
+      "sha256": "b006ef8689822e5c26b9700591651f5f41a722c9b0e26b363611ba9f7269de9b"
+    },
+    {
+      "url": "https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/download/validation-1.3.17/en16931-cii-1.3.17.zip#schematron%2Fcodelist%2FEN16931-CII-codes.sch",
+      "sha256": "e9c574ac66e083822b14f7e948a2ce188a817ee05412a0c02f3471ae5cf23958"
+    },
+    {
+      "url": "https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/download/validation-1.3.17/en16931-cii-1.3.17.zip#schematron%2FEN16931-CII-validation.sch",
+      "sha256": "7f3dc5e824cb945f4d630f4b93915166eb61b2bc5fd358f7bd0e5c2f22cd0741"
+    },
+    {
+      "url": "https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/download/validation-1.3.17/en16931-cii-1.3.17.zip#schematron%2Fpreprocessed%2FEN16931-CII-validation-preprocessed.sch",
+      "sha256": "74fa94df0513881b9c8e369650bb2282f9c8a30bb52ce4ce43d1219e88ccedc2"
+    },
+    {
+      "url": "https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/download/validation-1.3.17/en16931-cii-1.3.17.zip#xslt%2FEN16931-CII-validation.xslt",
+      "sha256": "0757f07909938b1b297b8356ab7b66406c89f1b342325385d6a2def998c817f0"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ConnectingEurope/eInvoicing-EN16931/validation-1.3.16/LICENSE.txt",
+      "sha256": "fc22ec1dcd8bee4636a395fb332e2308cde870fb3fdc71a2e260b919877cdef5"
     }
   ],
   "files": [
@@ -22,6 +58,51 @@
       "path": "EN16931-CII-validation.sef.json.gz",
       "sha256": "6091c1c481cd6f932c9f82722e9be124a1007c6b416c60cd719100396eea3ad8",
       "bytes": 155304
+    },
+    {
+      "path": "licenses/EUPL-1.2.txt",
+      "sha256": "fc22ec1dcd8bee4636a395fb332e2308cde870fb3fdc71a2e260b919877cdef5",
+      "bytes": 13871
+    },
+    {
+      "path": "source/schematron/abstract/EN16931-CII-model.sch",
+      "sha256": "0b3e3e54380ee473b674c22051d63b8e06e7e8113470ea2d1de13052a97ff41c",
+      "bytes": 52306
+    },
+    {
+      "path": "source/schematron/abstract/EN16931-CII-syntax.sch",
+      "sha256": "a4e3ef691ae2178d52034062015f89453fe8f065451465d3069e946ef0fca6ca",
+      "bytes": 77930
+    },
+    {
+      "path": "source/schematron/CII/EN16931-CII-model.sch",
+      "sha256": "864f96dff4819b39e0bdbda76c5396c78aee26d0f12676bb0b689df3230965ed",
+      "bytes": 61507
+    },
+    {
+      "path": "source/schematron/CII/EN16931-CII-syntax.sch",
+      "sha256": "b006ef8689822e5c26b9700591651f5f41a722c9b0e26b363611ba9f7269de9b",
+      "bytes": 58399
+    },
+    {
+      "path": "source/schematron/codelist/EN16931-CII-codes.sch",
+      "sha256": "e9c574ac66e083822b14f7e948a2ce188a817ee05412a0c02f3471ae5cf23958",
+      "bytes": 34412
+    },
+    {
+      "path": "source/schematron/EN16931-CII-validation.sch",
+      "sha256": "7f3dc5e824cb945f4d630f4b93915166eb61b2bc5fd358f7bd0e5c2f22cd0741",
+      "bytes": 1982
+    },
+    {
+      "path": "source/schematron/preprocessed/EN16931-CII-validation-preprocessed.sch",
+      "sha256": "74fa94df0513881b9c8e369650bb2282f9c8a30bb52ce4ce43d1219e88ccedc2",
+      "bytes": 241696
+    },
+    {
+      "path": "source/xslt/EN16931-CII-validation.xslt",
+      "sha256": "0757f07909938b1b297b8356ab7b66406c89f1b342325385d6a2def998c817f0",
+      "bytes": 729883
     }
   ]
 }

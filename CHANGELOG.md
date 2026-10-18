@@ -6,8 +6,17 @@ This file was reconstructed from the git history. Numbers in brackets are pull r
 
 ## [Unreleased]
 
+Validation additions below describe local qualification. The distributed subset is explicitly controlled by `validation/distribution.json`.
+
 ### Added
 
+- Local France RFE 1.4.0.04 strict UBL, CII and Factur-X suites, PINT billing specializations for seven jurisdictions and distinct self-billing chains for five. Exact process and customization controls prevent unsupported contracts from receiving a complete pass.
+- Additional historical validation artifacts for ebInterface 3.0/3.02, ISDOC releases and ordinary e-arve 1.2. Schema-only coverage remains explicitly incomplete for full-source validation; ordinary e-arve requires a caller-selected edition.
+- Historical Peppol BIS 2 and UBL.BE 1.31 validation with pinned publisher rule chains, exact source contracts and independent positive, negative and warning controls.
+- Local OIOUBL 2.02 validation with UBL 2.0 and pinned historical authority rules 1.11.1.35666 for invoices and credit notes, preserving warning/fatal severities and keeping generation-specific rule selection.
+- Source validation reports required coverage, incomplete results and versioned receipts; standalone `validateSource` retains findings independently of canonical mapping. Adds native Svefaktura and NLCIUS rules and a coherent Peppol May 2026 suite.
+- Inferred heading relations now carry `confidence: 'review'`, with their targets and review indicator visible in the converter. Missing confidence no longer implies certainty in the documentation or display.
+- Browser converter: export selected canonical annotation input and validate imported annotations separately, with an unreviewed download, a synthetic example and eight-language controls. Replaces the converter's in-browser model panel.
 - Optional canonical value-origin metadata and canonical field references on warnings, preserved by the line-annotation consumer. Traced text-only lines distinguish substituted zero amounts from source-supplied values.
 - Writers: canonical JSON back to Peppol BIS 3 UBL 2.1 and EN 16931 CII D16B (`toUbl`, `toCii`) [#42]
 - Human-readable rendering: `renderHtml`, `renderPdf` and `einvoice render` [#39]
@@ -29,6 +38,8 @@ This file was reconstructed from the git history. Numbers in brackets are pull r
 
 ### Changed
 
+- Distribute 43 validation bundles with reviewed permission evidence, source closures and notices; retain 64 others only for local qualification. Native Peppol/PINT, Svefaktura and several previously bundled national schemas are excluded. Their absence leaves source validation incomplete while conversion remains available. Git, npm, compiled CLI, Docker and Pages enforce the same inventory.
+
 - The site is an Astro build: Starlight docs generated from the README (with Pagefind search, the TypeScript API from starlight-typedoc and the HTTP API from a self-hosted Scalar), the converter as a React island on the library's `<Invoice>` component and shadcn/ui, old page addresses redirected, and an accessibility gate in CI
 
 - Supply-chain hardening: pinned actions, least-privilege permissions, attestations, SBOM and OpenSSF Scorecard [#37]
@@ -37,6 +48,14 @@ This file was reconstructed from the git history. Numbers in brackets are pull r
 
 ### Fixed
 
+- Restrict ebInterface 4.0 schema import localization to `schemaLocation` attributes so rebuilding preserves XML namespace identifiers.
+- Remove stale CLI sidecar files from reused release directories before packaging.
+
+- Execute attribute-context rules in the compiled BIS 2 and CIUS-RO suites using the compiler's supported key selection. Invalid MIME, identifier-scheme, currency and unit attributes now reach their original assertions.
+- Send compiled stylesheets to browser workers as JSON text, avoiding Chromium's structured-clone failure on deeply nested stylesheet objects. A hash-constrained, equivalent BIS 2 MIME membership expression avoids WebKit's checksum stack overflow.
+
+- Validation selects finite source contracts and keeps ambiguous editions, future declarations and unchecked extensions incomplete. The library and converter offer explicit CII D16B and e-arve 1.2.EN choices. The coverage gate requires independent evidence for each registered route, including routes that reuse bundles.
+- CLI `--validate` now executes source validation, including in quiet mode. HTTP rejects incomplete required checks, and MCP retains validation reports when canonical mapping fails. Coverage reports use observed source versions and distinguish detection-only formats.
 - Finvoice, KSeF and TEAPPSXML derivation paths use canonical line positions rather than source row numbers, including after informational rows are omitted.
 - CodeQL high alerts: linear `<think>` stripping and JSON span, single-run whitespace in `NOTE_LINE`, stable comment stripping [#32]
 

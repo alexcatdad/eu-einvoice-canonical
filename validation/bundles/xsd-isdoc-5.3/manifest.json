@@ -1,0 +1,40 @@
+{
+  "id": "xsd-isdoc-5.3",
+  "title": "ISDOC5.3 official invoice XSD closure",
+  "layer": "schema",
+  "syntax": "isdoc",
+  "version": "5.3",
+  "releaseDate": "2011-02-14",
+  "effectiveFrom": "2011-02-14",
+  "effectiveUntil": null,
+  "license": "Embedded ICT UNIE/SPIS permission to use, copy, modify and distribute the schema/documentation without fee, provided copyright and permission notices remain. XMLDSIG notices preserved.",
+  "upstream": "https://isdoc.cz/",
+  "note": "Official historical5.3 package linked by ISDOC authority. Exact namespace/invoice+version5.3; complete signed/unsigned invoice XSD closure preserved unchanged. Date identifies package publication, not independently verified legal activation.",
+  "format": "xsd",
+  "entries": {
+    "Invoice": "isdoc-invoice-dsig-5.3.xsd"
+  },
+  "source": [
+    {
+      "url": "https://isdoc.cz/fileadmin/isdoc/isdoc-schema-5.3-20110214.zip",
+      "sha256": "fbc22a4bd87ca842282c54810562ebeb22ea0d1b81b8f8479fe292b220030ede"
+    }
+  ],
+  "files": [
+    {
+      "path": "isdoc-invoice-5.3.xsd",
+      "sha256": "6a66416f4d3a4aedddf8dcf7b1239c366f9d6ddb9bb33fd0417bca59ea9e6899",
+      "bytes": 120629
+    },
+    {
+      "path": "isdoc-invoice-dsig-5.3.xsd",
+      "sha256": "d2310dc1a8e1caed6fc9c65c3342385728c640a67bfab29db28b3b91d8854a61",
+      "bytes": 1695
+    },
+    {
+      "path": "xmldsig-core-schema.xsd",
+      "sha256": "f6bf098b267d72a15a5cbb91af33711508811525fbab603b62ada677e5f6721b",
+      "bytes": 10750
+    }
+  ]
+}

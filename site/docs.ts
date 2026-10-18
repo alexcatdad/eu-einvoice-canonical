@@ -132,7 +132,7 @@ export const PAGES: PageDef[] = [
     slug: 'line-roles-and-relations',
     title: 'Line roles and relations',
     description:
-      'How the converter tells items from headings and surcharge lines and links them with proven arithmetic, plus an optional in-browser language model for the rest.',
+      'Deterministic invoice line roles and relations, with canonical input export and separate validation of imported annotations.',
     group: 'Model and contracts',
     sections: ['Line roles and relations'],
     related: [

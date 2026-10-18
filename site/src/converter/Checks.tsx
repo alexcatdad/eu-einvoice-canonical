@@ -73,7 +73,7 @@ function Notes({ title, rows, quiet }: { title: string; rows: { code?: string; m
 }
 
 export function ChecksPanel({ outcome, invoice, result }: { outcome: ConvertOutcome; invoice?: CanonicalInvoice; result: ConvertResult }) {
-  const v = invoice?.source.validation;
+  const v = invoice?.source.validation ?? outcome.validation;
   const notes = [
     invoice?.source.warnings.length ? (
       <Notes key="check" title={t('pen.check')} rows={invoice.source.warnings.map((w) => ({ code: w.code, message: w.message }))} />
@@ -90,16 +90,34 @@ export function ChecksPanel({ outcome, invoice, result }: { outcome: ConvertOutc
       {v && (
         <section className="layers">
           <h3>{t('val.title')}</h3>
+          <p>{t('val.local')}</p>
+          {v.result && (
+            <p>
+              <strong>
+                {t('val.coverage')}: {t(`val.result.${v.result}`)}
+              </strong>
+            </p>
+          )}
           <ul>
             {LAYERS.map((l) => (
               <li className={v[l]} key={l}>
                 <span>{t(`val.${l}`)}</span>
                 <strong>{t(`val.${v[l]}`)}</strong>
+                {(l === 'schema' || l === 'semantic' || l === 'profile') && v.bundles[l] && <small>{v.bundles[l]}</small>}
+                {(l === 'schema' || l === 'semantic' || l === 'profile') && v.reasons?.[l] && (
+                  <small>{t(`val.reason.${v.reasons[l]}`)}</small>
+                )}
               </li>
             ))}
           </ul>
         </section>
       )}
+      {v?.findings.length ? (
+        <Notes
+          title={t('val.findings')}
+          rows={v.findings.map((f) => ({ code: [f.layer, f.ruleId].filter(Boolean).join(': '), message: f.message }))}
+        />
+      ) : null}
       <Provenance outcome={outcome} />
       {notes.length > 0 && <div className="pen">{notes}</div>}
     </div>

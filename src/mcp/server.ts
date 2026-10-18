@@ -166,17 +166,42 @@ export function createMcpServer(options: McpServerOptions): McpServer {
     },
     guarded(async (a) => {
       const r = await convertTool({ ...a, validate: true });
-      const reports = invoicesOf(r).map((inv) => ({
-        id: inv.id,
-        format: inv.source.format,
-        validation: inv.source.validation,
-        warnings: inv.source.warnings,
-      }));
+      const reports = r.outcomes.flatMap<{
+        id?: string;
+        format?: string;
+        conversionStatus: ConvertResult['outcomes'][number]['status'];
+        validation: CanonicalInvoice['source']['validation'];
+        warnings: CanonicalInvoice['source']['warnings'];
+      }>((outcome) =>
+        outcome.status === 'ok'
+          ? outcome.invoices.map((inv) => ({
+              id: inv.id,
+              format: inv.source.format,
+              conversionStatus: outcome.status,
+              validation: inv.source.validation,
+              warnings: inv.source.warnings,
+            }))
+          : outcome.validation
+            ? [
+                {
+                  id: undefined,
+                  format: outcome.detection.kind === 'invoice' ? outcome.detection.format.id : undefined,
+                  conversionStatus: outcome.status,
+                  validation: outcome.validation,
+                  warnings: [],
+                },
+              ]
+            : [],
+      );
       const lines = reports.map((x) => {
         const v = x.validation;
-        return `${x.id} (${x.format}): schema ${v?.schema}, semantic ${v?.semantic}, profile ${v?.profile}, signature ${v?.signature}; ${v?.findings.length ?? 0} findings`;
+        return `${x.id ?? 'Source document'} (${x.format ?? 'unknown'}): ${v?.result ?? 'incomplete'}; schema ${v?.schema}, semantic ${v?.semantic}, profile ${v?.profile}, signature ${v?.signature}; ${v?.findings.length ?? 0} findings; conversion ${x.conversionStatus}`;
       });
-      return result(lines.join('\n') || summarise(r), { reports, skipped: r.skipped });
+      return result(lines.join('\n') || summarise(r), {
+        reports,
+        outcomes: r.outcomes.filter((o) => o.status !== 'ok'),
+        skipped: r.skipped,
+      });
     }),
   );
 

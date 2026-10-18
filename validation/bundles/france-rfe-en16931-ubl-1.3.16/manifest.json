@@ -1,0 +1,75 @@
+{
+  "version": "1.3.16",
+  "releaseDate": "2026-09-04",
+  "effectiveFrom": "2026-10-01",
+  "effectiveUntil": null,
+  "license": "EUPL-1.2 (original EN16931 source); FNFE repository Apache-2.0 notices retained",
+  "upstream": "https://github.com/fnfempe/France_RFE/tree/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d",
+  "note": "Pinned FNFE-MPE current fatal France RFE policy; not the historical warning alternative. Strict receiving policy required by 2026-10-01. This is XML format/business-rule validation; Chorus Pro, lifecycle messages, accredited-platform exchange and tax-authority acceptance are outside this chain.",
+  "id": "france-rfe-en16931-ubl-1.3.16",
+  "title": "France RFE paired EN16931 UBL1.3.16 rules",
+  "layer": "semantic",
+  "syntax": "ubl",
+  "entry": "france-rfe-en16931-ubl-1.3.16.sef.json.gz",
+  "format": "sef",
+  "source": [
+    {
+      "url": "https://codeload.github.com/fnfempe/France_RFE/zip/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d",
+      "sha256": "8728ce11486d4aa6db24c6fd653ba0c655f0fc47f8d6f69b065f2922cc595467"
+    },
+    {
+      "url": "https://codeload.github.com/fnfempe/France_RFE/zip/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d#France_RFE-97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d%2FFNFE_RFE_INVOICE%2FUBL%2FEN16931%2F2xslt%2FEN16931-UBL-validation.xslt",
+      "sha256": "39f9d282867f1a49e7708d9e29a53da89643e1ee56f10cec1ebcf1277595fcbd"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fnfempe/France_RFE/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d/LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ConnectingEurope/eInvoicing-EN16931/validation-1.3.16/LICENSE.txt",
+      "sha256": "fc22ec1dcd8bee4636a395fb332e2308cde870fb3fdc71a2e260b919877cdef5"
+    }
+  ],
+  "files": [
+    {
+      "path": "france-rfe-en16931-ubl-1.3.16.sef.json.gz",
+      "sha256": "6c9fe4e3411833c79a995173475fe4d70a4cd950653acdeb9b964ab41372ab3c",
+      "bytes": 168812
+    },
+    {
+      "path": "LICENSE.txt",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "bytes": 11357
+    },
+    {
+      "path": "licenses/Apache-2.0.txt",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "bytes": 11357
+    },
+    {
+      "path": "licenses/EUPL-1.2.txt",
+      "sha256": "fc22ec1dcd8bee4636a395fb332e2308cde870fb3fdc71a2e260b919877cdef5",
+      "bytes": 13871
+    },
+    {
+      "path": "original-source.sch",
+      "sha256": "268d4f7a2688676695e6c69cba6fba69a6802604fee12cb544a6b30ff09555a3",
+      "bytes": 309768
+    },
+    {
+      "path": "original-source.xslt",
+      "sha256": "39f9d282867f1a49e7708d9e29a53da89643e1ee56f10cec1ebcf1277595fcbd",
+      "bytes": 895489
+    },
+    {
+      "path": "publisher-explanatory-note.pdf",
+      "sha256": "fd6061eb6367cc97a571fab9b5868716a1887c2ea795b73930b645888287ba62",
+      "bytes": 783151
+    },
+    {
+      "path": "UPSTREAM-README.md",
+      "sha256": "a50389f3936aef8ccf7c8e8ed7230c7af3f5499fa6042296d51f212a1f1e92b7",
+      "bytes": 2424
+    }
+  ]
+}

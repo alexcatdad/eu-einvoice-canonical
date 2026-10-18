@@ -26,7 +26,7 @@ info:
     | `unsupported` | 422 | 3 | Well-formed, but not an invoice format this converter reads. |
     | `validation-failed` | 422 | 4 | Converted, but the requested validation reported failures. |
     | `partial` | 422 | 5 | Some documents in the file converted and some did not. |
-    | `validator-unavailable` | 503 | 6 | Validation or the trusted-list snapshot was requested and cannot run. |
+    | `validator-unavailable` | 503 | 6 | Requested validation is incomplete (missing, unsupported or skipped required checks), or the trusted-list snapshot is unavailable. |
     | `internal` | 500 | 7 | A bug. Please report it with the file hash. |
 
     ## Versioning
@@ -190,8 +190,9 @@ components:
       name: validate
       in: query
       description: >-
-        Run the XSD, EN 16931 Schematron and CIUS layers (UBL and CII) and fill `source.validation`. Slower: it loads the validators.
-        When every invoice fails a layer the answer is a `validation-failed` problem that still carries the result.
+        Run applicable source XSD and native/core/profile rules and fill `source.validation` and the outcome validation report.
+        Required checks follow the declared format, version and profile. Failed checks return 422; missing, unsupported or
+        skipped required checks return 503 even when another layer passes. The problem retains the conversion result.
       schema: { type: boolean, default: false }
     Relations:
       name: relations

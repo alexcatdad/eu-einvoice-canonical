@@ -1,0 +1,114 @@
+{
+  "id": "oioubl3-en16931-invoice-3.2.4",
+  "title": "OIOUBL3 invoice semantic rules3.2.4",
+  "layer": "semantic",
+  "syntax": "ubl",
+  "version": "3.2.4",
+  "releaseDate": "2026-08-10",
+  "effectiveFrom": "2026-08-10",
+  "effectiveUntil": null,
+  "license": "Danish Business Authority EUPL1.1 or CC-BY-SA4.0, with embedded OASIS/CEN notices preserved in LICENSE.txt",
+  "upstream": "https://oioubl-demo.nemhandel.dk/oioubl/Overblik.html",
+  "note": "Official2026-08-10 package. Matches OIOUBL3.0 customization; package edition3.2.4 is not a document-declared edition. Embedded EN16931 and native syntax-specific XSLTs must remain paired. The authority labels OIOUBL3 documentation as release-candidate.",
+  "entry": "oioubl3-en16931-invoice-3.2.4.sef.json.gz",
+  "format": "sef",
+  "source": [
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#OIOUBL-Invoice%2FSchematron%2FEN16931-UBL-validation.xslt",
+      "sha256": "10836eeb8bdb0731088efba6e35c9c4436fe1f940713d468655dde6e232a8ba0"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip",
+      "sha256": "5e2afd22a07e766c5416ef95b69fe83a465a1e17fc7d98d52abd58fb022ba9a0"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#OIOUBL-Invoice%2FSchematron%2Fsch%2FEN16931-UBL-validation%2FEN16931-UBL-validation.sch",
+      "sha256": "210bcd857ff342841e341b6e27ab9b0bb806e2a2ae4235451d57bc8ab541f75a"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#OIOUBL-Invoice%2FSchematron%2Fsch%2FEN16931-UBL-validation%2Fabstract%2FEN16931-model.sch",
+      "sha256": "da7b2180a8de0130f99c42383a23e594f74b7959eb8a9d65e9499112a2de70b0"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#OIOUBL-Invoice%2FSchematron%2Fsch%2FEN16931-UBL-validation%2Fabstract%2FEN16931-syntax.sch",
+      "sha256": "bcb7d0703361010517d1ef6756d018f1daaef9ffdbc7212a02815354972fb6b4"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#OIOUBL-Invoice%2FSchematron%2Fsch%2FEN16931-UBL-validation%2FUBL%2FEN16931-UBL-model.sch",
+      "sha256": "6cf9edfee6545ac15fb476ad5d68a0080157bb3db0d86e6c518537800946d70d"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#OIOUBL-Invoice%2FSchematron%2Fsch%2FEN16931-UBL-validation%2FUBL%2FEN16931-UBL-syntax.sch",
+      "sha256": "23d75eb61d49fc4d0d19cfd8310565d08e6e43985e8611ab2aac9bb25138c15d"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#OIOUBL-Invoice%2FSchematron%2Fsch%2FEN16931-UBL-validation%2Fcodelist%2FEN16931-UBL-codes.sch",
+      "sha256": "4d128a465a8b66bc62dcd598b91f99d0e8617c8ab29a699fc77f24d8ddd04388"
+    },
+    {
+      "url": "https://interoperable-europe.ec.europa.eu/sites/default/files/custom-page/attachment/eupl1.1.-licence-en_0.pdf",
+      "sha256": "641d72f7d261ddf08ceaa5db47a3356e528f1137b42dc796499a1364e7ca8461"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ConnectingEurope/eInvoicing-EN16931/validation-1.3.16/LICENSE.txt",
+      "sha256": "fc22ec1dcd8bee4636a395fb332e2308cde870fb3fdc71a2e260b919877cdef5"
+    }
+  ],
+  "files": [
+    {
+      "path": "LICENSE.txt",
+      "sha256": "bbc3d1f73d84186c0e1a60ccac8518ff8233d9e8789fd06061462ce2c710b51d",
+      "bytes": 7894
+    },
+    {
+      "path": "licenses/EUPL-1.1.pdf",
+      "sha256": "641d72f7d261ddf08ceaa5db47a3356e528f1137b42dc796499a1364e7ca8461",
+      "bytes": 34271
+    },
+    {
+      "path": "licenses/EUPL-1.2.txt",
+      "sha256": "fc22ec1dcd8bee4636a395fb332e2308cde870fb3fdc71a2e260b919877cdef5",
+      "bytes": 13871
+    },
+    {
+      "path": "oioubl3-en16931-invoice-3.2.4.sef.json.gz",
+      "sha256": "e1303d6b205deebddb49b7d9c30aef348785eba774cb13916692f6edf6d413de",
+      "bytes": 204007
+    },
+    {
+      "path": "source/OIOUBL-Invoice/Schematron/EN16931-UBL-validation.xslt",
+      "sha256": "10836eeb8bdb0731088efba6e35c9c4436fe1f940713d468655dde6e232a8ba0",
+      "bytes": 1031238
+    },
+    {
+      "path": "source/OIOUBL-Invoice/Schematron/sch/EN16931-UBL-validation/abstract/EN16931-model.sch",
+      "sha256": "da7b2180a8de0130f99c42383a23e594f74b7959eb8a9d65e9499112a2de70b0",
+      "bytes": 52998
+    },
+    {
+      "path": "source/OIOUBL-Invoice/Schematron/sch/EN16931-UBL-validation/abstract/EN16931-syntax.sch",
+      "sha256": "bcb7d0703361010517d1ef6756d018f1daaef9ffdbc7212a02815354972fb6b4",
+      "bytes": 122410
+    },
+    {
+      "path": "source/OIOUBL-Invoice/Schematron/sch/EN16931-UBL-validation/codelist/EN16931-UBL-codes.sch",
+      "sha256": "4d128a465a8b66bc62dcd598b91f99d0e8617c8ab29a699fc77f24d8ddd04388",
+      "bytes": 32679
+    },
+    {
+      "path": "source/OIOUBL-Invoice/Schematron/sch/EN16931-UBL-validation/EN16931-UBL-validation.sch",
+      "sha256": "210bcd857ff342841e341b6e27ab9b0bb806e2a2ae4235451d57bc8ab541f75a",
+      "bytes": 1872
+    },
+    {
+      "path": "source/OIOUBL-Invoice/Schematron/sch/EN16931-UBL-validation/UBL/EN16931-UBL-model.sch",
+      "sha256": "6cf9edfee6545ac15fb476ad5d68a0080157bb3db0d86e6c518537800946d70d",
+      "bytes": 73021
+    },
+    {
+      "path": "source/OIOUBL-Invoice/Schematron/sch/EN16931-UBL-validation/UBL/EN16931-UBL-syntax.sch",
+      "sha256": "23d75eb61d49fc4d0d19cfd8310565d08e6e43985e8611ab2aac9bb25138c15d",
+      "bytes": 77694
+    }
+  ]
+}

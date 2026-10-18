@@ -13,12 +13,14 @@ export type ProbeKey =
   | 'ciiBusinessProcessId'
   | 'zf1GuidelineId'
   | 'ksefFormCode'
+  | 'ksefVariant'
   | 'eArveVersion'
   | 'facturaeSchemaVersion'
   | 'facturaeModality'
   | 'fatturaTipoDocumento'
   | 'isdocDocumentType'
   | 'finvoiceTypeCode'
+  | 'teappsFormatVersion'
   | 'myDataInvoiceType'
   | 'myDataRequestedInvoiceType';
 
@@ -39,11 +41,13 @@ const TARGETS: Record<ProbeKey, Target> = {
   ciiBusinessProcessId: { path: ['ExchangedDocumentContext', 'BusinessProcessSpecifiedDocumentContextParameter', 'ID'] },
   zf1GuidelineId: { path: ['SpecifiedExchangedDocumentContext', 'GuidelineSpecifiedDocumentContextParameter', 'ID'] },
   ksefFormCode: { path: ['Naglowek', 'KodFormularza'] },
+  ksefVariant: { path: ['Naglowek', 'WariantFormularza'] },
   eArveVersion: { path: ['Header', 'Version'] },
   facturaeSchemaVersion: { path: ['FileHeader', 'SchemaVersion'] },
   facturaeModality: { path: ['FileHeader', 'Modality'] },
   fatturaTipoDocumento: { path: ['FatturaElettronicaBody', 'DatiGenerali', 'DatiGeneraliDocumento', 'TipoDocumento'] },
   isdocDocumentType: { path: ['DocumentType'] },
+  teappsFormatVersion: { path: ['CONTENT_FRAME', 'BLOCK_RULES', 'FORMAT_VERSION'] },
   finvoiceTypeCode: { path: ['InvoiceDetails', 'InvoiceTypeCode'] },
   myDataInvoiceType: { path: ['invoice', 'invoiceHeader', 'invoiceType'] },
   /** The RequestedDoc wrapper AADE's retrieval services return puts the invoices one level deeper. */

@@ -1,0 +1,69 @@
+{
+  "releaseDate": "2026-08-04",
+  "effectiveFrom": "2026-09-01",
+  "effectiveUntil": null,
+  "syntax": "cii",
+  "version": "1.09.2",
+  "upstream": "https://github.com/fnfempe/France_RFE/tree/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d",
+  "license": "Apache-2.0; official FNFE-MPE France_RFE repository LICENSE",
+  "id": "facturx-1.09.2-en16931",
+  "title": "Factur-X 1.09.2 EN16931 native rules",
+  "layer": "profile",
+  "note": "Official assertions retained; pinned code database is embedded as an XSLT global variable to prevent runtime document fetching. This is an explicitly selected XML validation edition, not a claim that a shared CII namespace declares its release.",
+  "format": "sef",
+  "entry": "Factur-X-EN16931.sef.json.gz",
+  "source": [
+    {
+      "url": "https://raw.githubusercontent.com/fnfempe/France_RFE/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d/FNFE_RFE_INVOICE/Factur-X/EN16931/2xslt/FACTUR-X_EN16931.xslt",
+      "sha256": "67f03050e3add4c83dc93de36e4501f6a11aae1ac790b3f9558feb0581019bcb"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fnfempe/France_RFE/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d/FNFE_RFE_INVOICE/Factur-X/EN16931/2xslt/FACTUR-X_EN16931_codedb.xml",
+      "sha256": "70339a41d71b02bb97683f8eea04acbd764e077a88a446b32860d89c3351b62f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fnfempe/France_RFE/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d/LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "url": "https://codeload.github.com/fnfempe/France_RFE/zip/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d",
+      "sha256": "8728ce11486d4aa6db24c6fd653ba0c655f0fc47f8d6f69b065f2922cc595467"
+    },
+    {
+      "url": "https://codeload.github.com/fnfempe/France_RFE/zip/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d#France_RFE-97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d%2FFNFE_RFE_INVOICE%2FFactur-X%2FEN16931%2Fschematron%2FFACTUR-X_EN16931.sch",
+      "sha256": "ef8c8380b499d1267b2dcf1fa709b45631a77d6d5f220c6cc2ade2fdade59473"
+    }
+  ],
+  "files": [
+    {
+      "path": "code-database.xml",
+      "sha256": "70339a41d71b02bb97683f8eea04acbd764e077a88a446b32860d89c3351b62f",
+      "bytes": 182828
+    },
+    {
+      "path": "derived-source.xslt",
+      "sha256": "275f19dca56a9d1e194851efa5d5fc7aff1bcab4119b076563fff5adbd8cd7d3",
+      "bytes": 833701
+    },
+    {
+      "path": "Factur-X-EN16931.sef.json.gz",
+      "sha256": "d13e6b681327e23f8f980c139f86e3e4462fa726847d498644330c4938f38dec",
+      "bytes": 208053
+    },
+    {
+      "path": "licenses/Apache-2.0.txt",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "bytes": 11357
+    },
+    {
+      "path": "original-source.xslt",
+      "sha256": "67f03050e3add4c83dc93de36e4501f6a11aae1ac790b3f9558feb0581019bcb",
+      "bytes": 652620
+    },
+    {
+      "path": "source/France_RFE-97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d/FNFE_RFE_INVOICE/Factur-X/EN16931/schematron/FACTUR-X_EN16931.sch",
+      "sha256": "ef8c8380b499d1267b2dcf1fa709b45631a77d6d5f220c6cc2ade2fdade59473",
+      "bytes": 223660
+    }
+  ]
+}

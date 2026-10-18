@@ -241,8 +241,8 @@ describe('packaging', () => {
 
   test('package.json exposes the subpath and keeps React an optional peer', () => {
     const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
-    expect(pkg.exports['./react']).toBe('./src/react/index.ts');
-    expect(pkg.exports['./react/invoice.css']).toBe('./src/react/invoice.css');
+    expect(pkg.exports['./react']).toEqual({ types: './lib/react/index.d.ts', import: './lib/react/index.js' });
+    expect(pkg.exports['./react/invoice.css']).toBe('./lib/react/invoice.css');
     expect(pkg.peerDependenciesMeta.react.optional).toBe(true);
     expect(pkg.peerDependenciesMeta['react-dom'].optional).toBe(true);
     expect(pkg.dependencies.react).toBeUndefined();

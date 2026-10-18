@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="http://www.ebinterface.at/schema/4p2/" xmlns:ebi="http://www.ebinterface.at/schema/4p2/" ebi:GeneratingSystem="Synthetic test data" ebi:DocumentType="CreditMemo" ebi:InvoiceCurrency="EUR" ebi:Language="ger">
+  <InvoiceNumber>GS-2026-0003</InvoiceNumber>
+  <InvoiceDate>2026-10-14</InvoiceDate>
+  <RelatedDocument>
+    <InvoiceNumber>RE-2026-1001</InvoiceNumber>
+    <InvoiceDate>2026-10-05</InvoiceDate>
+    <DocumentType>Invoice</DocumentType>
+  </RelatedDocument>
+  <Delivery>
+    <Period>
+      <FromDate>2026-09-01</FromDate>
+      <ToDate>2026-09-30</ToDate>
+    </Period>
+  </Delivery>
+  <Biller>
+    <VATIdentificationNumber>ATU12345678</VATIdentificationNumber>
+    <Address>
+      <Name>Muster Beratung GmbH</Name>
+      <Street>Beispielgasse 5</Street>
+      <Town>Wien</Town>
+      <ZIP>1010</ZIP>
+      <Country ebi:CountryCode="AT">Österreich</Country>
+      <Phone>+43 1 0000000</Phone>
+      <Email>rechnung@muster-beratung.example</Email>
+      <Contact>Max Muster</Contact>
+    </Address>
+  </Biller>
+  <InvoiceRecipient>
+    <VATIdentificationNumber>ATU87654321</VATIdentificationNumber>
+    <Address>
+      <Name>Stadt Beispielhausen</Name>
+      <Street>Hauptplatz 1</Street>
+      <Town>Beispielhausen</Town>
+      <ZIP>4020</ZIP>
+      <Country ebi:CountryCode="AT">Österreich</Country>
+    </Address>
+  </InvoiceRecipient>
+  <Details>
+    <ItemList>
+      <ListLineItem>
+        <PositionNumber>1</PositionNumber>
+        <Description>Rückerstattung Beratung</Description>
+        <Quantity ebi:Unit="HUR">-2.0000</Quantity>
+        <UnitPrice>100.0000</UnitPrice>
+        <VATRate>20</VATRate>
+        <LineItemAmount>-200.00</LineItemAmount>
+      </ListLineItem>
+      <ListLineItem>
+        <PositionNumber>2</PositionNumber>
+        <Description>Auslagenersatz</Description>
+        <Quantity ebi:Unit="C62">-1.0000</Quantity>
+        <UnitPrice>30.0000</UnitPrice>
+        <TaxExemption>Steuerfrei gemäß § 6 UStG</TaxExemption>
+        <LineItemAmount>-30.00</LineItemAmount>
+      </ListLineItem>
+    </ItemList>
+  </Details>
+  <Tax>
+    <VAT>
+      <VATItem>
+        <TaxedAmount>-200.00</TaxedAmount>
+        <VATRate>20</VATRate>
+        <Amount>-40.00</Amount>
+      </VATItem>
+      <VATItem>
+        <TaxedAmount>-30.00</TaxedAmount>
+        <TaxExemption>Steuerfrei gemäß § 6 UStG</TaxExemption>
+        <Amount>0.00</Amount>
+      </VATItem>
+    </VAT>
+  </Tax>
+  <TotalGrossAmount>-270.00</TotalGrossAmount>
+  <PayableAmount>-270.00</PayableAmount>
+  <PaymentMethod>
+    <UniversalBankTransaction>
+      <BeneficiaryAccount>
+        <BankName>Beispielbank AG</BankName>
+        <BankCode ebi:BankCodeType="AT">19043</BankCode>
+        <BankAccountNr>00234573201</BankAccountNr>
+        <BankAccountOwner>Muster Beratung GmbH</BankAccountOwner>
+      </BeneficiaryAccount>
+      <PaymentReference>GS-2026-0003</PaymentReference>
+    </UniversalBankTransaction>
+  </PaymentMethod>
+</Invoice>

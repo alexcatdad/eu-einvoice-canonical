@@ -1,0 +1,249 @@
+{
+  "id": "oioubl3-creditnote-3.2.4",
+  "title": "OIOUBL3 creditnote profile rules3.2.4",
+  "layer": "profile",
+  "syntax": "ubl",
+  "version": "3.2.4",
+  "releaseDate": "2026-08-10",
+  "effectiveFrom": "2026-08-10",
+  "effectiveUntil": null,
+  "license": "Danish Business Authority EUPL1.1 or CC-BY-SA4.0, with embedded OASIS/CEN notices preserved in LICENSE.txt",
+  "upstream": "https://oioubl-demo.nemhandel.dk/oioubl/Overblik.html",
+  "note": "Official2026-08-10 package. Matches OIOUBL3.0 customization; package edition3.2.4 is not a document-declared edition. Embedded EN16931 and native syntax-specific XSLTs must remain paired. The authority labels OIOUBL3 documentation as release-candidate.",
+  "entry": "oioubl3-creditnote-3.2.4.sef.json.gz",
+  "format": "sef",
+  "source": [
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#OIOUBL-Creditnote%2FSchematron%2FOIOUBL-Creditnote.xslt",
+      "sha256": "10d6e618c3af8a02545ab8488b43e24d5f31a79c1d8061c12237ae0278e1a912"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip",
+      "sha256": "5e2afd22a07e766c5416ef95b69fe83a465a1e17fc7d98d52abd58fb022ba9a0"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#OIOUBL-Creditnote%2FSchematron%2Fsch%2FOIOUBL-Creditnote.sch",
+      "sha256": "1a977ea79486450d7645fe53c06c9275e22e2c16ac3287c09e297c696f2cc09f"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#_common%2FSchematron%2Fsch%2Ffunction%2Fgln.xml",
+      "sha256": "b77eba6b0bb2c0634c1928f14eaafeb3d610bf5cff1e37f62fa964c29af338fc"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#_common%2FSchematron%2Fsch%2Ffunction%2Fslack.xml",
+      "sha256": "2aeb5706926f4d366c531015381126b32d3b9c4cd134246410fd565846d24b8b"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#_common%2FSchematron%2Fsch%2Ffunction%2FcheckCF.xml",
+      "sha256": "23fb38f3ae8ea227e60cd8912696bb7f3fa73a2ad882bd1f86d12a962cf41221"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#_common%2FSchematron%2Fsch%2Ffunction%2Fmod11.xml",
+      "sha256": "d3c4daa7b3aaa8cf354b71bd602b88f518b3c2d7a0c08bad83c1e68e84d76ab4"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#_common%2FSchematron%2Fsch%2Ffunction%2Fmod97-0208.xml",
+      "sha256": "dc1ba57be8175e0039e891ed10f559826ae164f932d80158db1885b8c390d721"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#_common%2FSchematron%2Fsch%2Ffunction%2FcheckCodiceIPA.xml",
+      "sha256": "74f71aa87b120f9abb664930eaee16be43ef15ec72ee604081653a17948357fd"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#_common%2FSchematron%2Fsch%2Ffunction%2FcheckPIVAseIT.xml",
+      "sha256": "89d131a370950101a643a8847102b334e7ad0d835345f2d2c137931117264b6a"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#_common%2FSchematron%2Fsch%2Ffunction%2Fabn.xml",
+      "sha256": "99cf0a978eff5ef523077d01cd6d1e6f5a9908e2d2b0a4d34b9a2f76e63d2235"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#_common%2FSchematron%2Fsch%2Ffunction%2FcheckCF16.xml",
+      "sha256": "f1f9378f70a3d938539c9662aeadcb6c8a127394f98cab9f15deb2c21447416a"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#_common%2FSchematron%2Fsch%2Ffunction%2FcheckPIVA.xml",
+      "sha256": "67a86dc815e99c4a8e086807821ba6fa55863f7424f13c05c149978077959505"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#_common%2FSchematron%2Fsch%2Ffunction%2FcheckSEOrgnr.xml",
+      "sha256": "fa3c266d622441209096457fb0585d15a855906ba996efc6d3cee20ef84b505b"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#_common%2FSchematron%2Fsch%2Ffunction%2FaddPIVA.xml",
+      "sha256": "33aa3e0426a3d2c755887f1fa5fed80649a825284d1e8a31ca81646fd840d56d"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#_common%2FSchematron%2Fsch%2FExcluded-Elements.sch",
+      "sha256": "d2a416346cb964f3235951071ce1556ed3e3a396f75cf8185a8d1acb48599ed6"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#_common%2FSchematron%2Fsch%2FMiscellaneous.sch",
+      "sha256": "67830ba6e8d99340bb3c1b811ddd4eccf8aa3a32c424d52955bbec0685696d25"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#_common%2FSchematron%2Fsch%2FPeppol-billing-EN16931-Main.sch",
+      "sha256": "f1e783951ef7ab7994f7d5c42410ba3587f0a8a2691374f6b22be95d58d860fd"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#_common%2FSchematron%2Fsch%2FPeppol-billing-EN16931-Common.sch",
+      "sha256": "e6c74a93dc68e990fb73db70b75fbbe0d86c92dd060b5df90756cea245e0cad3"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#_common%2FSchematron%2Fsch%2Fcommon-OIOUBL-billing.sch",
+      "sha256": "f607a841571349999eeec5761b99ae77dd66d40f26fd46a533d72d2cc08ad0fd"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#_common%2FSchematron%2Fsch%2Fcommon-OIOUBL-billing-PaymentMeans.sch",
+      "sha256": "cd94646d2a9a9f94e8a1be42ca56043388d6f1b036cd2bc9fabe157efcc22b06"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#_common%2FSchematron%2Fsch%2Fcommon-OIOUBL.sch",
+      "sha256": "978cec0e19f5b798111e20609553be1e38696fa464910d578dde8fbae76f73c7"
+    },
+    {
+      "url": "https://oioubl-demo.nemhandel.dk/oioubl/downloads/OIOUBL3_2026-08-10_v3.2.4.156accde.zip#_common%2FSchematron%2Fsch%2Fenvironmental-aspects.sch",
+      "sha256": "7c5789ed041f2782dd09e158b7843800f07a71c4d372d9470f27fbbaedca0db7"
+    },
+    {
+      "url": "https://interoperable-europe.ec.europa.eu/sites/default/files/custom-page/attachment/eupl1.1.-licence-en_0.pdf",
+      "sha256": "641d72f7d261ddf08ceaa5db47a3356e528f1137b42dc796499a1364e7ca8461"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ConnectingEurope/eInvoicing-EN16931/validation-1.3.16/LICENSE.txt",
+      "sha256": "fc22ec1dcd8bee4636a395fb332e2308cde870fb3fdc71a2e260b919877cdef5"
+    }
+  ],
+  "files": [
+    {
+      "path": "LICENSE.txt",
+      "sha256": "bbc3d1f73d84186c0e1a60ccac8518ff8233d9e8789fd06061462ce2c710b51d",
+      "bytes": 7894
+    },
+    {
+      "path": "licenses/EUPL-1.1.pdf",
+      "sha256": "641d72f7d261ddf08ceaa5db47a3356e528f1137b42dc796499a1364e7ca8461",
+      "bytes": 34271
+    },
+    {
+      "path": "licenses/EUPL-1.2.txt",
+      "sha256": "fc22ec1dcd8bee4636a395fb332e2308cde870fb3fdc71a2e260b919877cdef5",
+      "bytes": 13871
+    },
+    {
+      "path": "oioubl3-creditnote-3.2.4.sef.json.gz",
+      "sha256": "c89bece7e28ced8125790f01552519dc3bfa87623e5a099ae5e99206645fdc35",
+      "bytes": 110261
+    },
+    {
+      "path": "source/_common/Schematron/sch/common-OIOUBL-billing-PaymentMeans.sch",
+      "sha256": "cd94646d2a9a9f94e8a1be42ca56043388d6f1b036cd2bc9fabe157efcc22b06",
+      "bytes": 29872
+    },
+    {
+      "path": "source/_common/Schematron/sch/common-OIOUBL-billing.sch",
+      "sha256": "f607a841571349999eeec5761b99ae77dd66d40f26fd46a533d72d2cc08ad0fd",
+      "bytes": 18169
+    },
+    {
+      "path": "source/_common/Schematron/sch/common-OIOUBL.sch",
+      "sha256": "978cec0e19f5b798111e20609553be1e38696fa464910d578dde8fbae76f73c7",
+      "bytes": 40014
+    },
+    {
+      "path": "source/_common/Schematron/sch/environmental-aspects.sch",
+      "sha256": "7c5789ed041f2782dd09e158b7843800f07a71c4d372d9470f27fbbaedca0db7",
+      "bytes": 14221
+    },
+    {
+      "path": "source/_common/Schematron/sch/Excluded-Elements.sch",
+      "sha256": "d2a416346cb964f3235951071ce1556ed3e3a396f75cf8185a8d1acb48599ed6",
+      "bytes": 13072
+    },
+    {
+      "path": "source/_common/Schematron/sch/function/abn.xml",
+      "sha256": "99cf0a978eff5ef523077d01cd6d1e6f5a9908e2d2b0a4d34b9a2f76e63d2235",
+      "bytes": 793
+    },
+    {
+      "path": "source/_common/Schematron/sch/function/addPIVA.xml",
+      "sha256": "33aa3e0426a3d2c755887f1fa5fed80649a825284d1e8a31ca81646fd840d56d",
+      "bytes": 722
+    },
+    {
+      "path": "source/_common/Schematron/sch/function/checkCF.xml",
+      "sha256": "23fb38f3ae8ea227e60cd8912696bb7f3fa73a2ad882bd1f86d12a962cf41221",
+      "bytes": 516
+    },
+    {
+      "path": "source/_common/Schematron/sch/function/checkCF16.xml",
+      "sha256": "f1f9378f70a3d938539c9662aeadcb6c8a127394f98cab9f15deb2c21447416a",
+      "bytes": 815
+    },
+    {
+      "path": "source/_common/Schematron/sch/function/checkCodiceIPA.xml",
+      "sha256": "74f71aa87b120f9abb664930eaee16be43ef15ec72ee604081653a17948357fd",
+      "bytes": 413
+    },
+    {
+      "path": "source/_common/Schematron/sch/function/checkPIVA.xml",
+      "sha256": "67a86dc815e99c4a8e086807821ba6fa55863f7424f13c05c149978077959505",
+      "bytes": 277
+    },
+    {
+      "path": "source/_common/Schematron/sch/function/checkPIVAseIT.xml",
+      "sha256": "89d131a370950101a643a8847102b334e7ad0d835345f2d2c137931117264b6a",
+      "bytes": 558
+    },
+    {
+      "path": "source/_common/Schematron/sch/function/checkSEOrgnr.xml",
+      "sha256": "fa3c266d622441209096457fb0585d15a855906ba996efc6d3cee20ef84b505b",
+      "bytes": 1202
+    },
+    {
+      "path": "source/_common/Schematron/sch/function/gln.xml",
+      "sha256": "b77eba6b0bb2c0634c1928f14eaafeb3d610bf5cff1e37f62fa964c29af338fc",
+      "bytes": 584
+    },
+    {
+      "path": "source/_common/Schematron/sch/function/mod11.xml",
+      "sha256": "d3c4daa7b3aaa8cf354b71bd602b88f518b3c2d7a0c08bad83c1e68e84d76ab4",
+      "bytes": 550
+    },
+    {
+      "path": "source/_common/Schematron/sch/function/mod97-0208.xml",
+      "sha256": "dc1ba57be8175e0039e891ed10f559826ae164f932d80158db1885b8c390d721",
+      "bytes": 377
+    },
+    {
+      "path": "source/_common/Schematron/sch/function/slack.xml",
+      "sha256": "2aeb5706926f4d366c531015381126b32d3b9c4cd134246410fd565846d24b8b",
+      "bytes": 323
+    },
+    {
+      "path": "source/_common/Schematron/sch/Miscellaneous.sch",
+      "sha256": "67830ba6e8d99340bb3c1b811ddd4eccf8aa3a32c424d52955bbec0685696d25",
+      "bytes": 406
+    },
+    {
+      "path": "source/_common/Schematron/sch/Peppol-billing-EN16931-Common.sch",
+      "sha256": "e6c74a93dc68e990fb73db70b75fbbe0d86c92dd060b5df90756cea245e0cad3",
+      "bytes": 10517
+    },
+    {
+      "path": "source/_common/Schematron/sch/Peppol-billing-EN16931-Main.sch",
+      "sha256": "f1e783951ef7ab7994f7d5c42410ba3587f0a8a2691374f6b22be95d58d860fd",
+      "bytes": 18068
+    },
+    {
+      "path": "source/OIOUBL-Creditnote/Schematron/OIOUBL-Creditnote.xslt",
+      "sha256": "10d6e618c3af8a02545ab8488b43e24d5f31a79c1d8061c12237ae0278e1a912",
+      "bytes": 436637
+    },
+    {
+      "path": "source/OIOUBL-Creditnote/Schematron/sch/OIOUBL-Creditnote.sch",
+      "sha256": "1a977ea79486450d7645fe53c06c9275e22e2c16ac3287c09e297c696f2cc09f",
+      "bytes": 3104
+    }
+  ]
+}

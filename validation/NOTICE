@@ -1,11 +1,15 @@
 Third-party material in validation/bundles/
 ===========================================
 
-These files are pinned copies of published validation artefacts. Each bundle directory has a
+This notice covers both approved distribution artifacts and excluded local qualification inputs.
+validation/distribution.json is the authoritative shipping inventory:43 approved bundles,64 excluded.
+Availability at an upstream URL is not treated as a redistribution grant.
+
+Locally acquired files are pinned copies of published validation artefacts. Each bundle directory has a
 manifest.json with the version, release date, effective dates, upstream source (with the SHA-256
 of the downloaded archive) and the SHA-256 of every file. `bun run verify:bundles` checks them and
 runs in CI. The Schematron bundles are the upstream rules compiled to SaxonJS SEF (gzip) by
-`bun run build:bundles`; the rules themselves are unchanged. effectiveFrom is the publication date of
+`bun run build:bundles`; source assertions are preserved except for the explicitly documented build adapters below. Build adapters and original/derived hashes are recorded for affected bundles. effectiveFrom is the publication date of
 the release unless the publisher states another date.
 
 xsd-ubl-2.1
@@ -30,10 +34,9 @@ en16931-ubl-1.3.17, en16931-cii-1.3.17
 
 peppol-bis3-3.0.20-ubl
   Peppol BIS Billing 3.0 rules (PEPPOL-EN16931-UBL.sch), release 3.0.20, OpenPEPPOL AISBL.
-  Licensed under the European Union Public Licence (EUPL) v. 1.2. The Schematron states: "This
-  schematron uses business terms defined the CEN/EN16931-1 and is reproduced with permission from CEN.
-  CEN bears no liability from the use of the content and implementation of this schematron and gives
-  no warranties expressed or implied for any purpose."
+  The source states that CEN business terms are reproduced with permission and preserves the CEN
+  warranty disclaimer. This does not establish an EUPL grant for the OpenPeppol-specific artifact.
+  Its onward redistribution terms remain unresolved; it is excluded from the qualified public distribution.
   https://github.com/OpenPEPPOL/peppol-bis-invoice-3 (tag v3.0.20)
   Compiled with the ISO Schematron skeleton (MIT, https://github.com/Schematron/schematron, commit
   77dcd36c53d12ed786c144ece3b2af7694abdc56) and then to SaxonJS SEF.
@@ -49,11 +52,10 @@ National formats (schema layer only)
 The XSDs below are the issuing authorities' own schemas. They are vendored byte-for-byte except where a
 bundle's manifest lists `modifiedFiles`: there the remote `schemaLocation` of an imported schema (the W3C
 XML Signature schema, the Polish common types) is rewritten to the vendored copy so nothing is fetched at
-runtime. The manifest records the SHA-256 of every downloaded original under `source`. Most of these
-files carry no licence text. They are published by the authorities for implementers to validate documents
-against, and vendoring them for that purpose is the same practice as the KoSIT and OpenPEPPOL
-configurations. If a rights holder objects, the bundle is removed from build-validation-bundles.ts and from
-planFor(); nothing else depends on it. Release dates marked "vendoring date" in a manifest mean the
+runtime. The manifest records the SHA-256 of every downloaded original under `source`. Some of these
+files carry no licence text. Only artifacts with qualified publisher grants are distributed.
+The remaining inputs are ignored local files; their acquisition recipes and selectors do not imply
+permission to redistribute their bytes. Missing selected artifacts produce incomplete validation. Release dates marked "vendoring date" in a manifest mean the
 schema states none; they are the day the file was copied (2026-10-16).
 
 xsd-fatturapa-1.2.2
@@ -68,14 +70,14 @@ xsd-ksef-fa2, xsd-ksef-fa3, xsd-ksef-fa-rr
   common types StrukturyDanych_v10-0E.xsd.
 xsd-facturae-3.2, xsd-facturae-3.2.1, xsd-facturae-3.2.2
   Facturae, Ministerio de Asuntos Economicos y Transformacion Digital, from
-  https://www.facturae.gob.es/content/dam/facturae/formato/versiones/. Facturae 3.0 and 3.1 are not covered.
+  https://www.facturae.gob.es/content/dam/facturae/formato/versiones/. Exact 3.0 and 3.1 additions are listed below.
 xsd-isdoc-6.0.2
   ISDOC 6.0.2, (c) MVCR, ICT UNIE, SPIS. The schema permits use, copying, modification and distribution
   without fee, provided the notice stays; it does. From https://isdoc.cz/6.0.2/xsd/. The namespace is shared
-  by all 6.x versions, so this one schema is applied to 6.0.0 and 6.0.1 documents too.
+  by 6.x versions; the planner selects this artifact only for an exact 6.0.2 declaration.
 xsd-ebinterface-4.3, xsd-ebinterface-5.0, xsd-ebinterface-6.0, xsd-ebinterface-6.1
   ebInterface, AUSTRIAPRO / WKO, from https://github.com/austriapro/ebinterface-standards at commit
-  f7e4e4ec8778b7da2bc3468ed976a396fa8b6b29 (the repository has no licence file). 4.0 to 4.2 are not covered.
+  f7e4e4ec8778b7da2bc3468ed976a396fa8b6b29 (the repository has no licence file). Exact 4.0 to 4.2 additions are listed below.
 xsd-finvoice-3.0
   Finvoice 3.0 (Finvoice3.0.xsd, modified 17.12.2020), Finance Finland, from https://file.finanssiala.fi/finvoice/
 xsd-earve-1.2
@@ -88,18 +90,521 @@ xsd-eslog-2.0
 The W3C XML Signature schema (xmldsig-core-schema.xsd, 2002 Recommendation) bundled with several of
 these is (c) W3C and under the W3C Software and Document Licence, which permits copying with the notice.
 
-Runtime dependencies (installed from npm, not copied into this repository)
---------------------------------------------------------------------------
+Runtime dependencies and retained browser runtime
+------------------------------------------------
 saxon-js 2.7.0 (Saxonica Ltd): proprietary licence permitting use and redistribution in binary form as part
   of an application; see node_modules/saxon-js/LICENSE.txt. xslt3 2.7.0 (build script only) is under the same licence.
+The unmodified SaxonJS2.rt.js browser runtime and its license are retained under
+  validation/runtime/saxon-js-2.7 and distributed as part of this application.
 xmllint-wasm 5.3.0: MIT. Contains libxml2 (MIT).
 
-Not bundled: Peppol PINT and ZATCA rules
-========================================
+PINT: local qualification only; ZATCA unavailable
+------------------------------------------------
+Twenty pinned PINT shared/native artifacts are qualified locally for the exact
+contracts in the executable selector inventory. Their redistribution grants remain
+unresolved, so none ships in default outputs. Missing required native/shared rules
+keep public full-source validation incomplete even when UBL syntax passes.
+ZATCA SDK artifacts are not integrated. No alternative rules are silently substituted
+and no invoice is sent to an external validator. Publisher references and exact
+source hashes are retained in the distribution policy and local-source-pins.json.
+https://docs.peppol.eu/poac/pint/pint/
 
-The Peppol PINT Schematron (PINT, PINT SG, A-NZ, JP, MY, AE, OM, EU), its code lists and its examples are
-published at https://docs.peppol.eu/poac under an OpenPEPPOL copyright statement that says the document "may
-not be modified, re-distribute, sold or repackaged in any other way without the prior consent of OpenPEPPOL
-AISBL". That does not allow pinning copies here, so PINT documents get the UBL 2.1 XSD layer only and the
-profile layer reports 'not-run'. Add the bundles (build-validation-bundles.ts handles a Schematron given as
-.sch or .xslt) if OpenPEPPOL's consent is obtained. The same goes for ZATCA's Schematron and SDK samples.
+Peppol May 2026 coherent suite
+-----------------------------
+en16931-ubl-1.3.16 is EUPL-1.2. The separate peppol-bis3-3.0.21-ubl native
+artifact carries the CEN reproduction/disclaimer statement; its OpenPeppol
+redistribution grant remains unresolved and it is excluded from the qualified public distribution.
+The EN 1.3.16 release and Peppol May 2026 rules are paired as distributed by
+OpenPEPPOL, effective 2026-08-17. Manifests pin source and generated hashes.
+
+Svefaktura legacy artifacts: local evaluation; redistribution unresolved
+----------------------------------------------------------------------
+xsd-svefaktura-1.0-20081227 and svefaktura-1.0-rules-20161025 originate from
+SFTI's official Svefaktura 1.0 archive (2023-02-23 archive publication).
+The XSD dependency closure preserves OASIS copyright notices in component files.
+No explicit redistribution grant was identified for the SFTI-specific schemas
+or native 2016-10-25 XSLT rules. Their availability is not a license grant; no
+license is inferred from phive or other third-party wrappers. These artifacts
+are included for local evaluation pending rights clarification and must not
+be externally published as an approved redistribution. This unresolved point
+is not evidence that local validation is forbidden. Source hashes and artifact
+paths are recorded in manifests; source rules have not been modified.
+
+NLCIUS native rules, Dutch Peppol authority
+------------------------------------------
+nlcius-ubl-2.0.3.13 and nlcius-cii-1.0.3.13 use the native-only patterns from
+peppolautoriteit-nl/validation commit 4e93ae8681f413fef627a338ad84ce465a153ee8.
+The repository README names these versions and pairs the combined validators
+with EN 16931 validation-1.3.16; this implementation runs that core separately.
+The native pattern is wrapped in a Schematron schema declaring its namespaces;
+assertions, contexts, messages and source IDs are unchanged. The separately
+selected G-account combined suite is described below. Other extension claims
+remain incomplete. Manifest dates are
+vendoring dates, not claims about an unverified publication date.
+
+The CII native source explicitly states EUPL version 1.2; that specific notice
+takes precedence over assuming all files share the repository's MIT license.
+The UBL native pattern is covered by the repository MIT license below. The
+EN 16931 CII 1.3.16 core is EUPL-1.2, as with the other EN core bundles above.
+
+MIT License
+
+Copyright (c) 2017 Stichting Simplerinvoicing
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+TEAPPSXML 3.0 source schema: local evaluation; redistribution unresolved
+------------------------------------------------------------------------
+xsd-teappsxml-3.0 is the official standalone schema downloaded from Tieto's
+TEAPPSXML page. Its header states Copyright Tieto Finland Oy, Value Networks,
+version 3.0 dated 2018-03-26, updated 2019-09-30 (ROUNDINGS pattern). The file
+contains no schema imports/includes and no explicit redistribution grant.
+The manifest pins its original bytes; its copyright notice is preserved.
+Redistribution terms remain unresolved. It is included for local evaluation
+pending clarification, without inferring prohibition of local validation.
+XSD validation does not establish TEAPPS business rules, EN16931 compliance,
+or service-provider acceptance. Unknown declared versions are unsupported.
+
+Additional local profile suites (2026-10-18 evaluation)
+------------------------------------------------------
+selfbilling-ubl-en16931-1.3.16 and peppol-selfbilling-3.0.2-ubl
+  Official Peppol Self-Billing May 2026 release3.0.2, with the specialized
+  CEN1.3.16 rules distributed alongside it. The CEN source explicitly states
+  EUPL1.2. The native source records permission to reproduce CEN business terms,
+  but no separate blanket redistribution grant was identified in that artifact.
+  Native-artifact redistribution remains unresolved; local evaluation only.
+  https://docs.peppol.eu/poacc/self-billing/3.0/
+
+nlcius-gaccount-1.0.2.13-ubl
+  Dutch authority commit4e93ae8681f413fef627a338ad84ce465a153ee8, official
+  compiled combined suite including NLCIUS2.0.3.13 and modified EN1.3.16 syntax
+  permitting two payment instructions/terms. Generic EN is not run alongside
+  this modified suite. Repository MIT notice is retained above; included EN
+  material is EUPL1.2. Vendoring date does not establish exact release date.
+
+cius-pt-ubl-2.1.1
+  eSPap official CIUS-PT2.1.1 package, published2021-02-26. All four concrete
+  pattern groups run: syntax, model, datatype and conditions. The exact pinned
+  three abstract patterns are expanded by a deterministic build adapter rather
+  than the recursively expensive ISO expansion transform. Original archive hash, main-source bytes and
+  derived source hash are retained. Publisher parameter-name whitespace is
+  normalized as XPath variable tokens; assertion intent/messages are preserved.
+  Package contains no explicit redistribution grant: local evaluation pending
+  clarification. Authority source https://www.espap.gov.pt/Imagens/Documento.ashx?id=267
+
+hr-cius-ext-ubl-20260313
+  Croatian authority package197, published2026-03-13, effective2026-03-15.
+  The single code-list pattern include is deterministically inlined, preserving
+  all71main and2code-list assertions and their functions. Original closure and
+  derived source hashes are retained. The publisher instructs execution after
+  EN16931 without naming an exact core release; local tests use pinned EN1.3.17
+  and do not establish an authority-published combined release designation.
+  The authority site permits transmission with source attribution. See
+  validation/licenses/NATIONAL-NOTICES.txt. Original source and OASIS notices
+  are preserved. https://porezna.gov.hr/fiskalizacija/api/dokumenti/197
+
+cius-ro-ubl-1.0.9
+  Official Ministry of Finance integrated Romanian UBL suite from
+  https://mfinante.gov.ro/static/10/eFactura/ro16931-ubl-1.0.9.zip
+  The top-level authority schema states EUPL1.2. Its modified EN1.3.8-derived
+  model/syntax, code lists and native ROmodel are executed together. Generic
+  current EN is not added. A bounded parameter-expansion adapter preserves1098
+  active assertions/reports, including the native replacement of BR-27.
+  Compilation uses the pinned ISO skeleton's select-contexts=key option:
+  exact rule match patterns are retained and currencyID/unitCode attribute
+  contexts are visited, correcting the skeleton's default child-only traversal.
+  Source archive identity and derived source hashes retained. DocumentCIUS1.0.1
+  differs from artifactrevision1.0.9. Source header date is malformed; manifest
+  dates are qualified vendoring dates. No external identity check or clearance.
+
+Factur-X 1.09.2 XML profiles (BASICWL, EN16931 and EXTENDED)
+
+Source: the official FNFE-MPE France_RFE repository, immutable commit
+97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d, FNFE_RFE_INVOICE/Factur-X/.
+https://github.com/fnfempe/France_RFE/tree/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d
+The repository supplies an Apache License 2.0 LICENSE file. Its full text is
+retained in validation/licenses/Apache-2.0.txt and each bundle. Original preferred
+Schematron sources accompany compiled native artifacts; underlying UN/CEFACT
+notices remain in the schemas.
+
+Release metadata in the official XSLT/code database states version1.09.2,
+release2026-08-04, effective2026-09-01. Every supported profile has its own
+restricted CII D22B schema closure and native stylesheet. The native code database
+is pinned and embedded into a global XSLT variable, replacing only its exact
+static document() references to prevent runtime resource fetching. Original XSLT,
+code database, derived XSLT and resulting SEF are hashed in the bundle manifest.
+This is a disclosed offline adaptation; assertions and code-list entries are
+retained. It is selected explicitly with facturx-1.09.2. Shared CII namespaces and
+profile identifiers do not establish the source release. These artifacts check
+XML only, not PDF/A or hybrid container conformance.
+
+MINIMUM and BASIC1.09.2 artifacts were not obtained from an unencumbered official
+public source in this run. Official release download forms require personal
+contact details and CAPTCHA; no form was submitted or bypassed. They remain
+unsupported under this explicit edition. France_RFE's available3profile files do
+not by themselves establish French CTC national-rule coverage.
+
+ISDOC6.0.2 selected native rules
+
+Source: https://isdoc.cz/6.0.2/sch/isdoc-6.0.2.sch, linked by the official
+specification https://isdoc.cz/6.0.2/doc/isdoc.html (2022-03-23).
+Official documentation credits Copyright2022 MVCR and Copyright2014 ICT UNIE.
+No explicit redistribution license grant was identified in the inspected source
+or official repository. Retain the authority publication/provenance qualification;
+do not describe these files as MIT/Apache based on third-party wrappers.
+
+The original native source does not compile because of two XPath syntax defects:
+1. ` satisfied $va = 'false'` was changed once to ` satisfies $va = 'false'`.
+2. `isdoc:StoreBatch/isdoc:Quantity) satisfies` was changed once to
+   `isdoc:StoreBatch/isdoc:Quantity satisfies`.
+Original SCH SHA256:a992ae3de6432b01d8c27ca86a10ff33b20a2efe9b5f88c9948d2479f2972ce3.
+Derived SCH SHA256:0f9680bfabfcd063099a3ef7edaac5d3a386dc6e3cf6601f13631c3f1ce39a8d.
+Both sources are preserved and hashed by the reproducible builder. The derived
+bundle preserves the publisher's selected assertions apart from those disclosed
+syntax repairs. Public tests exercise both repaired assertions with schema-valid
+negative controls (non-VAT header with VAT line and mismatched batch quantity
+units), plus the original-document-reference rule. This does not claim exhaustive
+Czech tax-law, signature, timestamp or hybrid-document verification.
+
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright [yyyy] [name of copyright owner]
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+Legacy and national artifact provenance additions (local draft)
+
+- Finvoice1.3,2.0,2.01: Finance Finland's exact versioned XSDs, acquired2026-10-18. Official index https://www.finanssiala.fi/en/topics/finvoice-standard/ states that page materials are freely usable. Original files are preserved, including their version/date comments. URLs and rawSHA256 appear in each manifest. Current3.0 is not substituted for older declared versions.
+- ebInterface4.0,4.1,4.2: AUSTRIAPRO development repository, pinned commitf7e4e4ec8778b7da2bc3468ed976a396fa8b6b29. These are schema artifacts from the authority's development repository, not a claim that the snapshot constitutes a separately verified formal release. Original notices remain; no explicit license text was found in the source files. As in existing ebInterface bundles, imported XMLDSIG schemas resolve to their local W3C copy.4.0's extension schemaLocation URIs also resolve to the matching local files.
+- Facturae3.0 and3.1: exact archived schemas linked from https://www.facturae.gob.es/formato/versiones-anteriores, with the official W3C XMLDSIG dependency. The official portal document-reuse notice permits redistribution with attribution, date preservation and no endorsement; see validation/licenses/NATIONAL-NOTICES.txt. Only schemaLocation references are localized. Vendoring dates do not establish legal mandatory-use dates.
+- OASIS UBL2.0: original December2006 release https://docs.oasis-open.org/ubl/os-UBL-2.0.zip, SHA256d3eb3356d425bcf16c786d705ebaed99d7da8e581e1a0bcefc4855d734c0ddc9. Invoice/CreditNote and complete common schema/code-list closure are unchanged, retaining embedded OASIS copyright/permission notices. No later Errata01 claim is made. OIOUBL2.02 native coverage uses the separate pinned historical suite described below.
+- OIOUBL3: official2026-08-10 package3.2.4.156accde, SHA2565e2afd22a07e766c5416ef95b69fe83a465a1e17fc7d98d52abd58fb022ba9a0. Authority copyright and EUPL1.1/CC-BY-SA4.0 terms, with OASIS/CEN notices, are preserved byte-for-byte as LICENSE.txt in every derived bundle. Native invoice/creditnote XSLTs remain paired with the EN16931 XSLTs shipped alongside them. The source documentation identifies OIOUBL3 as release candidate; this is not a claim of a production effective-date policy. See https://oioubl-demo.nemhandel.dk/oioubl/dokumentation/License_and_Copyright_Statement.html .
+- OIOUBL2.1 native1.15.2: official2025-03-20 authority package, SHA2562b6d1945a5948500c8aeabd3bd637ea4774e3d0dbacf179132f677300b825090. Original readyXSLTs, upstreamREADME and severity table retained. No explicit redistribution license was found in this package; redistribution qualification remains unresolved. The generated importing wrapper translates the documented Error report into SVRL, preserving bracket rule identifiers and paths; unexpected report shapes terminate instead of becoming an empty pass. All424 invoice/creditnote severity-table records areF, and the readyXSLTs emitError, notWarning. This suite applies to OIOUBL-2.1; it is not substituted for OIOUBL-2.02 native rules.
+- SAT CFDI3.3/4.0: official core schemas, shared datatype/catalog schemas and TimbreFiscalDigital1.1 acquired2026-10-18 from SAT's official HTTPS endpoint, with unchanged source notices/documentation and rawSHA256 pins. No explicit redistribution license text found; qualification remains explicit. A small local import driver combines original core and Timbre namespaces without redefining normative components; only remote schemaLocation references are localized. The acquired catalog snapshot is pinned and is not a claim to reproduce every historical catalog revision. Only core+Timbre1.1 closure is covered; unshipped SAT complements/privateAddenda schemas make requested schema coverage unsupported. SAT business-control rules, PAC/authority acceptance, certificate/signature verification and cancellation status are separate.
+
+
+xsd-hr-cius-ubl-20260415
+  Croatian authority UBL package198 includes actual HR extension schema,
+  restrictive ExtensionContent declarations, and complete Invoice/CreditNote
+  imports. Source files unchanged; archive and per-file hashes pinned.
+  https://porezna.gov.hr/fiskalizacija/api/dokumenti/198
+  OASIS copyright notices retained. The authority site permits transmission
+  with source attribution; see validation/licenses/NATIONAL-NOTICES.txt.
+  Publication date2026-04-15 is from
+  the authority documentation page, not inferred from archive timestamps.
+
+OIOUBL2.02 native1.11.1.35666
+OIOUBL 2.02 Invoice and CreditNote native rules use the official Danish authority GitLab source at immutable commit `244631323b2fb56eda3bf7475bc050e65ad84b38`. Each stylesheet explicitly identifies OIOUBL-2.02, UBL2.0, and edition1.11.1.35666 dated2019-04-08. The observed Invoice source history next changes to UBL2.1 in March2022; this qualification does not establish the latest2.02 edition globally or current Danish production acceptance. Manifest releaseDate/effectiveFrom identify the stylesheet header date, not independently verified legal activation.
+
+The archive and each original stylesheet are hash-pinned; the original UTF16 source bytes are preserved. Each stylesheet is self-contained: no import, include, document(), or unparsed-text() dependencies were found. The importing wrapper validates the authority report shape (`Schematron/Information` and `Error` with `Pattern`, `Description`, `Xpath`) and translates original bracketed F/W rule prefixes to fatal/warning. Unknown severity prefixes fail closed. Rule Pattern/Description text is unchanged. A separately retained compatibility-source.xslt makes nine Invoice and six CreditNote direct-node format-number first arguments explicit number(...) conversions in XPath attributes, preserving the implicit XSLT1 numeric conversion that Saxon-JS2.7 otherwise evaluates as NaN. Numeric sum expressions remain unchanged. Original UTF16 source bytes are retained verbatim; the compatibility copy uses UTF8. Derived hashes: Invoice e9e62f484cd9c1cd58d0ab61b392613d78e4b09b0939ac99851491a4b2134453; CreditNote a9087edacda651819207407afb9232972fb61c71f188bbb9b2014396ba305a60. System xsltproc reports were byte-identical before and after this adapter for both synthetic positive fixtures; this is bounded cross-engine evidence, not an exhaustive proof for every document.
+
+No license/readme was present in the acquired21-file source closure and neither stylesheet contained a license header. Redistribution permission remains unresolved; these artifacts are for local evaluation pending qualification. No grant is inferred from public availability. Authority documentation also warns that Schematron is not exhaustive business validation: https://www.oioubl.info/downloads/da/Schematron.pdf .
+
+Archive: https://git.erst.dk/openebusiness/common/-/archive/244631323b2fb56eda3bf7475bc050e65ad84b38/common-244631323b2fb56eda3bf7475bc050e65ad84b38.zip?path=resources/Schematrons/OIOUBL
+SHA256: 5b0d5fa5d6affed0102eaf1b9f03664cffad424c2c3531791fb9423857e6491e
+Invoice SHA256: 858ec42d3d68bcaab173aaa0aae0d46bba1ff6ce1774002961d391324a611b10
+CreditNote SHA256: 9f10414ac955f7da6bbfda86364a2e08aa7bc9c681a8bfb71d8ad83265853674
+
+The earlier2010/v1.2 candidate is research only, outside generated artifacts/specs. Both2.02specs now use2019/v1.11.1.
+
+France RFE 1.4.0.04 (local qualification)
+---------------------------------------
+Publisher: FNFE-MPE, France_RFE commit 97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d.
+Archive: https://codeload.github.com/fnfempe/France_RFE/zip/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d
+Archive SHA256: 8728ce11486d4aa6db24c6fd653ba0c655f0fc47f8d6f69b065f2922cc595467
+
+The repository LICENSE and publisher explanatory note explicitly grant Apache-2.0 for the French XP Z12-012 Schematron work. The separately included EN16931 rules retain EUPL-1.2 terms; the base UBL artifact is not relabelled Apache-only. Original embedded EUPL version wording is retained verbatim. Original XSLT/Schematron, both applicable full license texts, README and publisher note accompany rule artifacts. The uncoupled CII D22B bundle retains the complete publisher XSD directory. Exact selected source hashes are recorded in manifests and build specs.
+
+Strict France rules run after the publisher-paired base rules and XSD. The separate historical warning-only receiving alternative is not selected. Genuine warnings emitted by the strict chain retain their severity. CII EN16931 reuses existing 1.3.16 only after byte identity was established (source SHA256 0b234dea2bbfee739b7761e607a992c17fab88773014ef56355b6158cfb1cc53). The UBL base is separately pinned to the package's actual source, rather than inferred from its version label. Factur-X profile artifacts are from the same immutable repository commit.
+
+Scope: invoice XML for the explicitly selected UBL/CII EN16931 or EXTENDED-CTC-FR chain, or Factur-X 1.09.2 BASICWL/EN16931/EXTENDED with French rules. No lifecycle/CDAR/Flux10, transport, authority acceptance, PDF/A container or arbitrary UBL-extension coverage is implied.
+PINT jurisdiction and self-billing validation artifacts (local qualification)
+
+The official current OpenPeppol distributions were retrieved from the respective https://docs.peppol.eu/poac/{jurisdiction}/{specification}/resources.zip endpoints. Exact archive and stylesheet hashes are pinned in scripts/pint-specialization-specs.ts and each bundle manifest; original stylesheets are retained. The archives contain no separate license or redistribution grant. Availability does not establish redistribution permission. These artifacts remain qualified for local evaluation only; no terms were accepted and no artifact redistribution or publication was performed.
+
+Qualified billing distributions: Singapore PINT SG1.4.1 (25 May2026), A-NZ1.1.3 (21 May2026), Japan1.1.3 (18 May2026), Malaysia1.3.1 (5 Jun2026), UAE1.0.4 and Oman1.0.1 (PDK1.4.4,29 Jul2026), EU1.1.1 (9 Jun2026). Published dates are recorded; they are not evidence of a production mandate, effective tax law, or current legal compliance.
+
+Qualified self-billing distributions: A-NZ1.1.3, Japan1.1.3, Malaysia1.3.1, UAE1.0.4 and Oman1.0.1. Each selects its distribution's own shared stylesheet. Billing and self-billing shared artifacts differ and are not interchangeable. The UAE self-billing jurisdiction stylesheet is byte-identical to its billing jurisdiction stylesheet (SHA256 da931f161362fe26bb9f5a1e519cd44758e5cba977584800b806c09bcf1b807b); the existing pint-ae-1.0.4 profile bundle is reused, while the distinct self-billing shared bundle preserves both the shared source and the equivalent jurisdiction source as evidence. Other self-billing native sources have their own pinned bundles.
+
+The general PINT1.1.3 shared source is reused only where its bytes match those shipped in the qualified jurisdiction distribution (SHA256 1b239af213b29f1127099bc0af7335689cfe45c6e6b11144f1316c52a0fed381). UAE billing has a distinct shared bundle as well.
+
+EU1.1.1 has three obligations: shared PINT, EN16931-aligned, and EU jurisdiction rules. The latter two are composed into one profile Schematron, preserving all1138 original assertions, their IDs, predicates, flags and messages. The merger pins both original source hashes, rejects duplicate IDs/variables, conflicting namespace declarations and unresolved includes, and retains both originals plus derived source. Derived SHA256:3b4de2b207805f8766a47bd7627cf75bc70904c96a20af025591eae4ba84648c. No assertion or publisher predicate is rewritten.
+
+Finite supported contracts use the exact current CustomizationID urn:peppol:pint:{billing|selfbilling}-1@{jurisdiction}-1 and UBL2.1 Invoice/CreditNote roots. Japan distributions publish only Invoice artifacts; Japan CreditNote remains incomplete. The qualified ProfileID is exactly urn:peppol:bis:billing or urn:peppol:bis:selfbilling respectively. Unknown additional process suffixes remain incomplete even where a broad publisher regex accepts them; native findings remain visible. Missing ProfileID is diagnosed by the native rules. Extra customization chains, unqualified future versions, and wrong edition choices do not inherit a native coverage claim. Legacy Japan identifiers and arbitrary future profile chains are outside this finite qualification.
+
+Unqualified self-billing gaps: Singapore's current pint-sg-sb resources endpoint returned404. The EU pint-eu-sb resources endpoint returned an old2022 placeholder archive with code lists but no validation XSLT and no qualified current production specification. Neither is selected as fully covered. Source availability alone is not accepted as version qualification.
+
+Independent synthetic controls:22 positive document contracts (all qualified roots), schema-invalid controls, schema-valid shared arithmetic and jurisdiction failures per contract, plus a separate EU EN-aligned BR-S-02 control and EU jurisdiction PEPPOL-EN16931-R003 control. Forty-five unsupported contract/process/syntax controls prevent silent coverage inheritance. Forty-five public test cases independently exercise source results, required gaps, rule IDs, severities and locations. This is bounded regression evidence for pinned artifacts, not an exhaustive test of all publisher rules or all possible XML.
+PINT Japan invoice for non-tax registered businesses 1.1.3 is separately qualified for exact CustomizationID urn:peppol:pint:nontaxinvoice-1@jp-1, Invoice root, UBL 2.1, and process urn:peppol:bis:billing. The official current resources.zip (SHA256 53b57443e45c442db6ed36ee03b528d87114b37c82d59b919c6950697affe33d) supplies both independently pinned shared and jurisdiction stylesheets, preserved unmodified. Shared SHA256 db22837ea129e7bff1332d25ff85aa3d3a4d1352e221adc7f0ac729829534a90; jurisdiction SHA256 8105f51800d17c26b5b498009fe3ca350b48d6c36431e13ac316ee66d558366b. Landing-page/archive publication is 18 May 2026; release notes separately state Final 8 June 2026. No mandate date is inferred. No separate license grant was found in the archive; redistribution rights remain unresolved and qualification is local evaluation only. CreditNote, unknown customization chains, unknown process chains and future UBL declarations are outside this qualified contract. The native publisher process regex is broader than the finite qualified process, so unsupported suffixes retain incomplete coverage even if native rules pass.
+Sources: https://docs.peppol.eu/poac/jp/pint-jp-ntr/ ; https://docs.peppol.eu/poac/jp/pint-jp-ntr/release-notes/ ; https://docs.peppol.eu/poac/jp/pint-jp-ntr/resources.zip
+- ebInterface3.0/3.02: exact original schema namespaces3p0/3p02 from pinned AUSTRIAPRO development commitf7e4e4ec8778b7da2bc3468ed976a396fa8b6b29. Header last-update dates2009-09-03/2010-12-15 identify snapshots, not independently verified legal activation. XMLDSIG dependency is retained with its notices; only remote import schemaLocation is localized. No license text found in these invoice XSDs; redistribution qualification remains unresolved. No native business-rule suite qualified; full-source remains incomplete.
+- Estonian ordinary e-arve1.2: official ITL description page links EE_einvoice_1.2.zip. ArchiveSHA2563b28246c95368f78126160cc3ec5023ef5e8c9343b35fb051a0450fb412f49c3; original self-contained schema SHA256eb78d8f543431bd20328e720fcfa7ccc9274989eedc830b2581751ddaa1a2232. Headerdate2013-12-01 and literal "License rules: no" retained; no broader grant inferred. Explicit suite e-arve-1.2 required because Header/Version1.2 is shared with1.2.EN. No native business rules qualified.
+- ISDOC6.0.1: exact authority historical package https://isdoc.cz/fileadmin/isdoc/6.0/isdoc-schema-6.0.1-20140526.zip , SHA256a369324a5910db65d5143ba6a62f97dc5aa360477351ab3a606b81b4d9aad021. Complete XSD closure includes invoice/common-document signed drivers and XMLDSIG. Embedded ICT UNIE/SPIS permission to use/copy/modify/distribute schema+documentation without fee is preserved with copyright/nonendorsement conditions. Matching native selected-rule SCH is unmodified (SHA256f601c2bd2870462b40e485f65a2c2f690ba9418bee808bd48783881a6097e680), self-contained xslt2; its file has no explicit redistribution grant, so native rights qualification remains unresolved/local evaluation. No6.0.2 rules substituted. Unflagged assertions remain errors. Positive full-source and schema-valid unreferenced credit native-negative controls pass.
+- ISDOC5.3.1: exact authority archive https://isdoc.cz/fileadmin/isdoc/isdoc-schema-5.3.1-20111230.zip , SHA2560c4ce9ccfee832ed30abba63bc365e451dd158a15bf873b8d5e5d6a0167558cc. Complete signed/unsigned invoice+XMLDSIG closure unchanged, permissive embedded notices retained. Exact namespace http://isdoc.cz/namespace/invoice and version5.3.1 required. No native-rule artifact supplied in package; full-source remains incomplete. Package publication dates identify historical snapshots rather than current acceptance.
+- Additional ISDOC5.x schema-only releases:5.3(2011-02-14, archivefbc22a4bd87ca842282c54810562ebeb22ea0d1b81b8f8479fe292b220030ede),5.2.3(2011-02-14,4346513a7ad8e690a546795f70f57143ff5d5635f99387edc51ffbbd84ef3f50),5.2.2(2010-12-07,d2fdc21f99b0cbb6c968b63ab1a6f1a57a21ba9496d6fa088b2499c94f02ff4e),5.2.1(2010-03-18,8f530b0f9a4c17d8c959ff4a133b8bd466c1f3b806fba366151dd54f036bfdc9),5.2 October2009(c8a632c71bdef44da14efe513667f72be744cd3522ba3bb95f678776c64e8344),5.1(ac4e831b3b2779a6cfc5d3e099885373882ebfc288d9f459fc7aa8bed6e44161). All official archive URLs are linked by https://isdoc.cz/ and pinned in manifests; all three-file invoice/signed-driver/XMLDSIG closures are unchanged.5.3/5.2.3/5.2.2 retain embedded permissive ICTUNIE/SPIS notices.5.2.1/5.2/5.1 invoice schemas have copyright notices but no explicit grant; redistribution qualification remains unresolved/local evaluation. Earlier grants are not inferred from later releases. Dates identify package/source snapshots, not current acceptance;5.1 uses its source$Id revision2009-03-10 rather than claiming a publication date. No native Schematron supplied in these archives; full-source remains incomplete.
+- ISDOC5.2 July/October equivalence: July official archive0e220d3b3a56d196c0a2476c6bbb08b15abe113084f578b3b79c42e39e9b8203 and selectedOctober archive have identical main and signed-driver constraints after stripping annotations/comments/insignificant whitespace; XMLDSIG bytes identical. Main normalized constraintSHA2565b0132d645c0cc4c24279e19f7ea840468fc6c3ba0d72361edf931699d2e7dcd, driverconstraintSHA256ecc697a59bff15a889112570bc946b8f356b464398b88c9d6ec7a3d4e2a123c6. This independently reviewed equivalence permits exact5.2 routing without an artificial edition choice. Original selected bytes remain unchanged.
+- UBL.BE1.31: publisher https://www.ubl.be/version-information/ links July2024 GLOBALUBL.BE-V1.31.zip, archiveSHA256602823ca612f9853fc9a7a587de51c6fe690d5416a4b9f71a6bc912ecb078e5e, SCHfd9f7f2263c13a0e2167cb6455153cc94995d04d1b4215ebb7f6316897b58af7. The self-contained combined EN16931/Peppol/Belgian suite is unchanged; all patterns active. It is not paired with a second generic EN suite. Exact20180214CustomizationID, UBL2.1 Invoice/CreditNote source contracts only; unknown editions incomplete. Publisher now describes UBL.BE as a conformant extension rather than a compliant customer-invoicing specification; these are historical technical checks, not current legal/Peppol acceptance. No explicit redistribution grant in acquired suite; local evaluation pending qualification.
+- Peppol BIS2 historical VA3.7.0: official deprecated OpenPEPPOL/peppol-bis source at immutablecdfda5919926022218439e4b5a14d40dd2557e10, archiveSHA25686062d73ff115d88507efdd894429081dfaccac2ffba36f86e88e77a6bd9e84c. The publisher buildconfig selects UBL2.1 + BII RULES + OPENPEPPOL + OPENPEPPOL CORE for Invoice4a/5a andCreditNote5a; unusedBII CORE is not substituted. BII is the semantic layer, OPENPEPPOL+CORE the profile layer. Narrow hash-pinned composition adds all1223/1317 CORE patterns (1255/1350 assertions) and namespace declarations without changing predicates/messages. Each main's three pinned abstract/binding/codelist fragments are inlined verbatim, with embedded XML declarations removed, to bypass demonstrated ISOinclude strip-strings recursion (NodeSIGSEGV and independentxsltproc depth error); original fragments/hashes retained. After inlining, only CL-T10-R008/CL-T14-R008’s identical917-literal pure OR-equality MIME predicate is normalized to XPath2 sequence membership, preserving ordered literals, context, ID, flag, message and all other assertions under exact source/predicate hash and grammar/count guards. Actual Saxon comparisons accepted all917members and rejected sixnonmembers identically. Standard ISOabstract expansion and#ALL compilation remain. Documented ISO select-contexts=key is used for allfour BIS2 suites because pinned default recursion omits direct attribute contexts; original match patterns and priorities remain. Source flags preserve fatal native/BII findings and inherited CORE warnings. Exact publisher CustomizationID/ProfileID pairs required; missing/unknown process remains incomplete. Release/effective dates2018-11-13/15 come from bundled3.7.0 notes and do not imply current acceptance. No explicit grant found in acquired source closure; redistribution qualification unresolved/local evaluation only.
+
+Redistribution notices and corresponding source
+----------------------------------------------
+Qualified rule bundles include the full applicable license texts under licenses/
+and their selected original Schematron/XSLT source closure. The reproducible
+builder pins every added source and license download in validation/licenses/evidence.json.
+No executable validator is changed by adding these distribution materials.
+
+OIOUBL3 is distributed under the publisher-offered EUPL-1.1 route for Danish
+Business Authority work; incorporated EN16931 rules retain EUPL-1.2. The package
+license statement, OASIS/CEN notices, selected invoice/credit-note source closure
+and original publisher XSLT inputs accompany the compiled artifacts. No later
+OIOUBL3 license grant is inferred for historical OIOUBL2 packages.
+
+The EN16931 1.3.16/1.3.17 UBL/CII and specialized self-billing EN16931 bundles
+include EUPL-1.2 and the corresponding selected original sources. XRechnung
+2.6.0 bundles retain the publisher Apache license, selected syntax rules, common
+source dependency and exact XSLT inputs.
+
+The covered EN16931 validators implement the semantic data model and mandatory
+syntaxes of EN16931. Reproduction is with the permission of CEN and the relevant
+national standardisation bodies as copyright owners. CEN and those bodies bear
+no liability for the content or implementation and give no warranties, express
+or implied. In case of doubt, refer to the official authoritative standard
+published by the relevant national standardisation body.
+
+National artifact distribution qualifications (2026-10-18)
+-------------------------------------------------------
+Facturae 3.0/3.1/3.2/3.2.1/3.2.2 and the Croatian schema/rule packages are
+qualified by their issuing portals' document-reuse permissions, recorded with
+attribution and source-page hashes in validation/licenses/NATIONAL-NOTICES.txt.
+This supersedes earlier statements that their missing inline license alone
+left redistribution unresolved. It does not cover portal software or design.
+
+ISDOC XSD 5.2.2/5.2.3/5.3/5.3.1/6.0.1/6.0.2 retain their explicit embedded
+permission and nonendorsement notices. Other ISDOC artifacts are separate.
+
+NLCIUS native bundles now retain original source and the MIT license; CII and
+G-account also retain EUPL-1.2. G-account includes the publisher XSLT and its
+Schematron source closure. CIUS-RO includes the complete original include
+closure and EUPL-1.2 license as well as the retained original/derived schema.
+All added files are hash-pinned in manifests and evidence-national.json.
+Compiled SEF bytes are unchanged by this distribution-evidence update.
+
+ISO Schematron runtime templates
+-------------------------------
+Generated Schematron validators contain template code from the pinned ISO
+Schematron implementation. Complete MIT copyright/permission notices for the
+Saxon skeleton and SVRL compiler are retained in
+validation/licenses/ISO-Schematron-MIT.txt, including their original copyright
+holders, source URLs and source hashes.
