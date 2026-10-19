@@ -11,13 +11,16 @@ import { fixturePath } from './helpers.js';
 const root = join(import.meta.dir, '..');
 
 async function inputs(entry: string): Promise<string[]> {
-  const result = await Bun.build({ entrypoints: [join(root, entry)], target: 'browser', metafile: true, splitting: true });
-  expect(result.success).toBe(true);
-  return Object.keys(result.metafile!.inputs);
+  // A fresh bundler avoids Node validator imports influencing browser package resolution.
+  const code = `const result=await Bun.build({entrypoints:[${JSON.stringify(join(root, entry))}],target:'browser',metafile:true,splitting:true}); if(!result.success) throw new AggregateError(result.logs); console.log(JSON.stringify(Object.keys(result.metafile.inputs)));`;
+  const result = Bun.spawnSync([process.execPath, '--eval', code], { cwd: root, stdout: 'pipe', stderr: 'pipe' });
+  expect(result.exitCode, result.stderr.toString()).toBe(0);
+  return JSON.parse(result.stdout.toString());
 }
 
 describe('public package boundaries', () => {
   test('core graph excludes downstream consumers and network trust maintenance', async () => {
+    await import('xmllint-wasm'); // Reproduce the resolution state after Node validation tests.
     const graph = await inputs('src/index.ts');
     expect(graph.length).toBeGreaterThan(10);
     expect(graph.filter((p) => /src\/(render\/|react\/|writers\/|mcp\/|server\.|signature\/tsl-load\.)/.test(p))).toEqual([]);
