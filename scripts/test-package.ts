@@ -67,6 +67,7 @@ try {
   assert.deepEqual(approvedBundleIds(installed), approved, 'installed assets, licenses and notices match the reviewed hashes');
   // Use the locked checkout dependencies, while loading our own code and assets solely from the tarball.
   symlinkSync(join(root, 'node_modules'), join(installed, 'node_modules'), 'dir');
+  for (const peer of ['react', 'react-dom']) symlinkSync(join(root, 'node_modules', peer), join(modules, peer), 'dir');
   writeFileSync(join(temp, 'package.json'), '{"type":"module"}');
   const invoice = readFileSync(join(root, 'test/fixtures/xrechnung-ubl.xml'), 'utf8');
   writeFileSync(join(temp, 'invoice.xml'), invoice);
@@ -79,13 +80,17 @@ try {
     import { readFileSync } from 'node:fs';
     import * as core from 'eu-einvoice-canonical';
     import { convert, validateSource, validationPassed, buildLineAnnotationInput, validateLineAnnotations } from 'eu-einvoice-canonical';
-    import { renderHtml } from 'eu-einvoice-canonical/render';
+    import { renderHtml, renderPdf } from 'eu-einvoice-canonical/render';
+    import { createHandler } from 'eu-einvoice-canonical/server';
     import { toUbl, toCii } from 'eu-einvoice-canonical/writers';
     import { loadTrustLists } from 'eu-einvoice-canonical/trust-lists';
     import { createMcpServer } from 'eu-einvoice-canonical/mcp';
     for (const retired of ['matching', 'findDuplicates', 'buildJournalEntry', 'renderHtml', 'toUbl', 'loadTrustLists']) assert.equal(retired in core, false);
     assert.equal(typeof loadTrustLists, 'function');
-    assert.equal(typeof createMcpServer, 'function');
+    const mcp = createMcpServer({allowDirs:[]});
+    await mcp.close();
+    assert.equal((await createHandler()(new Request('http://localhost/health'))).status, 200);
+    assert.ok(import.meta.resolve('eu-einvoice-canonical/react/invoice.css').endsWith('/lib/react/invoice.css'));
     assert.equal(typeof buildLineAnnotationInput, 'function');
     assert.equal(typeof validateLineAnnotations, 'function');
     const result = await convert(readFileSync(new URL('./invoice.xml', import.meta.url)), 'invoice.xml', undefined, {validate:true,provenance:true,relations:true});
@@ -95,6 +100,7 @@ try {
     assert.equal(invoice.source.valueOrigins['/lines/0/netAmount'], 'source');
     assert.ok(invoice.source.provenance['/lines/0/netAmount']);
     assert.ok(renderHtml(invoice).includes(invoice.id));
+    assert.equal(new TextDecoder().decode((await renderPdf(invoice)).subarray(0,5)), '%PDF-');
     assert.ok(toUbl(invoice).includes(invoice.id));
     assert.ok(toCii(invoice).includes(invoice.id));
     assert.ok(validationPassed(await validateSource({xml:readFileSync(new URL('./invoice.xml', import.meta.url),'utf8')}))); 
@@ -107,13 +113,16 @@ try {
     assert.equal(held.semantic, 'passed');
     assert.equal(held.profile, 'unavailable');
     assert.equal(validationPassed(held), false);
-    await import('eu-einvoice-canonical/react');
+    const {Invoice} = await import('eu-einvoice-canonical/react');
+    const {createElement} = await import('react');
+    const {renderToStaticMarkup} = await import('react-dom/server');
+    assert.ok(renderToStaticMarkup(createElement(Invoice,{invoice})).includes(invoice.id));
   `,
   );
   for (const runtime of [process.env.NODE_BIN ?? 'node', 'bun']) {
     assert.ok(run([runtime, '--version'], temp).trim());
     run([runtime, 'smoke.mjs'], temp);
-    console.log(`Packed conversion, validators, source validation and React import passed: ${runtime}`);
+    console.log(`Packed conversion, validation, HTTP, MCP, HTML/PDF and React consumers passed: ${runtime}`);
   }
   // Exercise the installed root with a loader that rejects all optional consumers.
   writeFileSync(
@@ -135,6 +144,8 @@ try {
     import { toUbl, type UblOptions } from 'eu-einvoice-canonical/writers';
     import { createMcpServer, type McpServerOptions } from 'eu-einvoice-canonical/mcp';
     import { loadTrustLists, type LoadOptions } from 'eu-einvoice-canonical/trust-lists';
+    import { createHandler, type ServerOptions } from 'eu-einvoice-canonical/server';
+    import { Invoice, type InvoiceProps } from 'eu-einvoice-canonical/react';
     const html = (invoice: CanonicalInvoice, options: RenderHtmlOptions) => renderHtml(invoice, options);
     const ubl = (invoice: CanonicalInvoice, options: UblOptions) => toUbl(invoice, options);
     const mcp = (options: McpServerOptions) => createMcpServer(options);
