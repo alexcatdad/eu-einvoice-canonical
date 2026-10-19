@@ -2,7 +2,7 @@
  * Rebuilds validation/bundles/ from the pinned upstream releases:
  *   bun scripts/build-validation-bundles.ts [bundle-id ...]
  *
- * Needs network access and the xslt3 dev dependency (SaxonJS compiler, no Java). Approved bundles are
+ * Needs network access, curl for upstream redirect recovery, and the xslt3 dev dependency (SaxonJS compiler, no Java). Approved bundles are
  * committed; --restore-held downloads the pinned, ignored local qualification inputs. Afterwards run
  * `bun run verify:bundles` and review the diff of validation/bundles/*\/manifest.json.
  *
@@ -16,6 +16,7 @@ import { sha256Hex } from '../src/hash.js';
 import { bis2Includes, bis2MimeMembership, combineBis2Core, inlineBis2Includes } from './bis2-source.js';
 import { CFDI_XSD_SPECS } from './cfdi-validation-specs.js';
 import { inlineFacturxCodeDb } from './facturx-artifacts.js';
+import { fetchSource } from './fetch-source.js';
 import { inlineHrSchematron } from './hr-schematron-source.js';
 import { oioubl2SvrlWrapper } from './oioubl2-report.js';
 import { oioubl202CompatibleSource } from './oioubl202-source.js';
@@ -693,11 +694,11 @@ function download(url: string) {
   let p = sources.get(url);
   if (!p) {
     p = (async () => {
-      let res = await fetch(url);
+      let res = await fetchSource(url);
       // crd.gov.pl answers 503 now and then.
       for (let i = 0; i < 6 && res.status >= 500; i++) {
         await Bun.sleep(3000);
-        res = await fetch(url);
+        res = await fetchSource(url);
       }
       if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
       const bytes = new Uint8Array(await res.arrayBuffer());

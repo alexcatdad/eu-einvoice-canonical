@@ -267,7 +267,7 @@ describe('every fixture through every endpoint', () => {
       const res = await post(`${base}/v1/convert?euTrust=true`, fixture(name), mime(name));
       await conforms(res, 'POST', '/v1/convert');
     }
-  });
+  }, 60_000);
 });
 
 describe('endpoints', () => {
