@@ -1,4 +1,4 @@
-import { afterAll, expect, test } from 'bun:test';
+import { afterAll, expect, spyOn, test } from 'bun:test';
 import { fetchSource } from '../scripts/fetch-source.js';
 
 let curlRequests = 0;
@@ -51,6 +51,34 @@ test('ordinary fetch responses, including HTTP errors, do not invoke curl', asyn
   expect(response.status).toBe(404);
   expect(await response.text()).toBe('missing');
   expect(curlRequests).toBe(before);
+});
+
+test('connection reset recovery uses the same URL and preserves downloaded bytes', async () => {
+  const before = curlRequests;
+  const native = spyOn(globalThis, 'fetch').mockRejectedValue(Object.assign(new TypeError('socket closed'), { code: 'ECONNRESET' }));
+  const url = `${server.url}fallback-200`;
+  try {
+    const response = await fetchSource(url);
+    expect(native).toHaveBeenCalledTimes(1);
+    expect(native).toHaveBeenCalledWith(url);
+    expect(response.status).toBe(200);
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array([0, 255, 10, 53, 48, 51]));
+    expect(curlRequests).toBe(before + 1);
+  } finally {
+    native.mockRestore();
+  }
+});
+
+test('unrecognized native failures propagate without invoking curl', async () => {
+  const before = curlRequests;
+  const failure = Object.assign(new TypeError('synthetic failure'), { code: 'UNEXPECTED' });
+  const native = spyOn(globalThis, 'fetch').mockRejectedValue(failure);
+  try {
+    await expect(fetchSource(String(server.url))).rejects.toBe(failure);
+    expect(curlRequests).toBe(before);
+  } finally {
+    native.mockRestore();
+  }
 });
 
 test('a redirect loop that also affects curl fails within the redirect bound', async () => {

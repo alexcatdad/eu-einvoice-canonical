@@ -14,6 +14,8 @@ bun install --frozen-lockfile
 
 Tests, coverage, the conformance checklist, the performance gate, Docker and CodeQL all run in GitHub Actions on every pull request. Open the PR and read the checks; you are not expected to run the full suite locally. A PR merges only when the required checks (`test`, `docker`, CodeQL) are green.
 
+Library CI runs static checks, the complete coverage suite and package checks in one lane, and artifact/selector qualification in another. Both lanes must pass the required `test` gate. `bun run check:lib` runs the same complete set locally, in sequence; coverage thresholds and qualification requirements are identical.
+
 ## Local checks
 
 Run these before pushing. Everything goes through `bun`:
