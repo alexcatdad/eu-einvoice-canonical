@@ -12,6 +12,9 @@ export async function fetchSource(url: string): Promise<Response> {
         '--silent',
         '--show-error',
         '--location',
+        // Enable an in-memory cookie engine for session/load-balancer redirects; never write a cookie jar.
+        '--cookie',
+        '',
         '--max-redirs',
         '10',
         '--max-time',
