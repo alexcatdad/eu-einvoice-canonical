@@ -105,88 +105,88 @@
   "bundles": [
     {
       "name": "app.js",
-      "bytes": 27801,
-      "gzipBytes": 10048
+      "bytes": 47526,
+      "gzipBytes": 15365
     },
     {
       "name": "chunks/app.js",
-      "bytes": 875749,
-      "gzipBytes": 248301
+      "bytes": 1268649,
+      "gzipBytes": 413059
     },
     {
       "name": "chunks/cades.js",
-      "bytes": 1852,
-      "gzipBytes": 1007
+      "bytes": 1860,
+      "gzipBytes": 1006
     },
     {
       "name": "chunks/de.js",
-      "bytes": 17680,
-      "gzipBytes": 6944
+      "bytes": 16800,
+      "gzipBytes": 6652
     },
     {
       "name": "chunks/envelope-cms.js",
-      "bytes": 780,
+      "bytes": 782,
       "gzipBytes": 490
     },
     {
       "name": "chunks/envelope-pdf.js",
-      "bytes": 449523,
-      "gzipBytes": 183549
+      "bytes": 2499,
+      "gzipBytes": 1240
     },
     {
       "name": "chunks/es.js",
-      "bytes": 17772,
-      "gzipBytes": 6787
+      "bytes": 16904,
+      "gzipBytes": 6504
     },
     {
       "name": "chunks/fr.js",
-      "bytes": 18139,
-      "gzipBytes": 6949
+      "bytes": 17229,
+      "gzipBytes": 6677
+    },
+    {
+      "name": "chunks/index.js",
+      "bytes": 61215,
+      "gzipBytes": 20965
     },
     {
       "name": "chunks/it.js",
-      "bytes": 17571,
-      "gzipBytes": 6709
+      "bytes": 16725,
+      "gzipBytes": 6443
     },
     {
       "name": "chunks/nl.js",
-      "bytes": 17250,
-      "gzipBytes": 6714
+      "bytes": 16398,
+      "gzipBytes": 6459
     },
     {
       "name": "chunks/pl.js",
-      "bytes": 17500,
-      "gzipBytes": 7124
+      "bytes": 16693,
+      "gzipBytes": 6852
     },
     {
       "name": "chunks/ro.js",
-      "bytes": 17539,
-      "gzipBytes": 6838
+      "bytes": 16687,
+      "gzipBytes": 6562
     },
     {
       "name": "chunks/trust.js",
-      "bytes": 914,
-      "gzipBytes": 513
-    },
-    {
-      "name": "chunks/tsl-load.js",
-      "bytes": 3110,
-      "gzipBytes": 1616
+      "bytes": 299,
+      "gzipBytes": 260
     },
     {
       "name": "chunks/xmldsig.js",
-      "bytes": 210,
-      "gzipBytes": 185
+      "bytes": 9288,
+      "gzipBytes": 3646
     },
     {
       "name": "deliverables.js",
-      "bytes": 1560,
-      "gzipBytes": 800
+      "bytes": 1755,
+      "gzipBytes": 873
     },
     {
       "name": "eval.js",
-      "bytes": 7518,
-      "gzipBytes": 3111
+      "bytes": 7474,
+      "gzipBytes": 3087
     }
   ]
 }
