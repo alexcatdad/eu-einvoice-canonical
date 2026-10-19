@@ -6,7 +6,7 @@ FROM oven/bun:1.4.3-slim
 
 WORKDIR /app
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile --production --ignore-scripts
+RUN bun install --frozen-lockfile --production --omit peer --ignore-scripts
 
 COPY src ./src
 COPY schemas ./schemas

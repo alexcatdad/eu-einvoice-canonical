@@ -6,7 +6,7 @@
 [![License: 0BSD](https://img.shields.io/badge/license-0BSD-blue)](LICENSE)
 [![Pages](https://img.shields.io/badge/demo-GitHub%20Pages-blue)](https://alexcatdad.github.io/eu-einvoice-canonical/)
 
-[Contributing](CONTRIBUTING.md) | [Code of Conduct](CODE_OF_CONDUCT.md) | [Security](SECURITY.md) | [Changelog](CHANGELOG.md)
+[Contributing](CONTRIBUTING.md) | [Code of Conduct](CODE_OF_CONDUCT.md) | [Security](SECURITY.md) | [Changelog](CHANGELOG.md) | [Migrating to v2](docs/MIGRATION-V2.md)
 
 One TypeScript model for every XML e-invoice you can receive from the 27 EU member states, plus the layer that gets you from a received file to "this is format X, version Y": unwrapping (PDF/A-3, `.p7m`, ZIP, SBDH, SOAP, legacy encodings), detection, and parsing into canonical JSON.
 
@@ -96,20 +96,15 @@ Parsers get this from `Ctx` in `src/parsers/context.ts`: construct it with `new 
 einvoice detect  <file...>                 format id, version and profile per document (tab separated)
 einvoice inspect <file...>                 the unwrap and detect result as JSON
 einvoice convert <file...> [--out <dir>]   canonical JSON array on stdout, or one <invoice-id>.json per invoice in <dir>
-einvoice export  <file...> --format sie|journal|csv [--accounts mapping.json] [--out <file>]   bookkeeping entries
 einvoice render  --as html|pdf <file...> [--lang en|de|fr|it|es|nl|pl|ro] [--out <file|dir>]   human-readable invoice
 einvoice write   <file...> --to ubl|cii [--profile peppol-bis3|xrechnung|en16931] [--out <dir>]   write canonical JSON (or any invoice file) as UBL 2.1 or CII D16B
 einvoice sweep   <dir...> [--expect answers.json]   detection coverage / known-answer check
-einvoice trust-lists update [--out <snapshot.json>] [--lotl-signer <cert.pem>]   fetch and verify the EU trusted lists
-einvoice match   --po <order.json|order.xml>... [--receipts r.json] [--tolerance '<json>'] <invoice...>   match to purchase orders
-einvoice duplicates <dir...> [--window days] [--index index.json] [--json]   duplicate and re-sent invoices; exit 9 if found
 einvoice serve   [--port 8080] [--host 127.0.0.1] [--cors[=<origin>]] [--eu-trust[=<snapshot.json>]]   the conversion API, see below
 ```
 
 `convert --eu-trust[=<snapshot.json>]` checks signers against a trusted-list snapshot (see [EU trusted lists](#eu-trusted-lists)).
 
 Flags: `--pretty` indents JSON; `--quiet` silences notes and warnings (errors are still printed); `--limits '{"maxEntries":10}'` overrides `UnwrapLimits`; `--validate` is accepted by `convert` and is a no-op with a message until the validation module lands.
-`duplicates` converts every file under the directories and groups repeats in four levels: identical payload (same XML in another wrapper), same seller + number + date, same seller + number with a different date or amount, and likely duplicates (same seller and amount, dates within `--window` days, similar lines, different number). Numbers are normalised (case, separators, leading zeros) and the evidence lists every step; credit notes that cite an invoice in BG-3 are paired with it, not flagged. `--index` keeps the index in a JSON file so later runs only add new files. The same logic is exported as `DuplicateIndex`.
 
 JSON goes to stdout only; every error is one line on stderr.
 
@@ -123,14 +118,14 @@ JSON goes to stdout only; every error is one line on stderr.
 | 5 | partially converted (some documents failed) |
 | 6 | validator unavailable |
 | 7 | internal error (including unreadable files) |
-| 8 | `match` verdict is `needs-review` |
-| 9 | `duplicates` found at least one duplicate group |
 
 With several failures and no success the code of the first failure is used; with at least one success it is 5.
 
 ## MCP server for AI agents
 
-`einvoice mcp` runs a [Model Context Protocol](https://modelcontextprotocol.io) server on stdio, so an AI agent can read and check e-invoices with the same code as the CLI.
+MCP consumers need the optional peers `@modelcontextprotocol/sdk@1.32.1` and `zod@4.6.7`; the repository development install includes both.
+
+The optional `eu-einvoice-canonical/mcp` entry point and `einvoice mcp` run a [Model Context Protocol](https://modelcontextprotocol.io) server on stdio, so an AI agent can read and check e-invoices with the same code as the CLI.
 
 | Tool | What it does |
 |---|---|
@@ -138,8 +133,6 @@ With several failures and no success the code of the first failure is used; with
 | `convert_invoice` | Canonical JSON, optionally with validation, line relations and provenance |
 | `validate_invoice` | Parse, schema, EN 16931, profile and signature results with every finding |
 | `explain_finding` | Plain-language explanation of a totals rule (BR-CO-10 to BR-CO-16) |
-| `check_duplicates` | Duplicate and re-sent invoices across files |
-| `match_purchase_order` | Two- or three-way match against purchase orders |
 | `list_formats` | The format registry |
 
 Resources: `einvoice://formats` and the JSON Schemas (`einvoice://schemas/canonical-invoice.v1`, `einvoice://schemas/convert-result.v1`).
@@ -161,47 +154,29 @@ Claude Desktop (`claude_desktop_config.json`) or Claude Code (`.mcp.json`):
 
 ## EU trusted lists
 
-Opt-in. `loadTrustLists()` fetches the EU List of Trusted Lists (LOTL) and the national lists (ETSI TS 119 612), accepts a list only if its own XML signature verifies (the LOTL against pinned signer certificates, each national list against the certificates the LOTL publishes for it), and keeps the qualified CA/QC services with their certificates and dated status history. The result is a snapshot with its fetch date; `trust/eu-trust-snapshot.json` is one, refreshed weekly by a workflow that opens a pull request.
+Verification is opt-in and works offline with a supplied snapshot. Snapshot acquisition is a separate maintenance operation: `loadTrustLists()` from `eu-einvoice-canonical/trust-lists` fetches the EU List of Trusted Lists (LOTL) and the national lists (ETSI TS 119 612), accepts a list only if its own XML signature verifies (the LOTL against pinned signer certificates, each national list against the certificates the LOTL publishes for it), and keeps the qualified CA/QC services with their certificates and dated status history. The result is a snapshot with its fetch date; `trust/eu-trust-snapshot.json` is one, refreshed weekly by a workflow that opens a pull request.
 
 ```ts
-const euTrust = await loadTrustLists(); // or parseSnapshot(fileText)
+import { convert, parseSnapshot } from 'eu-einvoice-canonical';
+
+const euTrust = parseSnapshot(fileText); // a previously acquired, reproducible snapshot
 const result = await convert(bytes, 'invoice.xml', undefined, { euTrust });
 result.outcomes[0].invoices[0].source.signatures[0].euTrust;
 // { qualified: true, status: 'qualified', service: { name, provider, territory, statusAtSigning, currentStatus }, snapshot: { fetchedAt, nextUpdate, stale } }
 ```
 
+Refresh snapshots separately from conversion with `einvoice-trust-lists update --out snapshot.json`, or call `loadTrustLists()` from the maintenance entry point. Conversion never refreshes a snapshot.
+
 `qualified` means the signer chains to a CA/QC service whose status was granted at the signing time (a service withdrawn later still counts, one withdrawn before does not); `snapshot.stale` says the snapshot is older than its next-update date. `trustAnchorsFromSnapshot(snapshot, at?)` gives the service certificates as `trustAnchors` if you only want the chain check. The LOTL signer is pinned from `lotlSigners`, else from the `previous` snapshot, else trusted on first use (the snapshot says which, and the first update prints a note): pass the certificate from the Official Journal to pin it. Revocation of the signer's own certificate (CRL/OCSP) is not checked.
 
-In the browser page the check is a checkbox and loads lazily. The national servers mostly do not allow browser access (CORS), so the page falls back to the snapshot published with the site and says so.
-
-## Matching invoices to purchase orders
-
-`src/matching/` matches the lines of a canonical invoice to purchase orders (two-way) and, with goods receipts, to what was received (three-way). Orders come from a small JSON model (`PurchaseOrder`: `id`, `currency`, `lines[]` with `id`, `description`, `sellerItemId`, `buyerItemId`, `standardItemId`, `quantity`, `unit`, `unitPrice`, `baseQuantity`, `vat`, and `invoicedQuantity` for what earlier invoices already billed) or from a UBL 2.1 Order / Peppol BIS Order 3 XML (`parseOrder`). Receipts are `[{ "poId": "PO-1", "lines": [{ "lineId": "1", "quantity": "6" }] }]`.
-
-Per invoice line, in this order: order-line reference (BT-132, within the order named by BT-13 or by the line itself, as Svefaktura's `BuyersID`), item identifiers (seller, buyer, standard/GTIN), line relations (a markup or discount follows the lines it applies to; text-only lines are ignored), and description similarity as a last resort. Each match carries its `method`, `confidence` and variances (quantity, unit price, line total, VAT) against the tolerances you set (`{ "unitPrice": { "percent": "2" }, "quantity": { "absolute": "1" } }`; a limit given as both absolute and percent must hold in both; no tolerance means zero). The result also lists unmatched invoice lines, over-invoiced order lines and, with receipts, order lines not yet received, and a verdict: `match`, `within-tolerance` or `needs-review`. Description-only and low-confidence matches always need review. Fewer units than expected is partial invoicing, not a variance error. A credit note is held against what has been invoiced, at the order price.
-
-```ts
-import { convert, matching } from 'eu-einvoice-canonical';
-const r = await convert(bytes, 'inv.xml', undefined, { relations: true });
-const result = matching.matchInvoice(invoice, [matching.parseOrder(orderXml)], { tolerances: { unitPrice: { percent: '2' } } });
-```
-
-## Bookkeeping export
-
-`src/export/` turns a received invoice into a balanced journal entry (`buildJournalEntry(invoice, mapping)`), and the entry into a SIE 4 file (type 4I, CP437, `#VER`/`#TRANS`), JSON or CSV.
-
-- The caller supplies an `AccountMapping`: accounts payable, input VAT (one account or per rate), expense accounts by rule (line id, VAT category and rate, seller, item classification; first match wins, with a default) and one account each for reverse-charge VAT, withholding (per scheme), split-payment VAT, rounding, prepaid amounts, other taxes and KSeF settlement differences. `--accounts mapping.json` takes the same shape; without it the CLI and the site use `BAS_EXAMPLE_MAPPING`, an **example** onto the Swedish BAS chart (2440 payable, 2641 input VAT, 4010 / 5410 / 6xxx expenses) that is a demonstration and not advice on how to book anything.
-- Accounts payable is credited with `totals.payable`. Credit notes reverse every posting through `effectiveSign()` (a credit note that keeps negative source amounts, like Finvoice INV02, is not reversed twice). Reverse charge (AE) books input and output VAT; the invoice states no VAT, so the rate comes from the invoice if it gives one and otherwise from `reverseCharge.rate` in the mapping, and a note records it. Corrections whose lines are before/after pairs (KSeF KOR) are booked per VAT category from the stated differences.
-- The builder never invents a value and never emits an unbalanced entry: when the invoice's own totals disagree with its lines, or an account the invoice needs is missing from the mapping, it throws a `JournalError` that names the amounts or the missing account. `roundingTolerance` books a stated small residual to the rounding account instead.
-- SIE amounts are in the ledger currency (`--currency`, default SEK); an invoice in another currency is refused, no exchange rate is applied. Exports are byte-compared with `test/export/expected/*.se` in the tests.
-- The demo site has a "Download journal entry" button that exports the shown invoice as SIE with the example mapping.
+In the browser page the check is a checkbox that lazily loads the snapshot published with the site. The page never acquires or updates national trust lists.
 
 ## Human-readable rendering
 
-`renderHtml(invoice, { lang?, standalone? })`, `renderPdf(invoice, { lang? })` and the React component `<Invoice>` turn a canonical invoice into something a person can read, print or archive. All three draw from one view model (`buildInvoiceView` in `src/render/model.ts`), so they show the same things: a header with the document type, number, key dates and the amount due; seller and buyer with postal addresses and labelled identifiers; references; the lines; allowances and charges; the VAT breakdown; the totals; payment instructions; notes; and attachments listed by name.
+The optional `eu-einvoice-canonical/render` entry point exports `renderHtml(invoice, { lang?, standalone? })` and `renderPdf(invoice, { lang? })`. Together with `<Invoice>` from `eu-einvoice-canonical/react`, they turn a canonical invoice into something a person can read, print or archive. All three draw from one view model (`buildInvoiceView` in `src/render/model.ts`), so they show the same things: a header with the document type, number, key dates and the amount due; seller and buyer with postal addresses and labelled identifiers; references; the lines; allowances and charges; the VAT breakdown; the totals; payment instructions; notes; and attachments listed by name.
 
 ```ts
-import { convert, renderHtml, renderPdf } from 'eu-einvoice-canonical';
+import { renderHtml, renderPdf } from 'eu-einvoice-canonical/render';
 
 const html = renderHtml(invoice, { lang: 'de' });   // a complete HTML document (string)
 const fragment = renderHtml(invoice, { standalone: false }); // just <style> + <article>, to embed
@@ -228,7 +203,7 @@ einvoice render --as pdf  a.xml b.xml --out out/        # one <invoice-id>.pdf p
 
 - **HTML** is self-contained: inline CSS, print styles (the standalone page prints on A4 with 15 mm margins), no scripts, no links, no images and no external resources, and the standalone page carries a Content-Security-Policy (`default-src 'none'`) on top. It uses landmarks, labelled sections and `<th scope>` so screen readers can navigate it. Invoices are untrusted input: every value is escaped (ampersand, angle brackets, both quote characters and backtick; control characters dropped), attachments are listed by name only (never decoded or linked) and external URIs appear as plain text. `test/render.test.ts` injects `<script>` and attribute-breaking strings into every text field and checks that only the renderer's own tags and attributes come out.
 - **PDF** is built with pdf-lib and the standard Helvetica fonts (nothing embedded), with amounts written with the currency code. Text wraps, long line lists continue on further pages with the table header repeated, and each page says "Page x of y". Output is deterministic (the PDF dates come from the invoice issue date). The standard fonts only cover the WinAnsi (Western European) character set: accented letters outside it lose the accent (`ș` as `s`, `ł` as `l`), and other characters, such as Cyrillic, Greek or CJK, are drawn as `?` in the PDF but are intact in the HTML.
-- The demo site still builds its own sheet; it does not use these renderers.
+- The browser converter loads the shared HTML renderer only when displaying an invoice.
 
 ### React component
 
@@ -264,10 +239,10 @@ The result is an A4-like sheet: the title and document number on the left with t
 
 ## Writing UBL and CII
 
-The inverse of the parsers: a canonical invoice becomes a Peppol BIS Billing 3.0 UBL 2.1 document (`Invoice`, or `CreditNote` for `kind: 'creditNote'`) or an EN 16931 CII D16B `CrossIndustryInvoice`.
+The optional `eu-einvoice-canonical/writers` entry point is the inverse of the parsers: a canonical invoice becomes a Peppol BIS Billing 3.0 UBL 2.1 document (`Invoice`, or `CreditNote` for `kind: 'creditNote'`) or an EN 16931 CII D16B `CrossIndustryInvoice`.
 
 ```ts
-import { toCii, toUbl } from 'eu-einvoice-canonical';
+import { toCii, toUbl } from 'eu-einvoice-canonical/writers';
 
 const ubl = toUbl(invoice);                          // string; keeps an EN 16931 based specification id, else Peppol BIS 3
 const xr = toUbl(invoice, { profile: 'xrechnung' }); // or 'peppol-bis3' | 'en16931': stamps BT-24 and BT-23
@@ -392,6 +367,8 @@ What the project publishes, all from the same TypeScript sources and listed on t
 | HTTP API | `openapi/openapi.yaml` (and `.json`), `einvoice serve`, the Dockerfile | `/v1` path prefix; the spec carries its own `info.version` |
 | Command line | `einvoice` binaries on each [GitHub release](https://github.com/alexcatdad/eu-einvoice-canonical/releases/latest) | package semver |
 | Browser converter, conformance checklist, corpus results | the Pages site | built from `main` |
+
+Version 2 removes downstream bookkeeping, purchase-order matching and duplicate detection, and moves optional rendering, XML writers and trust-list maintenance to separate entry points. See [Migrating to v2](docs/MIGRATION-V2.md). Canonical JSON schemas and HTTP responses remain on `v1`.
 
 **Compatibility promise.** The JSON Schema major version and the API prefix move together: `v1` stays compatible for as long as it is published.
 

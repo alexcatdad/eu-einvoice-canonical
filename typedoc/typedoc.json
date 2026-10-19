@@ -1,6 +1,14 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "entryPoints": ["../src/index.ts", "../src/server.ts", "../src/problems.ts"],
+  "entryPoints": [
+    "../src/index.ts",
+    "../src/render/index.ts",
+    "../src/writers/index.ts",
+    "../src/server.ts",
+    "../src/problems.ts",
+    "../src/mcp/server.ts",
+    "../src/signature/trust-lists.ts"
+  ],
   "tsconfig": "./tsconfig.json",
   "out": "../dist/api",
   "name": "eu-einvoice-canonical",

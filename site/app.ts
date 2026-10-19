@@ -2,25 +2,19 @@
 
 import {
   applyModelLabels,
-  BAS_EXAMPLE_MAPPING,
-  buildJournalEntry,
   type CanonicalInvoice,
   type ConvertOutcome,
   type ConvertResult,
   convert,
   FORMATS,
   type FormatDef,
-  JournalError,
   type Line,
   type LineRelation,
   type LineRole,
   type SignatureInfo,
   type TrustSnapshot,
-  toCii,
-  toSie4,
-  toUbl,
-  WriterError,
 } from '../src/index.js';
+import { toCii, toUbl, WriterError } from '../src/writers/index.js';
 import { shortName } from './coverage.js';
 import { currentLang, esc, initLanguage, initSwitcher, onLanguageChange, t } from './i18n.js';
 import { ENGINES, type EngineSpec, geminiNanoAvailability, loadEngine } from './model.js';
@@ -194,11 +188,11 @@ euBox.addEventListener('change', async () => {
       const ok = site.snapshot.lists.filter((l) => l.status === 'loaded').length;
       trustStatus = () =>
         t('trust.status', {
-          source: t(site.source === 'live' ? 'trust.live' : 'trust.published'),
+          source: t('trust.published'),
           date: site.snapshot.fetchedAt.slice(0, 10),
           ok,
           total: site.snapshot.lists.length,
-        }) + (site.note ? ` ${site.note}.` : '');
+        });
       euStatus.textContent = trustStatus();
     } catch (e) {
       euBox.checked = false;
@@ -600,7 +594,7 @@ async function fillInvoice(inv: CanonicalInvoice) {
   const host = document.querySelector<HTMLElement>('#invoice-host');
   if (!host) return;
   try {
-    const { renderHtml } = await import('../src/render/html.js');
+    const { renderHtml } = await import('../src/render/index.js');
     if (host.isConnected) host.innerHTML = renderHtml(inv, { lang: currentLang(), standalone: false });
     // Wide tables scroll inside their own box instead of widening the page.
     for (const table of host.querySelectorAll('table')) {
@@ -710,8 +704,7 @@ function jsonPanel(item: Item): string {
     : `<button type="button" data-view="full" aria-pressed="true">${esc(t('json.viewDetection'))}</button>`;
   return `<div class="json-panel">
     <div class="json-bar"><div class="views">${views}</div>
-      <div class="actions"><button type="button" class="btn secondary" data-act="copy">${esc(t('json.copy'))}</button><button type="button" class="btn" data-act="download">${esc(t('json.download'))}</button>${item.invoice ? `<button type="button" class="btn ghost" data-act="journal">${esc(t('json.journal'))}</button><button type="button" class="btn ghost" data-act="write-ubl">${esc(t('json.writeUbl'))}</button><button type="button" class="btn ghost" data-act="write-cii">${esc(t('json.writeCii'))}</button>` : ''}</div></div>
-    ${item.invoice ? `<p class="journal-note">${t('json.journalNote')}</p>` : ''}
+      <div class="actions"><button type="button" class="btn secondary" data-act="copy">${esc(t('json.copy'))}</button><button type="button" class="btn" data-act="download">${esc(t('json.download'))}</button>${item.invoice ? `<button type="button" class="btn ghost" data-act="write-ubl">${esc(t('json.writeUbl'))}</button><button type="button" class="btn ghost" data-act="write-cii">${esc(t('json.writeCii'))}</button>` : ''}</div></div>
     <pre class="json" tabindex="0" role="group" aria-label="${esc(t('json.output'))}"></pre>
   </div>`;
 }
@@ -769,22 +762,6 @@ function wireJson(item: Item, result: ConvertResult) {
       }
     });
   }
-  resultEl.querySelector<HTMLButtonElement>('[data-act="journal"]')?.addEventListener('click', () => {
-    const inv = item.invoice;
-    if (!inv) return;
-    try {
-      const sie = toSie4([buildJournalEntry(inv, BAS_EXAMPLE_MAPPING)], { currency: inv.currency });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([sie.bytes as BlobPart], { type: 'application/octet-stream' }));
-      a.download = `${inv.id.replace(/[^\w.-]+/g, '_')}.se`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-      toast(t('toast.journal'));
-    } catch (e) {
-      if (!(e instanceof JournalError)) throw e;
-      showNotice(t('notice.noJournalTitle'), e.message);
-    }
-  });
 }
 
 /** Long base64 attachments are shortened on screen only; Copy and Download keep them whole. */

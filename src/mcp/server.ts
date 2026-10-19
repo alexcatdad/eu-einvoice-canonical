@@ -1,5 +1,5 @@
 /**
- * Model Context Protocol server: lets AI agents detect, convert, validate and compare e-invoices.
+ * Model Context Protocol server: lets AI agents detect, convert and validate e-invoices.
  *
  * Safety:
  * - Invoice content is untrusted data. Every tool description says so, and nothing in an invoice can
@@ -13,16 +13,8 @@ import { readFileSync, realpathSync } from 'node:fs';
 import { isAbsolute, resolve, sep } from 'node:path';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import {
-  type CanonicalInvoice,
-  type ConvertResult,
-  convert,
-  DEFAULT_LIMITS,
-  FORMATS,
-  findDuplicates,
-  inspect,
-  matching,
-} from '../index.js';
+import pkg from '../../package.json' with { type: 'json' };
+import { type CanonicalInvoice, type ConvertResult, convert, DEFAULT_LIMITS, FORMATS, inspect } from '../index.js';
 
 export interface McpServerOptions {
   /** Directories whose files the tools may read. Empty means inline input only. */
@@ -47,7 +39,7 @@ const invoiceInput = {
 export function createMcpServer(options: McpServerOptions): McpServer {
   const allowed = options.allowDirs.map((d) => realpathSync(resolve(d)));
   const maxChars = options.maxOutputChars ?? 200_000;
-  const server = new McpServer({ name: 'eu-einvoice-canonical', version: '1.2.0' });
+  const server = new McpServer({ name: pkg.name, version: pkg.version });
 
   const readInput = (a: { file?: string; base64?: string; xml?: string; filename?: string }): { bytes: Uint8Array; name?: string } => {
     const given = [a.file, a.base64, a.xml].filter((v) => v !== undefined).length;
@@ -192,49 +184,6 @@ export function createMcpServer(options: McpServerOptions): McpServer {
         text ?? `No built-in explanation for ${ruleId}. The finding's own message comes from the official Schematron and states the rule.`,
         { ruleId, explanation: text ?? null },
       );
-    }),
-  );
-
-  server.registerTool(
-    'check_duplicates',
-    {
-      description: `Find duplicate and re-sent invoices across several files (same payload, same seller and number, or likely duplicates). ${UNTRUSTED}`,
-      inputSchema: {
-        files: z.array(z.string()).min(2).describe('Absolute paths inside the allowed directories.'),
-        windowDays: z.number().int().min(0).optional(),
-      },
-    },
-    guarded(async ({ files, windowDays }) => {
-      const invoices: CanonicalInvoice[] = [];
-      for (const f of files) invoices.push(...invoicesOf(await convert(readAllowed(f), f)));
-      const groups = findDuplicates(invoices, { windowDays });
-      return result(`${invoices.length} invoices, ${groups.length} duplicate group(s).`, groups);
-    }),
-  );
-
-  server.registerTool(
-    'match_purchase_order',
-    {
-      description: `Match an invoice's lines to purchase orders (two-way, or three-way with receipts). ${UNTRUSTED}`,
-      inputSchema: {
-        ...invoiceInput,
-        purchaseOrders: z
-          .array(z.string())
-          .min(1)
-          .describe('Absolute paths to purchase orders: UBL/Peppol Order XML or the PO JSON format.'),
-        receipts: z.string().optional().describe('Absolute path to a receipts JSON file.'),
-      },
-    },
-    guarded(async (a) => {
-      const orders = a.purchaseOrders.flatMap((f) => {
-        const bytes = readAllowed(f);
-        const text = new TextDecoder().decode(bytes).replace(/^﻿/, '');
-        return matching.isOrderXml(text) ? [matching.parseOrder(bytes)] : matching.parsePurchaseOrdersJson(text);
-      });
-      const receipts = a.receipts ? matching.parseReceiptsJson(new TextDecoder().decode(readAllowed(a.receipts))) : undefined;
-      const r = await convertTool({ ...a, relations: true });
-      const results = invoicesOf(r).map((inv) => ({ id: inv.id, ...matching.matchInvoice(inv, orders, { receipts }) }));
-      return result(results.map((x) => `${x.id}: ${x.verdict}`).join('\n') || summarise(r), results);
     }),
   );
 

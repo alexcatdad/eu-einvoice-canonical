@@ -10,7 +10,7 @@
  * entry point imports React, never the main one.
  */
 
-export type { CanonicalInvoice } from '../canonical.js';
+export type { CanonicalInvoice } from '../index.js';
 export { RENDER_LANGUAGES, type RenderLanguage } from '../render/labels.js';
 export { buildInvoiceView, type InvoiceView } from '../render/model.js';
 export {

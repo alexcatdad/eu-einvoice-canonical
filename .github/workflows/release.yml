@@ -32,8 +32,13 @@ jobs:
           bun build --compile --target=bun-linux-x64 src/cli.ts --outfile dist/release/einvoice-linux-x64
           bun build --compile --target=bun-darwin-arm64 src/cli.ts --outfile dist/release/einvoice-darwin-arm64
           bun build --compile --target=bun-windows-x64 src/cli.ts --outfile dist/release/einvoice-windows-x64.exe
-      - name: Smoke-test the Linux binary
-        run: dist/release/einvoice-linux-x64 detect test/fixtures/peppol-bis3-invoice.xml
+          bun build --compile --target=bun-linux-x64 src/trust-lists-cli.ts --outfile dist/release/einvoice-trust-lists-linux-x64
+          bun build --compile --target=bun-darwin-arm64 src/trust-lists-cli.ts --outfile dist/release/einvoice-trust-lists-darwin-arm64
+          bun build --compile --target=bun-windows-x64 src/trust-lists-cli.ts --outfile dist/release/einvoice-trust-lists-windows-x64.exe
+      - name: Smoke-test the Linux binaries
+        run: |
+          dist/release/einvoice-linux-x64 detect test/fixtures/peppol-bis3-invoice.xml
+          dist/release/einvoice-trust-lists-linux-x64 --help
       - name: SBOM (CycloneDX JSON)
         uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:

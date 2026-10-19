@@ -14,9 +14,7 @@ export * from './canonical.js';
 export { checkTotals, type Finding } from './checks.js';
 export * from './codes.js';
 export { type Detection, detectXml } from './detect.js';
-export * from './duplicates/index.js';
 export { DEFAULT_LIMITS, decodeXml, type Skipped, type UnwrapLimits, type UnwrapOptions, unwrap, type XmlPayload } from './envelope.js';
-export * from './export/index.js';
 export {
   describeFormats,
   FORMATS,
@@ -27,7 +25,7 @@ export {
   type FormatStatus,
   type ParserFamily,
 } from './formats.js';
-export * as matching from './matching/index.js';
+export { CREDIT_TYPE_CODES } from './parsers/context.js';
 export { IMPLEMENTED_FAMILIES, NotImplementedError, ParseError } from './parsers/index.js';
 export {
   applyModelLabels,
@@ -40,12 +38,7 @@ export {
   parseModelOutput,
 } from './relations/model.js';
 export { analyseLines, applyRelations, isDescriptor, type LineAnalysis, percentagesIn } from './relations/rules.js';
-export { escapeHtml, type RenderHtmlOptions, renderHtml } from './render/html.js';
-export { type RenderPdfOptions, renderPdf } from './render/pdf.js';
 export {
-  LOTL_URL,
-  type LoadOptions,
-  loadTrustLists,
   parseSnapshot,
   signatureStatus,
   type TrustAnchor,
@@ -56,9 +49,6 @@ export {
 } from './signature/index.js';
 export type { ValidateOptions } from './validation/index.js';
 export * as values from './values.js';
-export { type CiiOptions, toCii } from './writers/cii.js';
-export { WriterError, type WriterProfile } from './writers/shared.js';
-export { toUbl, type UblOptions } from './writers/ubl.js';
 
 /**
  * Major version of the published JSON Schemas (`schemas/*.v1.schema.json`). Additive changes to the model keep it;

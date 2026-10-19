@@ -5,7 +5,6 @@
     "": {
       "name": "eu-einvoice",
       "dependencies": {
-        "@modelcontextprotocol/sdk": "1.32.1",
         "@xmldom/xmldom": "^0.9.12",
         "asn1js": "^3.0.10",
         "fflate": "^0.8.3",
@@ -14,10 +13,10 @@
         "saxes": "^6.0.0",
         "saxon-js": "2.7.0",
         "xmllint-wasm": "5.3.0",
-        "zod": "4.6.7",
       },
       "devDependencies": {
         "@biomejs/biome": "2.5.15",
+        "@modelcontextprotocol/sdk": "1.32.1",
         "@seriousme/openapi-schema-validator": "^2.11.0",
         "@types/bun": "^1.4.3",
         "@types/node": "^26.6.5",
@@ -32,14 +31,19 @@
         "ts-json-schema-generator": "^2.9.0",
         "typescript": "^7.0.2",
         "xslt3": "2.7.0",
+        "zod": "4.6.7",
       },
       "peerDependencies": {
+        "@modelcontextprotocol/sdk": "1.32.1",
         "react": ">=18.0.0",
         "react-dom": ">=18.0.0",
+        "zod": "4.6.7",
       },
       "optionalPeers": [
+        "@modelcontextprotocol/sdk",
         "react",
         "react-dom",
+        "zod",
       ],
     },
   },

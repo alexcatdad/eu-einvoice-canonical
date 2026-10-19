@@ -21,8 +21,11 @@ import type {
   Period,
   Seller,
   VatBreakdown,
-} from '../canonical.js';
-import { sum } from '../values.js';
+} from '../index.js';
+import { values } from '../index.js';
+
+const { sum } = values;
+
 import {
   type Attrs,
   type Child,

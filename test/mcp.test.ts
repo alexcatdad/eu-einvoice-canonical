@@ -9,9 +9,7 @@ import { fixture, fixturePath } from './helpers.js';
 
 const allowed = mkdtempSync(join(tmpdir(), 'einvoice-mcp-'));
 const invoicePath = join(allowed, 'invoice.xml');
-const copyPath = join(allowed, 'copy.xml');
 writeFileSync(invoicePath, fixture('peppol-bis3-invoice.xml'));
-writeFileSync(copyPath, fixture('peppol-bis3-invoice.xml'));
 
 const client = new Client({ name: 'test', version: '1.0.0' });
 type Content = { type: string; text: string }[];
@@ -33,15 +31,7 @@ describe('MCP server', () => {
   test('lists every tool, each saying invoice content is untrusted where it reads invoices', async () => {
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name).sort();
-    expect(names).toEqual([
-      'check_duplicates',
-      'convert_invoice',
-      'detect_invoice_format',
-      'explain_finding',
-      'list_formats',
-      'match_purchase_order',
-      'validate_invoice',
-    ]);
+    expect(names).toEqual(['convert_invoice', 'detect_invoice_format', 'explain_finding', 'list_formats', 'validate_invoice']);
     for (const t of tools.filter((t) => !['list_formats', 'explain_finding'].includes(t.name)))
       expect(t.description).toContain('untrusted');
   });
@@ -80,12 +70,6 @@ describe('MCP server', () => {
     const r = await call('detect_invoice_format', { base64: Buffer.from(fixture('anaf-download.zip')).toString('base64') });
     expect(r.data.documents[0].format).toBe('cius-ro');
     expect(r.data.documents[0].envelope).toEqual(['zip', 'xml']);
-  });
-
-  test('check_duplicates finds the copy', async () => {
-    const r = await call('check_duplicates', { files: [invoicePath, copyPath] });
-    expect(r.isError).toBe(false);
-    expect(r.data.length).toBeGreaterThan(0);
   });
 
   test('explain_finding knows the totals rules', async () => {
