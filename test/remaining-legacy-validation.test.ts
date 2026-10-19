@@ -257,23 +257,24 @@ for (const [kind, transaction] of [
   ['invoice', '10'],
   ['creditnote', '14'],
 ] as const) {
-  test(`BIS2 ${kind} MIME membership preserves first, common and last codes and rejects nonmembers`, async () => {
-    const xml = await fixture(`peppol-bis2-${kind}`);
-    const withMime = (code: string) =>
-      xml.replace(
+  for (const [code, semantic] of [
+    ['application/activemessage', 'passed'],
+    ['application/pdf', 'passed'],
+    ['video/vnd.vivo', 'passed'],
+    ['application/x-synthetic-invalid-mime', 'failed'],
+  ] as const) {
+    test(`BIS2 ${kind} MIME membership: ${code}`, async () => {
+      const xml = (await fixture(`peppol-bis2-${kind}`)).replace(
         '<cac:AccountingSupplierParty>',
         `<cac:AdditionalDocumentReference><cbc:ID>SYNTHETIC-MIME</cbc:ID><cac:Attachment><cbc:EmbeddedDocumentBinaryObject mimeCode="${code}" filename="synthetic.bin">U3ludGhldGlj</cbc:EmbeddedDocumentBinaryObject></cac:Attachment></cac:AdditionalDocumentReference><cac:AccountingSupplierParty>`,
       );
-    for (const code of ['application/activemessage', 'application/pdf', 'video/vnd.vivo']) {
-      const result = await validateSource({ xml: withMime(code) });
+      const result = await validateSource({ xml });
       expect(result.schema).toBe('passed');
-      expect(result.semantic).toBe('passed');
-    }
-    const invalid = await validateSource({ xml: withMime('application/x-synthetic-invalid-mime') });
-    expect(invalid.schema).toBe('passed');
-    expect(invalid.semantic).toBe('failed');
-    expect(invalid.findings.some((f) => f.ruleId === `CL-T${transaction}-R008` && f.severity === 'fatal')).toBe(true);
-  });
+      expect(result.semantic).toBe(semantic);
+      if (semantic === 'failed')
+        expect(result.findings.some((f) => f.ruleId === `CL-T${transaction}-R008` && f.severity === 'fatal')).toBe(true);
+    });
+  }
 }
 
 for (const [kind, transaction] of [
