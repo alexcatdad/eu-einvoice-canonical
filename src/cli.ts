@@ -4,39 +4,21 @@
  * See the README ("Command line") for commands, flags and exit codes.
  */
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
-import { runDuplicates } from './duplicates/run.js';
+import { join, resolve } from 'node:path';
 import {
-  BAS_EXAMPLE_MAPPING,
-  buildJournalEntry,
   type CanonicalInvoice,
   convert,
   DEFAULT_LIMITS,
   type Detection,
   inspect,
-  type JournalEntry,
-  JournalError,
-  journalToCsv,
-  journalToJson,
-  parseAccountMapping,
-  renderHtml,
-  renderPdf,
-  toCii,
-  toSie4,
-  toUbl,
   type UnwrapLimits,
   type ValidateOptions,
   validationPassed,
-  WriterError,
-  type WriterProfile,
 } from './index.js';
-import { isOrderXml, MatchInputError, matchInvoice, parseOrder, parsePurchaseOrdersJson, parseReceiptsJson } from './matching/index.js';
-import type { PurchaseOrder, Tolerances } from './matching/types.js';
-import { startServer } from './server.js';
+import { snapshotPath } from './signature/snapshot-file.js';
 import { parseSnapshot, snapshotNextUpdate, type TrustSnapshot } from './signature/tsl.js';
-import { LotlError, loadTrustLists } from './signature/tsl-load.js';
 import { runSweep } from './sweep.js';
+import type { WriterProfile } from './writers/index.js';
 
 export const EXIT = {
   ok: 0,
@@ -47,8 +29,6 @@ export const EXIT = {
   partial: 5,
   validatorUnavailable: 6,
   internal: 7,
-  needsReview: 8,
-  duplicates: 9,
 } as const;
 
 /** Thrown by a validator that cannot run (missing rules, no network...). Maps to exit code 6. */
@@ -61,7 +41,7 @@ export interface Validator {
 
 export interface IO {
   stdout(text: string): void;
-  /** Raw bytes to stdout (SIE files are CP437, not UTF-8). */
+  /** Raw bytes to stdout (for PDF output). */
   stdoutBytes?(bytes: Uint8Array): void;
   stderr(line: string): void;
   readStdin(): Promise<Uint8Array>;
@@ -72,8 +52,6 @@ export interface Deps {
   validator?: Validator | null;
   /** Source-validation options, including a local bundle source. */
   validation?: ValidateOptions;
-  /** Fetches a trusted list by URL. Default: the global fetch. Tests inject one so nothing touches the network. */
-  fetch?: (url: string) => Promise<Uint8Array>;
   /** Clock for snapshot dates. */
   now?: Date;
   /** Stops `serve` (it otherwise runs until SIGINT or SIGTERM). */
@@ -84,35 +62,23 @@ const USAGE = `Usage:
   einvoice detect  <file...>                 format id, version and profile per document
   einvoice inspect <file...>                 unwrap and detect result as JSON
   einvoice convert <file...> [--out <dir>]   canonical JSON (stdout, or one <invoice-id>.json per invoice in <dir>)
-  einvoice export  <file...> --format sie|journal|csv [--accounts mapping.json] [--out <file>]
-                                             bookkeeping entries for received invoices (SIE 4I, JSON or CSV)
   einvoice render  --as html|pdf <file...> [--lang en|de|fr|it|es|nl|pl|ro] [--locale de-CH] [--out <file|dir>]
                                              human-readable invoice: a self-contained HTML page or an A4 PDF
                                              (stdout for html; pdf needs --out unless stdout is a binary sink)
   einvoice write   <file...> --to ubl|cii [--profile peppol-bis3|xrechnung|en16931] [--out <dir>]
                                              canonical JSON, or any invoice file (converted first), written as Peppol BIS 3 UBL 2.1 or EN 16931 CII D16B
   einvoice sweep   <dir...> [--expect answers.json]
-  einvoice trust-lists update [--out <snapshot.json>] [--lotl-signer <cert.pem>] [--lotl-url <url>]
-                                             fetch the EU trusted lists, verify them and write a snapshot
 
 convert --eu-trust[=<snapshot.json>] checks signers against a trusted-list snapshot (default: $EINVOICE_TRUST_SNAPSHOT,
 ~/.einvoice/eu-trust-snapshot.json, or trust/eu-trust-snapshot.json next to the sources).
-  einvoice match   --po <order.json|order.xml>... [--receipts r.json] [--tolerance '<json>'] <invoice...>
-                                             match invoice lines to purchase orders (two-way; three-way with --receipts)
   einvoice serve   [--port 8080] [--host 127.0.0.1] [--cors[=<origin>]] [--eu-trust[=<snapshot.json>]] [--limits '<json>']
                                              the conversion API (openapi/openapi.yaml): POST /v1/convert, /v1/inspect, /v1/detect
   einvoice mcp [--allow-dir <dir>]...           Model Context Protocol server on stdio, for AI agents; files only
                                              inside the allowed directories
-  einvoice duplicates <dir...> [--window days] [--index index.json] [--json]
-                                             duplicate and re-sent invoices across files; exit 9 if any
-
 A file argument of "-" reads stdin.
-Export flags: --accounts <mapping.json> (default: an example BAS mapping)  --currency <code> (SIE ledger currency, default SEK)
-              --series <id> (SIE series, default LF)  --granularity account|line  --generated YYYY-MM-DD (SIE #GEN date)
---tolerance takes e.g. '{"unitPrice":{"percent":"2"},"quantity":{"absolute":"1"}}' (keys: quantity, unitPrice, total, vat).
 Flags: --pretty  --quiet  --limits '<json>'  --validate  --help
 Exit codes: 0 ok, 1 usage, 2 unsafe/malformed input, 3 unsupported format, 4 validation failed,
-            5 partially converted, 6 validator unavailable, 7 internal error, 8 match needs review, 9 duplicates found.`;
+            5 partially converted, 6 validator unavailable, 7 internal error.`;
 
 class UsageError extends Error {}
 
@@ -123,58 +89,31 @@ interface Parsed {
   quiet: boolean;
   validate: boolean;
   euTrust?: string | true;
-  lotlSigner?: string;
-  lotlUrl?: string;
   out?: string;
   expect?: string;
-  format?: string;
   as?: string;
   lang?: string;
   locale?: string;
   to?: string;
   profile?: string;
-  accounts?: string;
-  currency?: string;
-  series?: string;
-  granularity?: string;
-  generated?: string;
-  index?: string;
-  window?: number;
-  json: boolean;
   port?: number;
   host?: string;
   cors?: string | true;
   limits?: Partial<UnwrapLimits>;
-  po: string[];
-  receipts?: string;
-  tolerance?: Tolerances;
   allowDir: string[];
 }
 
 function parseArgs(argv: string[]): Parsed {
-  const p: Parsed = { command: '', files: [], pretty: false, quiet: false, validate: false, json: false, po: [], allowDir: [] };
+  const p: Parsed = { command: '', files: [], pretty: false, quiet: false, validate: false, allowDir: [] };
   const takesValue = new Set([
     '--out',
     '--expect',
     '--limits',
-    '--lotl-signer',
-    '--lotl-url',
-    '--po',
-    '--receipts',
-    '--tolerance',
-    '--format',
     '--as',
     '--lang',
     '--locale',
     '--to',
     '--profile',
-    '--accounts',
-    '--currency',
-    '--series',
-    '--granularity',
-    '--generated',
-    '--index',
-    '--window',
     '--port',
     '--host',
     '--allow-dir',
@@ -209,20 +148,11 @@ function parseArgs(argv: string[]): Parsed {
       case '--eu-trust':
         p.euTrust = value ?? true;
         break;
-      case '--lotl-signer':
-        p.lotlSigner = value;
-        break;
-      case '--lotl-url':
-        p.lotlUrl = value;
-        break;
       case '--out':
         p.out = value;
         break;
       case '--expect':
         p.expect = value;
-        break;
-      case '--format':
-        p.format = value;
         break;
       case '--as':
         p.as = value;
@@ -239,33 +169,6 @@ function parseArgs(argv: string[]): Parsed {
       case '--profile':
         p.profile = value;
         break;
-      case '--accounts':
-        p.accounts = value;
-        break;
-      case '--currency':
-        p.currency = value;
-        break;
-      case '--series':
-        p.series = value;
-        break;
-      case '--granularity':
-        p.granularity = value;
-        break;
-      case '--generated':
-        p.generated = value;
-        break;
-      case '--index':
-        p.index = value;
-        break;
-      case '--window': {
-        const n = Number(value);
-        if (!Number.isInteger(n) || n < 0) throw new UsageError('--window must be a non-negative whole number of days');
-        p.window = n;
-        break;
-      }
-      case '--json':
-        p.json = true;
-        break;
       case '--cors':
         p.cors = value ?? true;
         break;
@@ -280,15 +183,6 @@ function parseArgs(argv: string[]): Parsed {
       }
       case '--allow-dir':
         p.allowDir.push(value!);
-        break;
-      case '--po':
-        p.po.push(value!);
-        break;
-      case '--receipts':
-        p.receipts = value;
-        break;
-      case '--tolerance':
-        p.tolerance = parseTolerance(value!);
         break;
       case '--limits':
         p.limits = parseLimits(value!);
@@ -317,32 +211,6 @@ function parseLimits(text: string): Partial<UnwrapLimits> {
     if (typeof n !== 'number' || !Number.isFinite(n) || n < 0) throw new UsageError(`--limits: "${k}" must be a non-negative number`);
   }
   return v as Partial<UnwrapLimits>;
-}
-
-function parseTolerance(text: string): Tolerances {
-  let v: unknown;
-  try {
-    v = JSON.parse(text);
-  } catch {
-    throw new UsageError('--tolerance must be a JSON object, e.g. \'{"unitPrice":{"percent":"2"}}\'');
-  }
-  if (!v || typeof v !== 'object' || Array.isArray(v)) throw new UsageError('--tolerance must be a JSON object');
-  const out: Record<string, { absolute?: string; percent?: string }> = {};
-  for (const [k, t] of Object.entries(v)) {
-    if (!['quantity', 'unitPrice', 'total', 'vat'].includes(k))
-      throw new UsageError(`--tolerance: unknown key "${k}" (known: quantity, unitPrice, total, vat)`);
-    if (!t || typeof t !== 'object' || Array.isArray(t))
-      throw new UsageError(`--tolerance: "${k}" must be an object with absolute and/or percent`);
-    const tol: { absolute?: string; percent?: string } = {};
-    for (const [f, n] of Object.entries(t)) {
-      if (f !== 'absolute' && f !== 'percent') throw new UsageError(`--tolerance: "${k}.${f}" is not absolute or percent`);
-      if ((typeof n !== 'string' && typeof n !== 'number') || !/^\d+(\.\d+)?$/.test(String(n)))
-        throw new UsageError(`--tolerance: "${k}.${f}" must be a non-negative decimal`);
-      tol[f] = String(n);
-    }
-    out[k] = tol;
-  }
-  return out as Tolerances;
 }
 
 /** Skipped entries that are expected and not a failure. */
@@ -384,43 +252,14 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
     io.stdout(`${USAGE}\n`);
     return EXIT.ok;
   }
-  const commands = [
-    'detect',
-    'inspect',
-    'convert',
-    'export',
-    'render',
-    'write',
-    'sweep',
-    'trust-lists',
-    'match',
-    'duplicates',
-    'mcp',
-    'serve',
-  ];
+  const commands = ['detect', 'inspect', 'convert', 'render', 'write', 'sweep', 'mcp', 'serve'];
   if (!commands.includes(args.command)) {
     io.stderr(`einvoice: unknown command "${args.command}" (try --help)`);
     return EXIT.usage;
   }
-  if (args.command === 'trust-lists' && args.files[0] !== 'update') {
-    io.stderr('einvoice: trust-lists needs a subcommand: update');
-    return EXIT.usage;
-  }
   if (args.files.length === 0 && args.command !== 'mcp' && args.command !== 'serve') {
-    io.stderr(
-      `einvoice: ${args.command} needs at least one ${args.command === 'sweep' || args.command === 'duplicates' ? 'directory' : 'file'}`,
-    );
+    io.stderr(`einvoice: ${args.command} needs at least one ${args.command === 'sweep' ? 'directory' : 'file'}`);
     return EXIT.usage;
-  }
-  if (args.command === 'export') {
-    if (!['sie', 'journal', 'csv'].includes(args.format ?? '')) {
-      io.stderr('einvoice: export needs --format sie, journal or csv');
-      return EXIT.usage;
-    }
-    if (args.granularity !== undefined && !['account', 'line'].includes(args.granularity)) {
-      io.stderr('einvoice: --granularity must be account or line');
-      return EXIT.usage;
-    }
   }
   if (args.command === 'render') {
     if (!['html', 'pdf'].includes(args.as ?? '')) {
@@ -450,10 +289,6 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
       return EXIT.usage;
     }
   }
-  if (args.command === 'match' && args.po.length === 0) {
-    io.stderr('einvoice: match needs --po <order.json|order.xml>');
-    return EXIT.usage;
-  }
   const err = (line: string) => io.stderr(`einvoice: ${oneLine(line)}`);
   const note = (line: string) => {
     if (!args.quiet) err(line);
@@ -461,22 +296,12 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
   const json = (v: unknown) => `${JSON.stringify(v, null, args.pretty ? 2 : undefined)}\n`;
 
   try {
-    if (args.command === 'trust-lists') return await updateTrustLists(args, io, deps, note, err);
     if (args.command === 'serve') return await runServe(args, io, deps, note, err);
     if (args.command === 'sweep') {
       if (args.validate) note('--validate has no effect on sweep');
       return await runSweep(args.files, { expect: args.expect, limits: args.limits }, (l) => io.stdout(`${l}\n`));
     }
 
-    if (args.command === 'duplicates') {
-      return await runDuplicates(
-        args.files,
-        { windowDays: args.window, indexFile: args.index, json: args.json, pretty: args.pretty, limits: args.limits },
-        (l) => io.stdout(`${l}\n`),
-        note,
-      );
-    }
-    if (args.command === 'match') return await runMatch(args, io, json, err);
     if (args.command === 'write') return await runWrite(args, io, err, note);
     if (args.command === 'mcp') {
       const { runMcpStdio } = await import('./mcp/stdio.js');
@@ -490,17 +315,6 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
       else if (deps.validator) validator = deps.validator;
     }
 
-    let mapping = BAS_EXAMPLE_MAPPING;
-    if (args.command === 'export') {
-      if (args.accounts) {
-        try {
-          mapping = parseAccountMapping(JSON.parse(readFileSync(args.accounts, 'utf8')));
-        } catch (e) {
-          err(`${args.accounts}: ${e instanceof JournalError ? e.message : `cannot read the account mapping: ${(e as Error).message}`}`);
-          return EXIT.usage;
-        }
-      } else note('no --accounts given: using the example BAS mapping, which is a demonstration and not advice on how to book anything');
-    }
     let euTrust: TrustSnapshot | undefined;
     if (args.euTrust) {
       if (args.command !== 'convert') note(`--eu-trust only applies to convert; ignored for ${args.command}`);
@@ -510,20 +324,19 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
           euTrust = parseSnapshot(readFileSync(path, 'utf8'));
         } catch (e) {
           err(
-            `--eu-trust: cannot use the trusted-list snapshot ${path}: ${(e as Error).message} (create one with: einvoice trust-lists update)`,
+            `--eu-trust: cannot use the trusted-list snapshot ${path}: ${(e as Error).message} (create one with: einvoice-trust-lists update)`,
           );
           return EXIT.usage;
         }
         const next = snapshotNextUpdate(euTrust);
         if (next && Date.parse(next) < (deps.now ?? new Date()).getTime())
           note(
-            `the trusted-list snapshot (fetched ${euTrust.fetchedAt.slice(0, 10)}) is past its next update ${next.slice(0, 10)}; run: einvoice trust-lists update`,
+            `the trusted-list snapshot (fetched ${euTrust.fetchedAt.slice(0, 10)}) is past its next update ${next.slice(0, 10)}; run: einvoice-trust-lists update`,
           );
       }
     }
 
     const tally = new Tally();
-    const entries: JournalEntry[] = [];
     const inspected: unknown[] = [];
     const invoices: CanonicalInvoice[] = [];
     const seenNames = new Set<string>();
@@ -598,16 +411,6 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
                 continue;
               }
             }
-            if (args.command === 'export') {
-              try {
-                entries.push(buildJournalEntry(inv, mapping, { granularity: args.granularity as 'account' | 'line' | undefined }));
-              } catch (e) {
-                if (!(e instanceof JournalError)) throw e;
-                err(`${label}: invoice ${inv.id}: ${e.message}`);
-                failure = EXIT.validation;
-                continue;
-              }
-            }
             invoices.push(inv);
             if (args.command === 'convert' && args.out) {
               const name = uniqueName(inv.id, seenNames);
@@ -634,31 +437,8 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
       skippedFailure(r.skipped);
     }
 
-    if (args.command === 'export' && entries.length > 0) {
-      let out: string | Uint8Array;
-      if (args.format === 'sie') {
-        let sie: ReturnType<typeof toSie4>;
-        try {
-          sie = toSie4(entries, { currency: args.currency, series: args.series, generated: args.generated });
-        } catch (e) {
-          if (!(e instanceof JournalError)) throw e;
-          err(e.message);
-          return EXIT.validation;
-        }
-        for (const w of sie.warnings) note(w);
-        out = sie.bytes;
-      } else out = args.format === 'csv' ? journalToCsv(entries) : journalToJson(entries, args.pretty);
-      if (args.out) {
-        writeFileSync(resolve(args.out), out);
-        note(`wrote ${entries.length} journal entr${entries.length === 1 ? 'y' : 'ies'} to ${args.out}`);
-      } else if (typeof out === 'string') io.stdout(out);
-      else if (io.stdoutBytes) io.stdoutBytes(out);
-      else {
-        err('this environment cannot write binary output to stdout; use --out <file>');
-        return EXIT.internal;
-      }
-    }
     if (args.command === 'render' && invoices.length > 0) {
+      const { renderHtml, renderPdf } = await import('./render/index.js');
       const as = args.as as 'html' | 'pdf';
       if (!args.out && as === 'pdf' && invoices.length > 1) {
         err('render --as pdf of several invoices needs --out <directory>');
@@ -720,11 +500,12 @@ async function runServe(args: Parsed, io: IO, deps: Deps, note: (line: string) =
       trustSnapshot = parseSnapshot(readFileSync(path, 'utf8'));
     } catch (e) {
       err(
-        `--eu-trust: cannot use the trusted-list snapshot ${path}: ${(e as Error).message} (create one with: einvoice trust-lists update)`,
+        `--eu-trust: cannot use the trusted-list snapshot ${path}: ${(e as Error).message} (create one with: einvoice-trust-lists update)`,
       );
       return EXIT.usage;
     }
   }
+  const { startServer } = await import('./server.js');
   let server: ReturnType<typeof startServer>;
   try {
     server = startServer({
@@ -752,52 +533,6 @@ async function runServe(args: Parsed, io: IO, deps: Deps, note: (line: string) =
   });
   await server.stop();
   return EXIT.ok;
-}
-
-/** Where a snapshot lives when no file is named: $EINVOICE_TRUST_SNAPSHOT, the user's cache, then the repository copy. */
-function snapshotPath(given?: string): string {
-  if (given) return resolve(given);
-  const user = process.env.EINVOICE_TRUST_SNAPSHOT || join(homedir(), '.einvoice', 'eu-trust-snapshot.json');
-  const repo = join(import.meta.dir, '..', 'trust', 'eu-trust-snapshot.json');
-  return existsSync(user) || !existsSync(repo) ? resolve(user) : repo;
-}
-
-async function updateTrustLists(
-  args: Parsed,
-  io: IO,
-  deps: Deps,
-  note: (line: string) => void,
-  err: (line: string) => void,
-): Promise<number> {
-  const out = snapshotPath(args.out);
-  let previous: TrustSnapshot | undefined;
-  try {
-    previous = parseSnapshot(readFileSync(out, 'utf8'));
-  } catch {
-    /* no usable previous snapshot: the LOTL signer is pinned on first use */
-  }
-  try {
-    const snapshot = await loadTrustLists({
-      fetch: deps.fetch,
-      lotlUrl: args.lotlUrl,
-      lotlSigners: args.lotlSigner ? [readFileSync(args.lotlSigner, 'utf8')] : undefined,
-      previous,
-      now: deps.now,
-    });
-    mkdirSync(dirname(out), { recursive: true });
-    writeFileSync(out, JSON.stringify(snapshot));
-    const loaded = snapshot.lists.filter((l) => l.status === 'loaded');
-    const services = loaded.reduce((n, l) => n + l.services.length, 0);
-    io.stdout(`${out}\t${loaded.length}/${snapshot.lists.length} lists\t${services} CA/QC services\tfetched ${snapshot.fetchedAt}\n`);
-    for (const p of snapshot.problems) note(p);
-    return EXIT.ok;
-  } catch (e) {
-    if (e instanceof LotlError) {
-      err(e.message);
-      return EXIT.unsafe;
-    }
-    throw e;
-  }
 }
 
 const PROFILE_NAMES: Record<WriterProfile, true> = { 'peppol-bis3': true, xrechnung: true, en16931: true };
@@ -851,6 +586,7 @@ function canonicalProblem(inv: unknown): string | undefined {
 
 /** `einvoice write`: canonical JSON, or any invoice file converted first, written as UBL or CII. */
 async function runWrite(args: Parsed, io: IO, err: (line: string) => void, note: (line: string) => void): Promise<number> {
+  const { toCii, toUbl, WriterError } = await import('./writers/index.js');
   const tally = new Tally();
   const outputs: { id: string; xml: string }[] = [];
   const profile = args.profile as WriterProfile | undefined;
@@ -924,57 +660,6 @@ async function runWrite(args: Parsed, io: IO, err: (line: string) => void, note:
     return EXIT.usage;
   }
   return tally.code();
-}
-
-async function runMatch(args: Parsed, io: IO, json: (v: unknown) => string, err: (line: string) => void): Promise<number> {
-  const orders: PurchaseOrder[] = [];
-  try {
-    for (const f of args.po) {
-      const bytes = new Uint8Array(readFileSync(f));
-      const text = new TextDecoder().decode(bytes).replace(/^\uFEFF/, '');
-      if (isOrderXml(text)) orders.push(parseOrder(bytes));
-      else orders.push(...parsePurchaseOrdersJson(text));
-    }
-    const receipts = args.receipts ? parseReceiptsJson(readFileSync(args.receipts, 'utf8')) : undefined;
-    const results: unknown[] = [];
-    let worst = EXIT.ok as number;
-    for (const file of args.files) {
-      const label = file === '-' ? 'stdin' : file;
-      let bytes: Uint8Array;
-      try {
-        bytes = file === '-' ? await io.readStdin() : new Uint8Array(readFileSync(file));
-      } catch (e) {
-        err(`${label}: cannot read: ${(e as Error).message}`);
-        worst = worst || EXIT.internal;
-        continue;
-      }
-      const r = await convert(bytes, file === '-' ? undefined : file, args.limits, { relations: true });
-      let any = false;
-      for (const o of r.outcomes) {
-        if (o.status !== 'ok') {
-          err(`${label}: ${o.status === 'error' ? o.error : o.status === 'unsupported' ? o.reason : 'not an invoice'}`);
-          worst = worst || (o.status === 'error' ? EXIT.unsafe : EXIT.unsupported);
-          continue;
-        }
-        for (const inv of o.invoices) {
-          any = true;
-          const res = matchInvoice(inv, orders, { tolerances: args.tolerance, receipts });
-          results.push({ file: label, ...res });
-          if (res.verdict === 'needs-review') worst = worst || EXIT.needsReview;
-        }
-      }
-      for (const s of r.skipped) if (!BENIGN_SKIP.test(s.reason)) err(`${label}: ${s.reason}`);
-      if (!any && r.outcomes.length === 0) worst = worst || EXIT.unsafe;
-    }
-    io.stdout(json(results));
-    return worst;
-  } catch (e) {
-    if (e instanceof MatchInputError || (e as NodeJS.ErrnoException).code === 'ENOENT') {
-      err(`match: ${(e as Error).message}`);
-      return EXIT.usage;
-    }
-    throw e;
-  }
 }
 
 /** A file-system-safe name for an invoice id, unique (case-insensitively) within one run. */

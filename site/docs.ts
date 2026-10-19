@@ -59,7 +59,7 @@ export const PAGES: PageDef[] = [
     slug: 'cli',
     title: 'Command line',
     description:
-      'The einvoice command line: detect, inspect, convert, export, render, write, match and find duplicates in e-invoices, with exit codes for scripts.',
+      'The einvoice command line: detect, inspect, convert, render, write, sweep and serve e-invoices, with exit codes for scripts.',
     group: 'Use it',
     sections: ['Command line'],
   },
@@ -67,7 +67,7 @@ export const PAGES: PageDef[] = [
     slug: 'mcp',
     title: 'MCP server for AI agents',
     description:
-      'Run einvoice mcp, a Model Context Protocol server that lets an AI agent detect, convert, validate and match e-invoices without network access.',
+      'Run einvoice mcp, a Model Context Protocol server that lets an AI agent detect, convert and validate e-invoices without network access.',
     group: 'Use it',
     sections: ['MCP server for AI agents'],
   },
@@ -87,22 +87,6 @@ export const PAGES: PageDef[] = [
       'Check e-invoice signers against the EU List of Trusted Lists with signed snapshots, from the library, the CLI and the browser.',
     group: 'Use it',
     sections: ['EU trusted lists'],
-  },
-  {
-    slug: 'matching',
-    title: 'Matching invoices to purchase orders',
-    description:
-      'Match e-invoice lines to purchase orders (two-way) and goods receipts (three-way), with tolerances and a match, within-tolerance or needs-review verdict.',
-    group: 'Use it',
-    sections: ['Matching invoices to purchase orders'],
-  },
-  {
-    slug: 'export',
-    title: 'Bookkeeping export',
-    description:
-      'Turn a received e-invoice into a balanced journal entry and export it as SIE 4, JSON or CSV with your own account mapping.',
-    group: 'Use it',
-    sections: ['Bookkeeping export'],
   },
   {
     slug: 'rendering',
@@ -731,7 +715,7 @@ export function buildLlmsTxt(site: DocSite, version: string): string {
 > TypeScript library, command line, HTTP API, MCP server and browser converter that read any XML e-invoice sent in the EU (Peppol BIS 3, XRechnung, Factur-X/ZUGFeRD, FatturaPA, KSeF, Facturae and many national formats, ${formats.length} in all) and map it to one canonical JSON model built on EN 16931. Version ${version}, licence 0BSD. The browser converter runs entirely client-side: files are never uploaded.
 
 Machine interfaces:
-- MCP server: run \`einvoice mcp\` (stdio) to give an agent the tools detect_invoice_format, convert_invoice, validate_invoice, explain_finding, check_duplicates, match_purchase_order and list_formats. See [MCP server for AI agents](${SITE_URL}docs/mcp.md).
+- MCP server: run \`einvoice mcp\` (stdio) to give an agent the tools detect_invoice_format, convert_invoice, validate_invoice, explain_finding and list_formats. See [MCP server for AI agents](${SITE_URL}docs/mcp.md).
 - OpenAPI 3.1 spec: ${absolute('openapi/openapi.yaml')} (JSON: ${absolute('openapi/openapi.json')}), served by \`einvoice serve\`.
 - JSON Schemas: ${absolute('schemas/canonical-invoice.v1.schema.json')}, ${absolute('schemas/convert-result.v1.schema.json')}, ${absolute('schemas/inspect-result.v1.schema.json')}.
 - Complete documentation as one text file: ${absolute('llms-full.txt')}.

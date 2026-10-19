@@ -69,7 +69,15 @@ export default defineConfig({
       lastUpdated: false,
       plugins: [
         starlightTypeDoc({
-          entryPoints: ['../src/index.ts', '../src/server.ts', '../src/problems.ts'],
+          entryPoints: [
+            '../src/index.ts',
+            '../src/render/index.ts',
+            '../src/writers/index.ts',
+            '../src/server.ts',
+            '../src/problems.ts',
+            '../src/mcp/server.ts',
+            '../src/signature/trust-lists.ts',
+          ],
           tsconfig: './typedoc.tsconfig.json',
           output: 'api',
           sidebar: { label: 'TypeScript API', collapsed: true },

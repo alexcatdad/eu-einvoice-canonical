@@ -6,7 +6,9 @@
  * nothing here converts them to a JS number, and the only arithmetic is the exact BigInt `sum`
  * from `values.ts` (used once, to fill a document-level VAT total the model leaves out).
  */
-import { isDecimal } from '../values.js';
+import { values } from '../index.js';
+
+const { isDecimal } = values;
 
 /** Thrown when the canonical invoice holds something the target syntax cannot carry (for example a malformed decimal). */
 export class WriterError extends Error {}

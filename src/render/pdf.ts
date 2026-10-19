@@ -1,5 +1,5 @@
 import type { PDFDocument, PDFFont, PDFPage } from 'pdf-lib';
-import type { CanonicalInvoice } from '../canonical.js';
+import type { CanonicalInvoice } from '../index.js';
 import { labelsFor, type RenderLanguage } from './labels.js';
 import { buildInvoiceView, type Column, type Field, type InvoiceView, parasText, type Value, valueText } from './model.js';
 
@@ -361,7 +361,7 @@ export async function renderPdf(invoice: CanonicalInvoice, options: RenderPdfOpt
   const view = buildInvoiceView(invoice, options.lang, { locale: options.locale, currencyDisplay: 'code' });
   const lang = view.lang;
   const t = labelsFor(lang);
-  lib = (await import('../envelope-pdf.js')).pdfLib;
+  lib = await import('pdf-lib');
   const doc = await lib.PDFDocument.create();
   const font = await doc.embedFont(lib.StandardFonts.Helvetica);
   const bold = await doc.embedFont(lib.StandardFonts.HelveticaBold);

@@ -1,9 +1,10 @@
 {
   "name": "eu-einvoice-canonical",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "Canonical TypeScript model, detection and parsers for inbound EU e-invoices (Peppol BIS 3, XRechnung, Factur-X, Svefaktura and more)",
   "bin": {
-    "einvoice": "lib/cli.js"
+    "einvoice": "lib/cli.js",
+    "einvoice-trust-lists": "lib/trust-lists-cli.js"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -35,7 +36,8 @@
     "test:package": "bun scripts/test-package.ts",
     "test:cli-package": "bun scripts/test-cli-package.ts",
     "restore:local-validation": "bun scripts/build-validation-bundles.ts --restore-held",
-    "check:distribution": "bun scripts/check-validation-distribution.ts"
+    "check:distribution": "bun scripts/check-validation-distribution.ts",
+    "build:trust-lists": "bun build --compile src/trust-lists-cli.ts --outfile dist/einvoice-trust-lists"
   },
   "author": "",
   "license": "0BSD",
@@ -44,7 +46,6 @@
     "url": "git+https://github.com/alexcatdad/eu-einvoice-canonical.git"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.32.1",
     "@xmldom/xmldom": "^0.9.12",
     "asn1js": "^3.0.10",
     "fflate": "^0.8.3",
@@ -57,13 +58,17 @@
   },
   "peerDependencies": {
     "react": ">=18.0.0",
-    "react-dom": ">=18.0.0"
+    "react-dom": ">=18.0.0",
+    "@modelcontextprotocol/sdk": "1.32.1"
   },
   "peerDependenciesMeta": {
     "react": {
       "optional": true
     },
     "react-dom": {
+      "optional": true
+    },
+    "@modelcontextprotocol/sdk": {
       "optional": true
     }
   },
@@ -82,7 +87,8 @@
     "react-dom": "^19.3.1",
     "ts-json-schema-generator": "^2.9.0",
     "typescript": "^7.0.2",
-    "xslt3": "2.7.0"
+    "xslt3": "2.7.0",
+    "@modelcontextprotocol/sdk": "1.32.1"
   },
   "type": "module",
   "exports": {
@@ -98,7 +104,23 @@
       "types": "./lib/react/index.d.ts",
       "import": "./lib/react/index.js"
     },
-    "./react/invoice.css": "./lib/react/invoice.css"
+    "./react/invoice.css": "./lib/react/invoice.css",
+    "./render": {
+      "types": "./lib/render/index.d.ts",
+      "import": "./lib/render/index.js"
+    },
+    "./writers": {
+      "types": "./lib/writers/index.d.ts",
+      "import": "./lib/writers/index.js"
+    },
+    "./mcp": {
+      "types": "./lib/mcp/server.d.ts",
+      "import": "./lib/mcp/server.js"
+    },
+    "./trust-lists": {
+      "types": "./lib/signature/trust-lists.d.ts",
+      "import": "./lib/signature/trust-lists.js"
+    }
   },
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",

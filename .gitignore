@@ -77,3 +77,5 @@ lib/
 # Temporary compiler outputs and local dependency link
 /.*.bun-build
 /node_modules
+
+session-progress/
