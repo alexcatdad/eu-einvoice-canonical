@@ -19,9 +19,11 @@ import type {
   Period,
   Seller,
   VatBreakdown,
-} from '../canonical.js';
-import { CREDIT_TYPE_CODES } from '../parsers/context.js';
-import { sum } from '../values.js';
+} from '../index.js';
+import { CREDIT_TYPE_CODES, values } from '../index.js';
+
+const { sum } = values;
+
 import {
   type Attrs,
   type Child,

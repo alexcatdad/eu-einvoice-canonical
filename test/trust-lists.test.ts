@@ -8,10 +8,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, test } from 'node:test';
 import { EXIT, type IO, main } from '../src/cli.js';
-import { convert, inspect, LOTL_URL, loadTrustLists, parseSnapshot, type TrustSnapshot, trustAnchorsFromSnapshot } from '../src/index.js';
+import { convert, inspect, parseSnapshot, type TrustSnapshot, trustAnchorsFromSnapshot } from '../src/index.js';
 import { signatureFindings } from '../src/signature/index.js';
+import { LOTL_URL, loadTrustLists } from '../src/signature/trust-lists.js';
 import { parseTrustedList } from '../src/signature/tsl.js';
 import { LotlError } from '../src/signature/tsl-load.js';
+import { type TrustListDeps, main as trustMain } from '../src/trust-lists-cli.js';
 import { fixturePath, utf8 } from './helpers.js';
 import { b64, type Identity, makeIdentity, pssVariant, signCms, signXml } from './sig-helpers.js';
 
@@ -425,13 +427,13 @@ describe('qualified status at signing time', () => {
   });
 });
 
-describe('einvoice trust-lists', () => {
+describe('einvoice-trust-lists', () => {
   const dir = mkdtempSync(join(tmpdir(), 'einvoice-trust-'));
-  const run = async (argv: string[], deps: Parameters<typeof main>[2] = {}) => {
+  const run = async (argv: string[], deps: Parameters<typeof main>[2] & TrustListDeps = {}) => {
     const out: string[] = [];
     const errs: string[] = [];
     const io: IO = { stdout: (t) => out.push(t), stderr: (l) => errs.push(l), readStdin: async () => new Uint8Array() };
-    const code = await main(argv, io, deps);
+    const code = argv[0] === 'trust-lists' ? await trustMain(argv.slice(1), io, deps) : await main(argv, io, deps);
     return { code, stdout: out.join(''), stderr: errs.join('\n') };
   };
 

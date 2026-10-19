@@ -1,4 +1,4 @@
-import type { CanonicalInvoice } from '../canonical.js';
+import type { CanonicalInvoice } from '../index.js';
 import type { RenderLanguage } from './labels.js';
 import {
   type AdjustmentView,

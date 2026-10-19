@@ -1,9 +1,6 @@
 /** PDF/A-3 attachment extraction. Loaded on demand by envelope.ts so pdf-lib stays out of the initial bundle. */
 import { Inflate, Unzlib } from 'fflate';
 
-// Also the lazy entry point for the PDF renderer (render/pdf.ts), so pdf-lib lives in this one chunk.
-export * as pdfLib from 'pdf-lib';
-
 import { PDFArray, PDFDict, PDFDocument, PDFHexString, PDFName, type PDFObject, PDFRawStream, PDFString } from 'pdf-lib';
 import { concat } from './bytes.js';
 import type { UnwrapLimits, UnwrapResult } from './envelope.js';

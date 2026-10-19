@@ -12,12 +12,10 @@ import {
   type Line,
   type Party,
   type PaymentInstructions,
-  toCii,
-  toUbl,
-  WriterError,
 } from '../src/index.js';
 import { CREDIT_TYPE_CODES, parseXml } from '../src/parsers/context.js';
 import { validate } from '../src/validation/index.js';
+import { toCii, toUbl, WriterError } from '../src/writers/index.js';
 import { vatPointCodeForCii, vatPointCodeForUbl } from '../src/writers/shared.js';
 import { utf8 } from './helpers.js';
 
