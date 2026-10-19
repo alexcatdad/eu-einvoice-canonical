@@ -12,6 +12,8 @@
       "!**/dist",
       "!**/coverage",
       "!validation/bundles",
+      "!validation/runtime",
+      "!lib",
       "!test/fixtures",
       "!test/corpus/repos",
       "!bun.lock",

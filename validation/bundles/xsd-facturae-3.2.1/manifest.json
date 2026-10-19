@@ -7,7 +7,7 @@
   "releaseDate": "2026-10-16",
   "effectiveFrom": "2026-10-16",
   "effectiveUntil": null,
-  "license": "No licence text in the files; published by the issuing authority for implementers to validate against (see validation/NOTICE)",
+  "license": "Official Facturae portal document-reuse permission: redistribution and necessary transformation with attribution, date/metadata preservation and no endorsement; W3C notices retained. See validation/licenses/NATIONAL-NOTICES.txt.",
   "upstream": "https://www.facturae.gob.es/formato/Paginas/version-3-2.aspx",
   "note": "releaseDate is the vendoring date: the schema carries no release date. schemaLocation of imported schemas rewritten to the vendored copy so nothing is fetched at runtime.",
   "format": "xsd",

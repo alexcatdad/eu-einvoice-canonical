@@ -1,0 +1,2575 @@
+[
+  {
+    "id": "xsd-fatturapa-1.2.2",
+    "fixture": "test/validation-fixtures/national/fatturapa.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-fatturapa-1.2.2"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "Divisa"
+      }
+    ]
+  },
+  {
+    "id": "xsd-fatturapa-semplificata-1.0",
+    "fixture": "test/validation-fixtures/national/fatturapa-semplificata.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-fatturapa-semplificata-1.0"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "Divisa"
+      }
+    ]
+  },
+  {
+    "id": "xsd-ksef-fa2",
+    "fixture": "test/validation-fixtures/national/ksef-fa2.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-ksef-fa2"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "P_2"
+      }
+    ]
+  },
+  {
+    "id": "xsd-ksef-fa3",
+    "fixture": "test/validation-fixtures/national/ksef-fa3.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-ksef-fa3"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "P_2"
+      }
+    ]
+  },
+  {
+    "id": "xsd-ksef-fa-rr",
+    "fixture": "test/validation-fixtures/national/ksef-fa-rr.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-ksef-fa-rr"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "P_4C"
+      }
+    ]
+  },
+  {
+    "id": "xsd-facturae-3.2",
+    "fixture": "test/validation-fixtures/national/facturae-3.2.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-facturae-3.2"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "InvoiceNumber"
+      }
+    ]
+  },
+  {
+    "id": "xsd-facturae-3.2.1",
+    "fixture": "test/validation-fixtures/national/facturae-3.2.1.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-facturae-3.2.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "InvoiceNumber"
+      }
+    ]
+  },
+  {
+    "id": "xsd-facturae-3.2.2",
+    "fixture": "test/validation-fixtures/national/facturae-3.2.2.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-facturae-3.2.2"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "InvoiceNumber"
+      }
+    ]
+  },
+  {
+    "id": "xsd-isdoc-6.0.2",
+    "fixture": "test/validation-fixtures/national/isdoc.isdoc",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-isdoc-6.0.2"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "ID"
+      }
+    ]
+  },
+  {
+    "id": "xsd-ebinterface-4.3",
+    "fixture": "test/validation-fixtures/national/ebinterface-4.3.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-ebinterface-4.3"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "InvoiceNumber"
+      }
+    ]
+  },
+  {
+    "id": "xsd-ebinterface-5.0",
+    "fixture": "test/validation-fixtures/national/ebinterface-5.0.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-ebinterface-5.0"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "InvoiceNumber"
+      }
+    ]
+  },
+  {
+    "id": "xsd-ebinterface-6.0",
+    "fixture": "test/validation-fixtures/national/ebinterface-6.0.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-ebinterface-6.0"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "InvoiceNumber"
+      }
+    ]
+  },
+  {
+    "id": "xsd-ebinterface-6.1",
+    "fixture": "test/validation-fixtures/national/ebinterface-6.1.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-ebinterface-6.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "InvoiceNumber"
+      }
+    ]
+  },
+  {
+    "id": "xsd-finvoice-3.0",
+    "fixture": "test/validation-fixtures/national/finvoice.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-finvoice-3.0"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "InvoiceNumber"
+      }
+    ]
+  },
+  {
+    "id": "xsd-earve-1.2",
+    "fixture": "test/validation-fixtures/national/e-arve.xml",
+    "options": {
+      "scope": "schema",
+      "suite": "e-arve-1.2.EN"
+    },
+    "bundles": {
+      "schema": "xsd-earve-1.2"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "InvoiceNumber"
+      }
+    ]
+  },
+  {
+    "id": "xsd-eslog-2.0",
+    "fixture": "test/validation-fixtures/national/eslog-2.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-eslog-2.0"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "S_UNH"
+      }
+    ]
+  },
+  {
+    "id": "finvoice-1.3",
+    "fixture": "test/validation-fixtures/legacy/finvoice-1.3.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-finvoice-1.3"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "InvoiceNumber"
+      }
+    ]
+  },
+  {
+    "id": "finvoice-2.0",
+    "fixture": "test/validation-fixtures/legacy/finvoice-2.0.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-finvoice-2.0"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "InvoiceNumber"
+      }
+    ]
+  },
+  {
+    "id": "finvoice-2.01",
+    "fixture": "test/validation-fixtures/legacy/finvoice-2.01.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-finvoice-2.01"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "InvoiceNumber"
+      }
+    ]
+  },
+  {
+    "id": "ebinterface-4.0",
+    "fixture": "test/validation-fixtures/legacy/ebinterface-4.0.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-ebinterface-4.0"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "InvoiceDate"
+      }
+    ]
+  },
+  {
+    "id": "ebinterface-4.1",
+    "fixture": "test/validation-fixtures/legacy/ebinterface-4.1.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-ebinterface-4.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "InvoiceDate"
+      }
+    ]
+  },
+  {
+    "id": "ebinterface-4.2",
+    "fixture": "test/validation-fixtures/legacy/ebinterface-4.2.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-ebinterface-4.2"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "InvoiceDate"
+      }
+    ]
+  },
+  {
+    "id": "peppol-2026",
+    "fixture": "test/validation-fixtures/peppol-valid-invoice.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "en16931-ubl-1.3.16",
+      "profile": "peppol-bis3-3.0.21-ubl"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:ID"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:TaxInclusiveAmount currencyID=\"SEK\">250.00", "<cbc:TaxInclusiveAmount currencyID=\"SEK\">260.00"],
+        "ruleId": "BR-CO-15"
+      },
+      {
+        "layer": "profile",
+        "replace": ["urn:fdc:peppol.eu:2017:poacc:billing:01:1.0", "urn:fdc:peppol.eu:2017:poacc:billing:99:1.0"],
+        "ruleId": "PEPPOL-EN16931-R007"
+      }
+    ]
+  },
+  {
+    "id": "peppol-legacy-replay",
+    "fixture": "test/validation-fixtures/peppol-valid-invoice.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "en16931-ubl-1.3.17",
+      "profile": "peppol-bis3-3.0.20-ubl"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:ID"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:TaxInclusiveAmount currencyID=\"SEK\">250.00", "<cbc:TaxInclusiveAmount currencyID=\"SEK\">260.00"],
+        "ruleId": "BR-CO-15"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:EndpointID schemeID=\"0007\">", "<cbc:EndpointID schemeID=\"INVALID\">"],
+        "ruleId": "PEPPOL-EN16931-CL008"
+      }
+    ],
+    "options": {
+      "suite": "legacy-peppol-3.0.20-en-1.3.17"
+    }
+  },
+  {
+    "id": "xrechnung-ubl",
+    "fixture": "test/fixtures/xrechnung-ubl.xml",
+    "bundles": {
+      "profile": "xrechnung-3.0.2-ubl",
+      "schema": "xsd-ubl-2.1",
+      "semantic": "en16931-ubl-1.3.17"
+    },
+    "negatives": [
+      {
+        "layer": "profile",
+        "drop": "cbc:BuyerReference",
+        "ruleId": "BR-DE-15"
+      },
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:TaxInclusiveAmount currencyID=\"EUR\">1190.00", "<cbc:TaxInclusiveAmount currencyID=\"EUR\">1191.00"],
+        "ruleId": "BR-CO-15"
+      }
+    ]
+  },
+  {
+    "id": "xrechnung-cii",
+    "fixture": "test/fixtures/xrechnung-cii.xml",
+    "bundles": {
+      "schema": "xsd-cii-d16b",
+      "semantic": "en16931-cii-1.3.17",
+      "profile": "xrechnung-3.0.2-cii"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "replace": ["<ram:ID>", "<ram:Bogus/><ram:ID>"]
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<ram:GrandTotalAmount>821.00", "<ram:GrandTotalAmount>822.00"],
+        "ruleId": "BR-CO-15"
+      },
+      {
+        "layer": "profile",
+        "drop": "ram:BuyerReference",
+        "ruleId": "BR-DE-15"
+      }
+    ]
+  },
+  {
+    "id": "nlcius-ubl",
+    "fixture": "test/validation-fixtures/nlcius-valid-invoice.xml",
+    "bundles": {
+      "profile": "nlcius-ubl-2.0.3.13",
+      "schema": "xsd-ubl-2.1",
+      "semantic": "en16931-ubl-1.3.16"
+    },
+    "negatives": [
+      {
+        "layer": "profile",
+        "replace": ["<cbc:CompanyID schemeID=\"0106\">12345678</cbc:CompanyID>", ""],
+        "ruleId": "BR-NL-1"
+      },
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:TaxInclusiveAmount currencyID=\"SEK\">250.00", "<cbc:TaxInclusiveAmount currencyID=\"SEK\">260.00"],
+        "ruleId": "BR-CO-15"
+      }
+    ]
+  },
+  {
+    "id": "nlcius-cii",
+    "fixture": "test/validation-fixtures/nlcius-valid-cii.xml",
+    "bundles": {
+      "semantic": "en16931-cii-1.3.16",
+      "profile": "nlcius-cii-1.0.3.13",
+      "schema": "xsd-cii-d16b"
+    },
+    "negatives": [
+      {
+        "layer": "semantic",
+        "replace": ["<ram:GrandTotalAmount>821.00", "<ram:GrandTotalAmount>822.00"],
+        "ruleId": "BR-CO-15"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<ram:CountryID>DE</ram:CountryID>", "<ram:CountryID>NL</ram:CountryID>"],
+        "ruleId": "BR-NL-1"
+      },
+      {
+        "layer": "schema",
+        "replace": ["<ram:ID>", "<ram:Bogus/><ram:ID>"]
+      }
+    ]
+  },
+  {
+    "id": "svefaktura",
+    "fixture": "test/validation-fixtures/svefaktura-valid-invoice.xml",
+    "bundles": {
+      "schema": "xsd-svefaktura-1.0-20081227",
+      "profile": "svefaktura-1.0-rules-20161025"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "RequisitionistDocumentReference"
+      },
+      {
+        "layer": "profile",
+        "replace": ["amountCurrencyID=\"SEK\"", "amountCurrencyID=\"EUR\""],
+        "ruleId": "R-100"
+      }
+    ]
+  },
+  {
+    "id": "teapps",
+    "fixture": "test/validation-fixtures/teappsxml-valid.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-teappsxml-3.0"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "NET_SERVICE_ID"
+      }
+    ]
+  },
+  {
+    "id": "selfbilling",
+    "fixture": "test/validation-fixtures/selfbilling-valid-invoice.xml",
+    "bundles": {
+      "semantic": "selfbilling-ubl-en16931-1.3.16",
+      "profile": "peppol-selfbilling-3.0.2-ubl",
+      "schema": "xsd-ubl-2.1"
+    },
+    "negatives": [
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:TaxInclusiveAmount currencyID=\"SEK\">250.00", "<cbc:TaxInclusiveAmount currencyID=\"SEK\">260.00"],
+        "ruleId": "BR-CO-15"
+      },
+      {
+        "layer": "profile",
+        "replace": ["urn:fdc:peppol.eu:2017:poacc:selfbilling:01:1.0", "urn:fdc:peppol.eu:2017:poacc:selfbilling:99:1.0"],
+        "ruleId": "PEPPOL-EN16931-R007"
+      },
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      }
+    ]
+  },
+  {
+    "id": "gaccount",
+    "fixture": "test/validation-fixtures/nlcius-gaccount-valid-invoice.xml",
+    "bundles": {
+      "profile": "nlcius-gaccount-1.0.2.13-ubl",
+      "schema": "xsd-ubl-2.1"
+    },
+    "negatives": [
+      {
+        "layer": "profile",
+        "replace": ["<cbc:Amount currencyID=\"SEK\">100.00</cbc:Amount>", "<cbc:Amount currencyID=\"SEK\">90.00</cbc:Amount>"],
+        "ruleId": "BR-GA-3"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:TaxInclusiveAmount currencyID=\"SEK\">250.00", "<cbc:TaxInclusiveAmount currencyID=\"SEK\">260.00"],
+        "ruleId": "BR-CO-15"
+      },
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      }
+    ]
+  },
+  {
+    "id": "isdoc-native",
+    "fixture": "test/validation-fixtures/national/isdoc.isdoc",
+    "bundles": {
+      "profile": "isdoc-6.0.2-rules",
+      "schema": "xsd-isdoc-6.0.2"
+    },
+    "negatives": [
+      {
+        "layer": "profile",
+        "replace": ["<DocumentType>1</DocumentType>", "<DocumentType>2</DocumentType>"]
+      },
+      {
+        "layer": "schema",
+        "drop": "ID"
+      }
+    ]
+  },
+  {
+    "id": "facturae-3.0",
+    "fixture": "test/validation-fixtures/legacy/facturae-3.0.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-facturae-3.0"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "IssueDate"
+      }
+    ]
+  },
+  {
+    "id": "facturae-3.1",
+    "fixture": "test/validation-fixtures/legacy/facturae-3.1.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-facturae-3.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "IssueDate"
+      }
+    ]
+  },
+  {
+    "id": "oioubl-2.02",
+    "fixture": "test/validation-fixtures/oioubl-202-invoice.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.0",
+      "profile": "oioubl-2.02-invoice-1.11.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:Name>Moms</cbc:Name>", "<cbc:Name>NotVAT</cbc:Name>"],
+        "ruleId": "F-LIB198"
+      }
+    ]
+  },
+  {
+    "id": "hr-cius-2026",
+    "fixture": "test/validation-fixtures/hr-cius-valid-invoice.xml",
+    "bundles": {
+      "profile": "hr-cius-ext-ubl-20260313",
+      "schema": "xsd-hr-cius-ubl-20260415",
+      "semantic": "en16931-ubl-1.3.17"
+    },
+    "negatives": [
+      {
+        "layer": "profile",
+        "drop": "cbc:IssueTime",
+        "ruleId": "HR-BR-2"
+      },
+      {
+        "layer": "profile",
+        "replace": ["31.00.11", "99.99.99"],
+        "ruleId": "HR-BR-CL-2"
+      },
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:TaxInclusiveAmount currencyID=\"SEK\">250.00", "<cbc:TaxInclusiveAmount currencyID=\"SEK\">260.00"],
+        "ruleId": "BR-CO-15"
+      }
+    ]
+  },
+  {
+    "id": "facturx-1.09.2-basicwl",
+    "fixture": "test/validation-fixtures/facturx-1.09.2-basicwl.xml",
+    "options": {
+      "suite": "facturx-1.09.2"
+    },
+    "bundles": {
+      "schema": "xsd-facturx-1.09.2-basicwl",
+      "profile": "facturx-1.09.2-basicwl"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "replace": ["<ram:ID>", "<ram:Bogus/><ram:ID>"]
+      },
+      {
+        "layer": "profile",
+        "replace": ["<ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>", "<ram:InvoiceCurrencyCode>ZZZ</ram:InvoiceCurrencyCode>"]
+      }
+    ]
+  },
+  {
+    "id": "facturx-1.09.2-en16931",
+    "fixture": "test/validation-fixtures/facturx-1.09.2-en16931.xml",
+    "options": {
+      "suite": "facturx-1.09.2"
+    },
+    "bundles": {
+      "schema": "xsd-facturx-1.09.2-en16931",
+      "profile": "facturx-1.09.2-en16931"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "replace": ["<ram:ID>", "<ram:Bogus/><ram:ID>"]
+      },
+      {
+        "layer": "profile",
+        "replace": ["<ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>", "<ram:InvoiceCurrencyCode>ZZZ</ram:InvoiceCurrencyCode>"]
+      }
+    ]
+  },
+  {
+    "id": "facturx-1.09.2-extended",
+    "fixture": "test/validation-fixtures/facturx-1.09.2-extended.xml",
+    "options": {
+      "suite": "facturx-1.09.2"
+    },
+    "bundles": {
+      "schema": "xsd-facturx-1.09.2-extended",
+      "profile": "facturx-1.09.2-extended"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "replace": ["<ram:ID>", "<ram:Bogus/><ram:ID>"]
+      },
+      {
+        "layer": "profile",
+        "replace": ["<ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>", "<ram:InvoiceCurrencyCode>ZZZ</ram:InvoiceCurrencyCode>"]
+      }
+    ]
+  },
+  {
+    "id": "oioubl3-invoice",
+    "fixture": "test/validation-fixtures/legacy/oioubl3-invoice.xml",
+    "bundles": {
+      "semantic": "oioubl3-en16931-invoice-3.2.4",
+      "profile": "oioubl3-invoice-3.2.4",
+      "schema": "xsd-ubl-2.1"
+    },
+    "negatives": [
+      {
+        "layer": "semantic",
+        "replace": [
+          "<cbc:PayableAmount currencyID=\"DKK\">6312.50</cbc:PayableAmount>",
+          "<cbc:PayableAmount currencyID=\"DKK\">999999.99</cbc:PayableAmount>"
+        ],
+        "ruleId": "BR-CO-16"
+      },
+      {
+        "layer": "profile",
+        "drop": "cbc:ProfileID",
+        "ruleId": "OIOUBL-BIL-132"
+      },
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      }
+    ]
+  },
+  {
+    "id": "oioubl3-creditnote",
+    "fixture": "test/validation-fixtures/legacy/oioubl3-creditnote.xml",
+    "bundles": {
+      "semantic": "oioubl3-en16931-creditnote-3.2.4",
+      "profile": "oioubl3-creditnote-3.2.4",
+      "schema": "xsd-ubl-2.1"
+    },
+    "negatives": [
+      {
+        "layer": "semantic",
+        "replace": [
+          "<cbc:PayableAmount currencyID=\"DKK\">6312.50</cbc:PayableAmount>",
+          "<cbc:PayableAmount currencyID=\"DKK\">999999.99</cbc:PayableAmount>"
+        ],
+        "ruleId": "BR-CO-16"
+      },
+      {
+        "layer": "profile",
+        "drop": "cbc:ProfileID",
+        "ruleId": "OIOUBL-BIL-137"
+      },
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      }
+    ]
+  },
+  {
+    "id": "cius-pt-2.1.1",
+    "fixture": "test/validation-fixtures/ciuspt-valid-invoice.xml",
+    "bundles": {
+      "profile": "cius-pt-ubl-2.1.1",
+      "schema": "xsd-ubl-2.1"
+    },
+    "negatives": [
+      {
+        "layer": "profile",
+        "replace": ["<cbc:CompanyID>SE212000000101</cbc:CompanyID>", ""],
+        "ruleId": "BR-CIUS-PT-03"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:Percent>25.00</cbc:Percent>", "<cbc:Percent>25</cbc:Percent>"],
+        "ruleId": "DT-CIUS-PT-106.1"
+      },
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      }
+    ]
+  },
+  {
+    "id": "pint-shared-only",
+    "fixture": "test/validation-fixtures/peppol-valid-invoice.xml",
+    "prepare": [["urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0", "urn:peppol:pint:billing-1"]],
+    "bundles": {
+      "semantic": "pint-shared-1.1.3",
+      "schema": "xsd-ubl-2.1"
+    },
+    "negatives": [
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"SEK\">250.00", "<cbc:PayableAmount currencyID=\"SEK\">260.00"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      }
+    ]
+  },
+  {
+    "id": "oioubl2-invoice",
+    "fixture": "test/validation-fixtures/legacy/oioubl2-invoice.xml",
+    "bundles": {
+      "profile": "oioubl2-invoice-1.15.2",
+      "schema": "xsd-ubl-2.1"
+    },
+    "negatives": [
+      {
+        "layer": "profile",
+        "replace": ["<cbc:Name>Moms</cbc:Name>", "<cbc:Name>NotVAT</cbc:Name>"],
+        "ruleId": "F-LIB198"
+      },
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      }
+    ]
+  },
+  {
+    "id": "oioubl2-creditnote",
+    "fixture": "test/validation-fixtures/legacy/oioubl2-creditnote.xml",
+    "bundles": {
+      "profile": "oioubl2-creditnote-1.15.2",
+      "schema": "xsd-ubl-2.1"
+    },
+    "negatives": [
+      {
+        "layer": "profile",
+        "replace": ["<cbc:Name>Moms</cbc:Name>", "<cbc:Name>NotVAT</cbc:Name>"],
+        "ruleId": "F-LIB198"
+      },
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      }
+    ]
+  },
+  {
+    "id": "selfbilling-valid-credit",
+    "fixture": "test/validation-fixtures/selfbilling-valid-credit.xml",
+    "bundles": {
+      "semantic": "selfbilling-ubl-en16931-1.3.16",
+      "profile": "peppol-selfbilling-3.0.2-ubl",
+      "schema": "xsd-ubl-2.1"
+    },
+    "negatives": [
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:TaxInclusiveAmount currencyID=\"SEK\">250.00", "<cbc:TaxInclusiveAmount currencyID=\"SEK\">260.00"],
+        "ruleId": "BR-CO-15"
+      },
+      {
+        "layer": "profile",
+        "replace": ["urn:fdc:peppol.eu:2017:poacc:selfbilling:01:1.0", "urn:fdc:peppol.eu:2017:poacc:selfbilling:99:1.0"],
+        "ruleId": "PEPPOL-EN16931-R007"
+      },
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      }
+    ]
+  },
+  {
+    "id": "ciusro-valid-invoice",
+    "fixture": "test/validation-fixtures/ciusro-valid-invoice.xml",
+    "bundles": {
+      "profile": "cius-ro-ubl-1.0.9",
+      "schema": "xsd-ubl-2.1"
+    },
+    "negatives": [
+      {
+        "layer": "profile",
+        "replace": ["unitCode=\"H87\"", "unitCode=\"ZZZ\""],
+        "ruleId": "BR-CL-23"
+      },
+      {
+        "layer": "profile",
+        "replace": ["currencyID=\"RON\"", "currencyID=\"ZZZ\""],
+        "ruleId": "BR-CL-03"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:StreetName>Synthetic Seller Street 1</cbc:StreetName>", ""],
+        "ruleId": "BR-RO-081"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:TaxInclusiveAmount currencyID=\"RON\">250.00", "<cbc:TaxInclusiveAmount currencyID=\"RON\">260.00"],
+        "ruleId": "BR-CO-15"
+      },
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      }
+    ]
+  },
+  {
+    "id": "xsd-cfdi-3.3",
+    "fixture": "test/validation-fixtures/legacy/cfdi-33.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-cfdi-3.3"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "replace": [" Rfc=\"EKU9003173C9\"", ""]
+      },
+      {
+        "layer": "schema",
+        "replace": ["UUID=\"d7e2f9a3-1b6c-4e85-a0d7-3c4b5a6f7e44\"", "UUID=\"not-a-uuid\""]
+      }
+    ]
+  },
+  {
+    "id": "xsd-cfdi-4.0",
+    "fixture": "test/validation-fixtures/legacy/cfdi-40.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-cfdi-4.0"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "replace": [" Rfc=\"EKU9003173C9\"", ""]
+      },
+      {
+        "layer": "schema",
+        "replace": ["UUID=\"3f2a9b1c-5d4e-4a7b-8c19-0e6d2f4a7b11\"", "UUID=\"not-a-uuid\""]
+      }
+    ]
+  },
+  {
+    "id": "hr-cius-extension-2026",
+    "fixture": "test/validation-fixtures/hr-cius-valid-extension.xml",
+    "bundles": {
+      "schema": "xsd-hr-cius-ubl-20260415"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "replace": [
+          "<hr:HRObracunPDVPoNaplati>Cash accounting</hr:HRObracunPDVPoNaplati>",
+          "<hr:UnexpectedElement>unexpected</hr:UnexpectedElement>"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ciusro-valid-invoice-selector-creditnote",
+    "fixture": "test/validation-fixtures/selectors/ciusro-valid-invoice-creditnote.xml",
+    "bundles": {
+      "profile": "cius-ro-ubl-1.0.9",
+      "schema": "xsd-ubl-2.1"
+    },
+    "negatives": [
+      {
+        "layer": "profile",
+        "replace": ["unitCode=\"H87\"", "unitCode=\"ZZZ\""],
+        "ruleId": "BR-CL-23"
+      },
+      {
+        "layer": "profile",
+        "replace": ["currencyID=\"RON\"", "currencyID=\"ZZZ\""],
+        "ruleId": "BR-CL-03"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:StreetName>Synthetic Seller Street 1</cbc:StreetName>", ""],
+        "ruleId": "BR-RO-081"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:TaxInclusiveAmount currencyID=\"RON\">250.00", "<cbc:TaxInclusiveAmount currencyID=\"RON\">260.00"],
+        "ruleId": "BR-CO-15"
+      },
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      }
+    ]
+  },
+  {
+    "id": "cius-pt-2.1.1-selector-creditnote",
+    "fixture": "test/validation-fixtures/selectors/cius-pt-2.1.1-creditnote.xml",
+    "bundles": {
+      "profile": "cius-pt-ubl-2.1.1",
+      "schema": "xsd-ubl-2.1"
+    },
+    "negatives": [
+      {
+        "layer": "profile",
+        "replace": ["<cbc:CompanyID>SE212000000101</cbc:CompanyID>", ""],
+        "ruleId": "BR-CIUS-PT-03"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:Percent>25.00</cbc:Percent>", "<cbc:Percent>25</cbc:Percent>"],
+        "ruleId": "DT-CIUS-PT-106.1"
+      },
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      }
+    ]
+  },
+  {
+    "id": "hr-cius-2026-selector-creditnote",
+    "fixture": "test/validation-fixtures/selectors/hr-cius-2026-creditnote.xml",
+    "bundles": {
+      "profile": "hr-cius-ext-ubl-20260313",
+      "schema": "xsd-hr-cius-ubl-20260415",
+      "semantic": "en16931-ubl-1.3.17"
+    },
+    "negatives": [
+      {
+        "layer": "profile",
+        "drop": "cbc:IssueTime",
+        "ruleId": "HR-BR-2"
+      },
+      {
+        "layer": "profile",
+        "replace": ["31.00.11", "99.99.99"],
+        "ruleId": "HR-BR-CL-2"
+      },
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:TaxInclusiveAmount currencyID=\"SEK\">250.00", "<cbc:TaxInclusiveAmount currencyID=\"SEK\">260.00"],
+        "ruleId": "BR-CO-15"
+      }
+    ]
+  },
+  {
+    "id": "gaccount-selector-creditnote",
+    "fixture": "test/validation-fixtures/selectors/gaccount-creditnote.xml",
+    "bundles": {
+      "profile": "nlcius-gaccount-1.0.2.13-ubl",
+      "schema": "xsd-ubl-2.1"
+    },
+    "negatives": [
+      {
+        "layer": "profile",
+        "replace": ["<cbc:TaxInclusiveAmount currencyID=\"SEK\">250.00", "<cbc:TaxInclusiveAmount currencyID=\"SEK\">260.00"],
+        "ruleId": "BR-CO-15"
+      },
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      }
+    ]
+  },
+  {
+    "id": "pint-shared-only-selector-creditnote",
+    "fixture": "test/validation-fixtures/selectors/pint-shared-only-creditnote.xml",
+    "bundles": {
+      "semantic": "pint-shared-1.1.3",
+      "schema": "xsd-ubl-2.1"
+    },
+    "negatives": [
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"SEK\">250.00", "<cbc:PayableAmount currencyID=\"SEK\">260.00"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      }
+    ]
+  },
+  {
+    "id": "peppol-2026-selector-creditnote",
+    "fixture": "test/validation-fixtures/selectors/peppol-2026-creditnote.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "en16931-ubl-1.3.16",
+      "profile": "peppol-bis3-3.0.21-ubl"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:ID"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:TaxInclusiveAmount currencyID=\"SEK\">250.00", "<cbc:TaxInclusiveAmount currencyID=\"SEK\">260.00"],
+        "ruleId": "BR-CO-15"
+      },
+      {
+        "layer": "profile",
+        "replace": ["urn:fdc:peppol.eu:2017:poacc:billing:01:1.0", "urn:fdc:peppol.eu:2017:poacc:billing:99:1.0"],
+        "ruleId": "PEPPOL-EN16931-R007"
+      }
+    ]
+  },
+  {
+    "id": "peppol-legacy-replay-selector-creditnote",
+    "fixture": "test/validation-fixtures/selectors/peppol-legacy-replay-creditnote.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "en16931-ubl-1.3.17",
+      "profile": "peppol-bis3-3.0.20-ubl"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:ID"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:TaxInclusiveAmount currencyID=\"SEK\">250.00", "<cbc:TaxInclusiveAmount currencyID=\"SEK\">260.00"],
+        "ruleId": "BR-CO-15"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:EndpointID schemeID=\"0007\">", "<cbc:EndpointID schemeID=\"INVALID\">"],
+        "ruleId": "PEPPOL-EN16931-CL008"
+      }
+    ],
+    "options": {
+      "suite": "legacy-peppol-3.0.20-en-1.3.17"
+    }
+  },
+  {
+    "id": "xrechnung-ubl-selector-creditnote",
+    "fixture": "test/validation-fixtures/selectors/xrechnung-ubl-creditnote.xml",
+    "bundles": {
+      "profile": "xrechnung-3.0.2-ubl",
+      "schema": "xsd-ubl-2.1",
+      "semantic": "en16931-ubl-1.3.17"
+    },
+    "negatives": [
+      {
+        "layer": "profile",
+        "drop": "cbc:BuyerReference",
+        "ruleId": "BR-DE-15"
+      },
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:TaxInclusiveAmount currencyID=\"EUR\">1190.00", "<cbc:TaxInclusiveAmount currencyID=\"EUR\">1191.00"],
+        "ruleId": "BR-CO-15"
+      }
+    ]
+  },
+  {
+    "id": "nlcius-ubl-selector-creditnote",
+    "fixture": "test/validation-fixtures/selectors/nlcius-ubl-creditnote.xml",
+    "bundles": {
+      "profile": "nlcius-ubl-2.0.3.13",
+      "schema": "xsd-ubl-2.1",
+      "semantic": "en16931-ubl-1.3.16"
+    },
+    "negatives": [
+      {
+        "layer": "profile",
+        "replace": ["<cbc:CompanyID schemeID=\"0106\">12345678</cbc:CompanyID>", ""],
+        "ruleId": "BR-NL-1"
+      },
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:TaxInclusiveAmount currencyID=\"SEK\">250.00", "<cbc:TaxInclusiveAmount currencyID=\"SEK\">260.00"],
+        "ruleId": "BR-CO-15"
+      }
+    ]
+  },
+  {
+    "id": "oioubl-2.02-selector-creditnote",
+    "fixture": "test/validation-fixtures/oioubl-202-creditnote.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.0",
+      "profile": "oioubl-2.02-creditnote-1.11.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:Name>Moms</cbc:Name>", "<cbc:Name>NotVAT</cbc:Name>"],
+        "ruleId": "F-LIB198"
+      }
+    ]
+  },
+  {
+    "id": "cii-d16b-explicit-en16931",
+    "fixture": "test/fixtures/en16931-cii.xml",
+    "bundles": {
+      "schema": "xsd-cii-d16b",
+      "semantic": "en16931-cii-1.3.17"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "replace": ["<ram:ID>", "<ram:Bogus/><ram:ID>"]
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<ram:GrandTotalAmount>1190.00</ram:GrandTotalAmount>", "<ram:GrandTotalAmount>999.00</ram:GrandTotalAmount>"],
+        "ruleId": "BR-CO-15"
+      }
+    ],
+    "options": {
+      "suite": "cii-d16b"
+    }
+  },
+  {
+    "id": "cii-d16b-explicit-unknown",
+    "fixture": "test/fixtures/en16931-cii.xml",
+    "bundles": {
+      "schema": "xsd-cii-d16b"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "replace": ["<ram:ID>", "<ram:Bogus/><ram:ID>"]
+      }
+    ],
+    "options": {
+      "suite": "cii-d16b",
+      "scope": "schema"
+    },
+    "prepare": [["urn:cen.eu:en16931:2017", "urn:example:unknown"]]
+  },
+  {
+    "id": "oioubl-2.02-invoice-warning",
+    "fixture": "test/validation-fixtures/oioubl-202-invoice.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.0",
+      "profile": "oioubl-2.02-invoice-1.11.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:Name>Moms</cbc:Name>", "<cbc:Name>NotVAT</cbc:Name>"],
+        "ruleId": "F-LIB198"
+      }
+    ],
+    "prepare": [["schemeID=\"urn:oioubl:id:profileid-1.2\"", "schemeID=\"urn:example:unknown\""]],
+    "warnings": [
+      {
+        "layer": "profile",
+        "ruleId": "W-LIB003"
+      }
+    ]
+  },
+  {
+    "id": "oioubl-2.02-creditnote-warning",
+    "fixture": "test/validation-fixtures/oioubl-202-creditnote.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.0",
+      "profile": "oioubl-2.02-creditnote-1.11.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:Name>Moms</cbc:Name>", "<cbc:Name>NotVAT</cbc:Name>"],
+        "ruleId": "F-LIB198"
+      }
+    ],
+    "prepare": [["schemeID=\"urn:oioubl:id:profileid-1.2\"", "schemeID=\"urn:example:unknown\""]],
+    "warnings": [
+      {
+        "layer": "profile",
+        "ruleId": "W-LIB003"
+      }
+    ]
+  },
+  {
+    "id": "france-rfe-1.4.0.04-ubl-en16931-invoice",
+    "fixture": "test/validation-fixtures/france-rfe/ubl-en16931-invoice.xml",
+    "options": {
+      "suite": "france-rfe-1.4.0.04"
+    },
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "france-rfe-en16931-ubl-1.3.16",
+      "profile": "france-rfe-ubl-1.4.0.04"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:DocumentCurrencyCode>EUR</cbc:DocumentCurrencyCode>", "<cbc:DocumentCurrencyCode>ZZZ</cbc:DocumentCurrencyCode>"],
+        "ruleId": "BR-CL-04"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:ID>F202500003</cbc:ID>", "<cbc:ID>SYNTHETIC-FRANCE-ID-OVER-THIRTY-FIVE-CHARACTERS</cbc:ID>"],
+        "ruleId": "BR-FR-01_BT-1-1"
+      }
+    ]
+  },
+  {
+    "id": "france-rfe-1.4.0.04-ubl-en16931-creditnote",
+    "fixture": "test/validation-fixtures/france-rfe/ubl-en16931-creditnote.xml",
+    "options": {
+      "suite": "france-rfe-1.4.0.04"
+    },
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "france-rfe-en16931-ubl-1.3.16",
+      "profile": "france-rfe-ubl-1.4.0.04"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:DocumentCurrencyCode>EUR</cbc:DocumentCurrencyCode>", "<cbc:DocumentCurrencyCode>ZZZ</cbc:DocumentCurrencyCode>"],
+        "ruleId": "BR-CL-04"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:ID>F202500003</cbc:ID>", "<cbc:ID>SYNTHETIC-FRANCE-ID-OVER-THIRTY-FIVE-CHARACTERS</cbc:ID>"],
+        "ruleId": "BR-FR-01_BT-1-1"
+      }
+    ]
+  },
+  {
+    "id": "france-rfe-1.4.0.04-ubl-extended-ctc-fr-invoice",
+    "fixture": "test/validation-fixtures/france-rfe/ubl-extended-ctc-fr-invoice.xml",
+    "options": {
+      "suite": "france-rfe-1.4.0.04"
+    },
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "france-rfe-extended-ubl-1.4.0.04",
+      "profile": "france-rfe-ubl-1.4.0.04"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:DocumentCurrencyCode>EUR</cbc:DocumentCurrencyCode>", "<cbc:DocumentCurrencyCode>ZZZ</cbc:DocumentCurrencyCode>"],
+        "ruleId": "BR-CL-04"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:ProfileID>S8</cbc:ProfileID>", "<cbc:ProfileID>UNKNOWN</cbc:ProfileID>"],
+        "ruleId": "BR-FR-08_BT-23"
+      }
+    ]
+  },
+  {
+    "id": "france-rfe-1.4.0.04-ubl-extended-ctc-fr-creditnote",
+    "fixture": "test/validation-fixtures/france-rfe/ubl-extended-ctc-fr-creditnote.xml",
+    "options": {
+      "suite": "france-rfe-1.4.0.04"
+    },
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "france-rfe-extended-ubl-1.4.0.04",
+      "profile": "france-rfe-ubl-1.4.0.04"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:DocumentCurrencyCode>EUR</cbc:DocumentCurrencyCode>", "<cbc:DocumentCurrencyCode>ZZZ</cbc:DocumentCurrencyCode>"],
+        "ruleId": "BR-CL-04"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:ProfileID>S8</cbc:ProfileID>", "<cbc:ProfileID>UNKNOWN</cbc:ProfileID>"],
+        "ruleId": "BR-FR-08_BT-23"
+      }
+    ]
+  },
+  {
+    "id": "france-rfe-1.4.0.04-cii-en16931",
+    "fixture": "test/validation-fixtures/france-rfe/cii-en16931.xml",
+    "options": {
+      "suite": "france-rfe-1.4.0.04"
+    },
+    "bundles": {
+      "schema": "xsd-cii-d22b-france-rfe-1.4.0.04",
+      "semantic": "en16931-cii-1.3.16",
+      "profile": "france-rfe-cii-1.4.0.04"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "replace": ["<ram:ID>", "<ram:Bogus/><ram:ID>"]
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>", "<ram:InvoiceCurrencyCode>ZZZ</ram:InvoiceCurrencyCode>"],
+        "ruleId": "BR-CL-04"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<ram:ID>F202500003</ram:ID>", "<ram:ID>SYNTHETIC-FRANCE-ID-OVER-THIRTY-FIVE-CHARACTERS</ram:ID>"],
+        "ruleId": "BR-FR-01_BT-1"
+      }
+    ]
+  },
+  {
+    "id": "france-rfe-1.4.0.04-cii-extended-ctc-fr",
+    "fixture": "test/validation-fixtures/france-rfe/cii-extended-ctc-fr.xml",
+    "options": {
+      "suite": "france-rfe-1.4.0.04"
+    },
+    "bundles": {
+      "schema": "xsd-cii-d22b-france-rfe-1.4.0.04",
+      "semantic": "france-rfe-extended-cii-1.4.0.04",
+      "profile": "france-rfe-cii-1.4.0.04"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "replace": ["<ram:ID>", "<ram:Bogus/><ram:ID>"]
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>", "<ram:InvoiceCurrencyCode>ZZZ</ram:InvoiceCurrencyCode>"],
+        "ruleId": "BR-CL-04"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<ram:ID>F202600004</ram:ID>", "<ram:ID>SYNTHETIC-FRANCE-ID-OVER-THIRTY-FIVE-CHARACTERS</ram:ID>"],
+        "ruleId": "BR-FR-01_BT-1"
+      }
+    ]
+  },
+  {
+    "id": "france-rfe-1.4.0.04-facturx-basicwl",
+    "fixture": "test/validation-fixtures/france-rfe/facturx-basicwl.xml",
+    "options": {
+      "suite": "france-rfe-1.4.0.04-facturx"
+    },
+    "bundles": {
+      "schema": "xsd-facturx-1.09.2-basicwl",
+      "semantic": "facturx-1.09.2-basicwl",
+      "profile": "france-rfe-cii-1.4.0.04"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "replace": ["<ram:ID>", "<ram:Bogus/><ram:ID>"]
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>", "<ram:InvoiceCurrencyCode>ZZZ</ram:InvoiceCurrencyCode>"],
+        "ruleId": "FX-SCH-A-000464"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<ram:ID>F20260023</ram:ID>", "<ram:ID>SYNTHETIC-FRANCE-ID-OVER-THIRTY-FIVE-CHARACTERS</ram:ID>"],
+        "ruleId": "BR-FR-01_BT-1"
+      }
+    ]
+  },
+  {
+    "id": "france-rfe-1.4.0.04-facturx-basicwl-zugferd",
+    "fixture": "test/validation-fixtures/france-rfe/facturx-basicwl.xml",
+    "options": {
+      "suite": "france-rfe-1.4.0.04-facturx"
+    },
+    "prepare": [["urn:factur-x.eu:1p0:basicwl", "urn:zugferd.de:2p0:basicwl"]],
+    "bundles": {
+      "schema": "xsd-facturx-1.09.2-basicwl",
+      "semantic": "facturx-1.09.2-basicwl",
+      "profile": "france-rfe-cii-1.4.0.04"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "replace": ["<ram:ID>", "<ram:Bogus/><ram:ID>"]
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>", "<ram:InvoiceCurrencyCode>ZZZ</ram:InvoiceCurrencyCode>"],
+        "ruleId": "FX-SCH-A-000464"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<ram:ID>F20260023</ram:ID>", "<ram:ID>SYNTHETIC-FRANCE-ID-OVER-THIRTY-FIVE-CHARACTERS</ram:ID>"],
+        "ruleId": "BR-FR-01_BT-1"
+      }
+    ]
+  },
+  {
+    "id": "france-rfe-1.4.0.04-facturx-en16931",
+    "fixture": "test/validation-fixtures/france-rfe/cii-en16931.xml",
+    "options": {
+      "suite": "france-rfe-1.4.0.04-facturx"
+    },
+    "bundles": {
+      "schema": "xsd-facturx-1.09.2-en16931",
+      "semantic": "facturx-1.09.2-en16931",
+      "profile": "france-rfe-cii-1.4.0.04"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "replace": ["<ram:ID>", "<ram:Bogus/><ram:ID>"]
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>", "<ram:InvoiceCurrencyCode>ZZZ</ram:InvoiceCurrencyCode>"],
+        "ruleId": "FX-SCH-A-000595"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<ram:ID>F202500003</ram:ID>", "<ram:ID>SYNTHETIC-FRANCE-ID-OVER-THIRTY-FIVE-CHARACTERS</ram:ID>"],
+        "ruleId": "BR-FR-01_BT-1"
+      }
+    ]
+  },
+  {
+    "id": "france-rfe-1.4.0.04-facturx-extended",
+    "fixture": "test/validation-fixtures/france-rfe/facturx-extended.xml",
+    "options": {
+      "suite": "france-rfe-1.4.0.04-facturx"
+    },
+    "bundles": {
+      "schema": "xsd-facturx-1.09.2-extended",
+      "semantic": "facturx-1.09.2-extended",
+      "profile": "france-rfe-cii-1.4.0.04"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "replace": ["<ram:ID>", "<ram:Bogus/><ram:ID>"]
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>", "<ram:InvoiceCurrencyCode>ZZZ</ram:InvoiceCurrencyCode>"],
+        "ruleId": "FX-SCH-A-000861"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<ram:ID>F202600004</ram:ID>", "<ram:ID>SYNTHETIC-FRANCE-ID-OVER-THIRTY-FIVE-CHARACTERS</ram:ID>"],
+        "ruleId": "BR-FR-01_BT-1"
+      }
+    ]
+  },
+  {
+    "id": "france-rfe-1.4.0.04-facturx-extended-zugferd",
+    "fixture": "test/validation-fixtures/france-rfe/facturx-extended.xml",
+    "options": {
+      "suite": "france-rfe-1.4.0.04-facturx"
+    },
+    "prepare": [["urn:factur-x.eu:1p0:extended", "urn:zugferd.de:2p0:extended"]],
+    "bundles": {
+      "schema": "xsd-facturx-1.09.2-extended",
+      "semantic": "facturx-1.09.2-extended",
+      "profile": "france-rfe-cii-1.4.0.04"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "replace": ["<ram:ID>", "<ram:Bogus/><ram:ID>"]
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>", "<ram:InvoiceCurrencyCode>ZZZ</ram:InvoiceCurrencyCode>"],
+        "ruleId": "FX-SCH-A-000861"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<ram:ID>F202600004</ram:ID>", "<ram:ID>SYNTHETIC-FRANCE-ID-OVER-THIRTY-FIVE-CHARACTERS</ram:ID>"],
+        "ruleId": "BR-FR-01_BT-1"
+      }
+    ]
+  },
+  {
+    "id": "france-rfe-strict-base-warning",
+    "fixture": "test/validation-fixtures/france-rfe/ubl-en16931-invoice.xml",
+    "options": {
+      "suite": "france-rfe-1.4.0.04"
+    },
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "france-rfe-en16931-ubl-1.3.16",
+      "profile": "france-rfe-ubl-1.4.0.04"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:DocumentCurrencyCode>EUR</cbc:DocumentCurrencyCode>", "<cbc:DocumentCurrencyCode>ZZZ</cbc:DocumentCurrencyCode>"],
+        "ruleId": "BR-CL-04"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:ID>F202500003</cbc:ID>", "<cbc:ID>SYNTHETIC-FRANCE-ID-OVER-THIRTY-FIVE-CHARACTERS</cbc:ID>"],
+        "ruleId": "BR-FR-01_BT-1-1"
+      }
+    ],
+    "prepare": [["<cbc:ID>F202500003</cbc:ID>", "<cbc:ID>F202500003</cbc:ID><cbc:CopyIndicator>false</cbc:CopyIndicator>"]],
+    "warnings": [
+      {
+        "layer": "semantic",
+        "ruleId": "UBL-CR-004"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-sg-invoice",
+    "fixture": "test/validation-fixtures/pint/sg-invoice.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-shared-1.1.3",
+      "profile": "pint-sg-1.4.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"SGD\">745.00", "<cbc:PayableAmount currencyID=\"SGD\">746"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "drop": "cbc:UUID",
+        "ruleId": "BR-108-GST-SG"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-sg-creditnote",
+    "fixture": "test/validation-fixtures/pint/sg-creditnote.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-shared-1.1.3",
+      "profile": "pint-sg-1.4.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"SGD\">745.00", "<cbc:PayableAmount currencyID=\"SGD\">746"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "drop": "cbc:UUID",
+        "ruleId": "BR-108-GST-SG"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-aunz-invoice",
+    "fixture": "test/validation-fixtures/pint/aunz-invoice.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-shared-1.1.3",
+      "profile": "pint-aunz-1.1.3"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"AUD\">1100.00", "<cbc:PayableAmount currencyID=\"AUD\">1101"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "drop": "cbc:BuyerReference",
+        "ruleId": "aligned-ibrp-003"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-aunz-creditnote",
+    "fixture": "test/validation-fixtures/pint/aunz-creditnote.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-shared-1.1.3",
+      "profile": "pint-aunz-1.1.3"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"AUD\">1100.00", "<cbc:PayableAmount currencyID=\"AUD\">1101"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "drop": "cbc:BuyerReference",
+        "ruleId": "aligned-ibrp-003"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-jp-invoice",
+    "fixture": "test/validation-fixtures/pint/jp-invoice.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-shared-1.1.3",
+      "profile": "pint-jp-1.1.3"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"JPY\">15320", "<cbc:PayableAmount currencyID=\"JPY\">15321"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "drop": "cac:InvoicePeriod",
+        "ruleId": "aligned-ibrp-052"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-my-invoice",
+    "fixture": "test/validation-fixtures/pint/my-invoice.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-shared-1.1.3",
+      "profile": "pint-my-1.3.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"MYR\">1080.00", "<cbc:PayableAmount currencyID=\"MYR\">1081"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:ID>SE</cbc:ID>", "<cbc:ID>S</cbc:ID>"],
+        "ruleId": "aligned-ibrp-cl-01-my"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-my-creditnote",
+    "fixture": "test/validation-fixtures/pint/my-creditnote.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-shared-1.1.3",
+      "profile": "pint-my-1.3.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"MYR\">1080.00", "<cbc:PayableAmount currencyID=\"MYR\">1081"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:ID>SE</cbc:ID>", "<cbc:ID>S</cbc:ID>"],
+        "ruleId": "aligned-ibrp-cl-01-my"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-ae-invoice",
+    "fixture": "test/validation-fixtures/pint/ae-invoice.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-ae-shared-1.0.4",
+      "profile": "pint-ae-1.0.4"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"AED\">1050.00", "<cbc:PayableAmount currencyID=\"AED\">1051"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "drop": "cbc:CountrySubentity",
+        "ruleId": "ibr-143-ae"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-ae-creditnote",
+    "fixture": "test/validation-fixtures/pint/ae-creditnote.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-ae-shared-1.0.4",
+      "profile": "pint-ae-1.0.4"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"AED\">1050.00", "<cbc:PayableAmount currencyID=\"AED\">1051"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "drop": "cbc:CountrySubentity",
+        "ruleId": "ibr-143-ae"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-om-invoice",
+    "fixture": "test/validation-fixtures/pint/om-invoice.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-shared-1.1.3",
+      "profile": "pint-om-1.0.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"OMR\">1050.00", "<cbc:PayableAmount currencyID=\"OMR\">1051"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "drop": "cbc:IssueTime",
+        "ruleId": "ALIGNED-IBRP-016-OM"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-om-creditnote",
+    "fixture": "test/validation-fixtures/pint/om-creditnote.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-shared-1.1.3",
+      "profile": "pint-om-1.0.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"OMR\">1050.00", "<cbc:PayableAmount currencyID=\"OMR\">1051"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "drop": "cbc:IssueTime",
+        "ruleId": "ALIGNED-IBRP-016-OM"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-eu-invoice",
+    "fixture": "test/validation-fixtures/pint/eu-invoice.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-shared-1.1.3",
+      "profile": "pint-eu-1.1.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"EUR\">1230.00", "<cbc:PayableAmount currencyID=\"EUR\">1231"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "drop": "cbc:BuyerReference",
+        "ruleId": "PEPPOL-EN16931-R003"
+      },
+      {
+        "layer": "profile",
+        "drop": "cac:PartyTaxScheme",
+        "ruleId": "BR-S-02"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-eu-creditnote",
+    "fixture": "test/validation-fixtures/pint/eu-creditnote.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-shared-1.1.3",
+      "profile": "pint-eu-1.1.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"EUR\">1230.00", "<cbc:PayableAmount currencyID=\"EUR\">1231"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "drop": "cbc:BuyerReference",
+        "ruleId": "PEPPOL-EN16931-R003"
+      },
+      {
+        "layer": "profile",
+        "drop": "cac:PartyTaxScheme",
+        "ruleId": "BR-S-02"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-aunz-sb-invoice",
+    "fixture": "test/validation-fixtures/pint/aunz-sb-invoice.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-aunz-sb-shared-1.1.3",
+      "profile": "pint-aunz-sb-1.1.3"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"AUD\">1100.00", "<cbc:PayableAmount currencyID=\"AUD\">1101"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "drop": "cbc:BuyerReference",
+        "ruleId": "aligned-ibrp-003"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-aunz-sb-creditnote",
+    "fixture": "test/validation-fixtures/pint/aunz-sb-creditnote.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-aunz-sb-shared-1.1.3",
+      "profile": "pint-aunz-sb-1.1.3"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"AUD\">1100.00", "<cbc:PayableAmount currencyID=\"AUD\">1101"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "drop": "cbc:BuyerReference",
+        "ruleId": "aligned-ibrp-003"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-jp-sb-invoice",
+    "fixture": "test/validation-fixtures/pint/jp-sb-invoice.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-jp-sb-shared-1.1.3",
+      "profile": "pint-jp-sb-1.1.3"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"JPY\">15320", "<cbc:PayableAmount currencyID=\"JPY\">15321"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "drop": "cac:InvoicePeriod",
+        "ruleId": "aligned-ibrp-052"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-my-sb-invoice",
+    "fixture": "test/validation-fixtures/pint/my-sb-invoice.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-my-sb-shared-1.3.1",
+      "profile": "pint-my-sb-1.3.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"MYR\">1080.00", "<cbc:PayableAmount currencyID=\"MYR\">1081"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:ID>SE</cbc:ID>", "<cbc:ID>S</cbc:ID>"],
+        "ruleId": "aligned-ibrp-cl-01-my"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-my-sb-creditnote",
+    "fixture": "test/validation-fixtures/pint/my-sb-creditnote.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-my-sb-shared-1.3.1",
+      "profile": "pint-my-sb-1.3.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"MYR\">1080.00", "<cbc:PayableAmount currencyID=\"MYR\">1081"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:ID>SE</cbc:ID>", "<cbc:ID>S</cbc:ID>"],
+        "ruleId": "aligned-ibrp-cl-01-my"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-ae-sb-invoice",
+    "fixture": "test/validation-fixtures/pint/ae-sb-invoice.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-ae-sb-shared-1.0.4",
+      "profile": "pint-ae-1.0.4"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"AED\">1050.00", "<cbc:PayableAmount currencyID=\"AED\">1051"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "drop": "cbc:CountrySubentity",
+        "ruleId": "ibr-143-ae"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-ae-sb-creditnote",
+    "fixture": "test/validation-fixtures/pint/ae-sb-creditnote.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-ae-sb-shared-1.0.4",
+      "profile": "pint-ae-1.0.4"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"AED\">1050.00", "<cbc:PayableAmount currencyID=\"AED\">1051"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "drop": "cbc:CountrySubentity",
+        "ruleId": "ibr-143-ae"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-om-sb-invoice",
+    "fixture": "test/validation-fixtures/pint/om-sb-invoice.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-om-sb-shared-1.0.1",
+      "profile": "pint-om-sb-1.0.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"OMR\">1050.00", "<cbc:PayableAmount currencyID=\"OMR\">1051"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "drop": "cbc:IssueTime",
+        "ruleId": "ALIGNED-IBRP-016-OM"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-om-sb-creditnote",
+    "fixture": "test/validation-fixtures/pint/om-sb-creditnote.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-om-sb-shared-1.0.1",
+      "profile": "pint-om-sb-1.0.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"OMR\">1050.00", "<cbc:PayableAmount currencyID=\"OMR\">1051"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "drop": "cbc:IssueTime",
+        "ruleId": "ALIGNED-IBRP-016-OM"
+      }
+    ]
+  },
+  {
+    "id": "pint-specialization-jp-ntr-invoice",
+    "fixture": "test/validation-fixtures/pint/jp-ntr-invoice.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "pint-jp-ntr-shared-1.1.3",
+      "profile": "pint-jp-ntr-1.1.3"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:InvoiceTypeCode>480", "<cbc:InvoiceTypeCode>380"],
+        "ruleId": "ibr-cl-01-jp-ntr"
+      },
+      {
+        "layer": "semantic",
+        "replace": ["<cbc:PayableAmount currencyID=\"JPY\">10000", "<cbc:PayableAmount currencyID=\"JPY\">10001"],
+        "ruleId": "ibr-co-16"
+      },
+      {
+        "layer": "profile",
+        "drop": "cac:InvoicePeriod",
+        "ruleId": "aligned-ibrp-052"
+      }
+    ]
+  },
+  {
+    "id": "xsd-ebinterface-3.0",
+    "fixture": "test/validation-fixtures/remaining-legacy/ebinterface-3.0.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-ebinterface-3.0"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "InvoiceDate"
+      }
+    ]
+  },
+  {
+    "id": "xsd-ebinterface-3.02",
+    "fixture": "test/validation-fixtures/remaining-legacy/ebinterface-3.02.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-ebinterface-3.02"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "InvoiceDate"
+      }
+    ]
+  },
+  {
+    "id": "xsd-e-arve-1.2",
+    "fixture": "test/validation-fixtures/remaining-legacy/e-arve-1.2.xml",
+    "options": {
+      "scope": "schema",
+      "suite": "e-arve-1.2"
+    },
+    "bundles": {
+      "schema": "xsd-e-arve-1.2"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "InvoiceNumber"
+      }
+    ]
+  },
+  {
+    "id": "isdoc-6.0.1",
+    "fixture": "test/validation-fixtures/remaining-legacy/isdoc-6.0.1.xml",
+    "bundles": {
+      "schema": "xsd-isdoc-6.0.1",
+      "profile": "isdoc-6.0.1-rules"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "ID"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<DocumentType>1</DocumentType>", "<DocumentType>2</DocumentType>"]
+      }
+    ]
+  },
+  {
+    "id": "xsd-isdoc-5.3.1",
+    "fixture": "test/validation-fixtures/remaining-legacy/isdoc-5.3.1.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-isdoc-5.3.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "ID"
+      }
+    ]
+  },
+  {
+    "id": "ublbe-1.31-invoice",
+    "fixture": "test/validation-fixtures/remaining-legacy/ublbe-1.31-invoice.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "profile": "ublbe-1.31-rules"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:Name>03</cbc:Name>", "<cbc:Name>INVALID</cbc:Name>"],
+        "ruleId": "ubl-BE-10"
+      }
+    ]
+  },
+  {
+    "id": "ublbe-1.31-creditnote",
+    "fixture": "test/validation-fixtures/remaining-legacy/ublbe-1.31-creditnote.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "profile": "ublbe-1.31-rules"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "profile",
+        "replace": ["<cbc:Name>03</cbc:Name>", "<cbc:Name>INVALID</cbc:Name>"],
+        "ruleId": "ubl-BE-10"
+      }
+    ]
+  },
+  {
+    "id": "xsd-isdoc-5.3",
+    "fixture": "test/validation-fixtures/remaining-legacy/isdoc-5.3.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-isdoc-5.3"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "ID"
+      }
+    ]
+  },
+  {
+    "id": "xsd-isdoc-5.2.3",
+    "fixture": "test/validation-fixtures/remaining-legacy/isdoc-5.2.3.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-isdoc-5.2.3"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "ID"
+      }
+    ]
+  },
+  {
+    "id": "xsd-isdoc-5.2.2",
+    "fixture": "test/validation-fixtures/remaining-legacy/isdoc-5.2.2.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-isdoc-5.2.2"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "ID"
+      }
+    ]
+  },
+  {
+    "id": "xsd-isdoc-5.2.1",
+    "fixture": "test/validation-fixtures/remaining-legacy/isdoc-5.2.1.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-isdoc-5.2.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "ID"
+      }
+    ]
+  },
+  {
+    "id": "xsd-isdoc-5.2",
+    "fixture": "test/validation-fixtures/remaining-legacy/isdoc-5.2.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-isdoc-5.2"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "ID"
+      }
+    ]
+  },
+  {
+    "id": "xsd-isdoc-5.1",
+    "fixture": "test/validation-fixtures/remaining-legacy/isdoc-5.1.xml",
+    "options": {
+      "scope": "schema"
+    },
+    "bundles": {
+      "schema": "xsd-isdoc-5.1"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "ID"
+      }
+    ]
+  },
+  {
+    "id": "peppol-bis2-invoice",
+    "fixture": "test/validation-fixtures/remaining-legacy/peppol-bis2-invoice.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "peppol-bis2-bii-invoice-3.7.0",
+      "profile": "peppol-bis2-invoice-3.7.0"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "drop": "cac:PartyName",
+        "ruleId": "BII2-T10-R006"
+      },
+      {
+        "layer": "profile",
+        "replace": [" schemeID=\"UNCL5305\"", ""],
+        "ruleId": "EUGEN-T10-R032"
+      },
+      {
+        "layer": "semantic",
+        "replace": [
+          "<cac:AccountingSupplierParty>",
+          "<cac:AdditionalDocumentReference><cbc:ID>SYNTHETIC-MIME</cbc:ID><cac:Attachment><cbc:EmbeddedDocumentBinaryObject mimeCode=\"application/x-synthetic-invalid-mime\" filename=\"synthetic.bin\">U3ludGhldGlj</cbc:EmbeddedDocumentBinaryObject></cac:Attachment></cac:AdditionalDocumentReference><cac:AccountingSupplierParty>"
+        ],
+        "ruleId": "CL-T10-R008"
+      },
+      {
+        "layer": "profile",
+        "replace": ["schemeID=\"SE:ORGNR\"", "schemeID=\"0007\""],
+        "ruleId": "OP-T10-R002"
+      }
+    ]
+  },
+  {
+    "id": "peppol-bis2-creditnote",
+    "fixture": "test/validation-fixtures/remaining-legacy/peppol-bis2-creditnote.xml",
+    "bundles": {
+      "schema": "xsd-ubl-2.1",
+      "semantic": "peppol-bis2-bii-creditnote-3.7.0",
+      "profile": "peppol-bis2-creditnote-3.7.0"
+    },
+    "negatives": [
+      {
+        "layer": "schema",
+        "drop": "cbc:IssueDate"
+      },
+      {
+        "layer": "semantic",
+        "drop": "cac:PartyName",
+        "ruleId": "BII2-T14-R006"
+      },
+      {
+        "layer": "profile",
+        "replace": [" schemeID=\"UNCL5305\"", ""],
+        "ruleId": "EUGEN-T14-R032"
+      },
+      {
+        "layer": "semantic",
+        "replace": [
+          "<cac:AccountingSupplierParty>",
+          "<cac:AdditionalDocumentReference><cbc:ID>SYNTHETIC-MIME</cbc:ID><cac:Attachment><cbc:EmbeddedDocumentBinaryObject mimeCode=\"application/x-synthetic-invalid-mime\" filename=\"synthetic.bin\">U3ludGhldGlj</cbc:EmbeddedDocumentBinaryObject></cac:Attachment></cac:AdditionalDocumentReference><cac:AccountingSupplierParty>"
+        ],
+        "ruleId": "CL-T14-R008"
+      },
+      {
+        "layer": "profile",
+        "replace": ["schemeID=\"SE:ORGNR\"", "schemeID=\"0007\""],
+        "ruleId": "OP-T14-R002"
+      }
+    ]
+  }
+]

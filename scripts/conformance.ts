@@ -18,11 +18,11 @@ import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs
 import { join } from 'node:path';
 import { renderPerformanceHtml } from '../bench/report.js';
 import type { Results } from '../bench/run.js';
-import { coverageHtml } from '../site/coverage.js';
+import { converts, coverageHtml } from '../site/coverage.js';
 import { BASE } from '../site/site.js';
-import type { Detection } from '../src/detect.js';
-import { convert, FORMATS, type FormatDef, IMPLEMENTED_FAMILIES } from '../src/index.js';
-import { type Layer, planFor } from '../src/validation/plan.js';
+import { convert, FORMATS, type FormatDef } from '../src/index.js';
+import { type Layer, plannedSummary } from '../src/validation/plan.js';
+import { loadDistribution } from './validation-distribution.js';
 
 interface Notes {
   publicSamples: string[];
@@ -41,13 +41,14 @@ interface Row {
   publicSamplesConverted: number;
   mappingSource?: string;
   validation: string[];
+  validationGaps: string[];
 }
 
 const root = join(import.meta.dir, '..');
+const distribution = loadDistribution(root);
 const fixtures = join(root, 'test', 'fixtures');
 const notes = JSON.parse(readFileSync(join(root, 'conformance', 'notes.json'), 'utf8')) as Notes;
 const expected = JSON.parse(readFileSync(join(fixtures, 'expected.json'), 'utf8')) as Record<string, string[]>;
-const implemented = new Set<string>(IMPLEMENTED_FAMILIES);
 const publicSamples = new Set(notes.publicSamples);
 
 const detected = new Map<string, number>();
@@ -55,8 +56,27 @@ for (const ids of Object.values(expected)) for (const id of new Set(ids)) detect
 
 const converted = new Map<string, number>();
 const convertedPublic = new Map<string, number>();
+const coveredLayers = new Map<string, Set<string>>();
+const coverageGaps = new Map<string, Set<string>>();
 for (const file of Object.keys(expected)) {
   const r = await convert(new Uint8Array(readFileSync(join(fixtures, file))), file);
+  for (const outcome of r.outcomes) {
+    if (outcome.detection.kind !== 'invoice') continue;
+    const id = outcome.detection.format.id;
+    const coverage = plannedSummary(outcome.detection);
+    const layers = coveredLayers.get(id) ?? new Set<string>();
+    const gaps = coverageGaps.get(id) ?? new Set<string>();
+    for (const layer of ['schema', 'semantic', 'profile'] as Layer[]) {
+      const bundle = coverage.bundles[layer];
+      if (bundle) {
+        if (distribution.bundles[bundle]?.publish) layers.add(`${layer} (${bundle})`);
+        else gaps.add(`${layer} (${bundle}: selected but not distributed)`);
+      }
+      if (coverage.reasons?.[layer] === 'unsupported') gaps.add(layer);
+    }
+    coveredLayers.set(id, layers);
+    coverageGaps.set(id, gaps);
+  }
   const ok = new Set(
     r.outcomes
       .filter((o) => o.status === 'ok' && o.detection.kind === 'invoice')
@@ -68,23 +88,6 @@ for (const file of Object.keys(expected)) {
   }
 }
 
-/**
- * The validation layers a format runs, taken from planFor() so they cannot drift from the code.
- * Factur-X runs the EN 16931 rules only for its EN 16931 profile, so its semantic layer is qualified.
- */
-function validationLayers(f: FormatDef): string[] {
-  const detection = {
-    kind: 'invoice',
-    format: f,
-    details: { profile: f.id === 'facturx' ? 'EN 16931' : undefined },
-    probe: null,
-  } as unknown as Detection;
-  const plan = planFor(detection);
-  return (['schema', 'semantic', 'profile'] as Layer[])
-    .filter((l) => plan[l])
-    .map((l) => (f.id === 'facturx' && l === 'semantic' ? 'semantic (EN 16931 profile only)' : l));
-}
-
 const rows: Row[] = (FORMATS as readonly FormatDef[]).map((f) => ({
   id: f.id,
   name: f.name,
@@ -92,11 +95,12 @@ const rows: Row[] = (FORMATS as readonly FormatDef[]).map((f) => ({
   countries: f.countries.join(', '),
   detection: f.status,
   fixturesDetected: detected.get(f.id) ?? 0,
-  parser: implemented.has(f.family),
+  parser: converts(f),
   fixturesConverted: converted.get(f.id) ?? 0,
   publicSamplesConverted: convertedPublic.get(f.id) ?? 0,
   mappingSource: notes.mappingSource[f.id] ?? notes.mappingSource[f.family],
-  validation: validationLayers(f),
+  validation: [...(coveredLayers.get(f.id) ?? [])].sort(),
+  validationGaps: [...(coverageGaps.get(f.id) ?? [])].sort(),
 }));
 
 const totals = {
@@ -113,7 +117,8 @@ const totals = {
 const summaryLines = [
   `${totals.withParser} of ${totals.formats} formats have a parser; ${totals.converting} convert at least one fixture, ${totals.realSample} of them from a real public sample.`,
   `${totals.untestedParser} formats have a parser but no fixture that exercises it, and ${totals.noFixture} have no fixture at all.`,
-  `${totals.unverified} detection rules are unverified. ${totals.validated} formats run schema or Schematron validation.`,
+  `${totals.unverified} detection rules are unverified. ${totals.validated} formats select at least one distributed validation bundle for the checked-in source fixtures.`,
+  'Validation lists distributed bundles selected for observed fixture versions and profiles, not all versions of a format. Required layers with unsupported selectors or undistributed artifacts are reported separately. Selection is not proof that a fixture passes validation.',
 ];
 
 const args = process.argv.slice(2);
@@ -133,7 +138,7 @@ const md = [
   '|---|---|---|---|---|---|---|---|---|',
   ...rows.map(
     (r) =>
-      `| ${r.name} (\`${r.id}\`) | ${r.countries} | ${r.detection} | ${r.fixturesDetected} | ${yes(r.parser)} | ${r.fixturesConverted} | ${r.publicSamplesConverted} | ${r.mappingSource ?? (r.parser ? '**not recorded**' : '—')} | ${r.validation.join(', ') || '—'} |`,
+      `| ${r.name} (\`${r.id}\`) | ${r.countries} | ${r.detection} | ${r.fixturesDetected} | ${yes(r.parser)} | ${r.fixturesConverted} | ${r.publicSamplesConverted} | ${r.mappingSource ?? (r.parser ? '**not recorded**' : '—')} | ${r.validation.join(', ') || 'No selected bundle'}${r.validationGaps.length ? `; missing required: ${r.validationGaps.join(', ')}` : ''} |`,
   ),
   '',
 ].join('\n');
@@ -175,7 +180,7 @@ function html() {
       ${r.parser ? cell(r.fixturesConverted, r.fixturesConverted > 0) : '<td class="num">—</td>'}
       ${r.parser ? cell(r.publicSamplesConverted, r.publicSamplesConverted > 0) : '<td class="num">—</td>'}
       <td class="${r.parser && !r.mappingSource ? 'gap' : ''}">${r.mappingSource ? esc(r.mappingSource) : r.parser ? 'not recorded' : '—'}</td>
-      <td class="${r.validation.length ? 'good' : ''}">${r.validation.length ? esc(r.validation.join(', ')) : 'not yet'}</td>
+      <td class="${r.validationGaps.length ? 'gap' : ''}">${r.validation.length ? esc(r.validation.join(', ')) : 'No selected bundle'}${r.validationGaps.length ? `<span class="sub">Missing required: ${esc(r.validationGaps.join(', '))}</span>` : ''}</td>
     </tr>`,
       )
       .join('')}</tbody>

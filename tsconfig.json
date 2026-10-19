@@ -13,5 +13,5 @@
     "types": ["node", "bun"]
   },
   "include": ["src", "test", "scripts", "site/*.ts", "examples/line-annotations/*.ts"],
-  "exclude": ["site/src", "site/node_modules", "site/a11y.ts"]
+  "exclude": ["site/src", "site/node_modules", "site/a11y.ts", "site/*-acceptance.ts", "site/validation-faults.ts"]
 }

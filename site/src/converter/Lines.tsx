@@ -1,9 +1,6 @@
-/** The Lines sheet: line roles and relations, and the optional language model that labels what the rules leave open. */
+/** The Lines sheet: deterministic line roles and relations. */
 import type { CanonicalInvoice, Line, LineRelation, LineRole } from '../../../src/index.ts';
 import { t } from '../../i18n';
-import { ENGINES, type EngineSpec } from '../../model';
-import { Button } from '../components/ui/button';
-import { Html } from './i18n';
 
 const ROLE_LABEL: Partial<Record<LineRole, string>> = {
   surcharge: 'role.surcharge',
@@ -14,6 +11,7 @@ const ROLE_LABEL: Partial<Record<LineRole, string>> = {
 };
 /** Message keys for relations seen from the line that holds them ("on line 3"). Percentage types also have a variant with the rate. */
 const RELATION_ON: Record<string, [plain: string, withRate?: string]> = {
+  heading: ['rel.headingFor'],
   markup: ['rel.markupOn', 'rel.markupRateOn'],
   discount: ['rel.discountOn', 'rel.discountRateOn'],
   'allowance-base': ['rel.allowanceBaseOn'],
@@ -28,8 +26,8 @@ const Review = () => (
   </span>
 );
 
-/** Structural rules (no confidence) are certain; everything else short of 'proven' is a hint. */
-const needsReview = (r: LineRelation) => r.method === 'model' || (r.confidence !== undefined && r.confidence !== 'proven');
+/** Missing confidence does not establish certainty; inferred headings always need review. */
+const needsReview = (r: LineRelation) => r.type === 'heading' || r.method === 'model' || r.confidence !== 'proven';
 
 function LineRow({ inv, line: l, under }: { inv: CanonicalInvoice; line: Line; under: Set<string> }) {
   const role = inv.lineRoles?.[l.id];
@@ -38,7 +36,6 @@ function LineRow({ inv, line: l, under }: { inv: CanonicalInvoice; line: Line; u
   const derivedRole = inv.source.derived.some((d) => d.field === `/lineRoles/${l.id}`);
   const notes: { text: string; review: boolean }[] = [];
   for (const r of rels) {
-    if (r.type === 'heading') continue;
     if (r.from === l.id) {
       const [plain, withRate] = RELATION_ON[r.type] ?? ['rel.sameItemOn'];
       const key = r.rate !== undefined && withRate ? withRate : plain;
@@ -151,94 +148,5 @@ export function LinesTable({ inv, limit }: { inv: CanonicalInvoice; limit: numbe
       </section>
       {inv.lines.length > limit && <p className="more-lines">{t('line.more', { count: inv.lines.length - limit })}</p>}
     </>
-  );
-}
-
-/** Approximate download sizes of the WebLLM models, shown before anything is fetched. */
-const ENGINE_SIZE: Record<string, string> = { 'qwen3-0.6b': '0.5 GB', 'qwen3-1.7b': '1 GB', 'qwen3-4b': '2.5 GB' };
-
-export interface ModelState {
-  inv: CanonicalInvoice;
-  phase: 'idle' | 'busy' | 'done' | 'error';
-  text: string;
-  fraction?: number;
-  /** Puts the invoice back as it was before the first model run. */
-  undo?: () => void;
-}
-
-export function ModelPanel({
-  state,
-  engine,
-  nanoStatus,
-  onEngine,
-  onRun,
-  onDismiss,
-}: {
-  /** The model state for this invoice, if a run has happened. */
-  state?: ModelState;
-  engine: string;
-  nanoStatus?: string;
-  onEngine: (id: string) => void;
-  onRun: (spec: EngineSpec) => void;
-  onDismiss: () => void;
-}) {
-  const busy = state?.phase === 'busy';
-  const option = (e: EngineSpec) => {
-    const unavailable = e.kind === 'gemini-nano' && nanoStatus === 'unavailable';
-    const note =
-      e.kind === 'gemini-nano'
-        ? t(unavailable ? 'model.unavailable' : 'model.optBuiltin')
-        : t('model.optSize', { size: ENGINE_SIZE[e.id] ?? '' });
-    return (
-      <label className="engine" key={e.id}>
-        <input
-          type="radio"
-          name="model-engine"
-          value={e.id}
-          checked={e.id === engine}
-          disabled={busy || unavailable}
-          onChange={() => onEngine(e.id)}
-        />
-        <span>
-          <strong>{e.label}</strong>
-          <small>{note}</small>
-        </span>
-      </label>
-    );
-  };
-  return (
-    <section className="model" aria-labelledby="model-title">
-      <div className="model-head">
-        <h3 id="model-title">{t('model.title')}</h3>
-        <span className="model-tag">{t('model.badge')}</span>
-        <span className="model-tag local">{t('model.local')}</span>
-      </div>
-      <p>{t('model.explain')}</p>
-      <fieldset disabled={busy}>
-        <legend>{t('model.engine')}</legend>
-        {ENGINES.map(option)}
-      </fieldset>
-      <div className="model-actions">
-        <Button
-          disabled={busy}
-          onClick={() => {
-            const spec = ENGINES.find((e) => e.id === engine);
-            if (spec) onRun(spec);
-          }}
-        >
-          {t('model.run')}
-        </Button>
-        {busy && <progress max={1} value={state?.fraction} aria-label={t('model.progressLabel')} />}
-        <span className={state?.phase === 'error' ? 'model-status error' : 'model-status'} role="status">
-          {state?.text ?? ''}
-        </span>
-        {state?.undo && (
-          <Button variant="ghost" onClick={onDismiss}>
-            {t('model.dismiss')}
-          </Button>
-        )}
-      </div>
-      <Html as="p" className="model-learn" k="model.learn" />
-    </section>
   );
 }

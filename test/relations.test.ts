@@ -42,7 +42,7 @@ describe('the Svefaktura example with descriptors, a markup and an uncovered ite
       method: 'arithmetic',
       confidence: 'proven',
     });
-    expect(inv.relations).toContainEqual({ from: '1', to: ['4', '5', '6'], type: 'heading', method: 'rule' });
+    expect(inv.relations).toContainEqual({ from: '1', to: ['4', '5', '6'], type: 'heading', method: 'rule', confidence: 'review' });
     expect(inv.relations).toHaveLength(2);
     expect(inv.source.warnings.filter((w) => w.code.startsWith('LINE-'))).toEqual([]);
   });
@@ -226,7 +226,7 @@ describe('descriptors and grouping', () => {
       ['3', 'Dörr', '1', '1000.00'],
     ]);
     expect(a.lineRoles).toEqual({ 1: 'heading', 2: 'description', 3: 'item' });
-    expect(a.relations as unknown[]).toEqual([{ from: '1', to: ['3'], type: 'heading', method: 'rule' }]);
+    expect(a.relations as unknown[]).toEqual([{ from: '1', to: ['3'], type: 'heading', method: 'rule', confidence: 'review' }]);
   });
 
   test('a new run of descriptors starts a new group', () => {
@@ -250,7 +250,7 @@ describe('descriptors and grouping', () => {
       ['2', 'x', '1', '10.00', ref('A')],
       ['3', 'y', '1', '20.00', ref('B')],
     ]);
-    expect(a.relations as unknown[]).toEqual([{ from: '1', to: ['2'], type: 'heading', method: 'rule' }]);
+    expect(a.relations as unknown[]).toEqual([{ from: '1', to: ['2'], type: 'heading', method: 'rule', confidence: 'review' }]);
     const b = rel([
       ['1', 'Rubrik', undefined, '0.00'],
       ['2', 'x', '1', '10.00', ref('A')],

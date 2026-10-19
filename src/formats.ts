@@ -643,7 +643,7 @@ export const FORMATS = [
     status: 'current',
     phase: 3,
     notes: 'Finnish operator format (TietoEVRY).',
-    match: (p) => (p.rootName === 'INVOICE_CENTER' ? {} : null),
+    match: (p) => (p.rootName === 'INVOICE_CENTER' ? { version: p.values.teappsFormatVersion } : null),
   },
   {
     id: 'e-arve',

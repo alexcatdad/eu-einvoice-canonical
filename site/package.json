@@ -7,7 +7,8 @@
     "build": "bun prepare.ts && ASTRO_TELEMETRY_DISABLED=1 bun --bun ./node_modules/astro/bin/astro.mjs build && bun check.ts",
     "dev": "bun prepare.ts && ASTRO_TELEMETRY_DISABLED=1 bun --bun ./node_modules/astro/bin/astro.mjs dev",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "a11y": "bun a11y.ts"
+    "a11y": "bun a11y.ts",
+    "check:validation": "bun check-validation.ts"
   },
   "dependencies": {
     "@astrojs/react": "7.0.1",

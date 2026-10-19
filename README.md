@@ -14,7 +14,7 @@ One TypeScript model for every XML e-invoice you can receive from the 27 EU memb
 
 **Status:**
 - Every parser family is implemented: UBL (Peppol BIS 3 and self-billing, PINT, XRechnung, NLCIUS, CIUS-RO, CIUS-PT, HR-CIUS, OIOUBL, plain EN 16931), CII (Factur-X/ZUGFeRD 2 in every profile, XRechnung CII), Svefaktura 1.0, FatturaPA, KSeF FA(2)/FA(3)/FA_RR, Facturae, ISDOC, ebInterface, Finvoice, e-arve, eSLOG 2.0, ZUGFeRD 1.0, TEAPPSXML and myDATA.
-- Also built: CAdES/XAdES signature verification, opt-in XSD and Schematron validation for UBL and CII, field-level provenance, the `einvoice` CLI, a coverage gate, and a per-format conformance checklist (the [conformance page](https://alexcatdad.github.io/eu-einvoice-canonical/conformance/) on the site).
+- Also built: CAdES/XAdES signature verification, opt-in XSD and Schematron source validation, field-level provenance, the `einvoice` CLI, a coverage gate, and a per-format conformance checklist (the [conformance page](https://alexcatdad.github.io/eu-einvoice-canonical/conformance/) on the site).
 - How well each format is covered (fixtures, real samples, mapping source, validation) is in the generated conformance checklist, not in this README, so it cannot drift.
 
 ```
@@ -67,6 +67,7 @@ bun scripts/sweep.ts /path/to/files --expect answers.json
 (cd site && bun install --frozen-lockfile)          # once: the site's own dependencies (Astro, Starlight, TypeDoc)
 bun run build:site && bun run serve:site             # the site on http://localhost:4173/eu-einvoice-canonical/
 bun run check:lib                                   # all library CI gates, including coverage and generated files
+bun run restore:local-validation                    # explicit pinned downloads for the full local test corpus
 bun run check:site                                  # build, site typecheck, benchmark and bundle-size gates
 (cd site && bunx playwright install --with-deps --only-shell chromium) # once: accessibility browser
 bun run check:a11y                                  # accessibility/privacy gates against the built dist/
@@ -120,7 +121,7 @@ einvoice serve   [--port 8080] [--host 127.0.0.1] [--cors[=<origin>]] [--eu-trus
 
 `convert --eu-trust[=<snapshot.json>]` checks signers against a trusted-list snapshot (see [EU trusted lists](#eu-trusted-lists)).
 
-Flags: `--pretty` indents JSON; `--quiet` silences notes and warnings (errors are still printed); `--limits '{"maxEntries":10}'` overrides `UnwrapLimits`; `--validate` is accepted by `convert` and is a no-op with a message until the validation module lands.
+Flags: `--pretty` indents JSON; `--quiet` silences notes and warnings (errors are still printed); `--limits '{"maxEntries":10}'` overrides `UnwrapLimits`; `--validate` on `convert` runs the pinned source XSD and applicable Schematron suites. Exit 0 requires every required source layer to finish and pass; failed rules return 4, and missing or skipped required checks return 6. Canonical JSON remains available for inspection. `--quiet` does not disable validation.
 `duplicates` converts every file under the directories and groups repeats in four levels: identical payload (same XML in another wrapper), same seller + number + date, same seller + number with a different date or amount, and likely duplicates (same seller and amount, dates within `--window` days, similar lines, different number). Numbers are normalised (case, separators, leading zeros) and the evidence lists every step; credit notes that cite an invoice in BG-3 are paired with it, not flagged. `--index` keeps the index in a JSON file so later runs only add new files. The same logic is exported as `DuplicateIndex`.
 
 JSON goes to stdout only; every error is one line on stderr.
@@ -133,7 +134,7 @@ JSON goes to stdout only; every error is one line on stderr.
 | 3 | unsupported format or profile (including well-formed non-invoice XML) |
 | 4 | validation failed |
 | 5 | partially converted (some documents failed) |
-| 6 | validator unavailable |
+| 6 | requested validation incomplete or unavailable |
 | 7 | internal error (including unreadable files) |
 | 8 | `match` verdict is `needs-review` |
 | 9 | `duplicates` found at least one duplicate group |
@@ -332,16 +333,18 @@ Many invoices mix real items with lines that only describe or adjust other lines
 lineRoles: { '1': 'heading', '2': 'description', '3': 'description', '4': 'item', '5': 'surcharge', '6': 'item' }
 relations: [
   { from: '5', to: ['4'], type: 'markup', rate: '8', method: 'arithmetic', confidence: 'proven' },
-  { from: '1', to: ['4', '5', '6'], type: 'heading', method: 'rule' },
+  { from: '1', to: ['4', '5', '6'], type: 'heading', method: 'rule', confidence: 'review' },
 ]
 ```
 
-- **Descriptors** have zero amount, quantity and price. A run of them heads the priced lines after it, until the next run or a change of order reference (`line.national.orderReference`, when a parser sets it).
+- **Descriptors** have zero amount, quantity and price. The rule treats a run of them as a possible heading for the priced lines after it, until the next run or a change of order reference (`line.national.orderReference`, when a parser sets it). This grouping is inferred and always marked `confidence: 'review'`.
 - **Percentage lines**: the rate is read from the text (`10%`, `10 %`, `10,5%`) and the earlier lines of the group are searched, with exact decimals, for the set whose net amounts times the rate equal the line's amount: contiguous runs first, then subsets of up to four of the twelve nearest lines. One match is `proven`. Several matches, or none, add `LINE-RELATION-AMBIGUOUS` or `LINE-RELATION-UNMATCHED` to `source.warnings` and record no relation.
 - Also found: line allowances whose base amount is another line (`allowance-base`), notes naming another line (`note-reference`), and shared item ids or order-line references (`same-item`, `same-order-line`, always `review`).
-- `method` says how a relation was found (`rule`, `arithmetic` or `model`); `confidence` is `proven`, `likely` or `review`, and is absent for structural rules that cannot be wrong.
+- `method` says how a relation was found (`rule`, `arithmetic` or `model`), not whether it is correct. `confidence` is `proven`, `likely` or `review`; an absent value means unspecified confidence. Deterministic rules can still infer the wrong relationship, so heading relations require review.
 
-An optional language model can label what the rules leave as plain items (freight, labour, discount in Swedish and other languages) and propose links. It runs in the browser only (`site/model.ts`: WebLLM with Qwen3, or Chrome's Gemini Nano), is held to a JSON schema, never overrides a rule and marks everything `method: 'model'`, `confidence: 'review'`. `applyModelLabels(invoice, labeller)` merges its output. The [evaluation page](https://alexcatdad.github.io/eu-einvoice-canonical/eval/) (`site/eval.ts`) scores the rules and the models on the labelled set in `src/relations/labelled.ts` and records accuracy, time, download size and memory.
+The browser converter’s **Lines** tab exports selected canonical JSON for a model and validates pasted annotation responses. Imported annotations stay separate from the invoice and are marked unreviewed; the converter makes no model request. See [canonical line annotations](docs/LINE-ANNOTATIONS.md) for the prompt, settings, examples and schema.
+
+The separate [evaluation page](https://alexcatdad.github.io/eu-einvoice-canonical/eval/) (`site/eval.ts`) retains the original browser-model integration (`site/model.ts`: WebLLM with Qwen3, or Chrome's Gemini Nano). It scores the rules and models on the labelled set in `src/relations/labelled.ts` and records accuracy, time, download size and memory. Its legacy `applyModelLabels(invoice, labeller)` merges output without overriding a rule and marks model relations `method: 'model'`, `confidence: 'review'`.
 
 For a separate, provider-independent consumer example, see [canonical line annotations](docs/LINE-ANNOTATIONS.md). It uses HuJSON for human-edited assets, standard JSON for model requests, and strict validation of complete annotation responses. It preserves the source invoice and represents unresolved roles and subjects separately; it does not replace the existing relation rules.
 
@@ -381,7 +384,7 @@ curl -X POST -F file=@invoice.pdf http://localhost:8080/v1/inspect
 | `GET /v1/schemas/{name}` | `canonical-invoice`, `convert-result` or `inspect-result` JSON Schema. |
 | `GET /health` | Liveness, package and schema versions. |
 
-Errors are `application/problem+json` ([RFC 9457](https://www.rfc-editor.org/rfc/rfc9457)) and use the CLI's exit-code categories as `type` URIs ([listed here](https://alexcatdad.github.io/eu-einvoice-canonical/problems/)): `unsafe-or-malformed` (400, and 413 for a limit), `unsupported`, `validation-failed` and `partial` (422, with the full result in `result`), `validator-unavailable` (503) and `internal` (500). `?euTrust=true` needs a trusted-list snapshot, so start the server with `--eu-trust`; `?validate=true` runs the XSD and Schematron layers (when the bundles are not readable it answers 503).
+Errors are `application/problem+json` ([RFC 9457](https://www.rfc-editor.org/rfc/rfc9457)) and use the CLI's exit-code categories as `type` URIs ([listed here](https://alexcatdad.github.io/eu-einvoice-canonical/problems/)): `unsafe-or-malformed` (400, and 413 for a limit), `unsupported`, `validation-failed` and `partial` (422, with the full result in `result`), `validator-unavailable` (503) and `internal` (500). `?euTrust=true` needs a trusted-list snapshot, so start the server with `--eu-trust`; `?validate=true` runs the XSD and Schematron layers. Missing, unsupported or size-limited required checks answer 503 even if another layer passes; failed checks answer 422. Conversion errors retain any independently obtained validation report on the outcome.
 
 The server writes nothing to disk and keeps no state. The upload is read through a counting reader and refused with 413 as soon as it passes `maxFileBytes` (50 MiB; `--limits '{"maxFileBytes":10485760}'` lowers it, the other `UnwrapLimits` apply too). CORS is off unless you pass `--cors` (any origin) or `--cors=https://app.example`. It listens on 127.0.0.1 by default; there is no authentication, so put it behind your own gateway before exposing it.
 
@@ -463,7 +466,7 @@ Peppol PINT and Saudi ZATCA are UBL documents, so they run through the UBL parse
 | `peppol-pint` | `urn:peppol:pint:billing-1`, other `@xx-n`, older BIS Billing International | Plain UBL mapping |
 | `zatca-ubl` | `ProfileID reporting:1.0` | See below |
 
-Category codes of PINT SG and MY are not UNCL 5305; `categoryCode` keeps them as sent. The PINT Schematron is not bundled (OpenPEPPOL's copyright statement forbids redistribution, see `validation/NOTICE`), so PINT gets the UBL XSD layer only.
+Category codes of PINT SG and MY are not UNCL 5305; `categoryCode` keeps them as sent. PINT suites are qualified locally but excluded from distribution while artifact permissions remain unresolved (see `validation/distribution.json`). The UBL schema check alone leaves full-source validation incomplete.
 
 **ZATCA (Saudi Arabia).** `InvoiceTypeCode/@name` (NNPNESB) gives the standard/simplified subtype and the third-party, nominal, exports, summary and self-billed flags. UUID, ICV, PIH, the invoice hash, the XAdES signature (the cryptographic stamp) and the QR code go into `clearance[0]` (authority `SA:ZATCA`) and `extensions.sa`; the QR TLV is decoded into fields and compared with the invoice. The invoice hash is recomputed with ZATCA's transforms (drop `UBLExtensions`, `cac:Signature` and the QR reference, canonicalize, SHA-256) and compared with the signature digest and QR tag 6: `extensions.sa.hashCheck` says `match`, `mismatch` or `not-checked`, and a mismatch is a warning, never an error. Credit notes (type 381 on an `Invoice` root) become `kind: 'creditNote'`. Hijri dates in date fields are converted with the tabular calendar (it can be a day off from Umm al-Qura), recorded in `extensions.sa.hijriDates` and `source.derived`.
 
@@ -544,9 +547,9 @@ Release binaries come with `SHA256SUMS`, a CycloneDX SBOM and signed build prove
 - **Unverified detection rules:** `ubl-unknown` and `cii-unknown` are fallbacks, not confirmed formats. The Croatian spec spells its own identifier inconsistently, so `hr-cius` only checks for `urn:mfin.gov.`.
 - **EN 16931-1:2026** (published March 2026; 164 to 216 business terms and 32 to 39 groups, per trade press) is not modelled beyond the identifier. Checked on 2026-10-16: the ConnectingEurope validation artefacts (v1.3.17, UBL 2.1 / CII D16B) and the KoSIT XRechnung Schematron (v2.6.0, XRechnung 3.0) contain no 2026 terms, and the EN 16931-1:2026 text and the updated CEN/TS 16931-3-x bindings are paywalled, so neither the exact BT/BG ids and names nor their UBL/CII paths are confirmed. Secondary sources mention multiple payment terms (BG-33), early-payment discounts (BG-35) and line-level delivery (BG-37) but disagree on detail, so nothing was added to `src/canonical.ts` or the parsers. Missing: the CEN/TS 16931-3-1 and 3-3 binding tables, or the 2026 Schematron/XSD once ConnectingEurope or Peppol BIS publish them. 2026-identified documents still parse, with the 2017 terms only.
 - **Signature trust:** signatures are verified cryptographically; signers are checked only when you pass `trustAnchors` or an `euTrust` snapshot. The snapshot is only as current as its fetch date and drops services the lists identify by name or key id without a certificate, and no revocation check is made on the signer's own certificate.
-- **Validation covers UBL and CII only** (XSD, EN 16931 and Peppol/XRechnung Schematron). On invoices with more than 2,000 lines the two Schematron layers are skipped (`not-run`, with an info finding saying why) because SaxonJS needs minutes for them (about 80 s for the EN 16931 rules on a 26,813-line Peppol sample, longer for Peppol's own); the XSD layer still runs. Raise or lift the limit with `validation: { maxSchematronLines }`. National formats get the BR-CO arithmetic checks only; their official schemas are not run yet.
+- **Validation is conditional on the exact version and profile.** Default distributions contain 43 approved bundles, including UBL/CII and XRechnung/NLCIUS rules; the full local qualification corpus has 107. Native Peppol/PINT, Svefaktura and other unresolved artifacts are excluded by `validation/distribution.json`. Missing native/profile rules make full-source validation incomplete even when an XSD passes. Older Finvoice, ISDOC, e-arve and eSLOG versions are not checked against a newer schema. Schematron defaults to a 2,000-line limit: skipped required layers retain `not-run` with `reasons[layer]: "size-limit"` and an incomplete result. Raise or lift it with `validation: { maxSchematronLines }`. See [source validation](docs/SOURCE-VALIDATION.md) for result semantics, replay and browser limits.
 - **Synthetic fixtures:** most national parsers were built from specifications and tested on synthetic files. Formats without a converted real sample are listed in the conformance checklist; run `sweep --expect` on your own inbound files before relying on them.
-- **Peppol PINT and ZATCA validation:** the PINT Schematron and ZATCA's rules are not bundled (licence, see `validation/NOTICE`); only the UBL XSD runs. PINT OM and EU are mapped as plain UBL. A Hijri date whose day does not exist in the Gregorian month of the same number (for example `1446-02-30`) is rejected as an invalid date before conversion.
+- **Peppol PINT and ZATCA validation:** PINT suites are qualified locally but excluded pending redistribution permission; ZATCA native suites remain unqualified (see `validation/NOTICE`). Default outputs run only the UBL XSD and full-source validation remains incomplete. PINT OM and EU are mapped as plain UBL. A Hijri date whose day does not exist in the Gregorian month of the same number (for example `1446-02-30`) is rejected as an invalid date before conversion.
 - **Non-XML formats** (EDIFACT INVOIC, PDFs without embedded XML) are out of scope.
 
 ## License

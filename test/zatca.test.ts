@@ -2,10 +2,9 @@ import assert from 'node:assert/strict';
 import { createHash, randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { describe, test } from 'node:test';
-import { convert, detectXml } from '../src/index.js';
+import { convert, detectXml, validateSource } from '../src/index.js';
 import { decodeZatcaQr, hijriToGregorian, zatcaInvoiceHash } from '../src/parsers/zatca.js';
 import { sha256 } from '../src/sha256.js';
-import { planFor } from '../src/validation/plan.js';
 import { CBC, fixturePath, NSI, parseOne, utf8, warningCodes } from './helpers.js';
 
 const text = (name: string) => readFileSync(fixturePath(name), 'utf8');
@@ -17,14 +16,20 @@ describe('ZATCA detection', () => {
   const header = (profile: string) =>
     `<Invoice xmlns="${NSI}" xmlns:cbc="${CBC}"><cbc:ProfileID>${profile}</cbc:ProfileID><cbc:ID>1</cbc:ID></Invoice>`;
 
-  test('ProfileID reporting:1.0 without a CustomizationID', () => {
+  test('ProfileID reporting:1.0 detects ZATCA without establishing a qualified syntax edition', async () => {
     const d = detectXml(header('reporting:1.0'));
     assert.equal(d.kind, 'invoice');
     if (d.kind !== 'invoice') return;
     assert.equal(d.format.id, 'zatca-ubl');
     assert.equal(d.details.version, '1.0');
     assert.equal(d.details.profile, 'reporting:1.0');
-    assert.deepEqual(planFor(d), { schema: 'xsd-ubl-2.1' });
+    const summary = await validateSource({ xml: header('reporting:1.0') }, { scope: 'schema' });
+    assert.equal(summary.result, 'incomplete');
+    assert.equal(summary.reasons?.schema, 'unsupported');
+    const declared = header('reporting:1.0').replace('<cbc:ProfileID>', '<cbc:UBLVersionID>2.1</cbc:UBLVersionID><cbc:ProfileID>');
+    const schema = await validateSource({ xml: declared }, { scope: 'schema' });
+    assert.equal(schema.bundles.schema, 'xsd-ubl-2.1');
+    assert.equal(schema.schema, 'failed', 'the declared edition checks the deliberately incomplete header');
   });
 
   test('clearance:1.0 is detected too; other profile ids are not', () => {

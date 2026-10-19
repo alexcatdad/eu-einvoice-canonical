@@ -1,0 +1,126 @@
+{
+  "id": "cius-ro-ubl-1.0.9",
+  "title": "Official Romanian CIUS-RO1.0.9 integrated UBL suite",
+  "layer": "profile",
+  "syntax": "ubl",
+  "version": "1.0.9 (documentCIUS1.0.1)",
+  "releaseDate": "2026-10-18",
+  "effectiveFrom": "2026-10-18",
+  "effectiveUntil": null,
+  "license": "EUPL-1.2 stated by the authority top-level schema which includes the native pattern; no separate grant in native fragment",
+  "upstream": "https://mfinante.gov.ro/static/10/eFactura/ro16931-ubl-1.0.9.zip",
+  "note": "Official integrated authority suite: modified EN1.3.8-derived model/syntax, code lists and ROmodel. Do not add modern generic EN. Bounded exact two-pattern expansion preserves1098assert/report nodes and the authority native replacement ofBR-27. ISO skeleton select-contexts=key preserves exact rule matches and visits currencyID/unitCode attribute contexts omitted by its default traversal. Authority source top-level is EUPL1.2. Source header date2024-05-78 is malformed, so manifest dates are vendoring dates, not claimed effective date. Native checks do not implement external authority identity validation or clearance.",
+  "format": "sef",
+  "entry": "CIUS-RO-UBL.sef.json.gz",
+  "source": [
+    {
+      "url": "https://mfinante.gov.ro/static/10/eFactura/ro16931-ubl-1.0.9.zip",
+      "sha256": "818e7dd77e429f5dbde7c60b43dddbdf1a9a82a1773c359caa80a36ef89ea7f2"
+    },
+    {
+      "url": "https://mfinante.gov.ro/static/10/eFactura/ro16931-ubl-1.0.9.zip#ro16931-ubl-1.0.9%2FEN16931-CIUS_RO-UBL-validation.sch",
+      "sha256": "f0510956fbec21ef501fdfbba51fb533f96fde0227c3280c229e7ad081dccde4"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Schematron/schematron/77dcd36c53d12ed786c144ece3b2af7694abdc56/trunk/schematron/code/iso_dsdl_include.xsl",
+      "sha256": "43ff20a1afd89d8a744d1c0b8df94ac5559ffa6a820d1ffbf508d6431ee4fdd9"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Schematron/schematron/77dcd36c53d12ed786c144ece3b2af7694abdc56/trunk/schematron/code/iso_abstract_expand.xsl",
+      "sha256": "c5267f124abf23eeb6669884e40a98607c055bfaa1f39e73b7d578feceeb6e46"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Schematron/schematron/77dcd36c53d12ed786c144ece3b2af7694abdc56/trunk/schematron/code/iso_schematron_skeleton_for_saxon.xsl",
+      "sha256": "95f3195d9f437ea8ff5f75d1a27f4e68ae20b236fe0d4a217bb4209f498a10a3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Schematron/schematron/77dcd36c53d12ed786c144ece3b2af7694abdc56/trunk/schematron/code/iso_svrl_for_xslt2.xsl",
+      "sha256": "0588d617924a0686255f6d182633d434c7986d561be8fcc3b363907d3f671b26"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ConnectingEurope/eInvoicing-EN16931/validation-1.3.16/LICENSE.txt",
+      "sha256": "fc22ec1dcd8bee4636a395fb332e2308cde870fb3fdc71a2e260b919877cdef5"
+    },
+    {
+      "url": "https://mfinante.gov.ro/static/10/eFactura/ro16931-ubl-1.0.9.zip#ro16931-ubl-1.0.9%2Fabstract%2FEN16931-model.sch",
+      "sha256": "0f5143f21cef1d4cbd5924d30dd0728bab388a905eef41d8f7135e8a94fa6974"
+    },
+    {
+      "url": "https://mfinante.gov.ro/static/10/eFactura/ro16931-ubl-1.0.9.zip#ro16931-ubl-1.0.9%2Fabstract%2FEN16931-syntax.sch",
+      "sha256": "3b5da7bffc8d6b2a3ebd908ce50bdf0cb44e6057e5bf9bfa7377ef6b1e9bc6cd"
+    },
+    {
+      "url": "https://mfinante.gov.ro/static/10/eFactura/ro16931-ubl-1.0.9.zip#ro16931-ubl-1.0.9%2FUBL%2FEN16931-UBL-model.sch",
+      "sha256": "c88b3be63f3272c9723d0e582f7b4407d8042821285be85ad80d4de87a7e1f42"
+    },
+    {
+      "url": "https://mfinante.gov.ro/static/10/eFactura/ro16931-ubl-1.0.9.zip#ro16931-ubl-1.0.9%2FUBL%2FEN16931-UBL-syntax.sch",
+      "sha256": "2fe1c7a89e4ea0571d861c2b96c5f2033ac1d54d0a078f7a893e3784fcab83a0"
+    },
+    {
+      "url": "https://mfinante.gov.ro/static/10/eFactura/ro16931-ubl-1.0.9.zip#ro16931-ubl-1.0.9%2Fcodelist%2FEN16931-UBL-codes.sch",
+      "sha256": "544b3f4b96ea2552ab6e6846dd0b2dada112d74815c6db99067dae96f45e6466"
+    },
+    {
+      "url": "https://mfinante.gov.ro/static/10/eFactura/ro16931-ubl-1.0.9.zip#ro16931-ubl-1.0.9%2Fcius-ro%2FRO16931-rules.sch",
+      "sha256": "dc868ca1de1fb875b631941c3769699544fa933439e638ec01f3d80021587fad"
+    }
+  ],
+  "files": [
+    {
+      "path": "CIUS-RO-UBL.sef.json.gz",
+      "sha256": "596362b2cfc6861a1a6b0260bad18847b7c810b8c27e251a8d6ac77f4f2c0d80",
+      "bytes": 232373
+    },
+    {
+      "path": "derived-source.sch",
+      "sha256": "b4e4dcd667ab034b62c1fc522f2514a0ef715d120403fd8cf45d7bd1f5420569",
+      "bytes": 370217
+    },
+    {
+      "path": "licenses/EUPL-1.2.txt",
+      "sha256": "fc22ec1dcd8bee4636a395fb332e2308cde870fb3fdc71a2e260b919877cdef5",
+      "bytes": 13871
+    },
+    {
+      "path": "original-source.sch",
+      "sha256": "f0510956fbec21ef501fdfbba51fb533f96fde0227c3280c229e7ad081dccde4",
+      "bytes": 2052
+    },
+    {
+      "path": "source/abstract/EN16931-model.sch",
+      "sha256": "0f5143f21cef1d4cbd5924d30dd0728bab388a905eef41d8f7135e8a94fa6974",
+      "bytes": 53172
+    },
+    {
+      "path": "source/abstract/EN16931-syntax.sch",
+      "sha256": "3b5da7bffc8d6b2a3ebd908ce50bdf0cb44e6057e5bf9bfa7377ef6b1e9bc6cd",
+      "bytes": 121915
+    },
+    {
+      "path": "source/cius-ro/RO16931-rules.sch",
+      "sha256": "dc868ca1de1fb875b631941c3769699544fa933439e638ec01f3d80021587fad",
+      "bytes": 55392
+    },
+    {
+      "path": "source/codelist/EN16931-UBL-codes.sch",
+      "sha256": "544b3f4b96ea2552ab6e6846dd0b2dada112d74815c6db99067dae96f45e6466",
+      "bytes": 41451
+    },
+    {
+      "path": "source/EN16931-CIUS_RO-UBL-validation.sch",
+      "sha256": "f0510956fbec21ef501fdfbba51fb533f96fde0227c3280c229e7ad081dccde4",
+      "bytes": 2052
+    },
+    {
+      "path": "source/UBL/EN16931-UBL-model.sch",
+      "sha256": "c88b3be63f3272c9723d0e582f7b4407d8042821285be85ad80d4de87a7e1f42",
+      "bytes": 72712
+    },
+    {
+      "path": "source/UBL/EN16931-UBL-syntax.sch",
+      "sha256": "2fe1c7a89e4ea0571d861c2b96c5f2033ac1d54d0a078f7a893e3784fcab83a0",
+      "bytes": 77322
+    }
+  ]
+}

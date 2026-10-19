@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="http://www.ebinterface.at/schema/3p02/" xmlns:ebi="http://www.ebinterface.at/schema/3p02/" ebi:GeneratingSystem="Synthetic test data" ebi:DocumentType="CreditMemo" ebi:InvoiceCurrency="EUR" ebi:Language="ger">
+  <InvoiceNumber>GS-2026-0003</InvoiceNumber>
+  <InvoiceDate>2026-10-14</InvoiceDate>
+  
+  <Delivery>
+    <Period>
+      <FromDate>2026-09-01</FromDate>
+      <ToDate>2026-09-30</ToDate>
+    </Period>
+  </Delivery>
+  <Biller>
+    <VATIdentificationNumber>ATU12345678</VATIdentificationNumber>
+    <Address>
+      <Name>Muster Beratung GmbH</Name>
+      <Street>Beispielgasse 5</Street>
+      <Town>Wien</Town>
+      <ZIP>1010</ZIP>
+      <Country>Österreich</Country>
+      <Phone>+43 1 0000000</Phone>
+      <Email>rechnung@muster-beratung.example</Email>
+      <Contact>Max Muster</Contact>
+    </Address>
+  </Biller>
+  <InvoiceRecipient>
+    <VATIdentificationNumber>ATU87654321</VATIdentificationNumber><BillersInvoiceRecipientID>SYNTHETIC-1</BillersInvoiceRecipientID>
+    <Address>
+      <Name>Stadt Beispielhausen</Name>
+      <Street>Hauptplatz 1</Street>
+      <Town>Beispielhausen</Town>
+      <ZIP>4020</ZIP>
+      <Country>Österreich</Country>
+    </Address>
+  </InvoiceRecipient>
+  <Details>
+    <ItemList>
+      <ListLineItem>
+        <PositionNumber>1</PositionNumber>
+        <Description>Rückerstattung Beratung</Description>
+        <Quantity ebi:Unit="HUR">-2.0000</Quantity>
+        <UnitPrice>100.0000</UnitPrice>
+        <TaxRate>20.0</TaxRate>
+        <LineItemAmount>-200.00</LineItemAmount>
+      </ListLineItem>
+      <ListLineItem>
+        <PositionNumber>2</PositionNumber>
+        <Description>Auslagenersatz</Description>
+        <Quantity ebi:Unit="C62">-1.0000</Quantity>
+        <UnitPrice>30.0000</UnitPrice>
+        <TaxRate ebi:TaxCode="AT000">0.0</TaxRate>
+        <LineItemAmount>-30.00</LineItemAmount>
+      </ListLineItem>
+    </ItemList>
+  </Details>
+  <Tax>
+    <VAT>
+      <Item>
+        <TaxedAmount>-200.00</TaxedAmount>
+        <TaxRate>20.0</TaxRate>
+        <Amount>-40.00</Amount>
+      </Item>
+      <Item>
+        <TaxedAmount>-30.00</TaxedAmount>
+        <TaxRate ebi:TaxCode="AT000">0.0</TaxRate>
+        <Amount>0.00</Amount>
+      </Item>
+    </VAT>
+  </Tax>
+  <TotalGrossAmount>-270.00</TotalGrossAmount>
+  
+  <PaymentMethod xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ebi:UniversalBankTransactionType" ebi:ConsolidatorPayable="false">
+    
+      <BeneficiaryAccount>
+        <BankName>Beispielbank AG</BankName>
+        <BankCode ebi:BankCodeType="AT">19043</BankCode>
+        <BankAccountNr>00234573201</BankAccountNr>
+        <BankAccountOwner>Muster Beratung GmbH</BankAccountOwner>
+      </BeneficiaryAccount>
+      <PaymentReference>20260003</PaymentReference>
+    
+  </PaymentMethod>
+</Invoice>

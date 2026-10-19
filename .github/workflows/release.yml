@@ -29,15 +29,17 @@ jobs:
       - name: Build standalone binaries
         run: |
           mkdir -p dist/release
-          bun build --compile --target=bun-linux-x64 src/cli.ts --outfile dist/release/einvoice-linux-x64
-          bun build --compile --target=bun-darwin-arm64 src/cli.ts --outfile dist/release/einvoice-darwin-arm64
-          bun build --compile --target=bun-windows-x64 src/cli.ts --outfile dist/release/einvoice-windows-x64.exe
-      - name: Smoke-test the Linux binary
-        run: dist/release/einvoice-linux-x64 detect test/fixtures/peppol-bis3-invoice.xml
+          bun scripts/build-cli.ts --target bun-linux-x64 --outfile dist/release/einvoice-linux-x64
+          bun scripts/build-cli.ts --target bun-darwin-arm64 --outfile dist/release/einvoice-darwin-arm64
+          bun scripts/build-cli.ts --target bun-windows-x64 --outfile dist/release/einvoice-windows-x64.exe
+      - name: Archive portable offline validation assets
+        run: tar -czf dist/release/einvoice-validation-assets.tar.gz -C dist/release validation runtime node_modules
+      - name: Smoke-test the installed Linux distribution
+        run: bun scripts/test-cli-package.ts dist/release/einvoice-linux-x64
       - name: SBOM (CycloneDX JSON)
         uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:
-          path: .
+          path: dist/release
           format: cyclonedx-json
           output-file: dist/release/einvoice-sbom.cdx.json
           upload-artifact: false
@@ -55,4 +57,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes
-          gh release upload "$GITHUB_REF_NAME" dist/release/* --clobber
+          gh release upload "$GITHUB_REF_NAME" dist/release/einvoice-* dist/release/SHA256SUMS --clobber

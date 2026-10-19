@@ -4,7 +4,7 @@ import { describe, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { detectXml } from '../src/detect.js';
 import { type CanonicalInvoice, convert, type ValidationSummary } from '../src/index.js';
-import { validate } from '../src/validation/index.js';
+import { type ValidationSuite, validate } from '../src/validation/index.js';
 import { utf8 } from './helpers.js';
 
 const DIR = new URL('./validation-fixtures/national/', import.meta.url);
@@ -17,6 +17,7 @@ interface Case {
   bundle: string;
   drop: string;
   swap: [string, string];
+  suite?: ValidationSuite;
 }
 
 const CASES: Case[] = [
@@ -88,7 +89,14 @@ const CASES: Case[] = [
     drop: 'InvoiceNumber',
     swap: ['InvoiceTypeCode', 'InvoiceTypeText'],
   },
-  { file: 'e-arve.xml', formatId: 'e-arve', bundle: 'xsd-earve-1.2', drop: 'InvoiceNumber', swap: ['Date', 'FileId'] },
+  {
+    file: 'e-arve.xml',
+    formatId: 'e-arve',
+    bundle: 'xsd-earve-1.2',
+    drop: 'InvoiceNumber',
+    swap: ['Date', 'FileId'],
+    suite: 'e-arve-1.2.EN',
+  },
   { file: 'eslog-2.xml', formatId: 'eslog-2', bundle: 'xsd-eslog-2.0', drop: 'S_UNH', swap: ['S_UNH', 'S_BGM'] },
 ];
 
@@ -105,8 +113,8 @@ function swap(xml: string, a: string, b: string) {
 /** The first test to run loads libxml2 as WebAssembly; give every validation test room. */
 const slow = (name: string, fn: () => Promise<void>) => test(name, { timeout: 60_000 }, fn);
 
-async function validated(xml: string, file: string): Promise<{ invoice: CanonicalInvoice; v: ValidationSummary }> {
-  const result = await convert(utf8(xml), file, undefined, { validate: true });
+async function validated(xml: string, file: string, suite?: ValidationSuite): Promise<{ invoice: CanonicalInvoice; v: ValidationSummary }> {
+  const result = await convert(utf8(xml), file, undefined, { validate: true, validation: { suite } });
   const outcome = result.outcomes[0];
   if (outcome?.status !== 'ok') throw new Error(`${file}: not converted: ${outcome?.status}`);
   const invoice = outcome.invoices[0];
@@ -114,8 +122,8 @@ async function validated(xml: string, file: string): Promise<{ invoice: Canonica
 }
 
 /** The mutated documents go straight to the validator: a parser would reject several of them before validation runs. */
-async function validatedXml(xml: string): Promise<ValidationSummary> {
-  return validate({ xml }, detectXml(xml));
+async function validatedXml(xml: string, suite?: ValidationSuite): Promise<ValidationSummary> {
+  return validate({ xml }, detectXml(xml), { suite });
 }
 
 const fatal = (v: ValidationSummary) => v.findings.filter((f) => f.layer === 'schema' && f.severity === 'fatal');
@@ -124,19 +132,19 @@ describe('national schemas', () => {
   for (const c of CASES) {
     describe(c.file, () => {
       slow('the valid document passes the schema layer', async () => {
-        const { invoice, v } = await validated(read(c.file), c.file);
+        const { invoice, v } = await validated(read(c.file), c.file, c.suite);
         assert.equal(invoice.source.format, c.formatId);
         assert.equal(v.schema, 'passed', JSON.stringify(fatal(v)));
         assert.equal(v.semantic, 'not-run');
-        assert.equal(v.profile, 'not-run');
-        assert.deepEqual(v.bundles, { schema: c.bundle });
+        assert.equal(v.profile, c.formatId === 'isdoc' ? 'passed' : 'not-run');
+        assert.deepEqual(v.bundles, { schema: c.bundle, ...(c.formatId === 'isdoc' ? { profile: 'isdoc-6.0.2-rules' } : {}) });
         assert.deepEqual(fatal(v), []);
       });
 
       slow(`a missing <${c.drop}> fails with a located finding`, async () => {
         const xml = drop(read(c.file), c.drop);
         assert.notEqual(xml, read(c.file));
-        const v = await validatedXml(xml);
+        const v = await validatedXml(xml, c.suite);
         assert.equal(v.schema, 'failed');
         assert.ok(fatal(v).length > 0);
         assert.ok(
@@ -146,7 +154,7 @@ describe('national schemas', () => {
       });
 
       slow(`<${c.swap[0]}> and <${c.swap[1]}> in the wrong order fail with a located finding`, async () => {
-        const v = await validatedXml(swap(read(c.file), c.swap[0], c.swap[1]));
+        const v = await validatedXml(swap(read(c.file), c.swap[0], c.swap[1]), c.suite);
         assert.equal(v.schema, 'failed');
         assert.ok(
           fatal(v).some((f) => /\(line \d+\)/.test(f.message)),

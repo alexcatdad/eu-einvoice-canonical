@@ -262,18 +262,12 @@ const LAYERS = ['schema', 'semantic', 'profile'] as const;
 function classify(result: ConvertResult, validate: boolean): Failure | null {
   const failures: Failure[] = [];
   let good = 0;
-  let validated = 0;
-  let unavailable = 0;
+  let incomplete = false;
   for (const o of result.outcomes) {
     if (o.status === 'ok') {
       const summaries = o.invoices.map((i) => i.source.validation);
       const failed = summaries.some((v) => v && LAYERS.some((l) => v[l] === 'failed'));
-      validated += summaries.length;
-      // Only the layers planned for the format count: the others stay 'not-run'.
-      unavailable += summaries.filter((v) => {
-        const planned = v ? LAYERS.filter((l) => v[l] !== 'not-run') : [];
-        return v && planned.length > 0 && planned.every((l) => v[l] === 'unavailable');
-      }).length;
+      incomplete ||= summaries.some((v) => v?.completeness !== 'complete');
       if (failed)
         failures.push({
           slug: 'validation-failed',
@@ -310,11 +304,11 @@ function classify(result: ConvertResult, validate: boolean): Failure | null {
     return failures.sort((a, b) => severity(b) - severity(a))[0]!;
   }
   if (good === 0) return { slug: 'unsupported', status: 422, detail: 'The file contains no XML document to convert' };
-  if (validate && validated > 0 && unavailable === validated)
+  if (validate && incomplete)
     return {
       slug: 'validator-unavailable',
       status: 503,
-      detail: 'The validators could not run on this server; see source.validation.findings',
+      detail: 'The requested source validation is incomplete; see source.validation',
     };
   return null;
 }

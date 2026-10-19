@@ -1,0 +1,121 @@
+{
+  "id": "xsd-hr-cius-ubl-20260415",
+  "title": "Official Croatian UBL2.1 with HR extension XSD closure",
+  "layer": "schema",
+  "syntax": "ubl",
+  "version": "UBL2.1 HR extension1.0 (2026-04-15 package)",
+  "releaseDate": "2026-04-15",
+  "effectiveFrom": "2026-04-15",
+  "effectiveUntil": null,
+  "license": "Croatian Tax Administration site permission to transmit contents with source attribution; original source and OASIS component notices retained. See validation/licenses/NATIONAL-NOTICES.txt.",
+  "upstream": "https://porezna.gov.hr/fiskalizacija/bezgotovinski-racuni/eracun",
+  "note": "Authority package198 includes Invoice/CreditNote and complete relative dependency closure. Modified CommonExtensionComponents directly imports HR extension and restricts ExtensionContent to known HR/signature types; does not inherit generic UBL lax acceptance of arbitrary foreign content. Source bytes unchanged. Publication date from official documentation page, not inferred from file mtime.",
+  "format": "xsd",
+  "entries": {
+    "Invoice": "maindoc/UBL-Invoice-2.1.xsd",
+    "CreditNote": "maindoc/UBL-CreditNote-2.1.xsd"
+  },
+  "source": [
+    {
+      "url": "https://porezna.gov.hr/fiskalizacija/api/dokumenti/198",
+      "sha256": "549ced211d2b463db0e5821ed9e604580140aa1870ee8636d207206d872c8388"
+    }
+  ],
+  "files": [
+    {
+      "path": "common/CCTS_CCT_SchemaModule-2.1.xsd",
+      "sha256": "d5fcf183b62d1e23021f1f62a5b129c9e1ef1fc7c451cf3d2f23e3fe5a8efbfd",
+      "bytes": 45999
+    },
+    {
+      "path": "common/HRExtensionAggregateComponents-1.xsd",
+      "sha256": "c5aae7d62509029a987156ddc563972bdc4326658b43c6c424002efecfff275f",
+      "bytes": 5897
+    },
+    {
+      "path": "common/UBL-CommonAggregateComponents-2.1.xsd",
+      "sha256": "2fd76c6bead543354c01bc40eab3e8188c25ee96b2a902456522ec6bab8b483e",
+      "bytes": 2460242
+    },
+    {
+      "path": "common/UBL-CommonBasicComponents-2.1.xsd",
+      "sha256": "0e71e086fbacb274b385fed385e29d7678ff9af6201f2975c3b51c298f51743a",
+      "bytes": 225283
+    },
+    {
+      "path": "common/UBL-CommonExtensionComponents-2.1.xsd",
+      "sha256": "03a502ef6e7feb617a4d570fbe1f8efe528c8bea71e95e6c07072ec4679974b3",
+      "bytes": 10448
+    },
+    {
+      "path": "common/UBL-CommonSignatureComponents-2.1.xsd",
+      "sha256": "4b1712f409695448e05288209792eef1980a5833fb13157b4b49d36ccc8a37a0",
+      "bytes": 5648
+    },
+    {
+      "path": "common/UBL-CoreComponentParameters-2.1.xsd",
+      "sha256": "884dfb162e341ba7c67fce002c5f04af6082b4901e53777322463dbb81cf69f4",
+      "bytes": 3236
+    },
+    {
+      "path": "common/UBL-ExtensionContentDataType-2.1.xsd",
+      "sha256": "11ca9bb07afd1745dc97599a6d82deb5daf0180b8c06f366fdac1ffb1c6ada1d",
+      "bytes": 3654
+    },
+    {
+      "path": "common/UBL-QualifiedDataTypes-2.1.xsd",
+      "sha256": "1a6182be542088f70d0351bbee1186d6b44ef86fac9a580622928ec989e558a9",
+      "bytes": 3659
+    },
+    {
+      "path": "common/UBL-SignatureAggregateComponents-2.1.xsd",
+      "sha256": "f54c70a5c9f4892d553ad397cbda2affbf861fd56f095c9094e205613a403e83",
+      "bytes": 7921
+    },
+    {
+      "path": "common/UBL-SignatureBasicComponents-2.1.xsd",
+      "sha256": "28207e7f2727857318a18ba6890fc158f4ac04eee1697285865111b50e2fad40",
+      "bytes": 4284
+    },
+    {
+      "path": "common/UBL-UnqualifiedDataTypes-2.1.xsd",
+      "sha256": "dd5b4e58a49dad38f1ec72b9e0ac4913dcf51168886bb87e2335fb168736018b",
+      "bytes": 27853
+    },
+    {
+      "path": "common/UBL-XAdESv132-2.1.xsd",
+      "sha256": "6cb9e71bef4d0de3baf5d1fa4268898ece0245d60d0ce22e76af92b7602089a3",
+      "bytes": 22140
+    },
+    {
+      "path": "common/UBL-XAdESv132.xsd",
+      "sha256": "6deab2f5a7c68f033864df97e67e9a3eb46d680b2c8af532e13db578a3b598d1",
+      "bytes": 22094
+    },
+    {
+      "path": "common/UBL-XAdESv141-2.1.xsd",
+      "sha256": "dbeb8eb9cde28083521551e27044200fdfe20280bb666dd052cf0de294ae14d4",
+      "bytes": 1341
+    },
+    {
+      "path": "common/UBL-XAdESv141.xsd",
+      "sha256": "ec63afdf4f49e34f0cdf2ded2b87ade28f873d1de0d56039c0d52578bb40e8c3",
+      "bytes": 1291
+    },
+    {
+      "path": "common/UBL-xmldsig-core-schema-2.1.xsd",
+      "sha256": "92fcf626208d0641846fea1e65c49e4e756cba6c61c77841da3492d30bc2b0cb",
+      "bytes": 11080
+    },
+    {
+      "path": "maindoc/UBL-CreditNote-2.1.xsd",
+      "sha256": "6b1efca5933d07c78e3eeea86a5c8cb08328cfe11762686d397669020bcbc5f9",
+      "bytes": 58647
+    },
+    {
+      "path": "maindoc/UBL-Invoice-2.1.xsd",
+      "sha256": "73a771d90790220181b0cb1a037b81b4baeea33c8bf2e3c8e12111090e644c6e",
+      "bytes": 61179
+    }
+  ]
+}

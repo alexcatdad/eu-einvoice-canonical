@@ -43,8 +43,13 @@ export interface BundleSource {
 const isNodeLike = () => typeof process !== 'undefined' && !!process.versions?.node;
 
 export function defaultReader(baseUrl?: string | URL): BundleReader {
-  const base = new URL(baseUrl ?? '../../validation/bundles/', import.meta.url);
+  let base = new URL(baseUrl ?? '../../validation/bundles/', import.meta.url);
   return async (bundleId, path) => {
+    if (!baseUrl && (import.meta.url.includes('/$bunfs/') || import.meta.url.includes('/~BUN/')) && isNodeLike()) {
+      const urlModule = 'node:url';
+      const { pathToFileURL } = await import(urlModule);
+      base = new URL('./validation/bundles/', pathToFileURL(process.execPath));
+    }
     const url = new URL(`${bundleId}/${path}`, base);
     if (url.protocol === 'file:' && isNodeLike()) {
       // Computed specifiers keep browser bundlers from pulling in node:fs.
@@ -60,7 +65,7 @@ export function defaultReader(baseUrl?: string | URL): BundleReader {
   };
 }
 
-const manifests = new Map<string, Promise<BundleManifest>>();
+const manifests = new Map<string, Promise<{ manifest: BundleManifest; sha256: string }>>();
 const verified = new Map<string, Promise<Uint8Array>>();
 
 function memo<T>(cache: Map<string, Promise<T>>, key: string, make: () => Promise<T>): Promise<T> {
@@ -80,12 +85,22 @@ export class BundleReaderFor {
     private readonly scope: string,
   ) {}
 
-  manifest(id: string): Promise<BundleManifest> {
+  private loadManifest(id: string): Promise<{ manifest: BundleManifest; sha256: string }> {
     return memo(manifests, `${this.scope}|${id}`, async () => {
-      const m = JSON.parse(new TextDecoder().decode(await this.read(id, 'manifest.json'))) as BundleManifest;
+      // Parse and hash one owned byte snapshot so the receipt identifies exactly what the engines use.
+      const bytes = new Uint8Array(await this.read(id, 'manifest.json'));
+      const m = JSON.parse(new TextDecoder().decode(bytes)) as BundleManifest;
       if (m.id !== id) throw new Error(`Bundle ${id}: manifest says ${m.id}`);
-      return m;
+      return { manifest: m, sha256: await sha256Hex(bytes) };
     });
+  }
+
+  async manifest(id: string): Promise<BundleManifest> {
+    return (await this.loadManifest(id)).manifest;
+  }
+
+  async manifestSha256(id: string): Promise<string> {
+    return (await this.loadManifest(id)).sha256;
   }
 
   /** A manifest-listed file, verified against its hash. */

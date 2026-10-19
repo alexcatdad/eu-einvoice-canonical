@@ -1,0 +1,369 @@
+{
+  "version": "1.4.0.04",
+  "releaseDate": "2026-09-04",
+  "effectiveFrom": "2026-10-01",
+  "effectiveUntil": null,
+  "license": "Apache-2.0 repository LICENSE and explanatory note; embedded Schematron EUPL wording retained verbatim",
+  "upstream": "https://github.com/fnfempe/France_RFE/tree/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d",
+  "note": "Pinned FNFE-MPE current fatal France RFE policy; not the historical warning alternative. Strict receiving policy required by 2026-10-01. This is XML format/business-rule validation; Chorus Pro, lifecycle messages, accredited-platform exchange and tax-authority acceptance are outside this chain.",
+  "id": "xsd-cii-d22b-france-rfe-1.4.0.04",
+  "title": "France RFE uncoupled UNCEFACT CII D22B schema",
+  "layer": "schema",
+  "syntax": "cii",
+  "entries": {
+    "CrossIndustryInvoice": "CrossIndustryInvoice_100pD22B.xsd"
+  },
+  "format": "xsd",
+  "source": [
+    {
+      "url": "https://codeload.github.com/fnfempe/France_RFE/zip/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d",
+      "sha256": "8728ce11486d4aa6db24c6fd653ba0c655f0fc47f8d6f69b065f2922cc595467"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fnfempe/France_RFE/97ba0f3d4ef2abed5780e9490d5c3a2be832ab1d/LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    }
+  ],
+  "files": [
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_EDIFICAS-EU_AccountingAccountType_D11A.xsd",
+      "sha256": "e7e6918e7c33438c340419719b1bae639ff84b3f92466d96f20b8069f846f1d2",
+      "bytes": 781
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_EDIFICAS-EU_AccountingAmountType_D11A.xsd",
+      "sha256": "4415a775f4c2d7be14e653beadc4cd0a69f8134bac53cb800fecfcc39c1a616e",
+      "bytes": 742
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_ISO_ISO3AlphaCurrencyCode_2012-08-31.xsd",
+      "sha256": "562adfecee1b104df31a43d0f5131f073d945c1777164b1aab7b23c2c13a44bd",
+      "bytes": 7360
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_ActionCode_D22A.xsd",
+      "sha256": "36af3214287d455cdb459846b29cc5f56bb2ce67e7dee99b2cfb002dce9d1719",
+      "bytes": 4900
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_AddressType_D22A.xsd",
+      "sha256": "0cbfa6dbdc440c0b1dac9f0f44203b3f33d11a014ad0798a2df25aa1476c996d",
+      "bytes": 763
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_AdjustmentReasonDescriptionCode_D22A.xsd",
+      "sha256": "5cca4460a0df6f4d481781cb2ac719591b598a99c10a084dd45609d1674ba98f",
+      "bytes": 4417
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_AllowanceChargeIdentificationCode_D22A.xsd",
+      "sha256": "588d82301a45065ef17cc93927e9de54c9ba5bd648284769506b1871258f0a14",
+      "bytes": 4441
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_AllowanceChargeReasonCode_D22A.xsd",
+      "sha256": "50d05237fcfa8ea21461de193893ca340558c436978961756127959ac40fffca",
+      "bytes": 4424
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_AutomaticDataCaptureMethodCode_D22A.xsd",
+      "sha256": "e9603fddd0a062181b473e2fb7906ae292d3bafb3dad705b8f02ac2d45e54a3b",
+      "bytes": 932
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_CargoOperationalCategoryCode_D22A.xsd",
+      "sha256": "4cab030adbdda3e0482344d19c07066abf4fcdba35b1b66aa0d14a7766d73a4d",
+      "bytes": 1443
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_CargoTypeCode_1996Rev2Final.xsd",
+      "sha256": "995634da5a94778dea9215324ca21b9950261bea3e82e67a47139459d35c9d9e",
+      "bytes": 841
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_CommodityIdentificationCode_D22A.xsd",
+      "sha256": "34eaf62a34b082e3a152ff56548a279541eeec2a70047df53b925e64c2ccb753",
+      "bytes": 561
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_CommunicationMeansTypeCode_D22A.xsd",
+      "sha256": "e8cb6a176bb138b1271801da82f41aa4eab5ae2e0b54feffaa2f57783c16058a",
+      "bytes": 2283
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_ContactFunctionCode_D22A.xsd",
+      "sha256": "18267230b49b9dd8e29a31209a85d06f9180859c3ac2b81d900a00a3f7272656",
+      "bytes": 4326
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_DangerousGoodsPackingCode_D22A.xsd",
+      "sha256": "7ac08578138cd1c5400075ca4b3fd32af143f7a5bb4da994f08fd886f506f601",
+      "bytes": 661
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_DangerousGoodsRegulationCode_D22A.xsd",
+      "sha256": "f26f315c009b62148d0c17176ffdbc1a83576033eaae5d96368aea9de5c5a868",
+      "bytes": 1437
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_DateOnlyFormatCode_D21B.xsd",
+      "sha256": "fea0ec94dfb8897736f44c42b9a5f0a8dfa463c320ebb16a566b43e665384887",
+      "bytes": 879
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_DeliveryTermsCode_2020.xsd",
+      "sha256": "2daba3d9e446fb4f1a5b3fb70b9fdb93045c66f84e13c822c0de6318cfa9df9d",
+      "bytes": 983
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_DeliveryTermsFunctionCode_D22A.xsd",
+      "sha256": "fe94ee012c53382f915125ecc0c630942bb129b0303c3daf76b34cc454b5a5ba",
+      "bytes": 830
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_DimensionTypeCode_D22A.xsd",
+      "sha256": "7a4eacf64b5fad813d88b43db1c8ca6b80d9b422c7c6dad549dce6f096e4b242",
+      "bytes": 1372
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_DocumentNameCode_Accounting_D22A.xsd",
+      "sha256": "794d733de5752c967a30ec28778bd2eea957b6d5012b9931cde89287ec782d68",
+      "bytes": 1444
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_DocumentNameCode_D22A.xsd",
+      "sha256": "7bb5eb6768f89625c72a6c71fcca33d2083aecc4f16ad45d3b34919b822a01c1",
+      "bytes": 31087
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_DocumentStatusCode_D22A.xsd",
+      "sha256": "e93ee4bbb3ee68c9bd7fe11ca4c109b66ea28a555c4b3f0ffc8bf6988b530418",
+      "bytes": 2337
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_DutyorTaxorFeeCategoryCode_D22A.xsd",
+      "sha256": "5c4afb1482989533442fbe31d830cc5ff1f47a0f4721ce0d08a33e178eec5c92",
+      "bytes": 1317
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_DutyTaxFeeTypeCode_D22A.xsd",
+      "sha256": "b71a2d05dbb49a5230559f26014480284f070f6c088e10bd15a23fe99410da14",
+      "bytes": 2624
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_EventTimeReferenceCode_D22A.xsd",
+      "sha256": "5678f8fc2dfe4da9fd74611acd251cef112c678440f6060e5b8e9d6c5a7d9f77",
+      "bytes": 2905
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_EventTimeReferenceCodePaymentTermsEvent_D22A.xsd",
+      "sha256": "6bdee2738f8e1540cf64cad35d9471406e5803020f02f0e6f2463970112050d7",
+      "bytes": 760
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_FreightChargeQuantityUnitBasisCode_D22A.xsd",
+      "sha256": "7e9eea3ec3484994e1117e4441ed46ee07029c1886509a4f3e66265378aa329d",
+      "bytes": 582
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_FreightChargeTariffCode_D22A.xsd",
+      "sha256": "71c5b6c5f2bf0dd0b62b37e22b923d64d9f8cb10264570e9dfa4cd99eb63e6a4",
+      "bytes": 1015
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_GoodsTypeCode_D22A.xsd",
+      "sha256": "6d23895c62ec101a61e915c68ac8377521f218e1f8e9a051314186483bd3ca1d",
+      "bytes": 523
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_GoodsTypeExtensionCode_D22A.xsd",
+      "sha256": "8d19fa5859d80c61120556730935debba6fe6eb9a90570849220af94ba2a0277",
+      "bytes": 550
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_LocationFunctionCode_D22A.xsd",
+      "sha256": "2390f4f4b694561b036a876b7d70e3719b7099e594f33a4892018896d49d13b7",
+      "bytes": 12364
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_MeasurementUnitCommonCodeLinear_4.xsd",
+      "sha256": "57727948b0e40f12f7e05fd7dc44cd0d34145b9a381140e67300f27160b6e9e4",
+      "bytes": 767
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_MeasurementUnitCommonCodeVolume_4.xsd",
+      "sha256": "40819f7a6d7c53bea6b814a352f5c66a46a858ad0b475c1f813ed760dffa204b",
+      "bytes": 805
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_MeasurementUnitCommonCodeWeight_4.xsd",
+      "sha256": "9f4d65c3825ff6be3b8f9afdc6c9344e55e0e8ee5e0852b1d2bd00b47034b1b8",
+      "bytes": 691
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_MessageFunctionCode_D22A.xsd",
+      "sha256": "03afa0ebeafb2a814563888964e9fbb3092dac6dbd046f32ae010506e51bc050",
+      "bytes": 3214
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_PackageTypeCode_2006.xsd",
+      "sha256": "1053a3022982349527c19e988196345c34f349cafccc95f682e8f20c8198a3a9",
+      "bytes": 15472
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_PackagingMarkingCode_D22A.xsd",
+      "sha256": "8559ba4bc02676670bfaa1e14b8b3b0821ce8d030eb713bb811d1822b3e63fa2",
+      "bytes": 2437
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_PartyRoleCode_ChargePaying_D22A.xsd",
+      "sha256": "aac087f4c07795cbfe4a70a3d04264b5a5f4da16699cd18c7feaa0d28e919a8b",
+      "bytes": 1310
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_PartyRoleCode_D22A.xsd",
+      "sha256": "99ecdaf8a07492dc1f77c7a485a066310f2b2dea3c161aa72e1113bba2db3ae2",
+      "bytes": 23739
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_PaymentGuaranteeMeansCode_D22A.xsd",
+      "sha256": "f735cea32de21822b8eef7168c9a80832cde62286323681c8834eecf6e01471d",
+      "bytes": 961
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_PaymentMeansChannelCode_D22A.xsd",
+      "sha256": "6d530291fba7fcb84204dd72c3de70d2b067a8b7f64bc0f2744af611e179eda5",
+      "bytes": 1095
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_PaymentMeansCode_D22A.xsd",
+      "sha256": "de341de756e51412733e8940b7491dac8a51d3fc5796f05d164cf402150b96af",
+      "bytes": 3553
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_PaymentTermsTypeCode_D22A.xsd",
+      "sha256": "4cd466f98f109fa7a46a658526a521e928380884aca08c1edfff9e77f2e9cded",
+      "bytes": 3417
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_PriceTypeCode_D22A.xsd",
+      "sha256": "fa942efa23283935aa36481508c5561c31c05bbe43bfaab328c37d5075e53644",
+      "bytes": 1924
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_ReferenceTypeCode_D22A.xsd",
+      "sha256": "8fefe501824aaa9098169dbf530b75037a428ba338129c9ed5d03a109f79bc8d",
+      "bytes": 31403
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_SealConditionCode_D22A.xsd",
+      "sha256": "0fcb728be045361f2a50aa89e4a820dca4ec71a705b10663e8901cab07f4b22f",
+      "bytes": 673
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_SealingPartyRoleCode_D22A.xsd",
+      "sha256": "9f83b94fd52c61b99505fdc8859afeab97504aa1e7f9a73e6be7d6a49250f0e6",
+      "bytes": 761
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_StatusCode_D22A.xsd",
+      "sha256": "1b33f192fd1575223c5829be8e8c9930f1fef560aec5de193219ad0ad90a34e4",
+      "bytes": 19869
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_StatusDescriptionCode_AccountingDebitCredit_D22A.xsd",
+      "sha256": "75a74d59978327a961928954c5880abe3a3b42ca00bea6b3f0ac34e65f07ae21",
+      "bytes": 850
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_TimeOnlyFormatCode_D21B.xsd",
+      "sha256": "d7f861945712cb833801654c1d6c00f2a80526ff1d9c421cdad6fdc3532e4ba2",
+      "bytes": 695
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_TimePointFormatCode_D21B.xsd",
+      "sha256": "1c90c2de5327eb50c5f28a0b84339a057590dd650ab49094167f6ab9d8178d0c",
+      "bytes": 728
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_TransportEquipmentCategoryCode_D22A.xsd",
+      "sha256": "c629795041d9a4003c199dd37b5a3ca5ca64e96fd476fa3e0be3c73dc57bc722",
+      "bytes": 4145
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_TransportEquipmentFullnessCode_D22A.xsd",
+      "sha256": "9c5b19e43360f3edaa6aaaad2800cf11c839b214d92eb621115aba4a3457ec71",
+      "bytes": 1004
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_TransportMeansTypeCode_2007.xsd",
+      "sha256": "0e580953f352fa02c9a3ff9541b6da95188d7a3a5adc060bb198863138f918bc",
+      "bytes": 5746
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_TransportModeCode_2.xsd",
+      "sha256": "773210342e73eef9fa7574e41c69c3537a82960ab43701569fd49a2eb61ac61a",
+      "bytes": 859
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_TransportMovementStageCode_D22A.xsd",
+      "sha256": "af53f0402b6dcda49d803585b68b6d7ecc25d71380086243f2fbd9db9a9f947d",
+      "bytes": 1624
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_codelist_standard_UNECE_TransportPaymentArrangementCode_D22A.xsd",
+      "sha256": "0cefd926cc8603f119031baf682bdffd37cd45e31b2ed6d0f40f408e8d2eba64",
+      "bytes": 710
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_data_standard_QualifiedDataType_100.xsd",
+      "sha256": "bc85893ae92561a9a9a760d1d624f340694858ea9b760c9167598da8cc2abe39",
+      "bytes": 42261
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_data_standard_ReusableAggregateBusinessInformationEntity_100.xsd",
+      "sha256": "da59380415e1efe1032e0f787986961efd69c6689906747ed56fd4d17c4dfe61",
+      "bytes": 300086
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_data_standard_UnqualifiedDataType_100.xsd",
+      "sha256": "58acb786f7cab1d70bb179ec6ff3add2e57fdb55f1c3995d3e05887bd2d717a9",
+      "bytes": 5745
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_identifierlist_standard_ISO_ISOTwo-letterCountryCode_SecondEdition2006.xsd",
+      "sha256": "23eb942f0b02dae57330512c362efcc63f925ec1cf832745e2b59241a12c3c34",
+      "bytes": 9768
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_identifierlist_standard_UNECE_FreightCostCode_4.xsd",
+      "sha256": "20b217a5d420395a2bda9875556a2d662251d5c8a1ee472df9082e33a9606a31",
+      "bytes": 70656
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B_urn_un_unece_uncefact_identifierlist_standard_UNECE_PaymentTermsDescriptionIdentifier_D22A.xsd",
+      "sha256": "a7644538f276168c598715dde8e5016488c390aa208a130cf0491d2dfd594cea",
+      "bytes": 805
+    },
+    {
+      "path": "CrossIndustryInvoice_100pD22B.xsd",
+      "sha256": "7be4b747f29e12634d269e5b456e1d58d7aece2817e23a2ea656bbf78afed80f",
+      "bytes": 1945
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "bytes": 11357
+    },
+    {
+      "path": "licenses/Apache-2.0.txt",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "bytes": 11357
+    },
+    {
+      "path": "README.md",
+      "sha256": "a50389f3936aef8ccf7c8e8ed7230c7af3f5499fa6042296d51f212a1f1e92b7",
+      "bytes": 2424
+    }
+  ]
+}

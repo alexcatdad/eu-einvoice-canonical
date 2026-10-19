@@ -1,0 +1,75 @@
+{
+  "layer": "profile",
+  "releaseDate": "2026-10-18",
+  "effectiveFrom": "2026-10-18",
+  "effectiveUntil": null,
+  "upstream": "https://github.com/peppolautoriteit-nl/validation/tree/4e93ae8681f413fef627a338ad84ce465a153ee8",
+  "note": "Native-only NLCIUS pattern wrapped in a namespace-declaring Schematron schema without changing rules. EN core is separately paired at the publisher's pinned 1.3.16. Date is vendoring date; no exact release date established.",
+  "id": "nlcius-cii-1.0.3.13",
+  "title": "NLCIUS CII 1.0.3.13 native rules",
+  "syntax": "cii",
+  "version": "1.0.3.13",
+  "license": "EUPL-1.2 (explicit native CII source notice); repository MIT notice also retained",
+  "format": "sef",
+  "entry": "NLCIUS-CII.sef.json.gz",
+  "source": [
+    {
+      "url": "https://raw.githubusercontent.com/peppolautoriteit-nl/validation/4e93ae8681f413fef627a338ad84ce465a153ee8/schematron/nlcius-cii/NLCIUS-CII-validation.sch",
+      "sha256": "283be2f95249204badd8a408615613c52acce8806ce6cf8370371779226f14fc"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Schematron/schematron/77dcd36c53d12ed786c144ece3b2af7694abdc56/trunk/schematron/code/iso_dsdl_include.xsl",
+      "sha256": "43ff20a1afd89d8a744d1c0b8df94ac5559ffa6a820d1ffbf508d6431ee4fdd9"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Schematron/schematron/77dcd36c53d12ed786c144ece3b2af7694abdc56/trunk/schematron/code/iso_abstract_expand.xsl",
+      "sha256": "c5267f124abf23eeb6669884e40a98607c055bfaa1f39e73b7d578feceeb6e46"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Schematron/schematron/77dcd36c53d12ed786c144ece3b2af7694abdc56/trunk/schematron/code/iso_schematron_skeleton_for_saxon.xsl",
+      "sha256": "95f3195d9f437ea8ff5f75d1a27f4e68ae20b236fe0d4a217bb4209f498a10a3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Schematron/schematron/77dcd36c53d12ed786c144ece3b2af7694abdc56/trunk/schematron/code/iso_svrl_for_xslt2.xsl",
+      "sha256": "0588d617924a0686255f6d182633d434c7986d561be8fcc3b363907d3f671b26"
+    },
+    {
+      "url": "https://codeload.github.com/peppolautoriteit-nl/validation/zip/4e93ae8681f413fef627a338ad84ce465a153ee8",
+      "sha256": "9dbba53c78f8ccca931b3d9cffbefac93eae519abeddf7190ca1e66286cb95da"
+    },
+    {
+      "url": "https://codeload.github.com/peppolautoriteit-nl/validation/zip/4e93ae8681f413fef627a338ad84ce465a153ee8#validation-4e93ae8681f413fef627a338ad84ce465a153ee8%2FLICENSE.txt",
+      "sha256": "21810c25c34d5d1dee5e111762249963904aa38e32779e67f28a51976b7525c3"
+    },
+    {
+      "url": "https://codeload.github.com/peppolautoriteit-nl/validation/zip/4e93ae8681f413fef627a338ad84ce465a153ee8#validation-4e93ae8681f413fef627a338ad84ce465a153ee8%2Fschematron%2Fnlcius-cii%2FNLCIUS-CII-validation.sch",
+      "sha256": "283be2f95249204badd8a408615613c52acce8806ce6cf8370371779226f14fc"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ConnectingEurope/eInvoicing-EN16931/validation-1.3.16/LICENSE.txt",
+      "sha256": "fc22ec1dcd8bee4636a395fb332e2308cde870fb3fdc71a2e260b919877cdef5"
+    }
+  ],
+  "files": [
+    {
+      "path": "licenses/EUPL-1.2.txt",
+      "sha256": "fc22ec1dcd8bee4636a395fb332e2308cde870fb3fdc71a2e260b919877cdef5",
+      "bytes": 13871
+    },
+    {
+      "path": "licenses/MIT.txt",
+      "sha256": "21810c25c34d5d1dee5e111762249963904aa38e32779e67f28a51976b7525c3",
+      "bytes": 1083
+    },
+    {
+      "path": "NLCIUS-CII.sef.json.gz",
+      "sha256": "b00b8cb83a8e51d38c4dd38aa88b806087d752de85680f535cb7ce693be91a32",
+      "bytes": 16915
+    },
+    {
+      "path": "original-source.sch",
+      "sha256": "283be2f95249204badd8a408615613c52acce8806ce6cf8370371779226f14fc",
+      "bytes": 16392
+    }
+  ]
+}

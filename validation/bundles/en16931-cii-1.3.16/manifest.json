@@ -1,0 +1,108 @@
+{
+  "id": "en16931-cii-1.3.16",
+  "title": "EN 16931 CII core paired with NLCIUS",
+  "layer": "semantic",
+  "syntax": "cii",
+  "version": "1.3.16",
+  "releaseDate": "2026-04-10",
+  "effectiveFrom": "2026-04-10",
+  "effectiveUntil": null,
+  "license": "EUPL-1.2",
+  "upstream": "https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/tag/validation-1.3.16",
+  "format": "sef",
+  "entry": "EN16931-CII-validation.sef.json.gz",
+  "source": [
+    {
+      "url": "https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/download/validation-1.3.16/en16931-cii-1.3.16.zip#xslt%2FEN16931-CII-validation.xslt",
+      "sha256": "0b234dea2bbfee739b7761e607a992c17fab88773014ef56355b6158cfb1cc53"
+    },
+    {
+      "url": "https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/download/validation-1.3.16/en16931-cii-1.3.16.zip",
+      "sha256": "1cd53cb8a84d38aedc82c0caede217da983a7934dd663f793a092fd66443c561"
+    },
+    {
+      "url": "https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/download/validation-1.3.16/en16931-cii-1.3.16.zip#schematron%2Fabstract%2FEN16931-CII-model.sch",
+      "sha256": "76de06cee20664c374032fa8b763e1f510551b9e9cc0e6fdd3e104964c85231b"
+    },
+    {
+      "url": "https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/download/validation-1.3.16/en16931-cii-1.3.16.zip#schematron%2Fabstract%2FEN16931-CII-syntax.sch",
+      "sha256": "6b396a301786c00e7f3ba97e9bea2c25577b28fb5c3c60f6e6c05fc86b0aef0d"
+    },
+    {
+      "url": "https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/download/validation-1.3.16/en16931-cii-1.3.16.zip#schematron%2FCII%2FEN16931-CII-model.sch",
+      "sha256": "4fd7b27479aa31d464f977a6abb3ba9d29263c17f7ec49e54e0a77b02d2a751b"
+    },
+    {
+      "url": "https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/download/validation-1.3.16/en16931-cii-1.3.16.zip#schematron%2FCII%2FEN16931-CII-syntax.sch",
+      "sha256": "a2c3d977fbb1aaf7563bc4620baa6840885dd7fba29294d50d19a3ece35aae44"
+    },
+    {
+      "url": "https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/download/validation-1.3.16/en16931-cii-1.3.16.zip#schematron%2Fcodelist%2FEN16931-CII-codes.sch",
+      "sha256": "c260c325dbccbbfdace9b049180aa4c708e45d84e03469a86bdf399b07a7b799"
+    },
+    {
+      "url": "https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/download/validation-1.3.16/en16931-cii-1.3.16.zip#schematron%2FEN16931-CII-validation.sch",
+      "sha256": "7f3dc5e824cb945f4d630f4b93915166eb61b2bc5fd358f7bd0e5c2f22cd0741"
+    },
+    {
+      "url": "https://github.com/ConnectingEurope/eInvoicing-EN16931/releases/download/validation-1.3.16/en16931-cii-1.3.16.zip#schematron%2Fpreprocessed%2FEN16931-CII-validation-preprocessed.sch",
+      "sha256": "54e0dc6d06cd7f17d268bb9696ff56f58d386ee28961c9bbef0a56718c400c89"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ConnectingEurope/eInvoicing-EN16931/validation-1.3.16/LICENSE.txt",
+      "sha256": "fc22ec1dcd8bee4636a395fb332e2308cde870fb3fdc71a2e260b919877cdef5"
+    }
+  ],
+  "files": [
+    {
+      "path": "EN16931-CII-validation.sef.json.gz",
+      "sha256": "ca2f78c2f869957c488aa0f71f53b98eaf405a5c75e128abbf387c9e2aad8d53",
+      "bytes": 154146
+    },
+    {
+      "path": "licenses/EUPL-1.2.txt",
+      "sha256": "fc22ec1dcd8bee4636a395fb332e2308cde870fb3fdc71a2e260b919877cdef5",
+      "bytes": 13871
+    },
+    {
+      "path": "source/schematron/abstract/EN16931-CII-model.sch",
+      "sha256": "76de06cee20664c374032fa8b763e1f510551b9e9cc0e6fdd3e104964c85231b",
+      "bytes": 52306
+    },
+    {
+      "path": "source/schematron/abstract/EN16931-CII-syntax.sch",
+      "sha256": "6b396a301786c00e7f3ba97e9bea2c25577b28fb5c3c60f6e6c05fc86b0aef0d",
+      "bytes": 77269
+    },
+    {
+      "path": "source/schematron/CII/EN16931-CII-model.sch",
+      "sha256": "4fd7b27479aa31d464f977a6abb3ba9d29263c17f7ec49e54e0a77b02d2a751b",
+      "bytes": 61284
+    },
+    {
+      "path": "source/schematron/CII/EN16931-CII-syntax.sch",
+      "sha256": "a2c3d977fbb1aaf7563bc4620baa6840885dd7fba29294d50d19a3ece35aae44",
+      "bytes": 57641
+    },
+    {
+      "path": "source/schematron/codelist/EN16931-CII-codes.sch",
+      "sha256": "c260c325dbccbbfdace9b049180aa4c708e45d84e03469a86bdf399b07a7b799",
+      "bytes": 34078
+    },
+    {
+      "path": "source/schematron/EN16931-CII-validation.sch",
+      "sha256": "7f3dc5e824cb945f4d630f4b93915166eb61b2bc5fd358f7bd0e5c2f22cd0741",
+      "bytes": 1982
+    },
+    {
+      "path": "source/schematron/preprocessed/EN16931-CII-validation-preprocessed.sch",
+      "sha256": "54e0dc6d06cd7f17d268bb9696ff56f58d386ee28961c9bbef0a56718c400c89",
+      "bytes": 240038
+    },
+    {
+      "path": "source/xslt/EN16931-CII-validation.xslt",
+      "sha256": "0b234dea2bbfee739b7761e607a992c17fab88773014ef56355b6158cfb1cc53",
+      "bytes": 725518
+    }
+  ]
+}

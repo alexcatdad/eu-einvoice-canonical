@@ -520,6 +520,35 @@ fieldset.samples {
 }
 
 /* JSON sheet */
+.annotation-panel {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--rule);
+}
+.annotation-panel > * {
+  margin: 0;
+}
+.annotation-panel textarea {
+  width: 100%;
+  min-height: 10rem;
+  padding: var(--space-3);
+  border: 1px solid var(--ink);
+  border-radius: var(--r);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--mono);
+  resize: vertical;
+}
+.annotation-panel summary {
+  cursor: pointer;
+  padding-block: var(--space-2);
+}
+.annotation-panel td {
+  overflow-wrap: anywhere;
+}
 .json-panel {
   display: grid;
   gap: var(--space-3);
@@ -938,4 +967,21 @@ pre.json {
     padding-inline: var(--space-2);
     font-size: 0.9375rem;
   }
+}
+
+.layers li {
+  flex-wrap: wrap;
+  align-content: start;
+}
+.layers li small {
+  flex-basis: 100%;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+.validation-progress {
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid currentColor;
+}
+.checks > section > ul {
+  overflow-wrap: anywhere;
 }

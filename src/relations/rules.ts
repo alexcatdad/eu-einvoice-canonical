@@ -1,7 +1,7 @@
 /**
- * Line roles and relations from rules and exact arithmetic only. Nothing here guesses: a
- * relation is either structural, stated in the invoice text, or proven by amounts that match
- * to the cent; everything else is reported in `source.warnings` or marked `review`.
+ * Line roles and relations from deterministic rules and exact arithmetic. Structural patterns
+ * and text matches can suggest a relationship without establishing its commercial meaning.
+ * Heading and shared-identifier relations require review; arithmetic confidence describes the amount match.
  *
  * The canonical lines and totals are never changed.
  */
@@ -188,7 +188,7 @@ export function analyseLines(inv: Pick<CanonicalInvoice, 'lines'>): LineAnalysis
     });
 
     if (g.descriptors.length > 0 && g.priced.length > 0) {
-      relations.push({ from: g.descriptors[0].id, to: g.priced.map((l) => l.id), type: 'heading', method: 'rule' });
+      relations.push({ from: g.descriptors[0].id, to: g.priced.map((l) => l.id), type: 'heading', method: 'rule', confidence: 'review' });
     }
   }
 

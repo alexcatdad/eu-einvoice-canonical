@@ -14,6 +14,7 @@ import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, write
 import { dirname, join } from 'node:path';
 import pkg from '../package.json' with { type: 'json' };
 import { type CorpusReport, describeReport, linkHtml, renderHtml } from '../scripts/corpus-lib.js';
+import { copyPublishedBundles } from '../scripts/validation-distribution.js';
 import { ANNOTATION_ASSET_PATH, ANNOTATION_ASSETS } from './annotation-assets.js';
 import { buildDocs, buildLlmsFull, buildLlmsTxt, robotsTxt, sidebar } from './docs.js';
 import { MOVED } from './site.js';
@@ -26,6 +27,7 @@ const gen = join(site, '.generated');
 
 /** The samples the converter offers; the same list as SAMPLES in src/converter/samples.ts. */
 export const SAMPLE_FILES = [
+  'peppol-bis3-reverse-charge.xml',
   'peppol-bis3-invoice.xml',
   'peppol-bis3-creditnote.xml',
   'xrechnung-ubl.xml',
@@ -194,4 +196,41 @@ function bundledSpec() {
     );
   };
   return rewrite(spec);
+}
+
+// Validation is an explicit lazy entry. Engines and pinned rules stay out of the initial converter bundle.
+const validationRuntime = join(pub, 'validation/runtime');
+mkdirSync(validationRuntime, { recursive: true });
+// Full local qualification is opt-in. Every normal build uses the reviewed release inventory.
+if (process.env.VALIDATION_ASSETS === 'local')
+  cpSync(join(root, 'validation/bundles'), join(pub, 'validation/bundles'), { recursive: true });
+else if (!process.env.VALIDATION_ASSETS || process.env.VALIDATION_ASSETS === 'published')
+  copyPublishedBundles(root, join(pub, 'validation/bundles'));
+else throw new Error('VALIDATION_ASSETS must be local or published');
+for (const file of ['NOTICE', 'distribution.json', 'licenses'])
+  cpSync(join(root, 'validation', file), join(pub, 'validation', file), { recursive: true });
+for (const file of ['SaxonJS2.rt.js', 'LICENSE.txt'])
+  cpSync(join(root, 'validation/runtime/saxon-js-2.7', file), join(validationRuntime, file));
+for (const file of ['xmllint-browser.mjs', 'xmllint.wasm'])
+  cpSync(join(root, 'node_modules/xmllint-wasm', file), join(validationRuntime, file));
+cpSync(join(root, 'node_modules/xmllint-wasm/COPYING'), join(validationRuntime, 'xmllint-LICENSE'));
+const manifestDigests: Record<string, string> = {};
+for (const id of readdirSync(join(pub, 'validation/bundles'))) {
+  const manifest = join(pub, 'validation/bundles', id, 'manifest.json');
+  if (existsSync(manifest)) manifestDigests[id] = new Bun.CryptoHasher('sha256').update(readFileSync(manifest)).digest('hex');
+}
+for (const [entry, naming, format] of [
+  ['worker.ts', 'validator.js', 'esm'],
+  ['saxon-worker.ts', 'saxon-worker.js', 'iife'],
+] as const) {
+  const built = await Bun.build({
+    entrypoints: [join(site, 'validation', entry)],
+    outdir: validationRuntime,
+    naming,
+    target: 'browser',
+    format,
+    external: ['saxon-js', 'xmllint-wasm'],
+    define: { VALIDATION_MANIFEST_DIGESTS: JSON.stringify(manifestDigests) },
+  });
+  if (!built.success) throw new AggregateError(built.logs, 'Could not package local validator');
 }

@@ -13,7 +13,16 @@ export async function runSchema(bundles: BundleReaderFor, bundleId: string, xml:
   if (!entry) throw new NotApplicable(`${bundleId} has no schema for <${rootName}>`);
   // The main schema and the modules it imports are preloaded into xmllint's in-memory file system.
   const files = await Promise.all(manifest.files.map(async (f) => ({ fileName: f.path, contents: await bundles.file(bundleId, f.path) })));
-  const { validateXML, memoryPages } = await import('xmllint-wasm');
+  // Compiled executables keep worker/WASM files beside the binary, outside Bun's virtual module tree.
+  let runtime: string | undefined;
+  if (import.meta.url.includes('/$bunfs/') || import.meta.url.includes('/~BUN/')) {
+    const urlSpecifier = 'node:url';
+    const { pathToFileURL } = await import(urlSpecifier);
+    runtime = new URL('./node_modules/xmllint-wasm/index-node.js', pathToFileURL(process.execPath)).href;
+  }
+  const { validateXML, memoryPages }: typeof import('xmllint-wasm') = runtime
+    ? await import(/* @vite-ignore */ runtime)
+    : await import('xmllint-wasm');
   const result = await validateXML({
     xml: [{ fileName: 'invoice.xml', contents: forValidator(xml) }],
     schema: [files.find((f) => f.fileName === entry)!],
@@ -29,4 +38,6 @@ export async function runSchema(bundles: BundleReaderFor, bundleId: string, xml:
 }
 
 /** The bundle exists but does not cover this document, which is not a failure of the document. */
-export class NotApplicable extends Error {}
+export class NotApplicable extends Error {
+  override name = 'NotApplicable';
+}

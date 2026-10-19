@@ -3,7 +3,7 @@
   "version": "1.2.0",
   "description": "Canonical TypeScript model, detection and parsers for inbound EU e-invoices (Peppol BIS 3, XRechnung, Factur-X, Svefaktura and more)",
   "bin": {
-    "einvoice": "src/cli.ts"
+    "einvoice": "lib/cli.js"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -20,15 +20,22 @@
     "build:site": "cd site && bun run build",
     "serve:site": "bun run site/serve.ts",
     "verify:bundles": "bun scripts/verify-validation-bundles.ts",
+    "check:validation-coverage": "bun scripts/check-validation-coverage.ts",
     "build:bundles": "bun scripts/build-validation-bundles.ts",
     "bench": "bun bench/run.ts",
     "bench:check": "bun bench/run.ts --quick --check",
-    "build:cli": "bun build --compile src/cli.ts --outfile dist/einvoice",
+    "build:cli": "bun scripts/build-cli.ts",
     "build:react-css": "bun scripts/build-react-css.ts",
     "check:react-css": "bun scripts/build-react-css.ts --check",
-    "check:lib": "bun run lint:ci && bun run check:schemas && bun run check:react-css && bun run typecheck && bun run verify:bundles && bun run coverage && bun run coverage:check && bun run sweep:fixtures",
+    "check:lib": "bun run lint:ci && bun run check:schemas && bun run check:react-css && bun run typecheck && bun run check:distribution && bun run verify:bundles && bun run check:validation-coverage && bun run coverage && bun run coverage:check && bun run sweep:fixtures && bun run test:package && bun run test:cli-package",
     "check:site": "bun run build:site && bun run --cwd site typecheck && bun run bench:check",
-    "check:a11y": "bun run --cwd site a11y"
+    "check:a11y": "bun run --cwd site a11y",
+    "build:package": "bun scripts/build-package.ts",
+    "prepack": "bun run build:package",
+    "test:package": "bun scripts/test-package.ts",
+    "test:cli-package": "bun scripts/test-cli-package.ts",
+    "restore:local-validation": "bun scripts/build-validation-bundles.ts --restore-held",
+    "check:distribution": "bun scripts/check-validation-distribution.ts"
   },
   "author": "",
   "license": "0BSD",
@@ -79,9 +86,73 @@
   },
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./server": "./src/server.ts",
-    "./react": "./src/react/index.ts",
-    "./react/invoice.css": "./src/react/invoice.css"
-  }
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./server": {
+      "types": "./lib/server.d.ts",
+      "import": "./lib/server.js"
+    },
+    "./react": {
+      "types": "./lib/react/index.d.ts",
+      "import": "./lib/react/index.js"
+    },
+    "./react/invoice.css": "./lib/react/invoice.css"
+  },
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib",
+    "schemas",
+    "validation/bundles/cius-ro-ubl-1.0.9",
+    "validation/bundles/en16931-cii-1.3.16",
+    "validation/bundles/en16931-cii-1.3.17",
+    "validation/bundles/en16931-ubl-1.3.16",
+    "validation/bundles/en16931-ubl-1.3.17",
+    "validation/bundles/facturx-1.09.2-basicwl",
+    "validation/bundles/facturx-1.09.2-en16931",
+    "validation/bundles/facturx-1.09.2-extended",
+    "validation/bundles/france-rfe-cii-1.4.0.04",
+    "validation/bundles/france-rfe-en16931-ubl-1.3.16",
+    "validation/bundles/france-rfe-extended-cii-1.4.0.04",
+    "validation/bundles/france-rfe-extended-ubl-1.4.0.04",
+    "validation/bundles/france-rfe-ubl-1.4.0.04",
+    "validation/bundles/hr-cius-ext-ubl-20260313",
+    "validation/bundles/nlcius-cii-1.0.3.13",
+    "validation/bundles/nlcius-gaccount-1.0.2.13-ubl",
+    "validation/bundles/nlcius-ubl-2.0.3.13",
+    "validation/bundles/oioubl3-creditnote-3.2.4",
+    "validation/bundles/oioubl3-en16931-creditnote-3.2.4",
+    "validation/bundles/oioubl3-en16931-invoice-3.2.4",
+    "validation/bundles/oioubl3-invoice-3.2.4",
+    "validation/bundles/selfbilling-ubl-en16931-1.3.16",
+    "validation/bundles/xrechnung-3.0.2-cii",
+    "validation/bundles/xrechnung-3.0.2-ubl",
+    "validation/bundles/xsd-cii-d16b",
+    "validation/bundles/xsd-cii-d22b-france-rfe-1.4.0.04",
+    "validation/bundles/xsd-facturae-3.0",
+    "validation/bundles/xsd-facturae-3.1",
+    "validation/bundles/xsd-facturae-3.2",
+    "validation/bundles/xsd-facturae-3.2.1",
+    "validation/bundles/xsd-facturae-3.2.2",
+    "validation/bundles/xsd-facturx-1.09.2-basicwl",
+    "validation/bundles/xsd-facturx-1.09.2-en16931",
+    "validation/bundles/xsd-facturx-1.09.2-extended",
+    "validation/bundles/xsd-hr-cius-ubl-20260415",
+    "validation/bundles/xsd-isdoc-5.2.2",
+    "validation/bundles/xsd-isdoc-5.2.3",
+    "validation/bundles/xsd-isdoc-5.3",
+    "validation/bundles/xsd-isdoc-5.3.1",
+    "validation/bundles/xsd-isdoc-6.0.1",
+    "validation/bundles/xsd-isdoc-6.0.2",
+    "validation/bundles/xsd-ubl-2.0",
+    "validation/bundles/xsd-ubl-2.1",
+    "validation/NOTICE",
+    "validation/licenses",
+    "validation/distribution.json",
+    "trust/eu-trust-snapshot.json",
+    "README.md",
+    "LICENSE"
+  ]
 }

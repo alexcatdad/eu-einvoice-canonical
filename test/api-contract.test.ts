@@ -250,11 +250,18 @@ describe('every fixture through every endpoint', () => {
   test('validation and trusted-list checks on a sample of files', async () => {
     for (const name of ['peppol-bis3-invoice.xml', 'xrechnung-cii.xml', 'xrechnung-ubl.xml', 'facturx-en16931.pdf']) {
       const res = await post(`${base}/v1/convert?validate=true`, fixture(name), mime(name));
-      // A fixture that breaks a Schematron rule is a 422 validation-failed problem that still carries the result.
-      expect([200, 422], name).toContain(res.status);
+      // Factur-X requires an explicit validation edition; the shared syntax cannot select one.
+      if (name === 'facturx-en16931.pdf') expect(res.status).toBe(503);
+      else expect([200, 422], name).toContain(res.status);
       const body = await conforms(res, 'POST', '/v1/convert');
       const layer = (body.result ?? body).outcomes[0].invoices[0].source.validation.schema;
-      expect(['passed', 'failed'], name).toContain(layer);
+      if (name === 'facturx-en16931.pdf') expect(layer).toBe('not-run');
+      else expect(['passed', 'failed'], name).toContain(layer);
+      if (name === 'facturx-en16931.pdf')
+        expect(body.result.outcomes[0].validation).toMatchObject({
+          result: 'incomplete',
+          reasons: { schema: 'unsupported', profile: 'unsupported' },
+        });
     }
     for (const name of ['IT01234567890_FPR12.xml.p7m', 'facturae-322-signed.xsig', 'peppol-bis3-invoice.xml']) {
       const res = await post(`${base}/v1/convert?euTrust=true`, fixture(name), mime(name));

@@ -34,7 +34,7 @@ describe('validation', () => {
   slow('a valid Peppol invoice passes every layer', async () => {
     const { v } = await validated(utf8(validXml));
     matches(v, { parse: 'passed', schema: 'passed', semantic: 'passed', profile: 'passed', signature: 'not-run', clearance: 'not-run' });
-    assert.deepEqual(v.bundles, { schema: 'xsd-ubl-2.1', semantic: 'en16931-ubl-1.3.17', profile: 'peppol-bis3-3.0.20-ubl' });
+    assert.deepEqual(v.bundles, { schema: 'xsd-ubl-2.1', semantic: 'en16931-ubl-1.3.16', profile: 'peppol-bis3-3.0.21-ubl' });
     assert.deepEqual(
       v.findings.filter((f) => f.severity === 'fatal'),
       [],
@@ -64,7 +64,9 @@ describe('validation', () => {
   });
 
   slow('a bad specification identifier fails the Peppol layer with PEPPOL-EN16931-R004', async () => {
-    const xml = validXml.replace('2017#compliant#urn:fdc:peppol', '2017#conformant#urn:fdc:peppol');
+    const xml = validXml
+      .replace('2017#compliant#urn:fdc:peppol', '2017#conformant#urn:fdc:peppol')
+      .replace('<cbc:CustomizationID>', '<cbc:UBLVersionID>2.1</cbc:UBLVersionID><cbc:CustomizationID>');
     const { v } = await validated(utf8(xml));
     assert.equal(v.schema, 'passed');
     assert.equal(v.profile, 'failed');
@@ -110,7 +112,8 @@ describe('validation', () => {
     assert.ok(lines >= 1);
     const { v } = await validated(utf8(validXml), 'valid.xml', { validation: { maxSchematronLines: lines - 1 } });
     matches(v, { schema: 'passed', semantic: 'not-run', profile: 'not-run' });
-    assert.deepEqual(v.bundles, { schema: 'xsd-ubl-2.1' });
+    assert.deepEqual(v.bundles, { schema: 'xsd-ubl-2.1', semantic: 'en16931-ubl-1.3.16', profile: 'peppol-bis3-3.0.21-ubl' });
+    assert.equal(v.result, 'incomplete');
     assert.ok(v.findings.some((f) => f.layer === 'semantic' && f.severity === 'info' && /maxSchematronLines/.test(f.message)));
     const atLimit = (await validated(utf8(validXml), 'valid.xml', { validation: { maxSchematronLines: lines } })).v;
     matches(atLimit, { semantic: 'passed', profile: 'passed' });
@@ -141,14 +144,17 @@ describe('validation', () => {
     assert.equal(countLines(`<Invoice ${cac}><cac:InvoiceLine/><cac:InvoiceLine>`), 2);
   });
 
-  slow('layers that do not apply are not-run, not passed', async () => {
+  slow('unavailable profile coverage is explicit and tolerant Svefaktura fixtures are not conforming', async () => {
     const minimum = (await validated(fixture('facturx-minimum.xml'), 'facturx-minimum.xml')).v;
-    matches(minimum, { schema: 'passed', semantic: 'not-run', profile: 'not-run' });
-    assert.deepEqual(minimum.bundles, { schema: 'xsd-cii-d16b' });
+    matches(minimum, { schema: 'not-run', semantic: 'not-run', profile: 'not-run' });
+    assert.deepEqual(minimum.bundles, {});
+    assert.equal(minimum.result, 'incomplete');
+    assert.equal(minimum.reasons?.profile, 'unsupported');
     const sve = await convert(fixture('svefaktura-1.0.xml'), 'svefaktura-1.0.xml', undefined, { validate: true });
     const o = sve.outcomes[0];
     const v = o.status === 'ok' ? o.invoices[0].source.validation! : undefined;
-    matches(v, { schema: 'not-run', semantic: 'not-run', profile: 'not-run', bundles: {} });
+    matches(v, { schema: 'failed', semantic: 'not-run', profile: 'passed', result: 'invalid' });
+    assert.equal(v?.bundles.schema, 'xsd-svefaktura-1.0-20081227');
   });
 
   slow('validators that cannot run are unavailable, not failed', async () => {

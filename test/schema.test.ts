@@ -34,6 +34,19 @@ describe('JSON Schema', () => {
     expect(validateResult({ fileSha256: 'x', outcomes: 'nope', skipped: [] })).toBe(false);
   });
 
+  test('custom validation receipts serialize with absent engine identities', async () => {
+    const result = await convert(fixture('xrechnung-ubl.xml'), 'synthetic.xml', undefined, {
+      validate: true,
+      validation: { runners: { schema: async () => [], schematron: async () => [] } },
+    });
+    const outcome = result.outcomes[0];
+    if (outcome.status !== 'ok') throw new Error('Synthetic fixture did not convert');
+    const wire = JSON.parse(JSON.stringify(result));
+    expect(wire.outcomes[0].invoices[0].source.validation.receipt.engines).toEqual({});
+    expect(validateResult(wire)).toBe(true);
+    expect(validateInvoice(wire.outcomes[0].invoices[0])).toBe(true);
+  });
+
   test('value origins survive JSON serialization, remain optional and reject unknown states', async () => {
     const result = await convert(fixture('en16931-cii.xml'), 'synthetic.xml');
     const outcome = result.outcomes[0];

@@ -1791,7 +1791,7 @@
             "arithmetic",
             "model"
           ],
-          "description": "How it was found. Only `model` is a guess by a language model; `rule` and `arithmetic` are deterministic."
+          "description": "How it was found: deterministic rules, arithmetic, or a language model. The method does not establish correctness."
         },
         "confidence": {
           "type": "string",
@@ -1800,7 +1800,7 @@
             "likely",
             "review"
           ],
-          "description": "`proven`: the arithmetic matches exactly and uniquely. `likely`: stated in the text or structure of the invoice. `review`: only a hint (shared ids, model output); do not act on it without a human. Absent for structural rules that cannot be wrong, such as a heading over the lines that follow it."
+          "description": "`proven`: the arithmetic matches exactly and uniquely. `likely`: stated in the text or structure of the invoice. `review`: only a hint (inferred headings, shared ids, model output); do not act on it without a human. An absent confidence is unspecified, not a guarantee of correctness. Deterministic rules can still infer incorrectly."
         }
       },
       "required": [
@@ -3032,6 +3032,179 @@
     "ValidationSummary": {
       "type": "object",
       "properties": {
+        "result": {
+          "type": "string",
+          "enum": [
+            "valid",
+            "invalid",
+            "incomplete",
+            "not-requested"
+          ],
+          "description": "Overall result covers parse and required source-conformance layers; signature and clearance remain independent."
+        },
+        "completeness": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "incomplete"
+          ]
+        },
+        "required": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "schema",
+              "semantic",
+              "profile"
+            ]
+          }
+        },
+        "reasons": {
+          "type": "object",
+          "properties": {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "not-applicable",
+                "unsupported",
+                "size-limit",
+                "unavailable"
+              ]
+            },
+            "semantic": {
+              "type": "string",
+              "enum": [
+                "not-applicable",
+                "unsupported",
+                "size-limit",
+                "unavailable"
+              ]
+            },
+            "profile": {
+              "type": "string",
+              "enum": [
+                "not-applicable",
+                "unsupported",
+                "size-limit",
+                "unavailable"
+              ]
+            }
+          }
+        },
+        "receipt": {
+          "type": "object",
+          "properties": {
+            "suite": {
+              "type": "string"
+            },
+            "policy": {
+              "type": "string",
+              "const": "source-conformance-v1"
+            },
+            "maxSchematronLines": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "const": "unlimited"
+                }
+              ]
+            },
+            "engines": {
+              "type": "object",
+              "properties": {
+                "schema": {
+                  "type": "string"
+                },
+                "schematron": {
+                  "type": "string"
+                }
+              },
+              "description": "Configured engine identities; custom adapters may leave unknown identities absent."
+            },
+            "artifacts": {
+              "type": "object",
+              "properties": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "string"
+                    },
+                    "manifestSha256": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "version",
+                    "manifestSha256"
+                  ]
+                },
+                "semantic": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "string"
+                    },
+                    "manifestSha256": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "version",
+                    "manifestSha256"
+                  ]
+                },
+                "profile": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "string"
+                    },
+                    "manifestSha256": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "version",
+                    "manifestSha256"
+                  ]
+                }
+              },
+              "description": "Manifest content digest identifies the complete artifact list, versions and effective dates."
+            }
+          },
+          "required": [
+            "suite",
+            "policy",
+            "maxSchematronLines",
+            "engines",
+            "artifacts"
+          ]
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "full-source",
+            "schema"
+          ],
+          "description": "Requested conformance scope; excludes signature trust and authority clearance."
+        },
         "parse": {
           "$ref": "#/$defs/CheckStatus"
         },

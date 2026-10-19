@@ -1,10 +1,9 @@
 /**
  * The browser converter. Everything runs locally through the same `convert()` the library exports: files are never
- * uploaded. The only outside requests are the ones the reader switches on (the EU trusted lists, a language model).
+ * uploaded. EU trusted lists are fetched only when the reader switches them on; this converter makes no model requests.
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import {
-  applyModelLabels,
   BAS_EXAMPLE_MAPPING,
   buildJournalEntry,
   type CanonicalInvoice,
@@ -16,12 +15,14 @@ import {
   toCii,
   toSie4,
   toUbl,
+  unwrap,
+  type ValidationSuite,
   WriterError,
 } from '../../../src/index.ts';
 import { Invoice } from '../../../src/react/index.ts';
+import { unavailableSummary } from '../../../src/validation/plan';
 import { shortName } from '../../coverage';
 import { currentLang, initLanguage, initSwitcher, t } from '../../i18n';
-import { type EngineSpec, geminiNanoAvailability, loadEngine } from '../../model';
 import { Button } from '../components/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '../components/ui/dialog';
 import { Dropzone } from '../components/ui/dropzone';
@@ -30,9 +31,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { ChecksPanel } from './Checks';
 import { Html, useLang } from './i18n';
 import { JsonText } from './Json';
-import { LinesTable, ModelPanel, type ModelState } from './Lines';
+import { LinesTable } from './Lines';
 import { CHIP_SAMPLES, EXAMPLE, SAMPLES } from './samples';
 import '../../../src/react/invoice.css';
+
+const Annotations = lazy(() => import('./Annotations'));
 
 const ACCEPT = '.xml,.pdf,.p7m,.zip,.xsig,.isdoc,.isdocx,.ubl,.cii,text/xml,application/xml,application/pdf,application/zip';
 const BASE = import.meta.env.BASE_URL.replace(/\/?$/, '/');
@@ -83,10 +86,6 @@ function stampFor(item: Item): { cls: string; title: string; note: string } {
   return { cls: 'bad', title, note: t('stamp.failed') };
 }
 
-type Snapshot = ReturnType<typeof snapshotOf>;
-const snapshotOf = (inv: CanonicalInvoice) =>
-  structuredClone({ lineRoles: inv.lineRoles, relations: inv.relations, derived: inv.source.derived, warnings: inv.source.warnings });
-
 export default function Converter() {
   useLang();
   const [shown, setShown] = useState<Shown>();
@@ -103,11 +102,6 @@ export default function Converter() {
     busy: false,
   });
   const [dialog, setDialog] = useState<{ title: string; detail: string }>();
-  const [model, setModel] = useState<ModelState>();
-  const [engine, setEngine] = useState('qwen3-1.7b');
-  const [nanoStatus, setNanoStatus] = useState<string>();
-  /** Bumped when the model changes an invoice in place, so the sheets redraw. */
-  const [, setRevision] = useState(0);
   const [announcement, setAnnouncement] = useState('');
   /** The paste shortcut as this keyboard writes it; set after hydration, since the server cannot know it. */
   const [shortcut, setShortcut] = useState('Ctrl+V');
@@ -116,8 +110,21 @@ export default function Converter() {
   const resultRef = useRef<HTMLElement>(null);
   const slotRef = useRef<HTMLDivElement>(null);
   const pasteRef = useRef<HTMLTextAreaElement>(null);
+  const validationSuiteRef = useRef<ValidationSuite | undefined>(undefined);
+  const [validationSuite, setValidationSuite] = useState<ValidationSuite | ''>('');
+  const validationJob = useRef<{ cancel: () => void } | undefined>(undefined);
+  const runId = useRef(0);
+  const [validationBusy, setValidationBusy] = useState(false);
+  const [validationState, setValidationState] = useState<string>('');
   const trustRef = useRef<TrustSnapshot | undefined>(undefined);
-  const modelBase = useRef(new WeakMap<CanonicalInvoice, Snapshot>());
+
+  useEffect(
+    () => () => {
+      ++runId.current;
+      validationJob.current?.cancel();
+    },
+    [],
+  );
 
   /** Tells screen readers what just happened; the visible result is not a live region. */
   const announce = useCallback((text: string) => {
@@ -127,6 +134,12 @@ export default function Converter() {
 
   const run = useCallback(
     async (bytes: Uint8Array, filename: string, isExample = false) => {
+      const generation = ++runId.current;
+      const suite = validationSuiteRef.current;
+      validationJob.current?.cancel();
+      validationJob.current = undefined;
+      setValidationBusy(false);
+      setValidationState('');
       last.current = { bytes, filename, isExample };
       if (!isExample) {
         setStatus({ reading: filename });
@@ -134,6 +147,7 @@ export default function Converter() {
       }
       try {
         const result = await convert(bytes, filename, undefined, { relations: true, euTrust: trustRef.current });
+        if (generation !== runId.current) return;
         const items = result.outcomes.flatMap((o, n): Item[] =>
           o.status === 'ok' ? o.invoices.map((invoice) => ({ outcome: o, invoice, n })) : [{ outcome: o, n }],
         );
@@ -142,6 +156,70 @@ export default function Converter() {
         setIndex(0);
         setView('invoice');
         setFresh(!isExample);
+        if (!isExample)
+          void (async () => {
+            setValidationBusy(true);
+            setValidationState(t('val.running'));
+            const finishPending = (reason: string) => {
+              if (generation !== runId.current) return;
+              for (const outcome of result.outcomes) {
+                if (outcome.status === 'not-an-invoice' || outcome.validation) continue;
+                outcome.validation = unavailableSummary(outcome.detection, reason, suite);
+                if (outcome.status === 'ok')
+                  for (const invoice of outcome.invoices) {
+                    const before = invoice.source.validation;
+                    invoice.source.validation = structuredClone(outcome.validation);
+                    if (before) {
+                      invoice.source.validation.signature = before.signature;
+                      invoice.source.validation.findings.push(...before.findings.filter((finding) => finding.layer === 'signature'));
+                    }
+                  }
+              }
+              setShown({ result, filename, items, isExample });
+            };
+            let currentJob: { cancel: () => void } | undefined;
+            validationJob.current = {
+              cancel: () => {
+                currentJob?.cancel();
+                finishPending('Local validation cancelled');
+              },
+            };
+            try {
+              const [{ startValidation }, extracted] = await Promise.all([import('../../validation/client'), unwrap(bytes, filename)]);
+              for (let n = 0; n < result.outcomes.length; n++) {
+                if (generation !== runId.current) return;
+                const outcome = result.outcomes[n]!;
+                if (outcome.status === 'not-an-invoice') continue;
+                const job = startValidation(extracted.payloads[n]!.xml, outcome.detection, BASE, undefined, suite);
+                currentJob = job;
+                const summary = await job.promise;
+                if (generation !== runId.current) return;
+                outcome.validation = summary;
+                if (outcome.status === 'ok')
+                  for (const invoice of outcome.invoices) {
+                    const before = invoice.source.validation;
+                    invoice.source.validation = structuredClone(summary);
+                    if (before) {
+                      invoice.source.validation.signature = before.signature;
+                      invoice.source.validation.findings.push(...before.findings.filter((f) => f.layer === 'signature'));
+                    }
+                  }
+                setShown({ result, filename, items, isExample });
+              }
+              setValidationState('');
+            } catch (error) {
+              if (generation === runId.current) {
+                const reason = error instanceof Error ? error.message : String(error);
+                finishPending(reason);
+                setValidationState(reason);
+              }
+            } finally {
+              if (generation === runId.current) {
+                validationJob.current = undefined;
+                setValidationBusy(false);
+              }
+            }
+          })();
         const first = items[0];
         if (first) {
           const st = stampFor(first);
@@ -166,7 +244,9 @@ export default function Converter() {
       try {
         const res = await fetch(`${BASE}samples/${name}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        await run(new Uint8Array(await res.arrayBuffer()), name, isExample);
+        const bytes = new Uint8Array(await res.arrayBuffer());
+        if (isExample && last.current) return;
+        await run(bytes, name, isExample);
       } catch (e) {
         if (!isExample)
           setStatus({
@@ -185,7 +265,6 @@ export default function Converter() {
     initLanguage();
     initSwitcher();
     void loadSample(EXAMPLE, true);
-    void geminiNanoAvailability().then(setNanoStatus);
     if (/Mac|iPhone|iPad/.test(navigator.userAgent)) setShortcut('\u2318V');
   }, [loadSample]);
 
@@ -295,56 +374,6 @@ export default function Converter() {
     if (last.current) await run(last.current.bytes, last.current.filename, last.current.isExample);
   };
 
-  const runModel = async (inv: CanonicalInvoice, spec: EngineSpec) => {
-    const started = performance.now();
-    const prior = model?.inv === inv ? model : undefined;
-    const before = snapshotOf(inv);
-    if (!modelBase.current.has(inv)) modelBase.current.set(inv, before);
-    const base = modelBase.current.get(inv)!;
-    const restoreTo = (snap: Snapshot) => () => {
-      inv.lineRoles = structuredClone(snap.lineRoles);
-      inv.relations = structuredClone(snap.relations);
-      inv.source.derived = structuredClone(snap.derived);
-      inv.source.warnings = structuredClone(snap.warnings);
-    };
-    const fail = (reason: string) => {
-      restoreTo(before)();
-      setModel({ inv, phase: 'error', text: t('model.failed', { reason }), undo: prior?.undo });
-      setRevision((r) => r + 1);
-    };
-    setModel({ inv, phase: 'busy', text: t('model.loading', { model: spec.label }), undo: prior?.undo });
-    try {
-      const loaded = await loadEngine(spec, (text, fraction) => setModel({ inv, phase: 'busy', text, fraction, undo: prior?.undo }));
-      setModel({ inv, phase: 'busy', text: t('model.labelling'), undo: prior?.undo });
-      await applyModelLabels(inv, loaded.labeller);
-      await loaded.dispose();
-      const failed = inv.source.warnings.find(
-        (w) => w.code === 'LINE-MODEL-FAILED' && !before.warnings.some((b) => b.code === w.code && b.message === w.message),
-      );
-      if (failed) return fail(failed.message.replace(/^The language model failed: /, ''));
-      const seconds = ((performance.now() - started) / 1000).toFixed(1);
-      const labels = Object.keys(inv.lineRoles ?? {}).filter((id) => inv.lineRoles?.[id] !== before.lineRoles?.[id]).length;
-      const links = (inv.relations?.length ?? 0) - (before.relations?.length ?? 0);
-      setModel({
-        inv,
-        phase: 'done',
-        text: labels || links ? t('model.done', { seconds, labels, links }) : t('model.nothing', { seconds }),
-        undo: labels || links || prior?.undo ? restoreTo(base) : undefined,
-      });
-      setRevision((r) => r + 1);
-    } catch (e) {
-      fail((e as Error).message);
-    }
-  };
-
-  const dismissModel = (inv: CanonicalInvoice) => {
-    if (model?.inv !== inv) return;
-    model.undo?.();
-    modelBase.current.delete(inv);
-    setModel({ inv, phase: 'idle', text: t('model.removed') });
-    setRevision((r) => r + 1);
-  };
-
   return (
     <div className="converter">
       <div className="desk" id="converter" tabIndex={-1}>
@@ -440,6 +469,35 @@ export default function Converter() {
               </select>
             </label>
           </fieldset>
+          <label className="field validation-suite">
+            <span id="validation-suite-label">{t('val.suite')}</span>
+            <select
+              aria-labelledby="validation-suite-label"
+              value={validationSuite}
+              onChange={(event) => {
+                const suite =
+                  event.target.value === 'facturx-1.09.2' ||
+                  event.target.value === 'cii-d16b' ||
+                  event.target.value === 'e-arve-1.2.EN' ||
+                  event.target.value === 'e-arve-1.2' ||
+                  event.target.value === 'france-rfe-1.4.0.04' ||
+                  event.target.value === 'france-rfe-1.4.0.04-facturx'
+                    ? event.target.value
+                    : undefined;
+                validationSuiteRef.current = suite;
+                setValidationSuite(suite ?? '');
+                if (last.current) void run(last.current.bytes, last.current.filename, false);
+              }}
+            >
+              <option value="">{t('val.suite.default')}</option>
+              <option value="facturx-1.09.2">{t('val.suite.facturx')}</option>
+              <option value="cii-d16b">{t('val.suite.ciiD16b')}</option>
+              <option value="e-arve-1.2.EN">{t('val.suite.earve')}</option>
+              <option value="e-arve-1.2">e-arve 1.2</option>
+              <option value="france-rfe-1.4.0.04">France RFE 1.4.0.04 · UBL / CII</option>
+              <option value="france-rfe-1.4.0.04-facturx">France RFE 1.4.0.04 · Factur-X 1.09.2</option>
+            </select>
+          </label>
           <div className="eu-trust">
             <label>
               <input type="checkbox" checked={trust.on} disabled={trust.busy} onChange={(e) => void toggleTrust(e.target.checked)} />{' '}
@@ -457,6 +515,25 @@ export default function Converter() {
         </div>
 
         <section className="out" aria-labelledby="result-title" ref={resultRef}>
+          {validationState && (
+            <p className="validation-progress" role="status">
+              {validationState}{' '}
+              {validationBusy && (
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    validationJob.current?.cancel();
+                    ++runId.current;
+                    validationJob.current = undefined;
+                    setValidationBusy(false);
+                    setValidationState(t('val.cancelled'));
+                  }}
+                >
+                  {t('val.cancel')}
+                </Button>
+              )}
+            </p>
+          )}
           <Result
             shown={shown}
             status={status}
@@ -466,12 +543,6 @@ export default function Converter() {
             setView={setView}
             fresh={fresh}
             onNotice={(title, detail) => setDialog({ title, detail })}
-            model={model}
-            engine={engine}
-            nanoStatus={nanoStatus}
-            onEngine={setEngine}
-            onRunModel={(inv, spec) => void runModel(inv, spec)}
-            onDismissModel={dismissModel}
           />
         </section>
       </div>
@@ -504,12 +575,6 @@ function Result(props: {
   setView: (v: View) => void;
   fresh: boolean;
   onNotice: (title: string, detail: string) => void;
-  model?: ModelState;
-  engine: string;
-  nanoStatus?: string;
-  onEngine: (id: string) => void;
-  onRunModel: (inv: CanonicalInvoice, spec: EngineSpec) => void;
-  onDismissModel: (inv: CanonicalInvoice) => void;
 }) {
   const { shown, status } = props;
   if (status.notice)
@@ -600,6 +665,8 @@ function Result(props: {
 
 function Sheets(props: Parameters<typeof Result>[0] & { item: Item; result: ConvertResult; filename: string }) {
   const { item, result, view, setView } = props;
+  const [annotationDraft, setAnnotationDraft] = useState({ invoice: item.invoice, text: '', checked: false });
+  if (annotationDraft.invoice !== item.invoice) setAnnotationDraft({ invoice: item.invoice, text: '', checked: false });
   const views: View[] = item.invoice ? ['invoice', 'json', 'checks', 'lines'] : ['invoice', 'json', 'checks'];
   const active = views.includes(view) ? view : 'invoice';
   return (
@@ -625,16 +692,15 @@ function Sheets(props: Parameters<typeof Result>[0] & { item: Item; result: Conv
           <div className="lines-view">
             <h3>{t('view.lines')}</h3>
             <LinesTable inv={item.invoice} limit={200} />
-            {item.invoice.lines.length > 0 && (
-              <ModelPanel
-                state={props.model?.inv === item.invoice ? props.model : undefined}
-                engine={props.engine}
-                nanoStatus={props.nanoStatus}
-                onEngine={props.onEngine}
-                onRun={(spec) => props.onRunModel(item.invoice!, spec)}
-                onDismiss={() => props.onDismissModel(item.invoice!)}
+            <Suspense fallback={<p>{t('annotation.loading')}</p>}>
+              <Annotations
+                invoice={item.invoice}
+                text={annotationDraft.invoice === item.invoice ? annotationDraft.text : ''}
+                checked={annotationDraft.invoice === item.invoice && annotationDraft.checked}
+                onDraft={(text, checked) => setAnnotationDraft({ invoice: item.invoice, text, checked })}
+                download={(text, suffix) => save(text, 'application/json', `${fileBase(item.invoice!.id)}.${suffix}.json`)}
               />
-            )}
+            </Suspense>
           </div>
         </TabsContent>
       )}

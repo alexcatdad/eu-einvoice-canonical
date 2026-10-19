@@ -494,6 +494,9 @@
             "ksefFormCode": {
               "type": "string"
             },
+            "ksefVariant": {
+              "type": "string"
+            },
             "eArveVersion": {
               "type": "string"
             },
@@ -510,6 +513,9 @@
               "type": "string"
             },
             "finvoiceTypeCode": {
+              "type": "string"
+            },
+            "teappsFormatVersion": {
               "type": "string"
             },
             "myDataInvoiceType": {
@@ -566,6 +572,12 @@
                 "type": "string"
               }
             },
+            "ksefVariant": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
             "eArveVersion": {
               "type": "object",
               "additionalProperties": {
@@ -597,6 +609,12 @@
               }
             },
             "finvoiceTypeCode": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "teappsFormatVersion": {
               "type": "object",
               "additionalProperties": {
                 "type": "string"
