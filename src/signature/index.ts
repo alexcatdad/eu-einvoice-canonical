@@ -2,12 +2,10 @@
 import type { CheckStatus, SignatureInfo, ValidationSummary } from '../canonical.js';
 import type { TrustAnchor } from './trust.js';
 import type { TrustSnapshot } from './tsl.js';
-import type { LoadOptions } from './tsl-load.js';
 
 export type { TrustAnchor } from './trust.js';
 export type { TrustListInfo, TrustService, TrustSnapshot } from './tsl.js';
-export { LOTL_URL, parseSnapshot, trustAnchorsFromSnapshot } from './tsl.js';
-export type { LoadOptions } from './tsl-load.js';
+export { parseSnapshot, trustAnchorsFromSnapshot } from './tsl.js';
 
 export interface VerifyOptions {
   /** DER bytes, base64 or PEM certificates the signer must chain to. Without them trust is reported as 'not-checked'. */
@@ -15,7 +13,7 @@ export interface VerifyOptions {
   /** Set false to skip signature verification entirely (signatures are then only detected). Default true. */
   verifySignatures?: boolean;
   /**
-   * A snapshot of the EU trusted lists (see `loadTrustLists`). Each valid signature is then checked for a signer
+   * A snapshot of the EU trusted lists (acquired separately through `eu-einvoice-canonical/trust-lists`). Each valid signature is then checked for a signer
    * that chains to a qualified CA/QC service that was granted at the signing time: `SignatureInfo.euTrust`.
    */
   euTrust?: TrustSnapshot;
@@ -89,13 +87,4 @@ export function signatureFindings(signatures: SignatureInfo[]): ValidationSummar
       };
     return { layer: 'signature', severity: 'info', message: `${who} is valid; signer not checked against a trust list` };
   });
-}
-
-/**
- * Fetches the EU List of Trusted Lists and the national lists, verifies each list's signature and returns a
- * snapshot to pass as the `euTrust` option. Loaded on demand: the XML signature code is not in the main bundle.
- */
-export async function loadTrustLists(opts?: LoadOptions): Promise<TrustSnapshot> {
-  const { loadTrustLists: load } = await import('./tsl-load.js');
-  return load(opts);
 }

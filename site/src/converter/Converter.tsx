@@ -1,26 +1,20 @@
 /**
  * The browser converter. Everything runs locally through the same `convert()` the library exports: files are never
- * uploaded. EU trusted lists are fetched only when the reader switches them on; this converter makes no model requests.
+ * uploaded. The published EU trust snapshot is loaded only when the reader switches it on; this converter makes no model requests.
  */
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import {
-  BAS_EXAMPLE_MAPPING,
-  buildJournalEntry,
   type CanonicalInvoice,
   type ConvertOutcome,
   type ConvertResult,
   convert,
-  JournalError,
   type TrustSnapshot,
-  toCii,
-  toSie4,
-  toUbl,
   unwrap,
   type ValidationSuite,
-  WriterError,
 } from '../../../src/index.ts';
 import { Invoice } from '../../../src/react/index.ts';
 import { unavailableSummary } from '../../../src/validation/plan';
+import { toCii, toUbl, WriterError } from '../../../src/writers/index.ts';
 import { shortName } from '../../coverage';
 import { currentLang, initLanguage, initSwitcher, t } from '../../i18n';
 import { Button } from '../components/ui/button';
@@ -360,11 +354,11 @@ export default function Converter() {
           snapshot: site.snapshot,
           status: () =>
             t('trust.status', {
-              source: t(site.source === 'live' ? 'trust.live' : 'trust.published'),
+              source: t('trust.published'),
               date: site.snapshot.fetchedAt.slice(0, 10),
               ok,
               total: site.snapshot.lists.length,
-            }) + (site.note ? ` ${site.note}.` : ''),
+            }),
         });
       } catch (e) {
         trustRef.current = undefined;
@@ -820,21 +814,6 @@ function JsonPanel({
           </Button>
           {inv && (
             <>
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  try {
-                    const sie = toSie4([buildJournalEntry(inv, BAS_EXAMPLE_MAPPING)], { currency: inv.currency });
-                    save(sie.bytes as BlobPart, 'application/octet-stream', `${fileBase(inv.id)}.se`);
-                    toast(t('toast.journal'));
-                  } catch (e) {
-                    if (!(e instanceof JournalError)) throw e;
-                    onNotice(t('notice.noJournalTitle'), e.message);
-                  }
-                }}
-              >
-                {t('json.journal')}
-              </Button>
               <Button variant="ghost" onClick={() => write('ubl')}>
                 {t('json.writeUbl')}
               </Button>
@@ -845,7 +824,6 @@ function JsonPanel({
           )}
         </div>
       </div>
-      {inv && <Html as="p" className="journal-note" k="json.journalNote" />}
       {/* biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable region must be reachable by keyboard */}
       {/* biome-ignore lint/a11y/useSemanticElements: a <pre> keeps the JSON's layout; the group role lets it carry a name */}
       <pre className="json" tabIndex={0} role="group" aria-label={t('json.output')}>

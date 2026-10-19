@@ -6,6 +6,19 @@ This file was reconstructed from the git history. Numbers in brackets are pull r
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-10-19
+
+### Removed
+
+- Accounting journal, BAS mapping and SIE/CSV bookkeeping exports, purchase-order and goods-receipt matching, and cross-document duplicate detection, including their CLI commands, MCP tools and website controls.
+
+### Changed
+
+- Rendering and XML writers use the optional `/render` and `/writers` entry points; MCP is available through `/mcp`.
+- Trust-list acquisition uses `/trust-lists` and the separate `einvoice-trust-lists update` command. Offline snapshot parsing and signature verification remain in the core.
+- Canonical conversion, source validation, provenance, algorithmic relations, annotation contracts and LLM evaluation research are preserved. Canonical JSON schemas and HTTP responses remain on `v1`.
+- See [Migrating to v2](docs/MIGRATION-V2.md) for breaking API changes.
+
 Validation additions below describe local qualification. The distributed subset is explicitly controlled by `validation/distribution.json`.
 
 ### Added
@@ -22,17 +35,14 @@ Validation additions below describe local qualification. The distributed subset 
 - Human-readable rendering: `renderHtml`, `renderPdf` and `einvoice render` [#39]
 - Site internationalisation: English, German, French, Italian, Spanish, Dutch, Polish and Romanian [#41]
 - Conversion API: OpenAPI 3.1 spec, reference server, contract tests, API docs and a Deliverables page [#34]
-- Bookkeeping export: journal entries, SIE 4I, CSV and JSON, CLI and site download [#27]
 - MCP server for AI agents (`einvoice mcp`) [#35]
 - Real-world corpus run with a published report and a "Real-world results" page [#31]
 - Fuzzing that checks hostile input never crashes or hangs the converter [#33]
 - Benchmarks and a performance gate in CI [#36]
 - Peppol PINT variants and Saudi ZATCA on top of the UBL parser [#30]
 - Real public samples with known-answer tests, and a corpus parse check [#29]
-- Detection of duplicate and re-sent invoices [#23]
 - Opt-in checking of signers against the EU trusted lists [#26]
 - Schema validation layer for the national formats [#28]
-- Two-way and three-way matching of invoices to purchase orders [#25]
 - CFDI 3.3/4.0 parser (Mexico); Pagos documents are detected as another document type [#24]
 - Versioned JSON Schemas for `CanonicalInvoice` and `ConvertResult` [#22]
 
@@ -92,5 +102,6 @@ Validation additions below describe local qualification. The distributed subset 
 
 - EN 16931-1:2026 research gap documented; 2026 identifiers pinned by tests [#2]
 
-[Unreleased]: https://github.com/alexcatdad/eu-einvoice-canonical/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/alexcatdad/eu-einvoice-canonical/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/alexcatdad/eu-einvoice-canonical/compare/v1.2.0...v2.0.0
 [1.2.0]: https://github.com/alexcatdad/eu-einvoice-canonical/releases/tag/v1.2.0

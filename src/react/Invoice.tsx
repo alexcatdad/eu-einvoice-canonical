@@ -7,7 +7,7 @@
  */
 
 import { Fragment, type ReactNode, useId } from 'react';
-import type { CanonicalInvoice } from '../canonical.js';
+import type { CanonicalInvoice } from '../index.js';
 import type { RenderLanguage } from '../render/labels.js';
 import {
   type AdjustmentView,

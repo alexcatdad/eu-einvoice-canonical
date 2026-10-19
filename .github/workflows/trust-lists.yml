@@ -24,7 +24,7 @@ jobs:
           bun-version: 1.4.2
       - run: bun install --frozen-lockfile
       - name: Fetch and verify the lists
-        run: bun src/cli.ts trust-lists update --out trust/eu-trust-snapshot.json
+        run: bun src/trust-lists-cli.ts update --out trust/eu-trust-snapshot.json
       - name: Open a pull request when the snapshot changed
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

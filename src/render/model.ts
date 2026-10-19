@@ -5,8 +5,8 @@
  * output format.
  */
 
-import type { Address, AllowanceCharge, CanonicalInvoice, Identifier, Line, Party, Period, VatInfo } from '../canonical.js';
-import { FORMATS_BY_ID } from '../formats.js';
+import type { Address, AllowanceCharge, CanonicalInvoice, Identifier, Line, Party, Period, VatInfo } from '../index.js';
+import { FORMATS_BY_ID } from '../index.js';
 import {
   countryLocale,
   countryName,
