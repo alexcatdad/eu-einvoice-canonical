@@ -26,8 +26,10 @@ jobs:
         with:
           bun-version: 1.4.2
       - run: bun install --frozen-lockfile
-      - name: Restore pinned local-only validation artifacts for qualification
-        run: bun run restore:local-validation
+      - name: Restore verified local-only validation artifacts for qualification
+        uses: ./.github/actions/qualification
+        with:
+          ssh-key: ${{ secrets.VALIDATION_CACHE_SSH_KEY }}
       - name: Library checks (same command locally and in CI)
         run: bun run check:lib
       - name: HuJSON consumer example (no model requests)
@@ -61,8 +63,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: scripts/fetch-corpus-report.sh
-      - name: Restore pinned local-only validation artifacts for qualification
-        run: bun run restore:local-validation
+      - name: Restore verified local-only validation artifacts for qualification
+        uses: ./.github/actions/qualification
+        with:
+          ssh-key: ${{ secrets.VALIDATION_CACHE_SSH_KEY }}
       - name: Local qualification site build, typecheck and performance gate
         env:
           VALIDATION_ASSETS: local
