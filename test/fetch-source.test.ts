@@ -9,6 +9,12 @@ const server = Bun.serve({
     const path = new URL(request.url).pathname;
     const curl = request.headers.get('user-agent')?.startsWith('curl/');
     if (curl) curlRequests++;
+    if (path === '/session-redirect') {
+      if (request.headers.get('cookie') !== 'source-session=ready') {
+        return new Response(null, { status: 302, headers: { location: request.url, 'set-cookie': 'source-session=ready; Path=/' } });
+      }
+      return new Response('synthetic pinned archive bytes');
+    }
     if (path.startsWith('/fallback-')) {
       if (!curl) return Response.redirect(request.url, 302);
       const status = Number(path.slice('/fallback-'.length));
@@ -22,13 +28,20 @@ const server = Bun.serve({
 });
 afterAll(() => server.stop(true));
 
+test('redirect recovery retains session cookies without persisting them to disk', async () => {
+  const response = await fetchSource(`${server.url}session-redirect`);
+  expect(response.status).toBe(200);
+  expect(await response.text()).toBe('synthetic pinned archive bytes');
+});
+
 test('source downloads recover from a native-fetch redirect loop using the same URL', async () => {
+  const before = curlRequests;
   const url = `${server.url}native-redirect-loop`;
   await expect(fetch(url)).rejects.toMatchObject({ code: 'TooManyRedirects' });
   const response = await fetchSource(url);
   expect(response.ok).toBe(true);
   expect(await response.text()).toBe('synthetic pinned archive bytes');
-  expect(curlRequests).toBe(1);
+  expect(curlRequests).toBe(before + 1);
 });
 
 test('ordinary fetch responses, including HTTP errors, do not invoke curl', async () => {
