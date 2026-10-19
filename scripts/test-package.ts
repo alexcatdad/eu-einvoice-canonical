@@ -25,6 +25,15 @@ try {
   for (const path of [
     'lib/index.js',
     'lib/index.d.ts',
+    'lib/render/index.js',
+    'lib/render/index.d.ts',
+    'lib/writers/index.js',
+    'lib/writers/index.d.ts',
+    'lib/mcp/server.js',
+    'lib/mcp/server.d.ts',
+    'lib/signature/trust-lists.js',
+    'lib/signature/trust-lists.d.ts',
+    'lib/trust-lists-cli.js',
     'lib/cli.js',
     'lib/react/index.js',
     'lib/react/invoice.css',
@@ -68,11 +77,26 @@ try {
     `
     import assert from 'node:assert/strict';
     import { readFileSync } from 'node:fs';
-    import { convert, validateSource, validationPassed } from 'eu-einvoice-canonical';
-    const result = await convert(readFileSync(new URL('./invoice.xml', import.meta.url)), 'invoice.xml', undefined, {validate:true});
+    import * as core from 'eu-einvoice-canonical';
+    import { convert, validateSource, validationPassed, buildLineAnnotationInput, validateLineAnnotations } from 'eu-einvoice-canonical';
+    import { renderHtml } from 'eu-einvoice-canonical/render';
+    import { toUbl, toCii } from 'eu-einvoice-canonical/writers';
+    import { loadTrustLists } from 'eu-einvoice-canonical/trust-lists';
+    import { createMcpServer } from 'eu-einvoice-canonical/mcp';
+    for (const retired of ['matching', 'findDuplicates', 'buildJournalEntry', 'renderHtml', 'toUbl', 'loadTrustLists']) assert.equal(retired in core, false);
+    assert.equal(typeof loadTrustLists, 'function');
+    assert.equal(typeof createMcpServer, 'function');
+    assert.equal(typeof buildLineAnnotationInput, 'function');
+    assert.equal(typeof validateLineAnnotations, 'function');
+    const result = await convert(readFileSync(new URL('./invoice.xml', import.meta.url)), 'invoice.xml', undefined, {validate:true,provenance:true,relations:true});
     assert.equal(result.outcomes[0].status, 'ok');
     const invoice = result.outcomes[0].invoices[0];
     assert.ok(validationPassed(invoice.source.validation), JSON.stringify(invoice.source.validation));
+    assert.equal(invoice.source.valueOrigins['/lines/0/netAmount'], 'source');
+    assert.ok(invoice.source.provenance['/lines/0/netAmount']);
+    assert.ok(renderHtml(invoice).includes(invoice.id));
+    assert.ok(toUbl(invoice).includes(invoice.id));
+    assert.ok(toCii(invoice).includes(invoice.id));
     assert.ok(validationPassed(await validateSource({xml:readFileSync(new URL('./invoice.xml', import.meta.url),'utf8')}))); 
     const invalid = await validateSource({xml:readFileSync(new URL('./invalid-profile.xml', import.meta.url),'utf8')});
     assert.equal(invalid.profile, 'failed');
@@ -91,12 +115,30 @@ try {
     run([runtime, 'smoke.mjs'], temp);
     console.log(`Packed conversion, validators, source validation and React import passed: ${runtime}`);
   }
+  // Exercise the installed root with a loader that rejects all optional consumers.
+  writeFileSync(
+    join(temp, 'core-only.mjs'),
+    "import {convert} from 'eu-einvoice-canonical'; import {readFileSync} from 'node:fs'; const r=await convert(readFileSync('invoice.xml'),'invoice.xml',undefined,{validate:true,relations:true,provenance:true}); if(r.outcomes[0].status!=='ok'||r.outcomes[0].invoices[0].source.validation.result!=='valid') throw new Error('Core conversion failed');",
+  );
+  writeFileSync(
+    join(temp, 'core-loader.mjs'),
+    "export async function resolve(specifier, context, next) { const resolved=await next(specifier,context); if (['/lib/render/','/lib/react/','/lib/writers/','/lib/mcp/','/lib/server.js','/signature/tsl-load.js','/signature/trust-lists.js','/node_modules/react/','/node_modules/react-dom/','/node_modules/@modelcontextprotocol/'].some(part=>resolved.url.includes(part))) throw new Error('Optional consumer loaded: '+resolved.url); return resolved; }",
+  );
+  run([process.env.NODE_BIN ?? 'node', '--experimental-loader', './core-loader.mjs', 'core-only.mjs'], temp);
   writeFileSync(join(temp, 'browser.mjs'), "export { convert, detectXml } from 'eu-einvoice-canonical';");
   run(['bun', 'build', 'browser.mjs', '--target=browser', '--outfile=browser.js'], temp);
   writeFileSync(
     join(temp, 'consumer.ts'),
     `
-    import { convert, type ConvertResult } from 'eu-einvoice-canonical';
+    import { convert, type ConvertResult, type CanonicalInvoice, type LineAnnotations, type ValidationSuite } from 'eu-einvoice-canonical';
+    import { renderHtml, type RenderHtmlOptions } from 'eu-einvoice-canonical/render';
+    import { toUbl, type UblOptions } from 'eu-einvoice-canonical/writers';
+    import { createMcpServer, type McpServerOptions } from 'eu-einvoice-canonical/mcp';
+    import { loadTrustLists, type LoadOptions } from 'eu-einvoice-canonical/trust-lists';
+    const html = (invoice: CanonicalInvoice, options: RenderHtmlOptions) => renderHtml(invoice, options);
+    const ubl = (invoice: CanonicalInvoice, options: UblOptions) => toUbl(invoice, options);
+    const mcp = (options: McpServerOptions) => createMcpServer(options);
+    const trust = (options: LoadOptions) => loadTrustLists(options);
     const converted: Promise<ConvertResult> = convert(new Uint8Array());
     converted.then(result => { for (const outcome of result.outcomes) if(outcome.status === 'ok') console.log(outcome.invoices.length); });
   `,
