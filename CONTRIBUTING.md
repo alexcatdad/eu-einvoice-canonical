@@ -62,3 +62,21 @@ Commit the result. CI fails when the files are stale. Do not edit them by hand.
 - Explain the why in the description and fill in the checklist in the PR template.
 - User-visible changes get a line under `Unreleased` in [CHANGELOG.md](CHANGELOG.md).
 - Address review comments with follow-up commits; maintainers squash on merge.
+## Private qualification cache
+
+Library and website CI can reuse verified qualification bundles from the private
+`alexcatdad/eu-einvoice-validation-cache` repository. `VALIDATION_CACHE_SSH_KEY` is
+a read-only deploy key for that repository, stored as an Actions secret. It is
+not available to fork PRs, which retain the normal pinned acquisition path.
+
+Cache keys include source pins, build recipes, dependency locks, compiler runtimes,
+and licensing/distribution policy. Cache hits verify the archive and every bundled
+file, source pin and inventory; corruption fails the job. Cache misses acquire the
+pinned sources normally. All existing qualification and distribution gates still run.
+
+The private repository rebuilds and qualifies pinned sources weekly, Mondays at
+02:47 UTC, before updating its cache. Changed upstream hashes fail verification;
+new versions or licensing decisions require a reviewed source-repository change.
+Unchanged keys retain the verified archive to avoid unnecessary binary Git history.
+The private checkout is removed before other builds and excluded from Git/Docker.
+Redistribution-excluded bundles never enter public Actions caches or release assets.
