@@ -81,7 +81,7 @@ for (const outcome of result.outcomes) {
 }
 ```
 
-All three flags default to off. Provenance maps canonical JSON Pointers to source XPaths; derived, defaulted or translated values may have no XPath. Consult `source.derived`, `source.warnings` and optional `source.valueOrigins`; absence of an origin entry means unrecorded, not source-supplied. See [evidence metadata](LINE-ANNOTATIONS.md#canonical-evidence-metadata).
+All three flags default to off. Provenance maps canonical JSON Pointers to source XPaths; derived, defaulted or translated values may have no XPath. Consult `source.derived`, `source.warnings` and optional `source.valueOrigins`; absence of an origin entry means unrecorded, not source-supplied. See [evidence metadata](https://github.com/alexcatdad/eu-einvoice-canonical/blob/main/docs/LINE-ANNOTATIONS.md#canonical-evidence-metadata).
 
 ## Handle every outcome
 
@@ -104,19 +104,19 @@ All three flags default to off. Provenance maps canonical JSON Pointers to sourc
 - `completeness`: whether all required source checks finished; an invalid document may also have incomplete coverage.
 - `required`, `reasons`, layer statuses and `findings`: what was checked, omitted, failed or unavailable, including rule IDs and locations.
 
-Use `validationPassed(report)` for a complete pass in the **requested scope**. The default is `full-source`; `validation: { scope: 'schema' }` explicitly asks only for XSD checks. A schema-only pass does not cover native business rules. Signature validity, signer trust and authority clearance remain separate questions; source validation does not prove authority acceptance. Preserve the report, selected suite and artifact receipt when auditing or replaying results. See [source validation](SOURCE-VALIDATION.md) for exact suites and scope semantics.
+Use `validationPassed(report)` for a complete pass in the **requested scope**. The default is `full-source`; `validation: { scope: 'schema' }` explicitly asks only for XSD checks. A schema-only pass does not cover native business rules. Signature validity, signer trust and authority clearance remain separate questions; source validation does not prove authority acceptance. Preserve the report, selected suite and artifact receipt when auditing or replaying results. See [source validation](https://github.com/alexcatdad/eu-einvoice-canonical/blob/main/docs/SOURCE-VALIDATION.md) for exact suites and scope semantics.
 
 ## Schema and compatibility
 
 Package semver and canonical schema version are independent. `schemaVersion` exported from the root is currently `v1`, including in package `2.0.0`. Validate persisted/transported data against the shipped `schemas/canonical-invoice.v1.schema.json` and `schemas/convert-result.v1.schema.json` (JSON Schema draft 2020-12). These files are present in the package but are not JavaScript export subpaths; copy them from the installed package into your schema tooling.
 
-Additive optional fields and new open code values keep `v1`; consumers should tolerate them. Breaking output changes require a new schema major published alongside the old files. Breaking TypeScript API changes require a package major, even when JSON remains compatible. Pin the package, retain the schema and do not infer schema version from the package number. See [v2 migration](MIGRATION-V2.md) for removed business APIs and separate optional entry points.
+Additive optional fields and new open code values keep `v1`; consumers should tolerate them. Breaking output changes require a new schema major published alongside the old files. Breaking TypeScript API changes require a package major, even when JSON remains compatible. Pin the package, retain the schema and do not infer schema version from the package number. See [v2 migration](https://github.com/alexcatdad/eu-einvoice-canonical/blob/main/docs/MIGRATION-V2.md) for removed business APIs and separate optional entry points.
 
 ## Deterministic relations and LLM-ready data
 
 `relations: true` adds line roles and links using deterministic rules and exact arithmetic. It preserves line order, source amounts and totals; ambiguous evidence can produce warnings. Relations include method and optional confidence metadata and remain inferences to assess, not authoritative commercial facts.
 
-Canonical JSON is already structured input for downstream analysis: stable field names, line IDs, exact decimal strings, references and evidence. Existing `buildLineAnnotationInput`, `LINE_ANNOTATION_SCHEMA` and `validateLineAnnotations` support selected input and checked annotation output; see [line annotations](LINE-ANNOTATIONS.md). Treat invoice text as untrusted data and select only the fields your consumer needs. Conversion does not execute an LLM or manage providers, credentials or workflows.
+Canonical JSON is already structured input for downstream analysis: stable field names, line IDs, exact decimal strings, references and evidence. Existing `buildLineAnnotationInput`, `LINE_ANNOTATION_SCHEMA` and `validateLineAnnotations` support selected input and checked annotation output; see [line annotations](https://github.com/alexcatdad/eu-einvoice-canonical/blob/main/docs/LINE-ANNOTATIONS.md). Treat invoice text as untrusted data and select only the fields your consumer needs. Conversion does not execute an LLM or manage providers, credentials or workflows.
 
 ## Offline deployment
 
@@ -124,7 +124,7 @@ Runtime source validation reads pinned local artifacts; it never downloads missi
 
 The package includes only approved redistribution artifacts. Native Peppol/PINT and other excluded rules can leave validation incomplete even when parsing, XSD and EN16931 checks pass. Missing files, unsupported versions/profiles and skipped required checks cannot satisfy a full-source pass. The default Schematron limit is 2,000 lines; `validation: { maxSchematronLines: 5000 }` changes it, but provides no wall-clock deadline. Account for CPU/memory in your application's execution boundary.
 
-Separate local qualification can explicitly download pinned excluded artifacts. Those downloads are outside this installation recipe; do not perform them implicitly during conversion or redistribute those files without resolving their terms. See [distribution and local qualification](SOURCE-VALIDATION.md#distribution-and-local-qualification) and [validation gaps](VALIDATION-GAPS.md).
+Separate local qualification can explicitly download pinned excluded artifacts. Those downloads are outside this installation recipe; do not perform them implicitly during conversion or redistribute those files without resolving their terms. See [distribution and local qualification](https://github.com/alexcatdad/eu-einvoice-canonical/blob/main/docs/SOURCE-VALIDATION.md#distribution-and-local-qualification) and [validation gaps](https://github.com/alexcatdad/eu-einvoice-canonical/blob/main/docs/VALIDATION-GAPS.md).
 
 ## Integration test against the installed package
 
