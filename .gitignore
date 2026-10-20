@@ -79,3 +79,4 @@ lib/
 /node_modules
 
 session-progress/
+/.qualification-cache/

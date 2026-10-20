@@ -1,0 +1,35 @@
+name: Restore private qualification cache
+description: Restore verified held bundles privately, or acquire the unchanged pinned sources on a miss.
+inputs:
+  ssh-key:
+    description: Read-only deploy key for the private qualification cache; absent on fork PRs.
+    required: false
+    default: ''
+runs:
+  using: composite
+  steps:
+    - name: Check out the private cache
+      if: inputs.ssh-key != ''
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        repository: alexcatdad/eu-einvoice-validation-cache
+        ref: main
+        ssh-key: ${{ inputs.ssh-key }}
+        persist-credentials: false
+        path: .qualification-cache
+    - name: Verify and restore matching qualification inputs
+      if: inputs.ssh-key != ''
+      id: restore
+      shell: bash
+      run: bun scripts/qualification-cache.ts restore .qualification-cache
+    - name: Acquire pinned qualification inputs on a cache miss
+      if: steps.restore.outputs.hit != 'true'
+      shell: bash
+      run: bun run restore:local-validation
+    - name: Verify every bundle after restoration
+      shell: bash
+      run: bun run verify:bundles
+    - name: Remove the private checkout before other build steps
+      if: always()
+      shell: bash
+      run: rm -rf .qualification-cache

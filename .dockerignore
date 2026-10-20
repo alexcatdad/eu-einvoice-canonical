@@ -1,5 +1,6 @@
 .git
 .github
+.qualification-cache
 .claude
 node_modules
 dist

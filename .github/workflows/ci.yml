@@ -30,8 +30,10 @@ jobs:
         with:
           bun-version: 1.4.2
       - run: bun install --frozen-lockfile
-      - name: Restore pinned local-only validation artifacts for qualification
-        run: bun run restore:local-validation
+      - name: Restore verified local-only validation artifacts for qualification
+        uses: ./.github/actions/qualification
+        with:
+          ssh-key: ${{ secrets.VALIDATION_CACHE_SSH_KEY }}
       - name: Library static, coverage and package checks
         if: matrix.gate == 'tests'
         run: bun run check:lib:static && bun run check:lib:tests
@@ -50,6 +52,10 @@ jobs:
           if-no-files-found: ignore
 
   site:
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     runs-on: ubuntu-24.04
     timeout-minutes: 75
     permissions:
@@ -70,14 +76,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: scripts/fetch-corpus-report.sh
-      - name: Restore pinned local-only validation artifacts for qualification
-        run: bun run restore:local-validation
+      - name: Restore verified local-only validation artifacts for qualification
+        uses: ./.github/actions/qualification
+        with:
+          ssh-key: ${{ secrets.VALIDATION_CACHE_SSH_KEY }}
       - name: Local qualification site build, typecheck and performance gate
         env:
           VALIDATION_ASSETS: local
         run: bun run check:site
       - name: Upload the quick benchmark run
-        if: always()
+        if: always() && matrix.browser == 'chromium'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: bench-quick
@@ -85,18 +93,32 @@ jobs:
           if-no-files-found: ignore
       - name: Install the browser engines
         working-directory: site
-        run: bunx playwright install --with-deps chromium firefox webkit
+        run: |
+          if [ "${{ matrix.browser }}" = chromium ]; then
+            bunx playwright install --with-deps chromium firefox webkit
+          else
+            bunx playwright install --with-deps "${{ matrix.browser }}"
+          fi
       - name: Accessibility and privacy gate
+        if: matrix.browser == 'chromium'
         run: bun run check:a11y
       - name: Local source validation browser gate
         working-directory: site
-        run: bun run check:validation
+        env:
+          VALIDATION_BROWSER: ${{ matrix.browser }}
+        run: bun check-validation.ts validation-acceptance.ts
+      - name: Factur-X, edition selection and fault browser gates
+        if: matrix.browser == 'chromium'
+        working-directory: site
+        run: bun check-validation.ts facturx-validation-acceptance.ts edition-selection-acceptance.ts validation-faults.ts
       - name: Rebuild the distributable site from the approved inventory
+        if: matrix.browser == 'chromium'
         run: bun run build:site
       - name: Verify distributable inventory and browser results
+        if: matrix.browser == 'chromium'
         run: bun site/check-validation.ts distribution-acceptance.ts
       - name: Upload the site
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        if: matrix.browser == 'chromium' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
           path: dist
