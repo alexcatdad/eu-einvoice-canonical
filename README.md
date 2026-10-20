@@ -78,20 +78,7 @@ The optional `scripts/fetch-corpus-report.sh` downloads the latest corpus report
 checks work without it. Accessibility checks print per-scenario timings; `A11Y_JOBS=1 bun run check:a11y` runs
 them serially for profiling (the default is two isolated browser contexts at a time).
 
-```ts
-import { convert } from 'eu-einvoice-canonical';
-
-const { fileSha256, outcomes, skipped } = await convert(bytes, 'invoice.xml');
-for (const o of outcomes) {
-  if (o.status === 'ok') console.log(o.invoices);          // CanonicalInvoice[]
-  else console.log(o.status, o.detection);                 // 'unsupported' | 'not-an-invoice' | 'error'
-}
-console.log(skipped);                                      // DOCTYPE, size limits, detached signatures...
-
-// Opt-in field provenance: source.provenance maps canonical paths to the XPath they were read from.
-const traced = await convert(bytes, 'invoice.xml', undefined, { provenance: true });
-// '/totals/payable' -> '/Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount', '/lines/1/netAmount' -> '/Invoice/cac:InvoiceLine[2]/cbc:LineExtensionAmount'
-```
+For pinned installation, Node/TypeScript examples, outcome handling, offline deployment and a fixture integration test, see the [integration guide](docs/INTEGRATION.md).
 
 ### Field provenance in a parser
 
