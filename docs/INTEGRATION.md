@@ -1,32 +1,33 @@
 # TypeScript / Node.js integration
 
-Use this guide to consume canonical invoices in `Jouncetech/asource-workflow-engine-ts` or another Node application. Conversion, validation and structural inference are library operations; downstream business decisions belong to the consumer.
+This guide verifies a standalone Node.js consumer. Integration with `Jouncetech/asource-workflow-engine-ts` has not been exercised; its dependency graph, build and deployment still need consumer-side acceptance. Conversion, validation and structural inference are library operations; downstream business decisions belong to the consumer.
 
 ## Install a pinned build
 
-The verified path is a locally built npm tarball, installed by npm or Bun. npm registry availability has **not** been verified; do not assume `npm install eu-einvoice-canonical@2.0.0` works. Git source archives are not ready-to-run packages: they need the build below. Direct Git dependencies are not a substitute for that build.
+The installation path below builds a pinned npm tarball and installs it into an isolated Node consumer. npm registry availability has **not** been verified; do not assume `npm install eu-einvoice-canonical@2.0.0` works. Git source archives are not ready-to-run packages: they need the build below. Direct Git dependencies are not a substitute for that build.
 
-This recipe pins package `2.0.0` to source commit `b24664c5b15e5276433bbb7bdcbb2d9f504f8422`. Run it in a scratch directory with Git, Node 20+, npm and Bun 1.4+ installed (Bun 1.4.3 and Node 26.12.0 verified for this guide):
+This recipe pins package `2.0.0` to source commit `b24664c5b15e5276433bbb7bdcbb2d9f504f8422`. Run it in a scratch directory with Git, Node 20+, npm and Bun 1.4+ installed (this guide was tested with Bun 1.4.3, Node 26.12.0 and npm 11.20.0; Node 20+ is the project compatibility baseline, not a tested version matrix):
 
 ```sh
-git clone https://github.com/alexcatdad/eu-einvoice-canonical.git
-cd eu-einvoice-canonical
+WORK=$(mktemp -d)
+cd "$WORK"
+git clone https://github.com/alexcatdad/eu-einvoice-canonical.git source
+cd source
 git checkout --detach b24664c5b15e5276433bbb7bdcbb2d9f504f8422
 bun install --frozen-lockfile
 bun run build:package
-npm pack --ignore-scripts --pack-destination .
-PACKAGE_TGZ="$PWD/eu-einvoice-canonical-2.0.0.tgz"
-FIXTURE="$PWD/test/fixtures/xrechnung-ubl.xml"
-CONSUMER=$(mktemp -d)
-cd "$CONSUMER"
+npm pack --ignore-scripts --cache ../npm-cache --pack-destination .
+cd ..
+mkdir consumer
+cd consumer
 npm init -y
-npm install --save-exact "$PACKAGE_TGZ"
-cp "$FIXTURE" invoice.xml
+npm install --save-exact --registry=https://registry.npmjs.org --cache ../npm-cache --fetch-retries=0 --fetch-timeout=20000 ../source/eu-einvoice-canonical-2.0.0.tgz
+cp ../source/test/fixtures/xrechnung-ubl.xml invoice.xml
 ```
 
-In an existing consumer, install the same tarball with `npm install --save-exact /absolute/path/eu-einvoice-canonical-2.0.0.tgz` or `bun add --exact /absolute/path/eu-einvoice-canonical-2.0.0.tgz`. Retain the immutable tarball and consumer lockfile in your dependency supply process. A file dependency needs that file to remain available for clean installs. A compiled local package directory is also usable (`npm install /absolute/path/eu-einvoice-canonical`), but npm may link it: retain its `lib/`, assets and dependencies, and avoid a moving checkout for deployment.
+Retain the immutable tarball and consumer lockfile in your dependency supply process. The file dependency needs that tarball at the recorded relative path for clean installs. The fresh cache and explicit registry above resolve runtime dependencies normally, independently of the source checkout. A registry timeout or install error is a failed prerequisite; do not substitute checkout dependencies.
 
-The core runtime supports Node 20+ and Bun; Bun is needed to build this source checkout, not to call `convert()` from Node. npm can install the built tarball without Bun. The manifest declares neither `engines` nor a `packageManager` pin; use the stated runtime baseline and your consumer's locked package-manager version. The package is **ESM only**, with compiled JavaScript and declarations under `lib/`. Use `.mjs`, or `"type": "module"` with TypeScript `module` / `moduleResolution` set to `NodeNext` (target ES2022 or later). No React or MCP peer is required for the root import. Bun users can omit optional peers with `bun install --production --omit peer`.
+The core runtime supports Node 20+ and Bun; Bun is needed to build this source checkout, not to call `convert()` from Node. npm can install the built tarball without Bun. The manifest declares neither `engines` nor a `packageManager` pin; use the stated runtime baseline and your consumer's locked package-manager version. The package is **ESM only**, with compiled JavaScript and declarations under `lib/`. Use `.mjs`, or `"type": "module"` with TypeScript `module` / `moduleResolution` set to `NodeNext` (target ES2022 or later). No React or MCP peer is required for the root import.
 
 ## Minimal conversion
 
@@ -38,19 +39,27 @@ import { convert } from 'eu-einvoice-canonical';
 
 const filename = process.argv[2] ?? 'invoice.xml';
 const result = await convert(await readFile(filename), filename);
-for (const outcome of result.outcomes) {
-  if (outcome.status === 'ok') {
-    for (const invoice of outcome.invoices) console.log(JSON.stringify(invoice));
-  } else {
-    console.error(outcome.status, outcome);
+// Reject the whole file before emitting invoices, including mixed/partial batches.
+if (result.skipped.length || !result.outcomes.length ||
+    result.outcomes.some(o => o.status !== 'ok' || !o.invoices.length)) {
+  console.error('Conversion rejected:', JSON.stringify(result));
+  process.exitCode = 1;
+} else {
+  for (const outcome of result.outcomes) {
+    if (outcome.status === 'ok') {
+      for (const invoice of outcome.invoices) console.log(JSON.stringify(invoice));
+    }
   }
 }
-if (result.skipped.length) console.error('Skipped:', result.skipped);
 ```
+
+This example exits nonzero and emits no invoices for unsupported, non-invoice, failed, skipped, empty or partially converted input. It checks conversion success only; source validation remains a separate acceptance decision.
 
 `Buffer` is a `Uint8Array`. The call signature is `convert(bytes, filename?, limits?, options?)`; pass `undefined` for limits when setting options. TypeScript consumers can import `type ConvertResult` and `type CanonicalInvoice` from the same entry point. Monetary amounts and quantities are decimal **strings**: preserve them, rather than coercing them to floating-point numbers.
 
 ## Optional evidence and validation
+
+Save as `evidence.mjs` beside `invoice.xml`, then run `node evidence.mjs`. This diagnostic example prints reports; its exit status is not an acceptance decision.
 
 ```js
 import { readFile } from 'node:fs/promises';
@@ -115,7 +124,7 @@ Runtime source validation reads pinned local artifacts; it never downloads missi
 
 The package includes only approved redistribution artifacts. Native Peppol/PINT and other excluded rules can leave validation incomplete even when parsing, XSD and EN16931 checks pass. Missing files, unsupported versions/profiles and skipped required checks cannot satisfy a full-source pass. The default Schematron limit is 2,000 lines; `validation: { maxSchematronLines: 5000 }` changes it, but provides no wall-clock deadline. Account for CPU/memory in your application's execution boundary.
 
-For separate local qualification, `bun run restore:local-validation` explicitly downloads pinned excluded artifacts. Do not run it implicitly during conversion or redistribute those files without resolving their terms. See [distribution and local qualification](SOURCE-VALIDATION.md#distribution-and-local-qualification) and [validation gaps](VALIDATION-GAPS.md).
+Separate local qualification can explicitly download pinned excluded artifacts. Those downloads are outside this installation recipe; do not perform them implicitly during conversion or redistribute those files without resolving their terms. See [distribution and local qualification](SOURCE-VALIDATION.md#distribution-and-local-qualification) and [validation gaps](VALIDATION-GAPS.md).
 
 ## Integration test against the installed package
 
@@ -155,3 +164,32 @@ test('packed Node consumer converts and validates the XRechnung fixture', async 
 ```
 
 This test checks conversion, opt-in metadata and a complete pass for this fixture using the distributed rules. It does not establish validation coverage for other formats or production invoices. For generated API details, use the [TypeDoc reference](https://alexcatdad.github.io/eu-einvoice-canonical/api/).
+
+## Verify TypeScript declarations
+
+In the same isolated consumer, install the pinned development tools:
+
+```sh
+npm install --save-dev --save-exact --registry=https://registry.npmjs.org --cache ../npm-cache --fetch-retries=0 --fetch-timeout=20000 typescript@7.0.2 @types/node@26.6.5
+```
+
+Save as `consumer.mts` (the extension selects ESM even with npm's default package.json):
+
+```ts
+import { readFile } from 'node:fs/promises';
+import { convert, schemaVersion, validationPassed, type ConvertResult, type CanonicalInvoice } from 'eu-einvoice-canonical';
+const result: ConvertResult = await convert(await readFile('invoice.xml'), 'invoice.xml', undefined, {
+  relations: true, provenance: true, validate: true,
+});
+const invoices: CanonicalInvoice[] = result.outcomes.flatMap(o => o.status === 'ok' ? o.invoices : []);
+for (const invoice of invoices) {
+  const payable: string = invoice.totals.payable;
+  console.log(schemaVersion, payable, validationPassed(invoice.source.validation));
+}
+```
+
+```sh
+./node_modules/.bin/tsc --noEmit --strict --types node --module NodeNext --moduleResolution NodeNext --target ES2022 consumer.mts
+```
+
+Verification of this pinned build used a fresh npm cache and an isolated consumer with every dependency link resolving inside its own `node_modules`. All three JavaScript examples and the strict NodeNext check passed. The fixture validation test also passed with all network access denied by a macOS sandbox. These checks establish the installed layout for this fixture and toolchain, not acceptance in the workflow-engine application or coverage of every supported Node version.
