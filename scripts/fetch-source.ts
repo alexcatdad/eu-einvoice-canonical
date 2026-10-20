@@ -3,8 +3,8 @@ export async function fetchSource(url: string): Promise<Response> {
   try {
     return await fetch(url);
   } catch (error) {
-    if (!(error instanceof Error) || !('code' in error) || error.code !== 'TooManyRedirects') throw error;
-    // Some upstream servers loop for Bun's HTTP client. Retain the URL and the caller's hash verification.
+    if (!(error instanceof Error) || !('code' in error) || (error.code !== 'TooManyRedirects' && error.code !== 'ECONNRESET')) throw error;
+    // Recover native-client redirect loops or connection resets using the same URL and caller's hash verification.
     const child = Bun.spawn(
       [
         'curl',
