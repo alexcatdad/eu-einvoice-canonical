@@ -64,6 +64,14 @@ export const PAGES: PageDef[] = [
     sections: ['Command line'],
   },
   {
+    slug: 'pdf-invoice-skill',
+    title: 'PDF invoice conversion skill',
+    description:
+      'Convert born-digital invoice PDFs into UBL or CII with a Codex skill, source-fidelity checks, validation and canonical round-trip verification.',
+    group: 'Use it',
+    sections: ['PDF invoice conversion skill'],
+  },
+  {
     slug: 'mcp',
     title: 'MCP server for AI agents',
     description:
