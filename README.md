@@ -121,6 +121,10 @@ JSON goes to stdout only; every error is one line on stderr.
 
 With several failures and no success the code of the first failure is used; with at least one success it is 5.
 
+## PDF invoice conversion skill
+
+The repository-scoped [`pdf-invoice-to-xml` skill](.agents/skills/pdf-invoice-to-xml/SKILL.md) guides Codex through one-off transcription of born-digital invoice PDFs without usable embedded XML into UBL/CII, with source-fidelity, arithmetic, validation and round-trip checks. Invoke `$pdf-invoice-to-xml` in a fresh session in this checkout. [Setup and tool prerequisites](.agents/skills/pdf-invoice-to-xml/references/tools.md) also cover installation in another project. The skill uses the active model and local tools; it adds no PDF dependencies to canonical conversion. OCR is outside its initial scope.
+
 ## MCP server for AI agents
 
 The MCP SDK (`@modelcontextprotocol/sdk@1.32.1`) is an optional peer dependency; development installs include it. Zod remains in the core for annotation contracts.
