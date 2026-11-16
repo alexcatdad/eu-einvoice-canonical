@@ -43,6 +43,13 @@ describe('ZATCA detection', () => {
 });
 
 describe('ZATCA simplified invoice', () => {
+  test('a malformed IssueTime is a parse error, not an invalid issueTime', async () => {
+    const xml = text('zatca-standard-debit-signed.xml').replace(/<cbc:IssueTime>[^<]*</, '<cbc:IssueTime>0.00<');
+    const o = (await convert(utf8(xml), 'x.xml')).outcomes[0];
+    assert.equal(o.status, 'error');
+    if (o.status === 'error') assert.match(o.error, /Not a time: "0\.00"/);
+  });
+
   test('header, transaction code and parties', async () => {
     const inv = await parseOne(SIMPLIFIED);
     assert.equal(inv.source.format, 'zatca-ubl');
