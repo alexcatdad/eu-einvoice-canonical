@@ -226,7 +226,7 @@
         ],
         "operationId": "getSchema",
         "summary": "A JSON Schema of the response models",
-        "description": "The draft 2020-12 JSON Schema for `canonical-invoice`, `convert-result` or `inspect-result` (the v1 files).",
+        "description": "The draft 2020-12 JSON Schema for `canonical-invoice`, `convert-result`, `inspect-result` or `pdf-rule-set` (the v1 files).",
         "parameters": [
           {
             "name": "name",
@@ -237,7 +237,8 @@
               "enum": [
                 "canonical-invoice",
                 "convert-result",
-                "inspect-result"
+                "inspect-result",
+                "pdf-rule-set"
               ]
             }
           }
@@ -766,6 +767,10 @@
             "format": "uri"
           }
         }
+      },
+      "PdfRuleSet": {
+        "description": "A generator profile or issuer template for PDF extraction, served by `GET /v1/schemas/pdf-rule-set`.",
+        "$ref": "../schemas/pdf-rule-set.v1.schema.json"
       },
       "Health": {
         "type": "object",
