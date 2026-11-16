@@ -12,7 +12,7 @@ import type { Element } from '@xmldom/xmldom';
 import type { AllowanceCharge, Attachment, CanonicalInvoice, Decimal, Line, Totals, VatBreakdown, VatInfo } from '../canonical.js';
 import { cmp, sub, toDecimal } from '../values.js';
 import { type DirectDebitEls, dateOf, delivery, party, payment, period, withScheme } from './cii.js';
-import { CREDIT_TYPE_CODES, Ctx, finish, ParseError, parseXml, SELF_BILLED_TYPE_CODES, sourceMeta } from './context.js';
+import { CREDIT_TYPE_CODES, Ctx, finish, need, ParseError, parseXml, SELF_BILLED_TYPE_CODES, sourceMeta } from './context.js';
 import type { ParseInput } from './index.js';
 import { recordUnmapped } from './leftover.js';
 
@@ -86,7 +86,7 @@ export function parseZugferd1(input: ParseInput): CanonicalInvoice[] {
 
   const logistics = c.all(settlement, 'ram:SpecifiedLogisticsServiceCharge').map(
     (s): AllowanceCharge => ({
-      amount: c.dec(s, 'ram:AppliedAmount')!,
+      amount: need(c.dec(s, 'ram:AppliedAmount'), 'SpecifiedLogisticsServiceCharge/AppliedAmount'),
       reason: c.text(s, 'ram:Description'),
       vat: c.el(s, 'ram:AppliedTradeTax') ? vatInfo(c, c.el(s, 'ram:AppliedTradeTax')) : undefined,
     }),
@@ -249,7 +249,7 @@ function allowanceCharges(c: Ctx, parent: Element | undefined, charge: boolean):
     .all(parent, 'ram:SpecifiedTradeAllowanceCharge')
     .filter((a) => (c.text(a, 'ram:ChargeIndicator/*:Indicator') ?? '').toLowerCase() === String(charge))
     .map((a) => ({
-      amount: c.dec(a, 'ram:ActualAmount')!,
+      amount: need(c.dec(a, 'ram:ActualAmount'), 'SpecifiedTradeAllowanceCharge/ActualAmount'),
       baseAmount: c.dec(a, 'ram:BasisAmount'),
       percentage: c.dec(a, 'ram:CalculationPercent'),
       reason: c.text(a, 'ram:Reason'),
@@ -359,6 +359,7 @@ function line(c: Ctx, l: Element, index: number): Line {
   }
   if (netAmount === undefined) throw new ParseError(`Line ${lineId || '?'}: LineTotalAmount (BT-131) missing`);
   const baseQty = c.el(net, 'ram:BasisQuantity') ?? c.el(gross, 'ram:BasisQuantity');
+  const priceNet = c.dec(net, 'ram:ChargeAmount');
   const at = `/CrossIndustryDocument/.../IncludedSupplyChainTradeLineItem[${lineId}]`;
   recordUnmapped(c, docLine, ['LineID', 'IncludedNote'], `${at}/AssociatedDocumentLineDocument`);
   recordUnmapped(
@@ -411,15 +412,16 @@ function line(c: Ctx, l: Element, index: number): Line {
     period: period(c, c.el(lineSettlement, 'ram:BillingSpecifiedPeriod'), c.in(`/lines/${index}/period`)),
     allowances: allowanceCharges(c, lineSettlement, false),
     charges: allowanceCharges(c, lineSettlement, true),
-    price: net
-      ? {
-          net: c.dec(net, 'ram:ChargeAmount')!,
-          discount: discount(c, gross),
-          gross: c.dec(gross, 'ram:ChargeAmount'),
-          baseQuantity: c.dec(baseQty),
-          baseQuantityUnit: c.attr(baseQty, undefined, 'unitCode'),
-        }
-      : undefined,
+    price:
+      priceNet !== undefined
+        ? {
+            net: priceNet,
+            discount: discount(c, gross),
+            gross: c.dec(gross, 'ram:ChargeAmount'),
+            baseQuantity: c.dec(baseQty),
+            baseQuantityUnit: c.attr(baseQty, undefined, 'unitCode'),
+          }
+        : undefined,
     vat: tax ? vatInfo(c, tax) : undefined,
     item: {
       name: c.text(product, 'ram:Name') ?? '',
