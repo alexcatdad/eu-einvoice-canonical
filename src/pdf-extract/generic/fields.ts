@@ -50,11 +50,13 @@ const EXTRA: [FieldKey, RegExp][] = [
   ],
   ['allowance', /^rabatt$/u],
   ['taxExclusive', /^(?:(?:summa|belopp|totalt) )?(?:ex|exl)\.? moms$/u],
+  ['vatRate', /^moms ?sats(?:en)?$/u],
+  ['vatBase', /^(?:beskattnings)?underlag$/u],
   ['vatBase', /^(?:moms|skatte)underlag$|^underlag (?:för )?moms$|^moms ?pl(?:iktigt)?\.? ?belopp$/u],
 ];
 
 /** Words that may stand next to a label without changing what it names ("Avgår skattereduktion", "Fakt nr / Kundnr"). */
-const FILLER = /^(?:avgår|ange|fakturans|avdrag|varav|summa|totalt|belopp|att|för|sek|kr|nr|preliminär|vid|betalning|enligt)$/u;
+const FILLER = /^(?:avgår|ange|grön|teknik|fakturans|avdrag|varav|summa|totalt|belopp|att|för|sek|kr|nr|preliminär|vid|betalning|enligt)$/u;
 const BUYER_SIDE = /^(?:er|ert|kundens|köparens|mottagarens)\b/u;
 
 export interface FieldLabel {
@@ -96,6 +98,24 @@ export function fieldLabel(text: string): FieldLabel | undefined {
   }
   if (!keys.length || new Set(keys).size !== keys.length) return undefined;
   return { keys, part, parts: split.length, ...(rate ? { rate } : {}) };
+}
+
+/**
+ * A label and its value in one text: "Fakturanummer: 941", or leading words that are a label followed by the value
+ * ("Org.nr 559900-1236").
+ */
+export function inlinePair(text: string): { label: FieldLabel; value: string } | undefined {
+  const colon = /^([^:]{2,40}):\s*(\S.*)$/u.exec(text);
+  if (colon) {
+    const label = fieldLabel(colon[1]);
+    return label ? { label, value: colon[2] } : undefined;
+  }
+  const words = text.split(' ');
+  for (let n = Math.min(4, words.length - 1); n >= 1; n--) {
+    const label = fieldLabel(words.slice(0, n).join(' '));
+    if (label) return { label, value: words.slice(n).join(' ') };
+  }
+  return undefined;
 }
 
 /** The field one label part names; undefined for a short part that names none ("Kundnr"); null when it is not a label. */

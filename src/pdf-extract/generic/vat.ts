@@ -7,7 +7,7 @@
  */
 import type { PdfRegion, SourceWarning } from '../../canonical.js';
 import type { ReadValue } from '../generic.js';
-import { classifyRates, findLabels } from '../se/index.js';
+import { classifyRates, findLabels, normalize } from '../se/index.js';
 import { type Cell, overlapX, regionOf } from './cells.js';
 import { type FieldKey, fieldLabel, type Parsed, parseAmount, parseRate } from './fields.js';
 import type { Item } from './items.js';
@@ -48,17 +48,24 @@ export function vatBreakdown(
         message: `Several VAT rates (${[...rates.keys()].join(', ')}) without a readable breakdown`,
       });
   }
-  for (const row of out) if (row.rate) row.categoryCode = category(row.rate);
-  if (!out.length && !values['/totals/vatTotal']) {
-    // Momsfritt: no VAT printed and a statement that the sale is exempt -> category E with that statement as reason
-    const exempt = rows.flat().filter((c) => findLabels(c.text).some((l) => l.label === 'vatExempt'));
-    if (new Set(exempt.map((c) => c.text)).size === 1) {
-      const reason = { value: exempt[0].text, region: regionOf(exempt[0]) };
-      const base = values['/totals/taxExclusive'] ?? values['/totals/lineNetTotal'];
-      out = [{ categoryCode: { value: 'E', region: reason.region }, exemptionReason: reason, ...(base ? { taxableAmount: base } : {}) }];
-    }
+  for (const row of out) if (row.rate && !row.categoryCode) row.categoryCode = category(row.rate);
+  // Momsfritt: a statement that the sale is exempt turns rows without VAT into category E, with the statement as reason
+  const exempt = rows.flat().filter((c) => findLabels(c.text).some((l) => l.label === 'vatExempt'));
+  const statements = [...new Set(exempt.filter((c) => normalize(c.text).split(' ').length > 2).map((c) => c.text))];
+  const reason = statements.length === 1 ? exempt.find((c) => c.text === statements[0]) : undefined;
+  const noVat = (v?: ReadValue) => !v || Number(v.value) === 0;
+  if (!out.length && reason && noVat(values['/totals/vatTotal'])) {
+    const base = values['/totals/taxExclusive'] ?? values['/totals/lineNetTotal'];
+    out = [{ categoryCode: { value: 'E', region: regionOf(reason) }, ...(base ? { taxableAmount: base } : {}) }];
   }
-  const known = new Set(out.map((r) => r.rate?.value));
+  for (const row of out)
+    if (exempt.length && (row.categoryCode?.value === 'E' || (row.rate && Number(row.rate.value) === 0 && noVat(row.taxAmount)))) {
+      row.categoryCode = { value: 'E', region: row.rate?.region ?? row.categoryCode!.region };
+      delete row.rate;
+      if (reason) row.exemptionReason = { value: reason.text, region: regionOf(reason) };
+      else problems.push({ code: 'missing', field: '/vatBreakdown', message: 'VAT-exempt sale without a readable exemption statement' });
+    }
+  const known = new Set(out.map((r) => (r.categoryCode?.value === 'E' ? '0' : r.rate?.value)));
   for (const i of items)
     if (i.rate && !known.has(i.rate.value))
       problems.push({
@@ -102,7 +109,9 @@ export function vatTable(rows: Cell[][]): VatRow[] {
         return cells.length === 1 ? cells[0] : undefined;
       };
       const rateCell = at(rateCol);
-      const rate = rateCell && parseRate(rateCell.text);
+      // "Momsfri" in the rate column: an exempt row
+      const exemptRow = rateCell && findLabels(rateCell.text).some((l) => l.label === 'vatExempt');
+      const rate = rateCell && (exemptRow ? '0' : parseRate(rateCell.text));
       if (!rateCell || !rate) break;
       const pick = (test: (k: FieldKey[]) => boolean): ReadValue | undefined => {
         const k = keys.findIndex(test);
@@ -110,7 +119,12 @@ export function vatTable(rows: Cell[][]): VatRow[] {
         const a = c && parseAmount(c.text);
         return c && a ? { value: a, region: regionOf(c) } : undefined;
       };
-      out.push({ rate: { value: rate, region: regionOf(rateCell) }, taxableAmount: pick(BASE_HEADER), taxAmount: pick(TAX_HEADER) });
+      out.push({
+        rate: { value: rate, region: regionOf(rateCell) },
+        ...(exemptRow ? { categoryCode: { value: 'E', region: regionOf(rateCell) } } : {}),
+        taxableAmount: pick(BASE_HEADER),
+        taxAmount: pick(TAX_HEADER),
+      });
       prev = row[0];
     }
     if (out.length) return out;
