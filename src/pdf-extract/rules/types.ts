@@ -60,6 +60,8 @@ export interface PdfRuleRegion {
 export interface PdfFieldRule {
   /** Literal label text. */
   label?: PdfRuleText;
+  /** How the label is compared: the whole text (default) or its start, for labels followed by varying text such as "Förfallodatum (30 dagar netto)". */
+  labelMatch?: 'whole' | 'start';
   /** Where the value stands relative to the label. */
   value?: 'right' | 'below' | 'inline';
   /** Region relative to the label's top-left corner, or in page coordinates when there is no label. */
@@ -71,6 +73,25 @@ export interface PdfFieldRule {
    */
   page?: number;
   /** When the label is not printed, keep what the earlier layers read instead of reporting a problem. */
+  optional?: boolean;
+}
+
+/**
+ * A party's address block: the first line is under the label, or the one text in `region` relative to the label's
+ * top-left corner; each next line is directly under the previous one, down to the postal line "NNN NN City".
+ * Replaces the party's address (and name, with `name`) read by earlier layers.
+ */
+export interface PdfAddressRule {
+  label: PdfRuleText;
+  labelMatch?: 'whole' | 'start';
+  region?: PdfRuleRegion;
+  /**
+   * `true`: the first line is the party's name. `auto`: it is the name when it equals the name read by an earlier
+   * layer, or when three lines stand above the postal line and the first ends in a company form (AB, HB, ...);
+   * otherwise, with no name read earlier, the block is ambiguous and reported. Absent or `false`: no name line.
+   */
+  name?: boolean | 'auto';
+  /** When the label is not printed, keep what earlier layers read instead of reporting a problem. */
   optional?: boolean;
 }
 
@@ -120,6 +141,8 @@ export interface PdfRuleLayout {
   /** Texts that must all be printed on the read pages for this layout to apply. Empty or absent: always applies. */
   fingerprint?: PdfRuleText[];
   fields?: Partial<Record<PdfRuleField, PdfFieldRule>>;
+  /** Address blocks of the seller and the buyer. */
+  addresses?: { seller?: PdfAddressRule; buyer?: PdfAddressRule };
   lines?: PdfTableRule;
   defaults?: PdfRuleDefaults;
 }

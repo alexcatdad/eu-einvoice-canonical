@@ -57,6 +57,12 @@ const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !
 const isText = (v: unknown): v is string => typeof v === 'string' && v.trim() !== '';
 const isTexts = (v: unknown): v is string[] => Array.isArray(v) && v.length > 0 && v.every(isText);
 const isNum = (v: unknown) => typeof v === 'number' && Number.isFinite(v);
+const isRegion = (r: unknown) =>
+  isObj(r) &&
+  Object.keys(r).length === 4 &&
+  ['x', 'y', 'width', 'height'].every((k) => isNum(r[k])) &&
+  (r.width as number) > 0 &&
+  (r.height as number) > 0;
 
 /** Checks a parsed JSON rule set and returns it typed; throws {@link PdfRuleError} listing every problem. Unknown properties are errors, to catch typos. */
 export function loadPdfRuleSet(json: unknown): PdfRuleSet {
@@ -97,7 +103,27 @@ export function loadPdfRuleSet(json: unknown): PdfRuleSet {
         bad(p, 'must be an object');
         return;
       }
-      known(l, p, ['name', 'fingerprint', 'fields', 'lines', 'defaults']);
+      known(l, p, ['name', 'fingerprint', 'fields', 'addresses', 'lines', 'defaults']);
+      if (l.addresses !== undefined) {
+        if (!isObj(l.addresses)) bad(`${p}/addresses`, 'must be an object');
+        else {
+          known(l.addresses, `${p}/addresses`, ['seller', 'buyer']);
+          for (const [party, a] of Object.entries(l.addresses)) {
+            const ap = `${p}/addresses/${party}`;
+            if (!isObj(a)) {
+              bad(ap, 'must be an object');
+              continue;
+            }
+            known(a, ap, ['label', 'labelMatch', 'region', 'name', 'optional']);
+            if (!isText(a.label)) bad(`${ap}/label`, 'non-empty text');
+            if (a.labelMatch !== undefined && !['whole', 'start'].includes(a.labelMatch as string))
+              bad(`${ap}/labelMatch`, 'whole or start');
+            if (a.region !== undefined && !isRegion(a.region)) bad(`${ap}/region`, 'object with numeric x, y and positive width, height');
+            if (a.name !== undefined && typeof a.name !== 'boolean' && a.name !== 'auto') bad(`${ap}/name`, 'boolean or "auto"');
+            if (a.optional !== undefined && typeof a.optional !== 'boolean') bad(`${ap}/optional`, 'boolean');
+          }
+        }
+      }
       if (!isText(l.name)) bad(`${p}/name`, 'non-empty text');
       if (l.fingerprint !== undefined && !(Array.isArray(l.fingerprint) && l.fingerprint.every(isText)))
         bad(`${p}/fingerprint`, 'list of non-empty texts');
@@ -111,16 +137,17 @@ export function loadPdfRuleSet(json: unknown): PdfRuleSet {
               bad(fp, 'must be an object');
               continue;
             }
-            known(rule, fp, ['label', 'value', 'region', 'page', 'optional']);
+            known(rule, fp, ['label', 'labelMatch', 'value', 'region', 'page', 'optional']);
+            if (
+              rule.labelMatch !== undefined &&
+              (!['whole', 'start'].includes(rule.labelMatch as string) || rule.label === undefined || rule.value === 'inline')
+            )
+              bad(`${fp}/labelMatch`, 'whole or start, with a label and not inline');
             if (rule.label !== undefined && !isText(rule.label)) bad(`${fp}/label`, 'non-empty text');
             if (rule.value !== undefined && !['right', 'below', 'inline'].includes(rule.value as string))
               bad(`${fp}/value`, 'right, below or inline');
-            if (rule.region !== undefined) {
-              const r = rule.region;
-              if (!isObj(r) || !['x', 'y', 'width', 'height'].every((k) => isNum(r[k])) || Object.keys(r).length !== 4)
-                bad(`${fp}/region`, 'object with numeric x, y, width, height');
-              else if ((r.width as number) <= 0 || (r.height as number) <= 0) bad(`${fp}/region`, 'width and height must be positive');
-            }
+            if (rule.region !== undefined && !isRegion(rule.region))
+              bad(`${fp}/region`, 'object with numeric x, y and positive width, height');
             if (rule.page !== undefined && !(Number.isInteger(rule.page) && (rule.page as number) >= 1))
               bad(`${fp}/page`, 'positive integer');
             if (rule.optional !== undefined && typeof rule.optional !== 'boolean') bad(`${fp}/optional`, 'boolean');
