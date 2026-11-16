@@ -11,6 +11,7 @@ import {
   StandardFonts,
 } from 'pdf-lib';
 import { encodeQR } from 'qr';
+import { convert } from '../../src/index.js';
 import type { GenericRead } from '../../src/pdf-extract/generic.js';
 import { extractPdfInvoice } from '../../src/pdf-extract/index.js';
 import { applyPaymentQr, findQrCodes, parseUsingQr, type QrCode } from '../../src/pdf-extract/qr.js';
@@ -338,6 +339,16 @@ describe('extractPdfInvoice with a payment QR code', () => {
     expect(Object.values(r.payment?.pdfProvenance ?? {}).every((p) => p.page === 1 && p.x === 420)).toBe(true);
     // Without a payment QR code the result is unchanged
     expect(await run(await pdf(pngQr(SWISH_LIKE)))).not.toHaveProperty('payment');
+  });
+
+  test('convert: the unsupported pdfOutcomes entry of an image-only page carries the QR payment facts', async () => {
+    const r = await convert(await pdf(pngQr(USING_QR)), 'scan.pdf', undefined, { extractPdf: true });
+    expect(r.pdfOutcomes).toEqual([
+      expect.objectContaining({
+        status: 'unsupported',
+        payment: expect.objectContaining({ fields: expect.objectContaining({ '/totals/payable': '13750.00', '/dueDate': '2026-04-01' }) }),
+      }),
+    ]);
   });
 
   test('a text value that disagrees with the QR code is kept and makes a draft with a qr-conflict problem', async () => {

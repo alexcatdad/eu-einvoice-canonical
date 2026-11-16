@@ -1,9 +1,9 @@
 import { expect, test } from 'bun:test';
-import { copyFileSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { PDFDocument } from 'pdf-lib';
-import { aggregate, renderMarkdown } from '../scripts/pdf-eval/report.js';
+import { aggregate, readBaseline, renderMarkdown } from '../scripts/pdf-eval/report.js';
 import { decimal, fromInvoice, fromTruth, isKnownPointer, norm, score, type Truth, unflatten } from '../scripts/pdf-eval/score.js';
 import { evaluatePaired, evaluateSwedish, readExclude } from '../scripts/pdf-eval.js';
 import type { CanonicalInvoice } from '../src/canonical.js';
@@ -271,6 +271,43 @@ test('the gate fails when extraction collapses, even with no wrong value', () =>
   expect(aggregate([], { mode: 'swedish', generatedAt: 'T' }).gate.failures).toEqual(['no values scored', 'no ok or draft documents']);
   expect(failed(ok(invoice()))).toMatchObject({ passed: true, failures: [] });
 });
+
+test('the gate fails when results drop below the committed baseline, though above half the documents', () => {
+  const t = truth();
+  const docs = (unsupported: number) => [
+    ...Array.from({ length: 4 - unsupported }, () => score(fromTruth(t), ok(invoice()))),
+    ...Array.from({ length: unsupported }, () => score(fromTruth(t), { status: 'unsupported', pdf, reason: 'no text' })),
+  ];
+  const correct = aggregate(docs(0), { mode: 'swedish', generatedAt: 'T' }).totals.correct;
+  const baseline = { ok: 4, okOrDraft: 4, correct };
+  expect(aggregate(docs(0), { mode: 'swedish', generatedAt: 'T', baseline }).gate).toMatchObject({ passed: true, baseline });
+  // One document of four turns unsupported: still above half, but below the baseline
+  const partial = aggregate(docs(1), { mode: 'swedish', generatedAt: 'T', baseline });
+  expect(partial.gate.failures).toEqual([
+    '3 ok documents, baseline 4',
+    '3 ok or draft documents, baseline 4',
+    `${(correct * 3) / 4} correct values, baseline ${correct}`,
+  ]);
+  const md = renderMarkdown(partial, true);
+  expect(md).toContain('Baseline: at least 4 ok, 4 ok or draft documents');
+  // Fewer correct values alone also fail
+  const fewer = aggregate(docs(0), { mode: 'swedish', generatedAt: 'T', baseline: { ...baseline, correct: correct + 1 } });
+  expect(fewer.gate.failures).toEqual([`${correct} correct values, baseline ${correct + 1}`]);
+});
+
+test('a baseline file must hold the three counts as non-negative integers', () => {
+  expect(readBaseline('{"ok":1,"okOrDraft":2,"correct":3}')).toEqual({ ok: 1, okOrDraft: 2, correct: 3 });
+  expect(() => readBaseline('{"ok":1,"okOrDraft":2}')).toThrow('correct must be a non-negative integer');
+  expect(() => readBaseline('{"ok":-1,"okOrDraft":2,"correct":3}')).toThrow('ok must be');
+  expect(() => readBaseline('not json')).toThrow();
+});
+
+for (const set of ['swedish', 'synthetic'])
+  test(`the committed ${set} baseline holds counts only`, () => {
+    const text = readFileSync(join(import.meta.dir, '..', 'scripts', 'pdf-eval', `baseline-${set}.json`), 'utf8');
+    expect(Object.keys(JSON.parse(text)).sort()).toEqual(['correct', 'ok', 'okOrDraft']);
+    expect(readBaseline(text).okOrDraft).toBeGreaterThan(0);
+  });
 
 async function blankPdf() {
   const doc = await PDFDocument.create();
