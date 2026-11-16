@@ -95,7 +95,7 @@ Parsers get this from `Ctx` in `src/parsers/context.ts`: construct it with `new 
 ```
 einvoice detect  <file...>                 format id, version and profile per document (tab separated)
 einvoice inspect <file...>                 the unwrap and detect result as JSON
-einvoice convert <file...> [--out <dir>]   canonical JSON array on stdout, or one <invoice-id>.json per invoice in <dir>
+einvoice convert <file...> [--out <dir>] [--extract-pdf]   canonical JSON array on stdout, or one <invoice-id>.json per invoice in <dir>
 einvoice render  --as html|pdf <file...> [--lang en|de|fr|it|es|nl|pl|ro] [--out <file|dir>]   human-readable invoice
 einvoice write   <file...> --to ubl|cii [--profile peppol-bis3|xrechnung|en16931] [--out <dir>]   write canonical JSON (or any invoice file) as UBL 2.1 or CII D16B
 einvoice sweep   <dir...> [--expect answers.json]   detection coverage / known-answer check
@@ -104,7 +104,7 @@ einvoice serve   [--port 8080] [--host 127.0.0.1] [--cors[=<origin>]] [--eu-trus
 
 `convert --eu-trust[=<snapshot.json>]` checks signers against a trusted-list snapshot (see [EU trusted lists](#eu-trusted-lists)).
 
-Flags: `--pretty` indents JSON; `--quiet` silences notes and warnings (errors are still printed); `--limits '{"maxEntries":10}'` overrides `UnwrapLimits`; `--validate` on `convert` runs the pinned source XSD and applicable Schematron suites. Exit 0 requires every required source layer to finish and pass; failed rules return 4, and missing or skipped required checks return 6. Canonical JSON remains available for inspection. `--quiet` does not disable validation.
+Flags: `--pretty` indents JSON; `--quiet` silences notes and warnings (errors are still printed); `--limits '{"maxEntries":10}'` overrides `UnwrapLimits`; `--extract-pdf` on `convert` reads invoices from PDFs without embedded XML (see [PDF text extraction](#pdf-text-extraction-opt-in)); `--validate` on `convert` runs the pinned source XSD and applicable Schematron suites. Exit 0 requires every required source layer to finish and pass; failed rules return 4, and missing or skipped required checks return 6. Canonical JSON remains available for inspection. `--quiet` does not disable validation.
 
 JSON goes to stdout only; every error is one line on stderr.
 
@@ -121,9 +121,51 @@ JSON goes to stdout only; every error is one line on stderr.
 
 With several failures and no success the code of the first failure is used; with at least one success it is 5.
 
-## PDF text extraction (opt-in, in development)
+## PDF text extraction (opt-in)
 
-Extraction of invoices from PDFs without embedded XML is deterministic (no OCR, no network) and is built on a layout model of the PDF's text layer (`src/pdf-extract/layout.ts`, using `pdfjs-dist`). It loads only when PDF extraction is requested, so the rest of the library keeps its runtime support. That path needs Node 26+, Bun 1.4+ or a current browser; on older runtimes it reports the file as unsupported (`unsupported-runtime`) instead of failing. In Node, pdf.js prints one "Please use the `legacy` build" warning when it first loads; the legacy build is not used because it loads a native canvas module in Node. `pdfjs-dist` lists `@napi-rs/canvas` as an optional dependency, so package managers download it unless optional dependencies are omitted (`npm install --omit=optional`, `bun install --omit optional`); extraction never loads it.
+`convert(bytes, filename, limits, { extractPdf: true })` reads an invoice from the text layer of a PDF that has no usable embedded XML. Without the option such PDFs are skipped as before ("PDF without a usable embedded XML"). Extraction is deterministic: no OCR, no language model and no network calls, so the same file and library version always give the same result. The rules cover Swedish invoices first.
+
+```ts
+import { convert } from 'eu-einvoice-canonical';
+
+const r = await convert(bytes, 'invoice.pdf', undefined, { extractPdf: true });
+for (const o of r.pdfOutcomes ?? []) {
+  if (o.status === 'ok') send(o.invoices[0]);              // complete and reconciled; see Peppol below
+  else if (o.status === 'draft') review(o.draft.problems); // never a valid invoice
+  else console.log(o.status, 'reason' in o ? o.reason : o.error);
+}
+```
+
+PDF results go to `ConvertResult.pdfOutcomes`, not `outcomes`, so existing `ConvertOutcome` handling is unchanged. There is one outcome for the received file, with `pdf: { filename, sha256, byteLength }`:
+
+| Status | Meaning |
+| ------ | ------- |
+| `ok` | `invoices`: a complete invoice whose line, VAT and total amounts reconcile (BR-CO-10 to 16, VAT breakdown), with no problems |
+| `draft` | `draft.fields` (printed values by canonical JSON Pointer), `draft.pdfProvenance` and `draft.problems` (code, message, field, page region). Missing, ambiguous, contradictory or non-reconciling values and check-digit failures make a draft. A draft is never presented as a valid invoice |
+| `unsupported` | `reason`: the text cannot be read (scanned or image-only pages, garbled or unmapped fonts, Swedish words missing å/ä/ö, encrypted, older runtime), or no invoice fields were recognised, as in explainer documents with callouts only |
+| `not-an-invoice` | `reason`: recognised as another document, such as a payment reminder (påminnelse) |
+| `error` | `error`: internal error |
+
+Field provenance: an `ok` invoice has `source.format: 'pdf-text'`, `source.syntaxDocumentType: 'PDF'`, `source.payloadSha256` of the PDF and `source.pdfProvenance`, a map of canonical path to `{ page, x, y, width, height }` (page from 1, PDF points, origin top left of the displayed page). It holds printed values only; values computed from them (totals not printed, a single VAT rate applied to lines, the seller endpoint from the organisation number) are listed in `source.derived` and have the `derived` origin in `source.valueOrigins`.
+
+Swedish mapping:
+
+- ROT, RUT and grön teknik deductions: the invoice total stays the full amount, the deduction is the prepaid amount (BT-113), payable (BT-115) is total minus deduction, and a note names `ROT`, `RUT` or `GRON_TEKNIK`.
+- Factoring (belåning): the payee (BG-10) is the finance company, with the payee's account. The generic rules do not read the payee yet, so such invoices are drafts with a `factoring` problem.
+- Momsfritt: VAT category `E` with the printed exemption reason (BT-120).
+- Kreditfaktura: type code 381 (credit note).
+- Payment reminders: `not-an-invoice`.
+- Identifiers are checked: OCR reference, Bankgiro, Plusgiro and organisation number (Luhn), SE VAT number, IBAN (mod 97). A value that fails its check is kept as printed and reported. Personal identity numbers are never kept.
+
+Peppol: the buyer reference (BT-10) and the buyer electronic address (BT-49) are usually not printed on PDFs. An `ok` invoice is complete EN 16931 but may lack them; supply both before sending it over Peppol (rules PEPPOL-EN16931-R003 and R010).
+
+Command line: `einvoice convert --extract-pdf <file...>` prints or writes `ok` invoices like converted XML. A draft prints its problems on stderr, is never written and exits 3, as do `unsupported` and `not-an-invoice`; `error` exits 7.
+
+Limits: only a received PDF file is read, not PDFs inside a ZIP. The HTTP server and the MCP server do not offer the option.
+
+Runtime: the text layer is read with the modern build of `pdfjs-dist`, loaded only when extraction is requested, so the rest of the library keeps its runtime support. Extraction needs Node 26+, Bun 1.4+ or a current browser; on older runtimes the file is `unsupported` (`unsupported-runtime`) instead of failing. In Node, pdf.js prints one "Please use the `legacy` build" warning when it first loads; the legacy build is not used because it loads a native canvas module in Node. `pdfjs-dist` lists `@napi-rs/canvas` as an optional dependency, so package managers download it unless optional dependencies are omitted (`npm install --omit=optional`, `bun install --omit optional`); extraction never loads it.
+
+Evaluation: [`scripts/pdf-eval.ts`](scripts/pdf-eval.ts) scores extraction field by field (correct, missing, wrong) and writes a counts-only report. The weekly public corpora workflow runs its `paired` mode, which reads the visible page of the hybrid PDFs in the pinned public corpora with the embedded files ignored and compares it with the embedded XML; it fails on any wrong value.
 
 ## PDF invoice conversion skill
 
@@ -522,7 +564,7 @@ Release binaries come with `SHA256SUMS`, a CycloneDX SBOM and signed build prove
 - **Validation is conditional on the exact version and profile.** Default distributions contain 43 approved bundles, including UBL/CII and XRechnung/NLCIUS rules; the full local qualification corpus has 107. Native Peppol/PINT, Svefaktura and other unresolved artifacts are excluded by `validation/distribution.json`. Missing native/profile rules make full-source validation incomplete even when an XSD passes. Older Finvoice, ISDOC, e-arve and eSLOG versions are not checked against a newer schema. Schematron defaults to a 2,000-line limit: skipped required layers retain `not-run` with `reasons[layer]: "size-limit"` and an incomplete result. Raise or lift it with `validation: { maxSchematronLines }`. See [source validation](docs/SOURCE-VALIDATION.md) for result semantics, replay and browser limits.
 - **Synthetic fixtures:** most national parsers were built from specifications and tested on synthetic files. Formats without a converted real sample are listed in the conformance checklist; run `sweep --expect` on your own inbound files before relying on them.
 - **Peppol PINT and ZATCA validation:** PINT suites are qualified locally but excluded pending redistribution permission; ZATCA native suites remain unqualified (see `validation/NOTICE`). Default outputs run only the UBL XSD and full-source validation remains incomplete. PINT OM and EU are mapped as plain UBL. A Hijri date whose day does not exist in the Gregorian month of the same number (for example `1446-02-30`) is rejected as an invalid date before conversion.
-- **Non-XML formats** (EDIFACT INVOIC, PDFs without embedded XML) are out of scope.
+- **Non-XML formats:** EDIFACT INVOIC is out of scope. PDFs without embedded XML are read only with `extractPdf`, from born-digital text (no OCR), with Swedish rules first (see [PDF text extraction](#pdf-text-extraction-opt-in)).
 
 ## License
 

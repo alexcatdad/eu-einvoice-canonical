@@ -127,6 +127,12 @@ describe('docs pages from the README', () => {
     expect(site.pages.every((p) => !p.body.includes('securityscorecards'))).toBe(true);
   });
 
+  test('the PDF extraction page states its limits, the Peppol gap and how to skip the native canvas download', () => {
+    const page = site.pages.find((p) => p.route === 'docs/pdf-extraction/')?.markdown ?? '';
+    for (const s of ['extractPdf', 'pdfOutcomes', 'no OCR', '--extract-pdf', 'BT-10', 'BT-49', 'R003', '--omit=optional', 'Node 26+'])
+      expect(page).toContain(s);
+  });
+
   test('slugs follow the GitHub rule, so README anchors keep working', () => {
     expect(slugify('Mexico: CFDI (`mx-cfdi`)')).toBe('mexico-cfdi-mx-cfdi');
     expect(slugify('Conversion API (HTTP)')).toBe('conversion-api-http');
