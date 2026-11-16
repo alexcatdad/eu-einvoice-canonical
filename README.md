@@ -142,7 +142,7 @@ PDF results go to `ConvertResult.pdfOutcomes`, not `outcomes`, so existing `Conv
 | ------ | ------- |
 | `ok` | `invoices`: a complete invoice whose line, VAT and total amounts reconcile (BR-CO-10 to 16, VAT breakdown), with no problems |
 | `draft` | `draft.fields` (printed values by canonical JSON Pointer), `draft.pdfProvenance` and `draft.problems` (code, message, field, page region). Missing, ambiguous, contradictory or non-reconciling values and check-digit failures make a draft. A draft is never presented as a valid invoice |
-| `unsupported` | `reason`: the text cannot be read (scanned or image-only pages, garbled or unmapped fonts, Swedish words missing å/ä/ö, encrypted, older runtime), or no invoice fields were recognised, as in explainer documents with callouts only |
+| `unsupported` | `reason`: the text cannot be read (scanned or image-only pages, garbled or unmapped fonts, Swedish words missing å/ä/ö, encrypted, older runtime), or no invoice fields were recognised, as in explainer documents with callouts only. `payment`, when present: payment facts from a Swedish payment QR code |
 | `not-an-invoice` | `reason`: recognised as another document, such as a payment reminder (påminnelse) |
 | `error` | `error`: internal error |
 
@@ -157,7 +157,7 @@ Swedish mapping:
 - Payment reminders: `not-an-invoice`.
 - Identifiers are checked: OCR reference, Bankgiro, Plusgiro and organisation number (Luhn), SE VAT number, IBAN (mod 97). A value that fails its check is kept as printed and reported. Personal identity numbers are never kept.
 
-Payment QR codes: Swedish UsingQR payment codes are decoded, both from embedded images and from codes drawn as vector paths, without OCR or page rendering. Their amount due, due date and Bankgiro, Plusgiro or IBAN fill payment fields the text does not give, with the code's region as provenance, and cross-check the printed ones: a disagreement is a `qr-conflict` problem and the printed value is kept. The OCR reference from a code (`iref`) is only compared with a printed OCR reference and never fills the field, because it often carries the invoice number instead. Swish and other payloads are ignored.
+Payment QR codes: Swedish UsingQR payment codes are decoded, both from embedded images and from codes drawn as vector paths, without OCR or page rendering. Their amount due, due date and Bankgiro, Plusgiro or IBAN fill payment fields the text does not give, with the code's region as provenance, and cross-check the printed ones: a disagreement is a `qr-conflict` problem and the printed value is kept. The OCR reference from a code (`iref`) is only compared with a printed OCR reference and never fills the field, because it often carries the invoice number instead. Swish and other payloads are ignored. A PDF with no usable text layer stays `unsupported`; when it carries a Swedish payment QR code, the outcome also has `payment` with only the facts decoded from the code, each with its region as provenance.
 
 Rule layers: the generic rules read every layout; generator profiles then refine them for one invoicing program's layouts, selected by the PDF's Producer or Creator and a layout fingerprint; issuer templates last refine them for one issuer's layout. A later layer replaces an earlier layer's value field by field. One generator profile is bundled, for Visma Spcs/Spiris. No templates for real issuers are bundled; callers pass their own:
 
