@@ -171,6 +171,7 @@ export function renderMarkdown(r: PdfEvalReport): string {
   );
   list('Documents with wrong values', d.withWrong);
   if (r.mode === 'paired')
-    out.push('', `Excluded (page and XML disagree): ${r.excluded.length}. PDFs without an XML invoice: ${r.noReference}.`);
+    out.push('', `PDFs without an XML invoice: ${r.noReference}. Excluded (page and XML disagree): ${r.excluded.length}.`);
+  list('Excluded', r.excluded);
   return `${out.join('\n')}\n`;
 }

@@ -336,22 +336,22 @@ export function score(exp: Expected, outcome: PdfOutcome | undefined): DocScore 
   }
   if (exp.notReconciling) s.notReconciling = !doc ? 'notExtracted' : outcome?.status === 'draft' ? 'flagged' : 'unflagged';
 
-  // VAT breakdown: rows matched by category and rate; extracted rows the key does not have are wrong.
+  // VAT breakdown: each key row takes the first unused extracted row with its category and rate (a missing rate is 0;
+  // an unreadable rate in the key matches any). Extracted rows left over are wrong.
   const gotVat: Doc[] = doc ? arr(doc.vatBreakdown) : [];
-  const rowKey = (cat: unknown, rate: unknown) => `${cat}|${rate === undefined ? '' : norm('decimal', rate)}`;
+  const rate = (r: unknown) => norm('decimal', r ?? '0');
   if (exp.vatRows && 'status' in exp.vatRows) {
     count(s.fields, 'vatBreakdown.rows', !doc ? 'notScored' : gotVat.length ? 'extraOnAbsent' : 'notScored');
   } else if (exp.vatRows) {
-    const want = new Set<string>();
+    const used = new Set<number>();
     for (const row of exp.vatRows) {
-      const cat = 'values' in (row.categoryCode ?? {}) ? (row.categoryCode as { values: string[] }).values[0] : undefined;
-      const rate = 'values' in (row.rate ?? {}) ? (row.rate as { values: string[] }).values[0] : undefined;
-      const k = rowKey(cat, rate);
-      want.add(k);
-      const match = gotVat.find((r) => rowKey(r?.categoryCode, r?.rate) === k);
-      for (const [fk, f] of Object.entries(VAT_FIELDS)) judge(`vatBreakdown.${fk}`, f, row[fk], match);
+      const cat = row.categoryCode && 'values' in row.categoryCode ? row.categoryCode.values[0] : undefined;
+      const want = row.rate && 'values' in row.rate ? rate(row.rate.values[0]) : undefined;
+      const i = gotVat.findIndex((r, j) => !used.has(j) && r?.categoryCode === cat && (want === undefined || rate(r?.rate) === want));
+      if (i >= 0) used.add(i);
+      for (const [fk, f] of Object.entries(VAT_FIELDS)) judge(`vatBreakdown.${fk}`, f, row[fk], gotVat[i]);
     }
-    if (doc) for (const r of gotVat) count(s.fields, 'vatBreakdown.rows', want.has(rowKey(r?.categoryCode, r?.rate)) ? 'correct' : 'wrong');
+    if (doc) gotVat.forEach((_, j) => count(s.fields, 'vatBreakdown.rows', used.has(j) ? 'correct' : 'wrong'));
   }
 
   // Lines: aligned by index only when the counts agree, so one missed line does not shift every later one.

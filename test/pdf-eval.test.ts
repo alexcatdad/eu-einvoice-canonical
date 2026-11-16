@@ -195,6 +195,25 @@ test('VAT rows match by category and rate; an invented row is wrong', () => {
   expect(s.fields['vatBreakdown.rows']).toEqual({ correct: 1, wrong: 1 });
 });
 
+test('VAT rows: a missing rate is 0, rows with the same key are matched once each', () => {
+  const t = truth({
+    vatBreakdown: {
+      rows: [
+        { categoryCode: 'E', rate: { value: '0' }, taxableAmount: { value: '10.00' }, taxAmount: { value: '0.00' } },
+        { categoryCode: 'S', rate: { status: 'unreadable' }, taxableAmount: { value: '100.00' }, taxAmount: { value: '25.00' } },
+      ],
+    },
+  });
+  const vat = [
+    { categoryCode: 'S', rate: '25', taxableAmount: '100', taxAmount: '25' },
+    { categoryCode: 'E', taxableAmount: '10', taxAmount: '0' },
+    { categoryCode: 'S', rate: '25', taxableAmount: '100', taxAmount: '25' },
+  ];
+  const s = score(fromTruth(t), ok(invoice({ vatBreakdown: vat })));
+  expect(s.fields['vatBreakdown.taxableAmount']).toEqual({ correct: 2 });
+  expect(s.fields['vatBreakdown.rows']).toEqual({ correct: 2, wrong: 1 });
+});
+
 test('VAT-inclusive line amounts are not scored', () => {
   const s = score(
     fromTruth(truth({ pricesIncludeVat: true })),
@@ -268,4 +287,5 @@ test('paired mode keys hybrid PDFs by their XML, skips others, and honours the e
   const x = await evaluatePaired(join(dir), readExclude(exclude));
   expect(x.documents.total).toBe(0);
   expect(x.excluded).toEqual(['corpus/hybrid.pdf']);
+  expect(renderMarkdown(x)).toContain('- corpus/hybrid.pdf');
 });
