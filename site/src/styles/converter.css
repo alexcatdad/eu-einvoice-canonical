@@ -441,6 +441,17 @@ fieldset.samples {
 .reason {
   margin: var(--space-4) 0 0;
 }
+/* A PDF read as a draft: why, then the values read with their place on the page */
+.pdf-problems,
+.pdf-fields {
+  margin-top: var(--space-5);
+}
+.pdf-fields h4 {
+  margin: 0 0 var(--space-2);
+}
+.pdf-fields dt {
+  overflow-wrap: anywhere;
+}
 
 /* The rubber stamp: status only, and always AA */
 .stamp-row {
