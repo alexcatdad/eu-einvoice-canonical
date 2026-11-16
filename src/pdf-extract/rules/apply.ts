@@ -13,11 +13,16 @@ import { itemValues } from '../generic.js';
 import type { LayoutDocument } from '../layout.js';
 import { normalize } from '../se/index.js';
 import { FIELD_TYPES, PDFJS_VERSION } from './load.js';
-import type { PdfFieldRule, PdfRuleField, PdfRuleLayout, PdfRuleSet, PdfTableRule } from './types.js';
+import type { PdfAddressRule, PdfFieldRule, PdfRuleField, PdfRuleLayout, PdfRuleSet, PdfTableRule } from './types.js';
 
 type Read = { value: string; region: PdfRegion; problem?: SourceWarning } | { problem: SourceWarning } | { absent: true };
 
+/** Swedish postal line "NNN NN City", and a name ending in a company form; as in the generic rules. */
+const POSTAL = /^(?:SE-?)?(\d{3}) ?(\d{2}) +(\p{L}[\p{L} -]*)$/u;
+const COMPANY_FORM = /\b(?:ab|hb|kb|aktiebolag|ek\.? ?för\.?|ekonomisk förening|kommun|region|stiftelse|förening)\.?$/u;
 const label = (text: string) => normalize(text).replace(/\s*:$/u, '');
+const isLabel = (c: Cell, want: string, match: 'whole' | 'start' = 'whole') =>
+  match === 'start' ? label(c.text).startsWith(want) : label(c.text) === want;
 const clean = (s: string) => s.normalize('NFC').replace(/\s+/gu, ' ').trim();
 const compact = (s: string) => s.toUpperCase().replace(/[^0-9A-Z]/gu, '');
 
@@ -96,6 +101,10 @@ function applyLayout(tag: string, rule: PdfRuleLayout, rows: Cell[][], out: Gene
     else setField(out.values, field, undefined);
     if (r.problem) out.problems.push({ ...r.problem, message: `${tag}: ${r.problem.message}` });
   }
+  for (const party of ['seller', 'buyer'] as const) {
+    const a = rule.addresses?.[party];
+    if (a) readAddressBlock(tag, `/${party}`, a, rows, out);
+  }
   if (rule.lines) readLines(tag, rule.lines, rows, out);
   for (const [key, pointer] of [
     ['currency', '/currency'],
@@ -129,7 +138,9 @@ function readField(rule: PdfFieldRule, type: string, rows: Cell[][], field: stri
   } else {
     const want = normalize(rule.label);
     const anchors = all.filter((c) =>
-      rule.value === 'inline' ? new RegExp(`^${escapeRe(want)}\\s*:?\\s+\\S`, 'u').test(normalize(c.text)) : label(c.text) === want,
+      rule.value === 'inline'
+        ? new RegExp(`^${escapeRe(want)}\\s*:?\\s+\\S`, 'u').test(normalize(c.text))
+        : isLabel(c, want, rule.labelMatch),
     );
     if (!anchors.length) return rule.optional ? { absent: true } : problem('rule-no-match', `Label "${rule.label}" is not printed`);
     for (const a of anchors) {
@@ -202,6 +213,76 @@ function readLines(tag: string, rule: PdfTableRule, rows: Cell[][], out: Generic
       message: `${tag}: ${tables.length ? 'the item table has no lines with an amount' : 'the item table header is not printed'}`,
       ...(tables.length ? { region: regionOf(tables[0].header[0]) } : {}),
     });
+}
+
+/**
+ * An address block: its first line (under the label, or the one cell in a region relative to the label), then each
+ * line directly under the previous one, down to the postal line "NNN NN City". With `name`, the first line is the
+ * party's name. More than two street lines, or no postal line, is a problem and no value.
+ */
+function readAddressBlock(tag: string, party: '/seller' | '/buyer', rule: PdfAddressRule, rows: Cell[][], out: GenericRead) {
+  const all = rows.flat();
+  const want = normalize(rule.label);
+  const anchors = all.filter((c) => isLabel(c, want, rule.labelMatch));
+  if (!anchors.length && rule.optional) return;
+  const field = `${party}/address`;
+  const owns = (k: string | undefined) =>
+    !!k && (k === field || k.startsWith(`${field}/`) || (rule.name === true && k === `${party}/name`));
+  for (const k of Object.keys(out.values)) if (owns(k)) delete out.values[k];
+  out.problems = out.problems.filter((p) => !owns(p.field));
+  const fail = (message: string, region?: PdfRegion) =>
+    out.problems.push({ code: 'rule-no-match', field, message: `${tag}: ${message}`, ...(region ? { region } : {}) });
+  if (!anchors.length) return fail(`Label "${rule.label}" is not printed`);
+  const blocks = anchors.map((a) => {
+    let first: Cell | undefined;
+    if (rule.region) {
+      const r = rule.region;
+      const hits = all.filter((c) => {
+        const cx = c.x + c.width / 2;
+        const cy = c.y + c.height / 2;
+        return (
+          c !== a && c.page === a.page && cx >= a.x + r.x && cx <= a.x + r.x + r.width && cy >= a.y + r.y && cy <= a.y + r.y + r.height
+        );
+      });
+      first = hits.length === 1 ? hits[0] : undefined;
+    } else first = below(rows, a);
+    const block = first ? [first] : [];
+    for (let at = first; at && !POSTAL.test(at.text) && block.length < 6; ) {
+      at = below(rows, at);
+      if (at) block.push(at);
+    }
+    return block;
+  });
+  const key = (b: Cell[]) => b.map((c) => c.text).join('\n');
+  if (new Set(blocks.map(key)).size > 1) return fail('Different address blocks are printed at the label', regionOf(anchors[0]));
+  const block = blocks[0];
+  const postal = block.length ? POSTAL.exec(block[block.length - 1].text) : null;
+  if (!postal) return fail('No address block ending in a postal code is printed at the label', regionOf(anchors[0]));
+  // `auto`: the first line is the name when it equals the name read earlier, or when three lines stand above the
+  // postal line (at most two are street lines) and the first ends in a company form; otherwise, without a name read
+  // earlier, the block is ambiguous
+  const known = out.values[`${party}/name`]?.value;
+  const above = block.length - 1;
+  let named = rule.name === true;
+  if (rule.name === 'auto') {
+    if (known !== undefined) named = above > 0 && normalize(block[0].text) === normalize(known);
+    else if (above === 3 && COMPANY_FORM.test(normalize(block[0].text))) named = true;
+    else if (above > 0) return fail('The address block may or may not start with the name', regionOf(block[0]));
+  }
+  const streets = block.slice(named ? 1 : 0, -1);
+  if (streets.length > 2 || (rule.name === true && block.length < 2))
+    return fail('The address block does not have a name and one or two street lines', regionOf(block[0]));
+  // A name read earlier stays; with `name: true` it was removed above
+  if (named && known === undefined) {
+    out.values[`${party}/name`] = { value: clean(block[0].text), region: regionOf(block[0]) };
+    out.problems = out.problems.filter((p) => p.field !== `${party}/name`);
+  }
+  streets.forEach((c, i) => {
+    out.values[`${field}/line${i + 1}`] = { value: clean(c.text), region: regionOf(c) };
+  });
+  const last = block[block.length - 1];
+  out.values[`${field}/postalCode`] = { value: `${postal[1]} ${postal[2]}`, region: regionOf(last) };
+  out.values[`${field}/city`] = { value: postal[3], region: regionOf(last) };
 }
 
 const ACCOUNTS = ['bankgiro', 'plusgiro', 'iban'] as const;

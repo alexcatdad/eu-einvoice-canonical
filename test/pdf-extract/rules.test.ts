@@ -8,7 +8,7 @@ import { buildExtraction } from '../../src/pdf-extract/generic/build.js';
 import { readInvoice } from '../../src/pdf-extract/generic.js';
 import { extractPdfInvoice, type PdfExtraction } from '../../src/pdf-extract/index.js';
 import { extractLayout } from '../../src/pdf-extract/layout.js';
-import { applyRules, loadPdfRuleSet, PDFJS_VERSION, type PdfRuleSet } from '../../src/pdf-extract/rules/index.js';
+import { applyRules, BUNDLED_PROFILES, loadPdfRuleSet, PDFJS_VERSION, type PdfRuleSet } from '../../src/pdf-extract/rules/index.js';
 
 /** Synthetic identifiers with valid check digits; no real company. */
 const ID = { org: '559900-1236', vat: 'SE559900123601', bankgiro: '123-4566', otherVat: 'SE556677889901' };
@@ -119,6 +119,10 @@ describe('rule-set loader and schema', () => {
           name: 'one',
           fields: { '/id': { label: 'Nr', value: 'inline' }, '/totals/payable': { region: { x: 1, y: 2, width: 3, height: 4 }, page: 2 } },
           lines: { columns: { Text: 'desc', Belopp: 'amount' }, optional: true },
+          addresses: {
+            seller: { label: 'Avsändare', name: 'auto' },
+            buyer: { label: 'Kund', region: { x: 0, y: 10, width: 100, height: 10 }, name: true },
+          },
           defaults: { currency: 'SEK', paymentMeansCode: '30' },
         },
       ],
@@ -132,6 +136,8 @@ describe('rule-set loader and schema', () => {
     [{ ...valid[0], match: { creator: 'x' } }, '/match/creator'],
     [{ ...valid[0], layouts: [{ name: 'a', fields: { '/id': { label: 'Nr', value: 'left' } } }] }, '/value'],
     [{ ...valid[0], layouts: [{ name: 'a', lines: { columns: { Text: 'description' } } }] }, '/lines/columns'],
+    [{ ...valid[0], layouts: [{ name: 'a', addresses: { seller: { label: 'A', name: 'maybe' } } }] }, '/addresses/seller/name'],
+    [{ ...valid[0], layouts: [{ name: 'a', fields: { '/id': { label: 'Nr', labelMatch: 'end' } } }] }, '/labelMatch'],
   ];
 
   test('valid samples pass the loader and the published schema', () => {
@@ -264,6 +270,45 @@ describe('rule layers', () => {
     expect(ok(await run(await pdf(), [eur])).currency).toBe('SEK');
   }, 30000);
 
+  test('a label can be matched by its start, for labels followed by varying text', async () => {
+    // On a line of its own: a text right of "Fakturaadress" would end the generic buyer address
+    const bytes = await pdf({ Förfallodatum: null, '2026-04-01': null }, [
+      [330, 50, 'Förfallodatum (30 d)'],
+      [430, 50, '2026-04-02'],
+    ]);
+    expect(ok(await run(bytes)).dueDate).toBeUndefined();
+    const p = profile([{ name: 'v1', fields: { '/dueDate': { label: 'Förfallodatum (', labelMatch: 'start' } } }]);
+    expect(String(ok(await run(bytes, [p])).dueDate)).toBe('2026-04-02');
+  }, 30000);
+
+  test('address blocks: the name line is taken only where the layout leaves no doubt', async () => {
+    const block = (lines: string[], edit: Record<string, string | null> = {}) =>
+      pdf({ Adress: null, 'Box 9': null, '222 33 ORTEN': null, ...edit }, [
+        [60, 600, 'Avsändare'],
+        ...lines.map((t, i): Text => [60, 612 + 12 * i, t]),
+      ]);
+    const p = profile([{ name: 'v1', addresses: { seller: { label: 'Avsändare', name: 'auto' } } }]);
+    // The first line repeats the name printed at the top
+    const same = ok(await run(await block(['Testbolaget AB', 'Box 7', '333 44 BYN']), [p]));
+    expect([same.seller.name, same.seller.address?.line1, same.seller.address?.postalCode]).toEqual(['Testbolaget AB', 'Box 7', '333 44']);
+    // The first line is not the name printed at the top: two street lines
+    const streets = ok(await run(await block(['Box 7', 'Gatan 1', '333 44 BYN']), [p]));
+    expect([streets.seller.name, streets.seller.address?.line1, streets.seller.address?.line2]).toEqual([
+      'Testbolaget AB',
+      'Box 7',
+      'Gatan 1',
+    ]);
+    // No name at the top: three lines above the postal line and a company form, so the first is the name
+    const named = ok(await run(await block(['Blockbolaget AB', 'Box 7', 'Gatan 1', '333 44 BYN'], { 'Testbolaget AB': null }), [p]));
+    expect([named.seller.name, named.seller.address?.line2]).toEqual(['Blockbolaget AB', 'Gatan 1']);
+    const noForm = draft(await run(await block(['Blockets kontor', 'Box 7', 'Gatan 1', '333 44 BYN'], { 'Testbolaget AB': null }), [p]));
+    expect(noForm.problems).toContainEqual(expect.objectContaining({ code: 'rule-no-match', field: '/seller/address' }));
+    // No name at the top and two lines: name and street, or two streets; reported, not guessed
+    const d = draft(await run(await block(['Blockbolaget AB', 'Box 7', '333 44 BYN'], { 'Testbolaget AB': null }), [p]));
+    expect(d.fields['/seller/address/line1']).toBeUndefined();
+    expect(d.problems).toContainEqual(expect.objectContaining({ code: 'rule-no-match', field: '/seller/address' }));
+  }, 30000);
+
   test('a rule set for another pdfjs-dist version is not applied and is reported', async () => {
     const p = profile([{ name: 'v1', fields: { '/totals/payable': { label: 'Slutsumma', value: 'below' } } }], { pdfjsVersion: '1.0.0' });
     const d = draft(await run(await pdf(SLUT), [p]));
@@ -290,5 +335,27 @@ describe('caller templates through the API', () => {
     );
     const p = profile([{ name: 'v1' }]);
     await expect(extractPdfInvoice(bytes, { fileSha256: SHA, templates: [p] })).rejects.toThrow('issuer templates only');
+  }, 30000);
+});
+
+describe('bundled generator profiles', () => {
+  test('every bundled profile is valid for the pinned pdfjs-dist version', () => {
+    expect(BUNDLED_PROFILES.map((p) => [p.id, p.kind, p.pdfjsVersion])).toEqual([['visma-spcs', 'generator-profile', PDFJS_VERSION]]);
+  });
+
+  test('the Visma profile reads the footer address block of a synthetic page in its layout', async () => {
+    // A text right of "Adress" (as in that layout) stops the generic rules from reading the block under it
+    const extra: Text[] = [
+      [130, 700, 'Telefon'],
+      [330, 760, 'Företagets säte'],
+      [430, 760, 'Organisationsnr'],
+      [330, 150, 'Vår referens'],
+    ];
+    const extract = async (producer: string) => extractPdfInvoice(await pdf({}, extra, producer), { fileSha256: SHA });
+    const d = draft(await extract('Other Writer'));
+    expect(d.problems.map((p) => p.field)).toContain('/seller/address');
+    const inv = ok(await extract('cairo 1.12.8 (synthetic)'));
+    expect(inv.seller.address).toMatchObject({ line1: 'Box 9', postalCode: '222 33', city: 'ORTEN' });
+    expect(inv.source.pdfProvenance?.['/seller/address/line1']).toMatchObject({ page: 1, x: 60 });
   }, 30000);
 });

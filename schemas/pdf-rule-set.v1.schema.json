@@ -55,12 +55,58 @@
   ],
   "description": "A generator profile or issuer template.",
   "$defs": {
+    "PdfAddressRule": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "$ref": "#/$defs/PdfRuleText"
+        },
+        "labelMatch": {
+          "type": "string",
+          "enum": [
+            "whole",
+            "start"
+          ]
+        },
+        "region": {
+          "$ref": "#/$defs/PdfRuleRegion"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "const": "auto"
+            }
+          ],
+          "description": "`true`: the first line is the party's name. `auto`: it is the name when it equals the name read by an earlier layer, or when three lines stand above the postal line and the first ends in a company form (AB, HB, ...); otherwise, with no name read earlier, the block is ambiguous and reported. Absent or `false`: no name line."
+        },
+        "optional": {
+          "type": "boolean",
+          "description": "When the label is not printed, keep what earlier layers read instead of reporting a problem."
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "description": "A party's address block: the first line is under the label, or the one text in `region` relative to the label's top-left corner; each next line is directly under the previous one, down to the postal line \"NNN NN City\". Replaces the party's address (and name, with `name`) read by earlier layers."
+    },
     "PdfFieldRule": {
       "type": "object",
       "properties": {
         "label": {
           "$ref": "#/$defs/PdfRuleText",
           "description": "Literal label text."
+        },
+        "labelMatch": {
+          "type": "string",
+          "enum": [
+            "whole",
+            "start"
+          ],
+          "description": "How the label is compared: the whole text (default) or its start, for labels followed by varying text such as \"Förfallodatum (30 dagar netto)\"."
         },
         "value": {
           "type": "string",
@@ -211,6 +257,18 @@
               "$ref": "#/$defs/PdfFieldRule"
             }
           }
+        },
+        "addresses": {
+          "type": "object",
+          "properties": {
+            "seller": {
+              "$ref": "#/$defs/PdfAddressRule"
+            },
+            "buyer": {
+              "$ref": "#/$defs/PdfAddressRule"
+            }
+          },
+          "description": "Address blocks of the seller and the buyer."
         },
         "lines": {
           "$ref": "#/$defs/PdfTableRule"
