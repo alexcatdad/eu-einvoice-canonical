@@ -127,9 +127,23 @@ describe('docs pages from the README', () => {
     expect(site.pages.every((p) => !p.body.includes('securityscorecards'))).toBe(true);
   });
 
-  test('the PDF extraction page states its limits, the Peppol gap and how to skip the native canvas download', () => {
+  test('the PDF extraction page states its limits, QR codes, rule layers, the Peppol gap and how to skip the native canvas download', () => {
     const page = site.pages.find((p) => p.route === 'docs/pdf-extraction/')?.markdown ?? '';
-    for (const s of ['extractPdf', 'pdfOutcomes', 'no OCR', '--extract-pdf', 'BT-10', 'BT-49', 'R003', '--omit=optional', 'Node 26+'])
+    for (const s of [
+      'extractPdf',
+      'pdfOutcomes',
+      'no OCR',
+      '--extract-pdf',
+      'BT-10',
+      'BT-49',
+      'R003',
+      '--omit=optional',
+      'Bun 1.4+',
+      'UsingQR',
+      'templates',
+      'pdf-rule-set.v1.schema.json',
+      'BT-34',
+    ])
       expect(page).toContain(s);
   });
 
