@@ -53,90 +53,105 @@ const T = (typeCode: string, label: string, opts: { credit?: boolean; selfBilled
 });
 
 /** TipoDocumento -> UNCL 1001. TD04 and TD08 are credit notes; the buyer-issued integrations and self-invoices map to 389. */
-const DOC_TYPES: Record<string, DocType> = {
-  TD01: T('380', 'Fattura'),
-  TD02: T('386', 'Acconto/anticipo su fattura'),
-  TD03: T('386', 'Acconto/anticipo su parcella'),
-  TD04: T('381', 'Nota di credito', { credit: true }),
-  TD05: T('383', 'Nota di debito'),
-  TD06: T('380', 'Parcella'),
-  TD07: T('380', 'Fattura semplificata'),
-  TD08: T('381', 'Nota di credito semplificata', { credit: true }),
-  TD09: T('383', 'Nota di debito semplificata'),
-  TD16: T('389', 'Integrazione fattura reverse charge interno', { selfBilled: true }),
-  TD17: T('389', "Integrazione/autofattura per acquisto servizi dall'estero", { selfBilled: true }),
-  TD18: T('389', 'Integrazione per acquisto di beni intracomunitari', { selfBilled: true }),
-  TD19: T('389', 'Integrazione/autofattura per acquisto di beni ex art. 17 c.2 DPR 633/72', { selfBilled: true }),
-  TD20: T('389', 'Autofattura per regolarizzazione e integrazione delle fatture', { selfBilled: true }),
-  TD21: T('389', 'Autofattura per splafonamento', { selfBilled: true }),
-  TD22: T('389', 'Estrazione beni da Deposito IVA', { selfBilled: true }),
-  TD23: T('389', 'Estrazione beni da Deposito IVA con versamento IVA', { selfBilled: true }),
-  TD24: T('380', 'Fattura differita ex art. 21 c.4 lett. a)'),
-  TD25: T('380', 'Fattura differita ex art. 21 c.4 terzo periodo lett. b)'),
-  TD26: T('380', 'Cessione di beni ammortizzabili e passaggi interni'),
-  TD27: T('389', 'Fattura per autoconsumo o cessioni gratuite senza rivalsa', { selfBilled: true }),
-  TD28: T('389', 'Acquisti da San Marino con IVA', { selfBilled: true }),
-};
+const DOC_TYPES: Record<string, DocType> = Object.setPrototypeOf(
+  {
+    TD01: T('380', 'Fattura'),
+    TD02: T('386', 'Acconto/anticipo su fattura'),
+    TD03: T('386', 'Acconto/anticipo su parcella'),
+    TD04: T('381', 'Nota di credito', { credit: true }),
+    TD05: T('383', 'Nota di debito'),
+    TD06: T('380', 'Parcella'),
+    TD07: T('380', 'Fattura semplificata'),
+    TD08: T('381', 'Nota di credito semplificata', { credit: true }),
+    TD09: T('383', 'Nota di debito semplificata'),
+    TD16: T('389', 'Integrazione fattura reverse charge interno', { selfBilled: true }),
+    TD17: T('389', "Integrazione/autofattura per acquisto servizi dall'estero", { selfBilled: true }),
+    TD18: T('389', 'Integrazione per acquisto di beni intracomunitari', { selfBilled: true }),
+    TD19: T('389', 'Integrazione/autofattura per acquisto di beni ex art. 17 c.2 DPR 633/72', { selfBilled: true }),
+    TD20: T('389', 'Autofattura per regolarizzazione e integrazione delle fatture', { selfBilled: true }),
+    TD21: T('389', 'Autofattura per splafonamento', { selfBilled: true }),
+    TD22: T('389', 'Estrazione beni da Deposito IVA', { selfBilled: true }),
+    TD23: T('389', 'Estrazione beni da Deposito IVA con versamento IVA', { selfBilled: true }),
+    TD24: T('380', 'Fattura differita ex art. 21 c.4 lett. a)'),
+    TD25: T('380', 'Fattura differita ex art. 21 c.4 terzo periodo lett. b)'),
+    TD26: T('380', 'Cessione di beni ammortizzabili e passaggi interni'),
+    TD27: T('389', 'Fattura per autoconsumo o cessioni gratuite senza rivalsa', { selfBilled: true }),
+    TD28: T('389', 'Acquisti da San Marino con IVA', { selfBilled: true }),
+  } satisfies Record<string, DocType>,
+  null,
+);
 
 /** Natura -> UNCL 5305. Sub-codes fall back to their group (N6.3 -> N6). */
-const NATURA: Record<string, string> = {
-  N1: 'O', // escluse ex art. 15
-  N2: 'O',
-  'N2.1': 'O',
-  'N2.2': 'O', // non soggette
-  N3: 'Z',
-  'N3.1': 'G',
-  'N3.2': 'K',
-  'N3.3': 'G',
-  'N3.4': 'G',
-  'N3.5': 'Z',
-  'N3.6': 'Z', // non imponibili
-  N4: 'E', // esenti
-  N5: 'E', // regime del margine
-  N6: 'AE', // reverse charge (N6.1 .. N6.9)
-  N7: 'O', // IVA assolta in altro stato UE
-};
+const NATURA: Record<string, string> = Object.setPrototypeOf(
+  {
+    N1: 'O', // escluse ex art. 15
+    N2: 'O',
+    'N2.1': 'O',
+    'N2.2': 'O', // non soggette
+    N3: 'Z',
+    'N3.1': 'G',
+    'N3.2': 'K',
+    'N3.3': 'G',
+    'N3.4': 'G',
+    'N3.5': 'Z',
+    'N3.6': 'Z', // non imponibili
+    N4: 'E', // esenti
+    N5: 'E', // regime del margine
+    N6: 'AE', // reverse charge (N6.1 .. N6.9)
+    N7: 'O', // IVA assolta in altro stato UE
+  } satisfies Record<string, string>,
+  null,
+);
 
 /** ModalitaPagamento -> UNCL 4461 (ZZZ where there is no equivalent), with the Italian label kept in meansText for those. */
-const PAYMENT_MEANS: Record<string, [code: string, label: string]> = {
-  MP01: ['10', 'Contanti'],
-  MP02: ['20', 'Assegno'],
-  MP03: ['23', 'Assegno circolare'],
-  MP04: ['10', 'Contanti presso Tesoreria'],
-  MP05: ['30', 'Bonifico'],
-  MP06: ['60', 'Vaglia cambiario'],
-  MP07: ['ZZZ', 'Bollettino bancario'],
-  MP08: ['48', 'Carta di pagamento'],
-  MP09: ['49', 'RID'],
-  MP10: ['49', 'RID utenze'],
-  MP11: ['49', 'RID veloce'],
-  MP12: ['49', 'RIBA'],
-  MP13: ['ZZZ', 'MAV'],
-  MP14: ['ZZZ', 'Quietanza erario'],
-  MP15: ['30', 'Giroconto su conti di contabilità speciale'],
-  MP16: ['49', 'Domiciliazione bancaria'],
-  MP17: ['49', 'Domiciliazione postale'],
-  MP18: ['ZZZ', 'Bollettino di c/c postale'],
-  MP19: ['59', 'SEPA Direct Debit'],
-  MP20: ['59', 'SEPA Direct Debit CORE'],
-  MP21: ['59', 'SEPA Direct Debit B2B'],
-  MP22: ['ZZZ', 'Trattenuta su somme già riscosse'],
-  MP23: ['ZZZ', 'PagoPA'],
-};
+const PAYMENT_MEANS: Record<string, [code: string, label: string]> = Object.setPrototypeOf(
+  {
+    MP01: ['10', 'Contanti'],
+    MP02: ['20', 'Assegno'],
+    MP03: ['23', 'Assegno circolare'],
+    MP04: ['10', 'Contanti presso Tesoreria'],
+    MP05: ['30', 'Bonifico'],
+    MP06: ['60', 'Vaglia cambiario'],
+    MP07: ['ZZZ', 'Bollettino bancario'],
+    MP08: ['48', 'Carta di pagamento'],
+    MP09: ['49', 'RID'],
+    MP10: ['49', 'RID utenze'],
+    MP11: ['49', 'RID veloce'],
+    MP12: ['49', 'RIBA'],
+    MP13: ['ZZZ', 'MAV'],
+    MP14: ['ZZZ', 'Quietanza erario'],
+    MP15: ['30', 'Giroconto su conti di contabilità speciale'],
+    MP16: ['49', 'Domiciliazione bancaria'],
+    MP17: ['49', 'Domiciliazione postale'],
+    MP18: ['ZZZ', 'Bollettino di c/c postale'],
+    MP19: ['59', 'SEPA Direct Debit'],
+    MP20: ['59', 'SEPA Direct Debit CORE'],
+    MP21: ['59', 'SEPA Direct Debit B2B'],
+    MP22: ['ZZZ', 'Trattenuta su somme già riscosse'],
+    MP23: ['ZZZ', 'PagoPA'],
+  } satisfies Record<string, [code: string, label: string]>,
+  null,
+);
 
-const PAYMENT_TERMS: Record<string, string> = { TP01: 'Pagamento a rate', TP02: 'Pagamento completo', TP03: 'Anticipo' };
+const PAYMENT_TERMS: Record<string, string> = Object.setPrototypeOf(
+  { TP01: 'Pagamento a rate', TP02: 'Pagamento completo', TP03: 'Anticipo' } satisfies Record<string, string>,
+  null,
+);
 
-const MIME: Record<string, string> = {
-  PDF: 'application/pdf',
-  XML: 'application/xml',
-  JPG: 'image/jpeg',
-  JPEG: 'image/jpeg',
-  PNG: 'image/png',
-  TXT: 'text/plain',
-  CSV: 'text/csv',
-  TIF: 'image/tiff',
-  TIFF: 'image/tiff',
-};
+const MIME: Record<string, string> = Object.setPrototypeOf(
+  {
+    PDF: 'application/pdf',
+    XML: 'application/xml',
+    JPG: 'image/jpeg',
+    JPEG: 'image/jpeg',
+    PNG: 'image/png',
+    TXT: 'text/plain',
+    CSV: 'text/csv',
+    TIF: 'image/tiff',
+    TIFF: 'image/tiff',
+  } satisfies Record<string, string>,
+  null,
+);
 
 export function parseFatturaPa(input: ParseInput): CanonicalInvoice[] {
   const root = parseXml(input.payload.xml);

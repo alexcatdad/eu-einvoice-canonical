@@ -108,7 +108,7 @@ export function parseUbl(input: ParseInput): CanonicalInvoice[] {
     typeCode,
     id,
     issueDate,
-    issueTime: s.text(root, 'cbc:IssueTime', 'issueTime') as CanonicalInvoice['issueTime'],
+    issueTime: issueTime(s.text(root, 'cbc:IssueTime', 'issueTime')),
     selfBilled:
       SELF_BILLED_TYPE_CODES.has(typeCode) ||
       format === 'peppol-bis3-selfbilling' ||
@@ -186,6 +186,13 @@ export function parseUbl(input: ParseInput): CanonicalInvoice[] {
 const isSepa = (c: Ctx) => (e: Element) => c.attr(e, undefined, 'schemeID') === 'SEPA';
 
 /** Peppol encodes the BT-21 subject code as "#AAI#text"; both parts are bound to the same node. */
+/** cbc:IssueTime as the canonical IsoTime; a malformed time is a parse error, like a malformed date. */
+function issueTime(raw: string | undefined): CanonicalInvoice['issueTime'] {
+  if (raw !== undefined && !/^\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?$/.test(raw))
+    throw new ParseError(`Not a time: "${raw}" (cbc:IssueTime)`);
+  return raw as CanonicalInvoice['issueTime'];
+}
+
 function note(c: Ctx, e: Element, s: Scope) {
   const text = c.text(e) ?? '';
   const m = /^#([A-Z]{3})#([\s\S]*)$/.exec(text);
