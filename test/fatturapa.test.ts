@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import { type CanonicalInvoice, convert, effectiveSign } from '../src/index.js';
+import { checkCase } from './fuzz/properties.js';
 import { fixture, parseOne, utf8, warningCodes } from './helpers.js';
 
 const text = (name: string) => new TextDecoder().decode(fixture(name));
@@ -411,5 +412,23 @@ describe('FatturaPA: real sample and failure modes', () => {
     const [inv] = await parseText(text('fatturapa-b2b.xml').replace('<ImportoTotaleDocumento>649.00', '<ImportoTotaleDocumento>700.00'));
     assert.equal(inv.totals.payable, '700.00');
     assert.ok(warningCodes(inv).includes('BR-CO-16'));
+  });
+});
+
+describe('FatturaPA: codes named like Object.prototype members are unknown codes', () => {
+  test('TipoDocumento, ModalitaPagamento, Natura and CondizioniPagamento', async () => {
+    const xml = text('fatturapa-b2b.xml')
+      .replace('<TipoDocumento>TD01', '<TipoDocumento>constructor')
+      .replace('<ModalitaPagamento>MP05', '<ModalitaPagamento>toString')
+      .replaceAll('<Natura>N4', '<Natura>__proto__')
+      .replace('<CondizioniPagamento>TP02', '<CondizioniPagamento>hasOwnProperty');
+    await checkCase({ label: 'fatturapa prototype keys', bytes: utf8(xml) });
+    const [inv] = await parseText(xml);
+    assert.equal(inv.typeCode, '380');
+    assert.equal(inv.payments[0].meansCode, 'ZZZ');
+    assert.equal(inv.paymentTerms, 'hasOwnProperty: hasOwnProperty');
+    for (const code of ['IT_UNKNOWN_TIPODOCUMENTO', 'IT_UNKNOWN_MODALITA_PAGAMENTO', 'IT_UNKNOWN_NATURA']) {
+      assert.ok(warningCodes(inv).includes(code), code);
+    }
   });
 });
