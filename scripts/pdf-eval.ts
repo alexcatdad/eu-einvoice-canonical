@@ -1,8 +1,8 @@
 /**
  * Evaluates PDF invoice extraction (`convert(..., { extractPdf: true })`) and writes a counts-only report.
  *
- *   bun scripts/pdf-eval.ts swedish <dir with PDFs and truth/> [--truth dir] [--out file] [--md file] [--gate] [--counts-only]
- *   bun scripts/pdf-eval.ts paired <corpora dir> [--exclude file] [--out file] [--md file] [--gate]
+ *   bun scripts/pdf-eval.ts swedish <dir with PDFs and truth/> [--truth dir] [--baseline file] [--out file] [--md file] [--gate] [--counts-only]
+ *   bun scripts/pdf-eval.ts paired <corpora dir> [--exclude file] [--baseline file] [--out file] [--md file] [--gate]
  *
  * `swedish`: one truth file per PDF (format: se-pdf/truth/SCHEMA.md in the private cache repository); each PDF
  * is converted with `extractPdf` and scored field by field. File ids in the report are SHA-256 prefixes.
@@ -15,7 +15,9 @@
  *
  * The report holds counts, normalised messages, problem codes and file ids only; nothing read from a file is
  * printed. `--gate` exits 1 when any value is wrong, any document errored, or nothing was read (no scored value,
- * no `ok` or `draft` document). `--counts-only` also leaves file ids and message text out of
+ * no `ok` or `draft` document), or results drop below the `--baseline` file: the minimum `ok`, `ok` or `draft`, and
+ * correct-value counts of that answer-key set, e.g. scripts/pdf-eval/baseline-swedish.json (see README). A missing
+ * or invalid baseline file stops the run with exit 2. `--counts-only` also leaves file ids and message text out of
  * the printed and `--md` report (the `--out` JSON keeps them).
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -24,7 +26,7 @@ import { sha256Hex } from '../src/hash.js';
 import { convert, type PdfOutcome } from '../src/index.js';
 import { extractPdfInvoice } from '../src/pdf-extract/index.js';
 import { sweepFiles } from '../src/sweep.js';
-import { aggregate, type PdfEvalReport, renderMarkdown } from './pdf-eval/report.js';
+import { aggregate, type PdfEvalBaseline, type PdfEvalReport, readBaseline, renderMarkdown } from './pdf-eval/report.js';
 import { type DocScore, type Expected, fromInvoice, fromTruth, score, type Truth } from './pdf-eval/score.js';
 
 const TIMEOUT_MS = 120_000;
@@ -50,7 +52,7 @@ async function guarded(
 }
 
 /** Swedish answer key: every `truth/<name>.json` with its `<name>.pdf`. */
-export async function evaluateSwedish(dir: string, truthDir = join(dir, 'truth')): Promise<PdfEvalReport> {
+export async function evaluateSwedish(dir: string, truthDir = join(dir, 'truth'), baseline?: PdfEvalBaseline): Promise<PdfEvalReport> {
   const scores: DocScore[] = [];
   for (const name of readdirSync(truthDir)
     .filter((n) => n.endsWith('.json'))
@@ -70,11 +72,11 @@ export async function evaluateSwedish(dir: string, truthDir = join(dir, 'truth')
     }
     scores.push(score(exp, outcome));
   }
-  return aggregate(scores, { mode: 'swedish', commit: process.env.GITHUB_SHA });
+  return aggregate(scores, { mode: 'swedish', commit: process.env.GITHUB_SHA, baseline });
 }
 
 /** Paired public corpus: hybrid PDFs, page against embedded XML. */
-export async function evaluatePaired(root: string, exclude: string[] = []): Promise<PdfEvalReport> {
+export async function evaluatePaired(root: string, exclude: string[] = [], baseline?: PdfEvalBaseline): Promise<PdfEvalReport> {
   const scores: DocScore[] = [];
   const excluded: string[] = [];
   let noReference = 0;
@@ -101,7 +103,7 @@ export async function evaluatePaired(root: string, exclude: string[] = []): Prom
     }, pdf);
     scores.push(score(exp, outcome));
   }
-  return aggregate(scores, { mode: 'paired', commit: process.env.GITHUB_SHA, excluded, noReference });
+  return aggregate(scores, { mode: 'paired', commit: process.env.GITHUB_SHA, excluded, noReference, baseline });
 }
 
 /** Repository-relative paths, one per line; `#` starts a comment. */
@@ -122,15 +124,27 @@ if (import.meta.main) {
   const [mode, dir] = args;
   if ((mode !== 'swedish' && mode !== 'paired') || !dir) {
     console.error(
-      'usage: bun scripts/pdf-eval.ts swedish <dir> [--truth dir] [--out file] [--md file] [--gate] [--counts-only]\n' +
-        '       bun scripts/pdf-eval.ts paired <corpora dir> [--exclude file] [--out file] [--md file] [--gate]',
+      'usage: bun scripts/pdf-eval.ts swedish <dir> [--truth dir] [--baseline file] [--out file] [--md file] [--gate] [--counts-only]\n' +
+        '       bun scripts/pdf-eval.ts paired <corpora dir> [--exclude file] [--baseline file] [--out file] [--md file] [--gate]',
     );
+    process.exit(2);
+  }
+  const baselinePath = opt('--baseline');
+  let baseline: PdfEvalBaseline | undefined;
+  try {
+    baseline = baselinePath === undefined ? undefined : readBaseline(readFileSync(baselinePath, 'utf8'));
+  } catch (e) {
+    console.error(`--baseline ${baselinePath}: ${e instanceof Error ? e.message : String(e)}`);
     process.exit(2);
   }
   const report =
     mode === 'swedish'
-      ? await evaluateSwedish(dir, opt('--truth'))
-      : await evaluatePaired(dir, readExclude(opt('--exclude', resolve(import.meta.dir, 'pdf-eval/paired-exclude.txt')) as string));
+      ? await evaluateSwedish(dir, opt('--truth'), baseline)
+      : await evaluatePaired(
+          dir,
+          readExclude(opt('--exclude', resolve(import.meta.dir, 'pdf-eval/paired-exclude.txt')) as string),
+          baseline,
+        );
   const out = opt('--out', `dist/pdf-eval-${mode}.json`) as string;
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, `${JSON.stringify(report, null, 2)}\n`);

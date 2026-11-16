@@ -1,5 +1,5 @@
 name: Swedish PDF evaluation
-description: Score PDF extraction against the private Swedish answer key; fail on any wrong value. Logs and summary hold counts only.
+description: Score PDF extraction against the private Swedish answer key; fail on any wrong value or results below the committed baseline. Logs and summary hold counts only.
 inputs:
   ssh-key:
     description: Read-only deploy key for the private cache; absent on fork PRs and Dependabot runs.
@@ -24,13 +24,13 @@ runs:
         sparse-checkout: |
           /se-pdf/
         sparse-checkout-cone-mode: false
-    - name: Evaluate with the zero-wrong gate (counts only)
+    - name: Evaluate with the zero-wrong and baseline gate (counts only)
       if: inputs.ssh-key != ''
       shell: bash
       run: |
         d=.se-pdf-cache
         status=0
-        bun scripts/pdf-eval.ts swedish "$d/se-pdf" --out "$d/report.json" --md "$d/report.md" --gate --counts-only > "$d/eval.log" 2>&1 || status=$?
+        bun scripts/pdf-eval.ts swedish "$d/se-pdf" --baseline scripts/pdf-eval/baseline-swedish.json --out "$d/report.json" --md "$d/report.md" --gate --counts-only > "$d/eval.log" 2>&1 || status=$?
         if [ ! -f "$d/report.md" ]; then
           echo "::error::Swedish PDF evaluation did not complete (exit $status); output withheld because it may hold corpus text."
           exit 1

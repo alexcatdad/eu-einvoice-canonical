@@ -374,6 +374,16 @@ describe('generic PDF invoice extraction', () => {
     expect(await extract(bytes)).toMatchObject({ status: 'unsupported', reason: expect.stringContaining('not a readable PDF') });
   }, 30000);
 
+  test('a truncated PDF is unsupported with a reason, never an internal error', async () => {
+    const bytes = await invoicePdf();
+    for (const cut of [0.5, 0.9]) {
+      const part = bytes.slice(0, Math.floor(bytes.length * cut));
+      expect(await extract(part)).toMatchObject({ status: 'unsupported', reason: expect.any(String) });
+      const r = await convert(part, 'cut.pdf', undefined, { extractPdf: true });
+      expect(r.pdfOutcomes?.some((o) => o.status === 'error') ?? false).toBe(false);
+    }
+  }, 30000);
+
   test('a payment reminder is not an invoice', async () => {
     expect(await extract(await invoicePdf({ Faktura: 'Betalningspåminnelse' }))).toMatchObject({ status: 'not-an-invoice' });
   }, 30000);

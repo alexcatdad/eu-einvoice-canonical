@@ -6,6 +6,16 @@
 import { type Cluster, normaliseMessage } from '../corpus-lib.js';
 import { type DocScore, type FieldCounts, VERDICTS } from './score.js';
 
+/**
+ * Committed floors for one answer-key set (counts only): the gate fails when results drop below them.
+ * Raise them by hand to the counts of a report that improved; never lower them to make a regression pass.
+ */
+export interface PdfEvalBaseline {
+  ok: number;
+  okOrDraft: number;
+  correct: number;
+}
+
 export const DOC_STATUSES = ['ok', 'draft', 'unsupported', 'not-an-invoice', 'error', 'none'] as const;
 type StatusCounts = Record<(typeof DOC_STATUSES)[number], number>;
 
@@ -39,10 +49,18 @@ export interface PdfEvalReport {
   noReference: number;
   /**
    * Passes when no value is wrong, no document errored and something was read: at least one scored value and one
-   * `ok` or `draft` document, and in Swedish mode at least half of the documents `ok` or `draft`. `failures` names
-   * each broken condition.
+   * `ok` or `draft` document, in Swedish mode at least half of the documents `ok` or `draft`, and with a baseline
+   * at least its `ok`, `ok` or `draft`, and correct-value counts. `failures` names each broken condition.
    */
-  gate: { wrong: number; errors: number; scored: number; extracted: number; passed: boolean; failures: string[] };
+  gate: {
+    wrong: number;
+    errors: number;
+    scored: number;
+    extracted: number;
+    baseline?: PdfEvalBaseline;
+    passed: boolean;
+    failures: string[];
+  };
 }
 
 const zeroFields = (): FieldCounts => Object.fromEntries(VERDICTS.map((v) => [v, 0])) as FieldCounts;
@@ -60,7 +78,14 @@ function cluster(into: Map<string, Cluster>, raw: string, id: string) {
 
 export function aggregate(
   scores: DocScore[],
-  meta: { mode: PdfEvalReport['mode']; commit?: string; excluded?: string[]; noReference?: number; generatedAt?: string },
+  meta: {
+    mode: PdfEvalReport['mode'];
+    commit?: string;
+    excluded?: string[];
+    noReference?: number;
+    generatedAt?: string;
+    baseline?: PdfEvalBaseline;
+  },
 ): PdfEvalReport {
   const documents = { total: 0, ...zeroStatus(), okAllCorrect: 0, withWrong: [] as string[] };
   const totals = zeroFields();
@@ -124,18 +149,47 @@ export function aggregate(
     errors: top(errors),
     excluded: [...(meta.excluded ?? [])].sort(),
     noReference: meta.noReference ?? 0,
-    gate: gate(totals.wrong, documents.error, scored, documents.ok + documents.draft, meta.mode === 'swedish' ? documents.total / 2 : 0),
+    gate: gate(totals.wrong, documents.error, scored, documents.ok + documents.draft, meta.mode === 'swedish' ? documents.total / 2 : 0, {
+      ok: documents.ok,
+      okOrDraft: documents.ok + documents.draft,
+      correct: totals.correct,
+      baseline: meta.baseline,
+    }),
   };
 }
 
-function gate(wrong: number, errors: number, scored: number, extracted: number, minExtracted: number): PdfEvalReport['gate'] {
+const BASELINE_LABELS: Record<keyof PdfEvalBaseline, string> = {
+  ok: 'ok documents',
+  okOrDraft: 'ok or draft documents',
+  correct: 'correct values',
+};
+
+function gate(
+  wrong: number,
+  errors: number,
+  scored: number,
+  extracted: number,
+  minExtracted: number,
+  { baseline, ...actual }: PdfEvalBaseline & { baseline?: PdfEvalBaseline },
+): PdfEvalReport['gate'] {
   const failures = [
     wrong ? `${wrong} wrong values` : '',
     errors ? `${errors} documents errored` : '',
     scored ? '' : 'no values scored',
     !extracted ? 'no ok or draft documents' : extracted < minExtracted ? `only ${extracted} documents ok or draft` : '',
+    ...(Object.keys(BASELINE_LABELS) as (keyof PdfEvalBaseline)[]).map((k) =>
+      baseline && actual[k] < baseline[k] ? `${actual[k]} ${BASELINE_LABELS[k]}, baseline ${baseline[k]}` : '',
+    ),
   ].filter(Boolean);
-  return { wrong, errors, scored, extracted, passed: !failures.length, failures };
+  return { wrong, errors, scored, extracted, ...(baseline && { baseline }), passed: !failures.length, failures };
+}
+
+/** Reads a baseline file; throws when it is missing or does not hold the three counts as non-negative integers. */
+export function readBaseline(text: string): PdfEvalBaseline {
+  const b = JSON.parse(text) as Record<string, unknown>;
+  for (const k of Object.keys(BASELINE_LABELS))
+    if (!Number.isInteger(b[k]) || (b[k] as number) < 0) throw new Error(`baseline: ${k} must be a non-negative integer`);
+  return { ok: b.ok as number, okOrDraft: b.okOrDraft as number, correct: b.correct as number };
 }
 
 const row = (cells: (string | number)[]) => `| ${cells.join(' | ')} |`;
@@ -147,6 +201,12 @@ export function renderMarkdown(r: PdfEvalReport, countsOnly = false): string {
     `## PDF extraction evaluation (${r.mode === 'swedish' ? 'Swedish answer key' : 'paired public corpus'})`,
     '',
     `Gate: **${r.gate.passed ? 'passed' : `failed (${r.gate.failures.join(', ')})`}**, ${r.gate.wrong} wrong of ${r.totals.scored} scored values.`,
+    ...(r.gate.baseline
+      ? [
+          '',
+          `Baseline: at least ${r.gate.baseline.ok} ok, ${r.gate.baseline.okOrDraft} ok or draft documents and ${r.gate.baseline.correct} correct values.`,
+        ]
+      : []),
     '',
     row(['Documents', ...DOC_STATUSES, 'ok, all correct']),
     row(Array(DOC_STATUSES.length + 2).fill('---')),
