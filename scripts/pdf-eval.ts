@@ -1,7 +1,7 @@
 /**
  * Evaluates PDF invoice extraction (`convert(..., { extractPdf: true })`) and writes a counts-only report.
  *
- *   bun scripts/pdf-eval.ts swedish <dir with PDFs and truth/> [--truth dir] [--out file] [--md file] [--gate]
+ *   bun scripts/pdf-eval.ts swedish <dir with PDFs and truth/> [--truth dir] [--out file] [--md file] [--gate] [--counts-only]
  *   bun scripts/pdf-eval.ts paired <corpora dir> [--exclude file] [--out file] [--md file] [--gate]
  *
  * `swedish`: one truth file per PDF (format: se-pdf/truth/SCHEMA.md in the private cache repository); each PDF
@@ -14,7 +14,8 @@
  * document with a wrong value so it can be checked against the page.
  *
  * The report holds counts, normalised messages, problem codes and file ids only; nothing read from a file is
- * printed. `--gate` exits 1 when any value is wrong.
+ * printed. `--gate` exits 1 when any value is wrong. `--counts-only` also leaves file ids and message text out of
+ * the printed and `--md` report (the `--out` JSON keeps them).
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
@@ -120,7 +121,7 @@ if (import.meta.main) {
   const [mode, dir] = args;
   if ((mode !== 'swedish' && mode !== 'paired') || !dir) {
     console.error(
-      'usage: bun scripts/pdf-eval.ts swedish <dir> [--truth dir] [--out file] [--md file] [--gate]\n' +
+      'usage: bun scripts/pdf-eval.ts swedish <dir> [--truth dir] [--out file] [--md file] [--gate] [--counts-only]\n' +
         '       bun scripts/pdf-eval.ts paired <corpora dir> [--exclude file] [--out file] [--md file] [--gate]',
     );
     process.exit(2);
@@ -132,7 +133,7 @@ if (import.meta.main) {
   const out = opt('--out', `dist/pdf-eval-${mode}.json`) as string;
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, `${JSON.stringify(report, null, 2)}\n`);
-  const md = renderMarkdown(report);
+  const md = renderMarkdown(report, args.includes('--counts-only'));
   const mdPath = opt('--md');
   if (mdPath) writeFileSync(mdPath, md);
   console.log(md);

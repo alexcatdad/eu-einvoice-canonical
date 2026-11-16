@@ -124,7 +124,8 @@ export function aggregate(
 
 const row = (cells: (string | number)[]) => `| ${cells.join(' | ')} |`;
 
-export function renderMarkdown(r: PdfEvalReport): string {
+/** `countsOnly` leaves out file ids and message text (for logs of private corpora); statuses stay counted in the table. */
+export function renderMarkdown(r: PdfEvalReport, countsOnly = false): string {
   const d = r.documents;
   const out = [
     `## PDF extraction evaluation (${r.mode === 'swedish' ? 'Swedish answer key' : 'paired public corpus'})`,
@@ -153,14 +154,16 @@ export function renderMarkdown(r: PdfEvalReport): string {
         `not reconciling ${nr.expected} (draft ${nr.flagged}, presented as complete ${nr.unflagged}, not extracted ${nr.notExtracted}).`,
     );
   const list = (title: string, items: string[]) => (items.length ? out.push('', `${title}:`, ...items.map((i) => `- ${i}`)) : 0);
-  list(
-    'Unsupported or not an invoice',
-    r.unsupported.map((c) => `${c.count}× ${c.message}`),
-  );
-  list(
-    'Errors',
-    r.errors.map((c) => `${c.count}× ${c.message}`),
-  );
+  if (!countsOnly) {
+    list(
+      'Unsupported or not an invoice',
+      r.unsupported.map((c) => `${c.count}× ${c.message}`),
+    );
+    list(
+      'Errors',
+      r.errors.map((c) => `${c.count}× ${c.message}`),
+    );
+  }
   list(
     'Problem codes',
     r.problemCodes.slice(0, 20).map((c) => `${c.count}× ${c.code}`),
@@ -169,7 +172,8 @@ export function renderMarkdown(r: PdfEvalReport): string {
     'Unmapped draft pointers',
     r.unmappedPointers.map((p) => `${p.count}× \`${p.pointer}\``),
   );
-  list('Documents with wrong values', d.withWrong);
+  if (countsOnly) out.push('', `Documents with wrong values: ${d.withWrong.length}.`);
+  else list('Documents with wrong values', d.withWrong);
   if (r.mode === 'paired')
     out.push('', `PDFs without an XML invoice: ${r.noReference}. Excluded (page and XML disagree): ${r.excluded.length}.`);
   list('Excluded', r.excluded);

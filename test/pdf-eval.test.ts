@@ -249,6 +249,9 @@ test('the report holds counts and ids only, and the gate fails on a wrong value'
   expect(report.unsupported[0]).toMatchObject({ message: "Garbled text on page N '…'", count: 1, examples: ['cdcdcdcdcdcd'] });
   const text = JSON.stringify(report) + renderMarkdown(report);
   for (const v of ['SECRET-ID-777', 'Synthetic', 'Widget', '1234566', 'synthetic-1']) expect(text).not.toContain(v);
+  const counts = renderMarkdown(report, true);
+  expect(counts).toContain('Documents with wrong values: 1.');
+  for (const v of ['abababababab', 'cdcdcdcdcdcd', 'Garbled']) expect(counts).not.toContain(v);
 });
 
 async function blankPdf() {
