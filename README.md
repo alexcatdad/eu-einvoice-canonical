@@ -171,7 +171,7 @@ Peppol: the buyer reference (BT-10) and the buyer electronic address (BT-49) are
 
 Command line: `einvoice convert --extract-pdf <file...>` prints or writes `ok` invoices like converted XML. A draft prints its problems on stderr, is never written and exits 3, as do `unsupported` and `not-an-invoice`; `error` exits 7.
 
-Limits: only a received PDF file is read, not PDFs inside a ZIP. Page and work limits bound extraction; a PDF over them is `unsupported` with the reason. The HTTP server and the MCP server do not offer the option.
+Limits: only a received PDF file is read, not PDFs inside a ZIP. Page and work limits bound extraction; a PDF over them is `unsupported` with the reason. The options are described on `ConvertOptions` ([TypeDoc](https://alexcatdad.github.io/eu-einvoice-canonical/api/)). The HTTP server and the MCP server do not offer the option.
 
 Runtime: the text layer is read with the modern build of `pdfjs-dist`, loaded only when extraction is requested, so the rest of the library keeps its runtime support. Extraction is supported on Bun 1.4+ and current browsers only, not on Node: the modern build needs `Math.sumPrecise`, which V8 ships behind a flag, so no released Node version runs it. On other runtimes the file is `unsupported` (`unsupported-runtime`) with a reason naming the supported runtimes, instead of failing. The legacy build is not used because it loads a native canvas module in Node. `pdfjs-dist` lists `@napi-rs/canvas` as an optional dependency, so package managers download it unless optional dependencies are omitted (`npm install --omit=optional`, `bun install --omit optional`); extraction never loads it.
 
