@@ -188,7 +188,10 @@ export function build(spec: CaseSpec): Model {
   };
 
   const v = (x: string | undefined) => (x === undefined ? { status: 'absent' as const } : { value: x });
-  const amount = (o: number, shown: boolean) => v(shown ? key(o) : undefined);
+  // A credit note carries positive magnitudes in the canonical model (effectiveSign), whatever signs the page prints
+  const sgn = credit ? -1 : 1;
+  const mag = (o: number) => key(sgn * o);
+  const amount = (o: number, shown: boolean) => v(shown ? mag(o) : undefined);
   const truth: Omit<Truth, 'sha256'> = {
     schemaVersion: 1,
     file: `${spec.file}.pdf`,
@@ -227,19 +230,19 @@ export function build(spec: CaseSpec): Model {
       rows: vatRows.map((r) => ({
         categoryCode: exempt && r.rate === 0 ? 'E' : 'S',
         rate: exempt && r.rate === 0 ? { status: 'absent' as const } : { value: String(r.rate) },
-        taxableAmount: { value: key(r.taxable) },
-        taxAmount: { value: key(r.tax) },
+        taxableAmount: { value: mag(r.taxable) },
+        taxAmount: { value: mag(r.tax) },
         ...(exempt && r.rate === 0 ? { exemptionReason: { value: spec.exemptReason! } } : {}),
       })),
     },
     lines: {
       rows: spec.lines.map((l, i) => ({
         'item.name': { value: l.name },
-        quantity: { value: l.qty },
+        quantity: { value: credit ? String(-Number(l.qty)) : l.qty },
         unitText: { value: l.unit },
         'price.net': { value: l.price },
         'vat.rate': { value: String(l.rate) },
-        netAmount: { value: key(nets[i]) },
+        netAmount: { value: mag(nets[i]) },
       })),
     },
     notes: `Synthetic (scripts/pdf-synth): ${spec.covers}`,

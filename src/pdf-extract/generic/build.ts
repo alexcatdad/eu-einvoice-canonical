@@ -7,9 +7,10 @@
 import type { CanonicalInvoice, Decimal, IsoDate, Line, PdfRegion, SourceWarning } from '../../canonical.js';
 import { checkTotals } from '../../checks.js';
 import type { CountryCode, UnitCode, VatCategoryCode } from '../../codes.js';
-import { abs, add, cmp, percentOf, round, sub, sum } from '../../values.js';
+import { abs, add, cmp, neg, percentOf, round, sign, sub, sum } from '../../values.js';
 import type { GenericRead } from '../generic.js';
 import type { InvoiceDraft, PdfExtraction, PdfExtractOptions } from '../index.js';
+import { parseSeVatNumber } from '../se/index.js';
 
 /** Free-text units on Swedish invoices -> UN/ECE Rec 20. */
 const UNITS: Record<string, string> = {
@@ -38,8 +39,9 @@ const UNITS: Record<string, string> = {
   kwh: 'KWH',
 };
 
-export function buildExtraction(read: GenericRead, options: PdfExtractOptions): PdfExtraction {
-  if (read.notAnInvoice) return { status: 'not-an-invoice', reason: read.notAnInvoice };
+export function buildExtraction(printed: GenericRead, options: PdfExtractOptions): PdfExtraction {
+  if (printed.notAnInvoice) return { status: 'not-an-invoice', reason: printed.notAnInvoice };
+  const read = creditNoteMagnitudes(printed);
   const v = read.values;
   if (
     !v['/id'] &&
@@ -60,6 +62,30 @@ export function buildExtraction(read: GenericRead, options: PdfExtractOptions): 
   return 'invoice' in built && !read.problems.length ? { status: 'ok', invoice: built.invoice } : draft(built.problems ?? []);
 }
 
+const CREDIT_NOTE_RULE =
+  'Credit note printed with negative amounts: amounts and quantities negated, so the credit note carries positive magnitudes';
+const SIGNED = /^\/(?:totals\/\w+|vatBreakdown\/\d+\/(?:taxableAmount|taxAmount)|lines\/\d+\/netAmount)$/u;
+
+/**
+ * A kreditfaktura (381) printed with a negative total: amounts and quantities are negated so the credit note carries
+ * positive magnitudes, as `effectiveSign()` and the XML parsers expect. Unit prices stay positive (BR-27): a line
+ * printed with a negative price keeps its quantity, otherwise the quantity is negated, so quantity × price = amount.
+ */
+function creditNoteMagnitudes(read: GenericRead): GenericRead {
+  const v = read.values;
+  const total = v['/totals/payable']?.value ?? v['/totals/taxInclusive']?.value;
+  if (v['/typeCode']?.value !== '381' || total === undefined || sign(total) >= 0) return read;
+  const values = { ...v };
+  for (const [k, rv] of Object.entries(v)) {
+    if (SIGNED.test(k)) values[k] = { ...rv, value: neg(rv.value) };
+    const line = /^\/lines\/(\d+)\/quantity$/u.exec(k);
+    const price = line && v[`/lines/${line[1]}/price/net`];
+    if (line && !(price && sign(price.value) < 0)) values[k] = { ...rv, value: neg(rv.value) };
+    if (k.endsWith('/price/net') && sign(rv.value) < 0) values[k] = { ...rv, value: abs(rv.value) };
+  }
+  return { ...read, values, flipped: true };
+}
+
 function buildInvoice(
   read: GenericRead,
   options: PdfExtractOptions,
@@ -70,6 +96,7 @@ function buildInvoice(
   const get = (k: string) => v[k]?.value ?? read.defaults?.[k]?.value;
   const problems: SourceWarning[] = [];
   const derived: { field: string; rule: string }[] = defaults.map(([field, d]) => ({ field, rule: d.rule }));
+  if (read.flipped) derived.push({ field: '/totals', rule: CREDIT_NOTE_RULE });
   const need = (k: string, what: string) => {
     if (get(k) === undefined) problems.push({ code: 'missing', field: k, message: `${what} was not found` });
     return get(k) ?? '';
@@ -247,7 +274,12 @@ function buildInvoice(
   if (transfers.length && !defaults.some(([k]) => k === '/payments/0/meansCode'))
     derive('/payments/0/meansCode', 'Bankgiro, Plusgiro or IBAN printed: credit transfer (30)');
   const orgNumber = get('/seller/legalRegistrationId/value');
+  // BT-34 (Peppol R020): the printed org.nr, else the org.nr inside a seller SE VAT number that passes its check digits
+  const vat = parseSeVatNumber(get('/seller/vatId') ?? '');
+  const endpointId = orgNumber ?? (vat?.kind === 'organisation' ? vat.orgNumber.replace('-', '') : undefined);
   if (orgNumber) derive('/seller/endpoint', 'Organisation number as Peppol endpoint (scheme 0007)');
+  else if (endpointId)
+    derive('/seller/endpoint', 'Organisation number from the seller SE VAT number (SE + org.nr + 01) as Peppol endpoint (scheme 0007)');
   const note = get('/notes/0/text');
 
   const invoice: CanonicalInvoice = {
@@ -268,7 +300,7 @@ function buildInvoice(
       vatId: get('/seller/vatId'),
       taxRegistrationId: get('/seller/taxRegistrationId'),
       nationalTaxIds: [],
-      endpoint: orgNumber ? { value: orgNumber, schemeId: '0007' } : undefined,
+      endpoint: endpointId ? { value: endpointId, schemeId: '0007' } : undefined,
       address: sellerAddress,
     },
     buyer: { name: buyerName, identifiers: [], nationalTaxIds: [], address: buyerAddress },
@@ -323,33 +355,31 @@ function buildInvoice(
   return mismatch.length ? { problems: mismatch } : { invoice };
 }
 
-/** EN 16931 calculation rules plus the VAT breakdown arithmetic; each failure is a problem. */
+/**
+ * EN 16931 calculation rules plus the VAT breakdown arithmetic; each failure is a problem, placed at the printed value
+ * it names (or the first printed value under it), else at the printed amount due.
+ */
 function reconcile(inv: CanonicalInvoice, lineSum: Decimal): SourceWarning[] {
-  const out: SourceWarning[] = checkTotals(inv).map((f) => ({
-    code: 'not-reconciling',
-    field: f.path,
-    message: `${f.message} [${f.code}]`,
-  }));
+  const printed = Object.entries(inv.source.pdfProvenance ?? {});
+  const at = (field: string | undefined) => {
+    const region =
+      printed.find(([k]) => k === field)?.[1] ??
+      printed.find(([k]) => k.startsWith(`${field}/`))?.[1] ??
+      inv.source.pdfProvenance?.['/totals/payable'];
+    return { code: 'not-reconciling', field, ...(region ? { region } : {}) };
+  };
+  const out: SourceWarning[] = checkTotals(inv).map((f) => ({ ...at(f.path), message: `${f.message} [${f.code}]` }));
   if (cmp(round(lineSum), round(inv.totals.lineNetTotal)) !== 0 && !out.some((p) => p.field === '/totals/lineNetTotal'))
-    out.push({
-      code: 'not-reconciling',
-      field: '/totals/lineNetTotal',
-      message: `Sum of line net amounts is ${lineSum}, printed ${inv.totals.lineNetTotal}`,
-    });
+    out.push({ ...at('/totals/lineNetTotal'), message: `Sum of line net amounts is ${lineSum}, printed ${inv.totals.lineNetTotal}` });
   for (const [i, b] of inv.vatBreakdown.entries()) {
     const tax = round(percentOf(b.taxableAmount, b.rate ?? '0'));
     if (cmp(abs(sub(tax, b.taxAmount)), '0.01') > 0)
-      out.push({
-        code: 'not-reconciling',
-        field: `/vatBreakdown/${i}/taxAmount`,
-        message: `VAT ${b.taxAmount} is not ${b.rate} % of ${b.taxableAmount} (${tax})`,
-      });
+      out.push({ ...at(`/vatBreakdown/${i}/taxAmount`), message: `VAT ${b.taxAmount} is not ${b.rate} % of ${b.taxableAmount} (${tax})` });
   }
   const taxableSum = sum(inv.vatBreakdown.map((b) => b.taxableAmount));
   if (cmp(round(taxableSum), round(inv.totals.taxExclusive)) !== 0)
     out.push({
-      code: 'not-reconciling',
-      field: '/vatBreakdown',
+      ...at('/vatBreakdown'),
       message: `VAT breakdown taxable amounts add up to ${taxableSum}, total without VAT is ${inv.totals.taxExclusive}`,
     });
   return out;

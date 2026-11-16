@@ -70,11 +70,12 @@ export interface FieldLabel {
 }
 
 /**
- * The fields a cell labels, when the whole cell is a label: an optional trailing colon, a unit ("kr", "%") and a
+ * The fields a cell labels, when the whole cell is a label: an optional trailing colon or full stop, a unit ("kr", "%") and a
  * VAT rate ("Moms 25 %") aside. Parts joined by "/" are read separately; a part that names no field is ignored.
  */
 export function fieldLabel(text: string): FieldLabel | undefined {
-  let t = normalize(text).replace(/\s*:$/u, '');
+  // A trailing colon, and the full stop of an abbreviation before it ("Org. nr.:")
+  let t = normalize(text).replace(/\.?\s*:?$/u, '');
   let rate: Decimal | undefined;
   const pct = /(?:^|\s)\(?(\d{1,2}(?:,\d{1,2})?) ?%\)?(?=\s|$)/u.exec(t);
   if (pct && pct.index > 0) {

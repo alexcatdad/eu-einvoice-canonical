@@ -324,6 +324,22 @@ describe('extractPdfInvoice with a payment QR code', () => {
     expect(r.draft.pdfProvenance['/totals/payable']).toMatchObject({ page: 1, x: 420 });
   });
 
+  test('an image-only page stays unsupported; its payment QR code gives the payment facts only', async () => {
+    const r = await run(await pdf(pngQr(USING_QR)));
+    if (r.status !== 'unsupported') throw new Error(r.status);
+    expect(r.reason).toContain('cannot be read');
+    expect(r.payment?.fields).toEqual({
+      '/currency': 'SEK',
+      '/totals/payable': '13750.00',
+      '/dueDate': '2026-04-01',
+      '/payments/0/creditTransfers/0/accountId': '1234566',
+      '/payments/0/creditTransfers/0/serviceProviderId': 'SE:BANKGIRO',
+    });
+    expect(Object.values(r.payment?.pdfProvenance ?? {}).every((p) => p.page === 1 && p.x === 420)).toBe(true);
+    // Without a payment QR code the result is unchanged
+    expect(await run(await pdf(pngQr(SWISH_LIKE)))).not.toHaveProperty('payment');
+  });
+
   test('a text value that disagrees with the QR code is kept and makes a draft with a qr-conflict problem', async () => {
     const r = await run(
       await pdf(text([330, 100, 'Förfallodatum'], [430, 100, '2026-04-02'], [60, 60, 'Alla belopp i SEK']), pngQr(USING_QR)),

@@ -9,7 +9,7 @@ import { checkTotals } from './checks.js';
 import { type Detection, detectXml } from './detect.js';
 import { type Skipped, type UnwrapLimits, type UnwrapOptions, unwrap, type XmlPayload } from './envelope.js';
 import { NotImplementedError, PARSERS, ParseError } from './parsers/index.js';
-import type { InvoiceDraft } from './pdf-extract/index.js';
+import type { InvoiceDraft, PdfPaymentFacts } from './pdf-extract/index.js';
 import { PdfRuleError } from './pdf-extract/rules/load.js';
 import { clearProbeCache } from './probe.js';
 import { applyRelations } from './relations/rules.js';
@@ -35,7 +35,7 @@ export {
 } from './formats.js';
 export { CREDIT_TYPE_CODES } from './parsers/context.js';
 export { IMPLEMENTED_FAMILIES, NotImplementedError, ParseError } from './parsers/index.js';
-export type { InvoiceDraft, PdfExtraction, PdfExtractOptions, PdfExtractor } from './pdf-extract/index.js';
+export type { InvoiceDraft, PdfExtraction, PdfExtractOptions, PdfExtractor, PdfPaymentFacts } from './pdf-extract/index.js';
 export { loadPdfRuleSet, PdfRuleError } from './pdf-extract/rules/load.js';
 export type * from './pdf-extract/rules/types.js';
 export {
@@ -139,7 +139,8 @@ export type PdfOutcome =
   | { status: 'ok'; invoices: CanonicalInvoice[]; pdf: PdfSource }
   | { status: 'draft'; draft: InvoiceDraft; pdf: PdfSource }
   | { status: 'not-an-invoice'; pdf: PdfSource; reason: string }
-  | { status: 'unsupported'; pdf: PdfSource; reason: string }
+  /** `payment`: payment QR facts only, when the text cannot be read but a payment QR code can; the status stays unsupported. */
+  | { status: 'unsupported'; pdf: PdfSource; reason: string; payment?: PdfPaymentFacts }
   | { status: 'error'; pdf: PdfSource; error: string };
 
 export interface ConvertResult {

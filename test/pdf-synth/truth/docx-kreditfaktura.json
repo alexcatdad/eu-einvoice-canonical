@@ -53,7 +53,7 @@
       "value": "202611042"
     },
     "totals.lineNetTotal": {
-      "value": "-880.00"
+      "value": "880.00"
     },
     "totals.allowanceTotal": {
       "status": "absent"
@@ -65,10 +65,10 @@
       "status": "absent"
     },
     "totals.vatTotal": {
-      "value": "-105.60"
+      "value": "105.60"
     },
     "totals.taxInclusive": {
-      "value": "-985.60"
+      "value": "985.60"
     },
     "totals.prepaid": {
       "status": "absent"
@@ -80,7 +80,7 @@
       "status": "absent"
     },
     "totals.payable": {
-      "value": "-985.60"
+      "value": "985.60"
     }
   },
   "vatBreakdown": {
@@ -91,10 +91,10 @@
           "value": "12"
         },
         "taxableAmount": {
-          "value": "-880.00"
+          "value": "880.00"
         },
         "taxAmount": {
-          "value": "-105.60"
+          "value": "105.60"
         }
       }
     ]
@@ -106,7 +106,7 @@
           "value": "Lunchbuffé, felaktigt debiterad"
         },
         "quantity": {
-          "value": "-4"
+          "value": "4"
         },
         "unitText": {
           "value": "st"
@@ -118,7 +118,7 @@
           "value": "12"
         },
         "netAmount": {
-          "value": "-500.00"
+          "value": "500.00"
         }
       },
       {
@@ -126,7 +126,7 @@
           "value": "Kaffe och bulle, ej levererat"
         },
         "quantity": {
-          "value": "-10"
+          "value": "10"
         },
         "unitText": {
           "value": "st"
@@ -138,7 +138,7 @@
           "value": "12"
         },
         "netAmount": {
-          "value": "-380.00"
+          "value": "380.00"
         }
       }
     ]

@@ -34,6 +34,8 @@ export interface GenericRead {
   pages?: number;
   /** Values no page prints, set by a rule layer's defaults: used only when no value was read, and recorded as derived. */
   defaults?: Record<string, { value: string; rule: string }>;
+  /** Set by `buildExtraction` on a credit note printed with negative amounts, whose amounts it negated. */
+  flipped?: true;
 }
 
 const POINTER: Partial<Record<FieldKey, string>> = {
@@ -67,14 +69,20 @@ export function readInvoice(layout: LayoutDocument): GenericRead {
   const whole = readPages(layout);
   if (whole.notAnInvoice || layout.pages.length < 2 || !whole.problems.some((p) => p.code === 'ambiguous' && p.field === '/id'))
     return whole;
-  const ids = layout.pages.map((page) => readPages({ ...layout, pages: [page] }).values['/id']?.value);
+  const idValues = layout.pages.map((page) => readPages({ ...layout, pages: [page] }).values['/id']);
+  const ids = idValues.map((v) => v?.value);
   const first = ids.findIndex((id) => id !== undefined);
   let end = first + 1;
   while (end < ids.length && (ids[end] === undefined || ids[end] === ids[first])) end++;
   if (first < 0 || end === ids.length) return whole;
   const read = readPages({ ...layout, pages: layout.pages.slice(0, end) });
   read.pages = end;
-  read.problems.push({ code: 'several-invoices', message: `The file holds several invoices; only the first, on pages 1-${end}, is read` });
+  // Placed at the invoice number of the next invoice
+  read.problems.push({
+    code: 'several-invoices',
+    message: `The file holds several invoices; only the first, on pages 1-${end}, is read`,
+    region: idValues[end]!.region,
+  });
   return read;
 }
 
@@ -85,7 +93,8 @@ function readPages(layout: LayoutDocument): GenericRead {
   const lineTexts = rows.map((r) => r.map((c) => c.text).join('\t'));
   if (lineTexts.some((t) => isReminder(t)))
     return { notAnInvoice: 'Payment reminder (påminnelse), not an invoice', values, problems, pricesIncludeVat: false, lineCount: 0 };
-  const pricesIncludeVat = rows.some((r) => r.some((c) => PRICES_INCLUDE_VAT.test(normalize(c.text))));
+  const pricesIncludeVatAt = rows.flat().find((c) => PRICES_INCLUDE_VAT.test(normalize(c.text)));
+  const pricesIncludeVat = pricesIncludeVatAt !== undefined;
 
   const tables = findItemTables(rows);
   const inTable = new Set<Line>(tables.flatMap((t) => [...t.lines]));
@@ -235,12 +244,18 @@ function readPages(layout: LayoutDocument): GenericRead {
   for (const a of addresses) if (a.key === 'sellerAddress') readAddress('/seller', a.label, rows, values, false);
   // A letterhead: the seller's address printed under its name
   if (sellerName && !values['/seller/address/postalCode']) readAddress('/seller', sellerName, rows, values, false, false);
-  const fSkatt = free.flat().filter((c) => {
-    const labels = findLabels(c.text);
-    return labels.length === 1 && labels[0].label === 'fSkatt' && c.text.split(' ').length <= 6;
-  });
-  if (new Set(fSkatt.map((c) => c.text)).size === 1)
-    values['/seller/taxRegistrationId'] = { value: fSkatt[0].text, region: regionOf(fSkatt[0]) };
+  // "Godkänd för F-skatt" alone in a cell, or between "·" separators in a footer line
+  const fSkatt = free.flat().flatMap((c) =>
+    c.text
+      .split(/\s+[·•]\s+/u)
+      .filter((text) => {
+        const labels = findLabels(text);
+        return labels.length === 1 && labels[0].label === 'fSkatt' && text.split(' ').length <= 6;
+      })
+      .map((text) => ({ text, cell: c })),
+  );
+  if (new Set(fSkatt.map((f) => f.text)).size === 1)
+    values['/seller/taxRegistrationId'] = { value: fSkatt[0].text, region: regionOf(fSkatt[0].cell) };
 
   // Document type and currency
   const all = rows.flat();
@@ -264,7 +279,13 @@ function readPages(layout: LayoutDocument): GenericRead {
       message: 'The invoice is assigned to a finance company; the payee is not read',
       region: regionOf(all.find((c) => findLabels(c.text).some((l) => l.label === 'factoring'))!),
     });
-  if (pricesIncludeVat) problems.push({ code: 'prices-include-vat', field: '/lines', message: 'Line amounts are printed including VAT' });
+  if (pricesIncludeVatAt)
+    problems.push({
+      code: 'prices-include-vat',
+      field: '/lines',
+      message: 'Line amounts are printed including VAT',
+      region: regionOf(pricesIncludeVatAt),
+    });
 
   return { values, problems, pricesIncludeVat, lineCount: items.length };
 }
