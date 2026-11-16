@@ -37,6 +37,24 @@ function oldAddresses() {
   };
 }
 
+/**
+ * The library loads PDF extraction with a @vite-ignore import, so bundlers of its users leave pdf.js out. The converter
+ * extracts PDFs, so the site bundles it: pdf.js, its in-thread worker and the QR decoder become lazy chunks of the site.
+ */
+function bundlePdfExtract() {
+  const entry = join(here, '../src/index.ts');
+  const ignored = "import(/* @vite-ignore */ './pdf-extract/index.js')";
+  return {
+    name: 'bundle-pdf-extract',
+    enforce: 'pre',
+    transform(code, id) {
+      if (id.split('?')[0] !== entry) return;
+      if (!code.includes(ignored)) throw new Error(`src/index.ts no longer contains ${ignored}`);
+      return code.replace(ignored, "import('./pdf-extract/index.ts')");
+    },
+  };
+}
+
 export default defineConfig({
   site: SITE,
   base: BASE,
@@ -110,7 +128,7 @@ export default defineConfig({
     oldAddresses(),
   ],
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [tailwindcss(), bundlePdfExtract()],
     // The library's React component imports react from the repository's node_modules; one copy only.
     resolve: { dedupe: ['react', 'react-dom'] },
     server: { fs: { allow: ['..'] } },

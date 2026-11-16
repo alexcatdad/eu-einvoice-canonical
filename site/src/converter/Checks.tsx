@@ -56,7 +56,7 @@ function Provenance({ outcome: o }: { outcome: ConvertOutcome }) {
   );
 }
 
-function Notes({ title, rows, quiet }: { title: string; rows: { code?: string; message: string }[]; quiet?: boolean }) {
+export function Notes({ title, rows, quiet }: { title: string; rows: { code?: string; message: string }[]; quiet?: boolean }) {
   return (
     <section className={quiet ? 'quiet' : undefined}>
       <h3>{title}</h3>
@@ -72,8 +72,9 @@ function Notes({ title, rows, quiet }: { title: string; rows: { code?: string; m
   );
 }
 
-export function ChecksPanel({ outcome, invoice, result }: { outcome: ConvertOutcome; invoice?: CanonicalInvoice; result: ConvertResult }) {
-  const v = invoice?.source.validation ?? outcome.validation;
+/** `outcome` is absent for an invoice read from the text layer of a PDF without embedded XML. */
+export function ChecksPanel({ outcome, invoice, result }: { outcome?: ConvertOutcome; invoice?: CanonicalInvoice; result: ConvertResult }) {
+  const v = invoice?.source.validation ?? outcome?.validation;
   const notes = [
     invoice?.source.warnings.length ? (
       <Notes key="check" title={t('pen.check')} rows={invoice.source.warnings.map((w) => ({ code: w.code, message: w.message }))} />
@@ -118,7 +119,16 @@ export function ChecksPanel({ outcome, invoice, result }: { outcome: ConvertOutc
           rows={v.findings.map((f) => ({ code: [f.layer, f.ruleId].filter(Boolean).join(': '), message: f.message }))}
         />
       ) : null}
-      <Provenance outcome={outcome} />
+      {outcome ? (
+        <Provenance outcome={outcome} />
+      ) : (
+        <dl className="provenance">
+          <div>
+            <dt>{t('prov.format')}</dt>
+            <dd>{t('prov.pdfText')}</dd>
+          </div>
+        </dl>
+      )}
       {notes.length > 0 && <div className="pen">{notes}</div>}
     </div>
   );

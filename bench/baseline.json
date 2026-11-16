@@ -105,13 +105,18 @@
   "bundles": [
     {
       "name": "converter/initial.js",
-      "bytes": 900469,
-      "gzipBytes": 293579
+      "bytes": 909096,
+      "gzipBytes": 292994
     },
     {
       "name": "converter/all.js",
-      "bytes": 1826788,
-      "gzipBytes": 587781
+      "bytes": 3616905,
+      "gzipBytes": 1142955
+    },
+    {
+      "name": "_astro/Annotations.js",
+      "bytes": 86281,
+      "gzipBytes": 25398
     },
     {
       "name": "_astro/bytes.js",
@@ -121,27 +126,32 @@
     {
       "name": "_astro/cades.js",
       "bytes": 1843,
-      "gzipBytes": 976
+      "gzipBytes": 978
     },
     {
       "name": "_astro/client.js",
-      "bytes": 209162,
-      "gzipBytes": 65705
+      "bytes": 209925,
+      "gzipBytes": 66177
     },
     {
       "name": "_astro/Converter.js",
-      "bytes": 179643,
-      "gzipBytes": 56062
+      "bytes": 169135,
+      "gzipBytes": 53375
     },
     {
       "name": "_astro/de.js",
-      "bytes": 17875,
-      "gzipBytes": 6973
+      "bytes": 20202,
+      "gzipBytes": 7827
+    },
+    {
+      "name": "_astro/decode.js",
+      "bytes": 39660,
+      "gzipBytes": 16192
     },
     {
       "name": "_astro/deliverables.astro_astro_type_script_index_0_lang.js",
       "bytes": 1080,
-      "gzipBytes": 624
+      "gzipBytes": 625
     },
     {
       "name": "_astro/ec.0vx5m.js",
@@ -155,33 +165,33 @@
     },
     {
       "name": "_astro/envelope-pdf.js",
-      "bytes": 430855,
-      "gzipBytes": 179431
+      "bytes": 422212,
+      "gzipBytes": 176471
     },
     {
       "name": "_astro/es.js",
-      "bytes": 18007,
-      "gzipBytes": 6819
+      "bytes": 20249,
+      "gzipBytes": 7621
     },
     {
       "name": "_astro/eu-trust.js",
-      "bytes": 4095,
-      "gzipBytes": 1854
+      "bytes": 4093,
+      "gzipBytes": 1856
     },
     {
       "name": "_astro/eval.astro_astro_type_script_index_0_lang.js",
       "bytes": 8290,
-      "gzipBytes": 3485
+      "gzipBytes": 3484
     },
     {
       "name": "_astro/fr.js",
-      "bytes": 18376,
-      "gzipBytes": 6977
+      "bytes": 20688,
+      "gzipBytes": 7823
     },
     {
       "name": "_astro/i18n.js",
-      "bytes": 19082,
-      "gzipBytes": 7472
+      "bytes": 21215,
+      "gzipBytes": 8222
     },
     {
       "name": "_astro/index.es.js",
@@ -190,8 +200,13 @@
     },
     {
       "name": "_astro/it.js",
-      "bytes": 17804,
-      "gzipBytes": 6747
+      "bytes": 20069,
+      "gzipBytes": 7550
+    },
+    {
+      "name": "_astro/Json.js",
+      "bytes": 66497,
+      "gzipBytes": 20100
     },
     {
       "name": "_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.js",
@@ -199,14 +214,9 @@
       "gzipBytes": 437
     },
     {
-      "name": "_astro/model.js",
-      "bytes": 473997,
-      "gzipBytes": 156752
-    },
-    {
       "name": "_astro/nl.js",
-      "bytes": 17469,
-      "gzipBytes": 6752
+      "bytes": 19726,
+      "gzipBytes": 7609
     },
     {
       "name": "_astro/page.js",
@@ -214,9 +224,24 @@
       "gzipBytes": 1154
     },
     {
+      "name": "_astro/pdf-extract.js",
+      "bytes": 67734,
+      "gzipBytes": 25213
+    },
+    {
+      "name": "_astro/pdf.js",
+      "bytes": 444361,
+      "gzipBytes": 133725
+    },
+    {
+      "name": "_astro/pdf.worker.js",
+      "bytes": 1195516,
+      "gzipBytes": 376240
+    },
+    {
       "name": "_astro/pl.js",
-      "bytes": 17720,
-      "gzipBytes": 7168
+      "bytes": 19941,
+      "gzipBytes": 7961
     },
     {
       "name": "_astro/preload-helper.js",
@@ -230,8 +255,8 @@
     },
     {
       "name": "_astro/ro.js",
-      "bytes": 17750,
-      "gzipBytes": 6862
+      "bytes": 20010,
+      "gzipBytes": 7674
     },
     {
       "name": "_astro/rolldown-runtime.js",
@@ -242,6 +267,11 @@
       "name": "_astro/Search.astro_astro_type_script_index_0_lang.js",
       "bytes": 1937,
       "gzipBytes": 1008
+    },
+    {
+      "name": "_astro/src.js",
+      "bytes": 424502,
+      "gzipBytes": 138004
     },
     {
       "name": "_astro/starlight-toc.js",
@@ -255,13 +285,8 @@
     },
     {
       "name": "_astro/trust.js",
-      "bytes": 863,
-      "gzipBytes": 484
-    },
-    {
-      "name": "_astro/tsl-load.js",
-      "bytes": 3147,
-      "gzipBytes": 1602
+      "bytes": 255,
+      "gzipBytes": 226
     },
     {
       "name": "_astro/ui-core.js",
@@ -270,8 +295,8 @@
     },
     {
       "name": "_astro/xmldsig.js",
-      "bytes": 9147,
-      "gzipBytes": 3558
+      "bytes": 9145,
+      "gzipBytes": 3557
     }
   ]
 }

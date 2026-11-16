@@ -116,10 +116,10 @@ jobs:
         env:
           VALIDATION_BROWSER: ${{ matrix.browser }}
         run: bun check-validation.ts validation-acceptance.ts
-      - name: Factur-X, edition selection and fault browser gates
+      - name: Factur-X, edition selection, fault and PDF extraction browser gates
         if: matrix.browser == 'chromium'
         working-directory: site
-        run: bun check-validation.ts facturx-validation-acceptance.ts edition-selection-acceptance.ts validation-faults.ts
+        run: bun check-validation.ts facturx-validation-acceptance.ts edition-selection-acceptance.ts validation-faults.ts pdf-extraction-acceptance.ts
       - name: Rebuild the distributable site from the approved inventory
         if: matrix.browser == 'chromium'
         run: bun run build:site
