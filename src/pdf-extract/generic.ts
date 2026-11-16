@@ -10,7 +10,7 @@
 import type { PdfRegion, SourceWarning } from '../canonical.js';
 import { below, belowAll, type Cell, cellRows, regionOf, rightOf } from './generic/cells.js';
 import { type FieldKey, fieldLabel, type Parsed, parseField } from './generic/fields.js';
-import { findItemTables } from './generic/items.js';
+import { findItemTables, type Item } from './generic/items.js';
 import { vatBreakdown, vatTable } from './generic/vat.js';
 import type { LayoutDocument, Line } from './layout.js';
 import { findLabels, isReminder, matchLabel, normalize } from './se/index.js';
@@ -30,6 +30,10 @@ export interface GenericRead {
   pricesIncludeVat: boolean;
   /** Number of item lines read. */
   lineCount: number;
+  /** Set when only the first pages were read (a file with several invoices): the number of pages read. */
+  pages?: number;
+  /** Values no page prints, set by a rule layer's defaults: used only when no value was read, and recorded as derived. */
+  defaults?: Record<string, { value: string; rule: string }>;
 }
 
 const POINTER: Partial<Record<FieldKey, string>> = {
@@ -69,6 +73,7 @@ export function readInvoice(layout: LayoutDocument): GenericRead {
   while (end < ids.length && (ids[end] === undefined || ids[end] === ids[first])) end++;
   if (first < 0 || end === ids.length) return whole;
   const read = readPages({ ...layout, pages: layout.pages.slice(0, end) });
+  read.pages = end;
   read.problems.push({ code: 'several-invoices', message: `The file holds several invoices; only the first, on pages 1-${end}, is read` });
   return read;
 }
@@ -204,29 +209,7 @@ function readPages(layout: LayoutDocument): GenericRead {
   // Item lines; several invoice numbers on the same pages means several invoices, whose lines are not mixed
   const several = new Set((found.get('id') ?? []).map((h) => ('value' in h.parsed ? h.parsed.value : ''))).size > 1;
   const items = several ? [] : tables.flatMap((t) => t.items);
-  items.forEach((item, i) => {
-    const p = `/lines/${i}`;
-    if (item.unclearName)
-      problems.push({
-        code: 'ambiguous',
-        field: `${p}/item/name`,
-        message: `Line ${i + 1}: text under the item may be part of its description or a note`,
-        region: item.unclearName,
-      });
-    else if (item.name) values[`${p}/item/name`] = item.name;
-    if (item.quantity) values[`${p}/quantity`] = item.quantity;
-    if (item.unitText) values[`${p}/unitText`] = item.unitText;
-    if (item.price) values[`${p}/price/net`] = item.price;
-    if (item.rate) values[`${p}/vat/rate`] = item.rate;
-    values[`${p}/netAmount`] = item.amount;
-    if (item.discount)
-      problems.push({
-        code: 'line-discount',
-        field: `${p}/price/net`,
-        message: `Line ${i + 1} has a discount column; its net price is not read`,
-        region: item.discount.region,
-      });
-  });
+  itemValues(items, values, problems);
   if (!items.length && tables.length)
     problems.push({
       code: 'missing',
@@ -279,6 +262,33 @@ function readPages(layout: LayoutDocument): GenericRead {
   if (pricesIncludeVat) problems.push({ code: 'prices-include-vat', field: '/lines', message: 'Line amounts are printed including VAT' });
 
   return { values, problems, pricesIncludeVat, lineCount: items.length };
+}
+
+/** Writes item lines as `/lines/k/...` values, with a problem where a line's description or net price is unclear. */
+export function itemValues(items: Item[], values: Record<string, ReadValue>, problems: SourceWarning[]) {
+  items.forEach((item, i) => {
+    const p = `/lines/${i}`;
+    if (item.unclearName)
+      problems.push({
+        code: 'ambiguous',
+        field: `${p}/item/name`,
+        message: `Line ${i + 1}: text under the item may be part of its description or a note`,
+        region: item.unclearName,
+      });
+    else if (item.name) values[`${p}/item/name`] = item.name;
+    if (item.quantity) values[`${p}/quantity`] = item.quantity;
+    if (item.unitText) values[`${p}/unitText`] = item.unitText;
+    if (item.price) values[`${p}/price/net`] = item.price;
+    if (item.rate) values[`${p}/vat/rate`] = item.rate;
+    values[`${p}/netAmount`] = item.amount;
+    if (item.discount)
+      problems.push({
+        code: 'line-discount',
+        field: `${p}/price/net`,
+        message: `Line ${i + 1} has a discount column; its net price is not read`,
+        region: item.discount.region,
+      });
+  });
 }
 
 /** ROT, RUT or grön teknik, when the page names exactly one of them. */
