@@ -162,6 +162,19 @@ describe('ZUGFeRD 1.0 COMFORT', async () => {
     const r = await convert(utf8(xml), 'bad.xml');
     assert.equal(r.outcomes[0].status, 'error');
   });
+
+  for (const amount of ['48.00', '20.00'])
+    test(`an allowance or charge without ActualAmount (${amount}) is a parse error`, async () => {
+      const xml = text('zugferd1-comfort.xml').replace(`<ram:ActualAmount currencyID="EUR">${amount}</ram:ActualAmount>`, '');
+      const r = await convert(utf8(xml), 'bad.xml');
+      assert.equal(r.outcomes[0].status, 'error');
+    });
+
+  test('a net price without ChargeAmount leaves the line price out', async () => {
+    const xml = text('zugferd1-comfort.xml').replace('<ram:ChargeAmount currencyID="EUR">95.00</ram:ChargeAmount>', '');
+    const inv = await parseOne(utf8(xml), 'np.xml');
+    assert.equal(inv.lines[0].price, undefined);
+  });
 });
 
 // ---------------------------------------------------------------------------
