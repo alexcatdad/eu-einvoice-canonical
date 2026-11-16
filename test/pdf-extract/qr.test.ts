@@ -295,11 +295,13 @@ describe('applyPaymentQr', () => {
     expect(valuesOf(applyPaymentQr(read(), [code(credit)]))).not.toHaveProperty(['/totals/payable']);
   });
 
-  test('an amount in another currency than the text is not used', () => {
+  test('an amount in another currency is not compared with the text and not filled in', () => {
     const eur = JSON.stringify({ ...PAYLOAD, cur: 'EUR' });
     expect(valuesOf(applyPaymentQr(read({ '/currency': 'SEK' }), [code(eur)]))).not.toHaveProperty(['/totals/payable']);
-    // Without a printed currency the text's amounts are taken as SEK
-    expect(applyPaymentQr(read({ '/totals/payable': '12000.00' }), [code(eur)]).problems).toEqual([]);
+    expect(applyPaymentQr(read({ '/currency': 'SEK', '/totals/payable': '12000.00' }), [code(eur)]).problems).toEqual([]);
+    // Without a printed currency the amounts are still compared, but a missing amount is not filled in
+    expect(applyPaymentQr(read({ '/totals/payable': '12000.00' }), [code(eur)]).problems.map((p) => p.code)).toEqual(['qr-conflict']);
+    expect(valuesOf(applyPaymentQr(read(), [code(eur)]))).not.toHaveProperty(['/totals/payable']);
   });
 
   test('Swish-like and malformed codes are ignored; two different UsingQR codes are ambiguous; pages not read are skipped', () => {
@@ -316,14 +318,16 @@ describe('extractPdfInvoice with a payment QR code', () => {
   const run = async (bytes: Uint8Array) => extractPdfInvoice(bytes, { fileSha256: 'f'.repeat(64) });
 
   test('fills the amount due and due date the text does not give, with the QR region', async () => {
-    const r = await run(await pdf(text([60, 30, 'Faktura']), vectorQr(USING_QR)));
+    const r = await run(await pdf(text([60, 30, 'Faktura'], [60, 60, 'Alla belopp i SEK']), vectorQr(USING_QR)));
     if (r.status !== 'draft') throw new Error(r.status);
     expect(r.draft.fields['/totals/payable']).toBe('13750.00');
     expect(r.draft.pdfProvenance['/totals/payable']).toMatchObject({ page: 1, x: 420 });
   });
 
   test('a text value that disagrees with the QR code is kept and makes a draft with a qr-conflict problem', async () => {
-    const r = await run(await pdf(text([330, 100, 'Förfallodatum'], [430, 100, '2026-04-02']), pngQr(USING_QR)));
+    const r = await run(
+      await pdf(text([330, 100, 'Förfallodatum'], [430, 100, '2026-04-02'], [60, 60, 'Alla belopp i SEK']), pngQr(USING_QR)),
+    );
     if (r.status !== 'draft') throw new Error(r.status);
     expect(r.draft.fields['/dueDate']).toBe('2026-04-02');
     expect(r.draft.problems).toContainEqual(expect.objectContaining({ code: 'qr-conflict', field: '/dueDate', region }));

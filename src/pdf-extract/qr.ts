@@ -259,9 +259,15 @@ export function applyPaymentQr(read: GenericRead, codes: readonly QrCode[]): Gen
   };
   const equal = (a: string, b: string) => a === b;
 
-  // An amount in another currency than the text's (SEK when none is printed) is not compared
-  if (qr.type === 1 && (!f.cur || f.cur.toUpperCase() === (out.values['/currency']?.value ?? 'SEK')))
-    fill('/totals/payable', usingQrAmount(f.due), 'amount due', (a, b) => cmp(a, b) === 0);
+  // The amount is compared unless both currencies are known and differ; it is filled in only when the code gives
+  // no currency or the text's
+  const textCurrency = out.values['/currency']?.value;
+  const qrCurrency = f.cur?.toUpperCase();
+  const amount = qr.type === 1 ? usingQrAmount(f.due) : undefined;
+  if (amount && out.values['/totals/payable']) {
+    if (!(qrCurrency && textCurrency && qrCurrency !== textCurrency))
+      fill('/totals/payable', amount, 'amount due', (a, b) => cmp(a, b) === 0);
+  } else if (amount && (!qrCurrency || qrCurrency === textCurrency)) fill('/totals/payable', amount, 'amount due', equal);
   fill('/dueDate', usingQrDate(f.ddt), 'due date', equal);
   // The reference is an OCR reference or the invoice number, and often one the page does not print: it is only
   // compared with an OCR reference read from the text, never filled in
