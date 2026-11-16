@@ -288,7 +288,7 @@ function readAddressBlock(tag: string, party: '/seller' | '/buyer', rule: PdfAdd
 const ACCOUNTS = ['bankgiro', 'plusgiro', 'iban'] as const;
 
 /** Sets or removes a field, keeping the values that depend on it consistent. */
-function setField(values: Record<string, ReadValue>, field: PdfRuleField, v: ReadValue | undefined) {
+export function setField(values: Record<string, ReadValue>, field: PdfRuleField, v: ReadValue | undefined) {
   const m = /^\/payments\/0\/(bankgiro|plusgiro|iban|bic)$/u.exec(field);
   if (!m) {
     if (v) values[field] = v;
