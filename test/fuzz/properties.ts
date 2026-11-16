@@ -5,6 +5,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Ajv2020 } from 'ajv/dist/2020.js';
+import { checkTotals } from '../../src/checks.js';
 import { type ConvertOptions, type ConvertResult, convert, schemaVersion, type UnwrapLimits } from '../../src/index.js';
 
 const schema = (name: string) =>
@@ -47,6 +48,18 @@ export function checkResult(result: ConvertResult): void {
     checkNumbers(o.invoices, `outcomes[${i}].invoices`);
     for (const inv of wire.outcomes[i].invoices ?? []) {
       if (!validateInvoice(inv)) throw new Error(`invoice violates canonical-invoice schema: ${ajv.errorsText(validateInvoice.errors)}`);
+    }
+  }
+  // extractPdf: an `ok` result must be a valid invoice whose amounts reconcile; anything else must be a draft or a reason.
+  for (const [i, o] of (result.pdfOutcomes ?? []).entries()) {
+    if (o.status === 'error' && /^Internal error/.test(o.error)) throw new Error(`pdfOutcomes ${i}: ${o.error}`);
+    if (o.status !== 'ok') continue;
+    checkNumbers(o.invoices, `pdfOutcomes[${i}].invoices`);
+    for (const inv of o.invoices) {
+      if (!validateInvoice(JSON.parse(JSON.stringify(inv))))
+        throw new Error(`pdfOutcomes ${i}: invoice violates canonical-invoice schema: ${ajv.errorsText(validateInvoice.errors)}`);
+      const totals = checkTotals(inv);
+      if (totals.length) throw new Error(`pdfOutcomes ${i}: ok but not reconciling: ${totals.map((f) => f.code).join(', ')}`);
     }
   }
 }
