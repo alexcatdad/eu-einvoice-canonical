@@ -8,7 +8,7 @@
  */
 import type { PdfRegion, SourceWarning } from '../canonical.js';
 import { cmp } from '../values.js';
-import type { GenericRead } from './generic.js';
+import type { GenericRead, ReadValue } from './generic.js';
 import { type Pdfjs, pdfjs } from './layout.js';
 import { type Gray, matrixToGray, type PdfjsImage, toGray, toRgba } from './qr/raster.js';
 import { parseUsingQr, type UsingQr, usingQrAmount, usingQrDate } from './qr/usingqr.js';
@@ -300,4 +300,17 @@ export function applyPaymentQr(read: GenericRead, codes: readonly QrCode[]): Gen
     } else if (out.values[same].value !== account.value) out.problems.push(conflict(same, `${account.kind} account`));
   }
   return out;
+}
+
+/**
+ * Payment facts from the UsingQR code of a PDF whose text is not read (an image-only or garbled page): the fields
+ * `applyPaymentQr` fills, plus the code's currency, each with the code's region. Undefined without one usable code.
+ */
+export function qrPaymentFacts(codes: readonly QrCode[]): Record<string, ReadValue> | undefined {
+  const usable = codes.map((code) => ({ code, qr: parseUsingQr(code.text) })).filter((c) => c.qr);
+  const cur = usable[0]?.qr?.fields.cur?.toUpperCase();
+  const values: Record<string, ReadValue> =
+    cur && /^[A-Z]{3}$/u.test(cur) ? { '/currency': { value: cur, region: usable[0].code.region } } : {};
+  const out = applyPaymentQr({ values, problems: [], pricesIncludeVat: false, lineCount: 0 }, codes);
+  return out.problems.length || Object.keys(out.values).length <= Object.keys(values).length ? undefined : out.values;
 }

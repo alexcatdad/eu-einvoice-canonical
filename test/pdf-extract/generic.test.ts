@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Ajv2020 } from 'ajv/dist/2020.js';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
-import type { CanonicalInvoice } from '../../src/canonical.js';
+import { type CanonicalInvoice, effectiveSign } from '../../src/canonical.js';
 import { convert, schemaVersion } from '../../src/index.js';
 import { extractPdfInvoice, type PdfExtraction } from '../../src/pdf-extract/index.js';
 import { toUbl } from '../../src/writers/ubl.js';
@@ -295,6 +295,85 @@ describe('generic PDF invoice extraction', () => {
     expect([inv.kind, inv.typeCode]).toEqual(['creditNote', '381']);
   }, 30000);
 
+  test('a kreditfaktura printed with minus signs is a credit note with positive magnitudes', async () => {
+    const neg = (row: string[]) => row.map((t, i) => [ITEM_X[i], 0, t] as Text);
+    const inv = ok(
+      await extract(
+        await letterheadPdf(
+          [
+            neg(['Konsultarbete', '-10', 'tim', '1 000,00', '25', '-10 000,00']),
+            neg(['Kurslitteratur', '4', 'fp', '-250,00', '12', '-1 000,00']),
+          ],
+          [
+            ['25 %', '-10 000,00', '-2 500,00'],
+            ['12 %', '-1 000,00', '-120,00'],
+          ],
+          [
+            ['Netto', '-11 000,00'],
+            ['Moms', '-2 620,00'],
+            ['Summa inkl. moms', '-13 620,00'],
+            ['Att betala (kr)', '-13 620,00'],
+          ],
+          [[309, 110, 'Kreditfaktura']],
+        ),
+      ),
+    );
+    expect([inv.kind, inv.typeCode, effectiveSign(inv)]).toEqual(['creditNote', '381', -1]);
+    expect(inv.totals).toMatchObject({ lineNetTotal: '11000.00', vatTotal: '2620.00', taxInclusive: '13620.00', payable: '13620.00' });
+    expect(inv.vatBreakdown.map((b) => [b.taxableAmount, b.taxAmount]) as unknown).toEqual([
+      ['10000.00', '2500.00'],
+      ['1000.00', '120.00'],
+    ]);
+    // Unit prices stay positive (BR-27): quantity × price = amount
+    expect(inv.lines.map((l) => [l.quantity, l.price?.net, l.netAmount]) as unknown).toEqual([
+      ['10', '1000.00', '10000.00'],
+      ['4', '250.00', '1000.00'],
+    ]);
+    expect(inv.source.derived.map((d) => d.field)).toContain('/totals');
+  }, 30000);
+
+  test('an invoice assigned to a finance company ("har överlåtits") is a draft, never ok', async () => {
+    const d = draft(
+      await extract(await letterheadPdf(undefined, undefined, undefined, [[61, 410, 'Denna faktura har överlåtits till Finans AB']])),
+    );
+    expect(d.problems).toContainEqual(expect.objectContaining({ code: 'factoring', field: '/payee/name' }));
+  }, 30000);
+
+  test('without a printed org.nr the Peppol endpoint (BT-34) comes from a valid SE VAT number, marked derived', async () => {
+    const inv = ok(await extract(await invoicePdf({ 'Org.nr': null, [ID.org]: null })));
+    expect(inv.seller.legalRegistrationId).toBeUndefined();
+    expect(inv.seller.endpoint).toEqual({ value: '5599001236', schemeId: '0007' });
+    expect(inv.source.derived.find((d) => d.field === '/seller/endpoint')?.rule).toContain('VAT number');
+    expect(inv.source.valueOrigins?.['/seller/endpoint']).toBe('derived');
+    // A VAT number failing its check digits gives no endpoint (and a draft)
+    const d = draft(await extract(await invoicePdf({ 'Org.nr': null, [ID.org]: null, [ID.vat]: 'SE559900123701' })));
+    expect(d.problems).toContainEqual(expect.objectContaining({ code: 'identifier-check', field: '/seller/vatId' }));
+  }, 30000);
+
+  test('labels ending in an abbreviation full stop ("Org. nr.:") are read; a failing org.nr is kept and flagged', async () => {
+    const d = draft(await extract(await invoicePdf({ 'Org.nr': 'ORG. NR.:', [ID.org]: '559900-1237' })));
+    expect(d.fields['/seller/legalRegistrationId/value']).toBe('5599001237');
+    expect(d.problems).toContainEqual(expect.objectContaining({ code: 'identifier-check', field: '/seller/legalRegistrationId/value' }));
+  }, 30000);
+
+  test('"Godkänd för F-skatt" in a footer line with "·" separators is BT-32', async () => {
+    expect(ok(await extract(await letterheadPdf())).seller.taxRegistrationId).toBe('Godkänd för F-skatt');
+  }, 30000);
+
+  test('problems that contradict a printed value carry its page and position', async () => {
+    const d = draft(await extract(await invoicePdf({ '13 750,00 kr': '13 700,00 kr' }, [[60, 400, 'Mervärdesskatt ingår']])));
+    for (const code of ['not-reconciling', 'prices-include-vat'])
+      expect(d.problems.filter((p) => p.code === code).every((p) => p.region?.page === 1)).toBe(true);
+  }, 30000);
+
+  test('a damaged PDF that pdf.js cannot parse is unsupported with the reason', async () => {
+    const doc = await PDFDocument.create();
+    doc.addPage().drawText('Faktura');
+    const s = Buffer.from(await doc.save({ useObjectStreams: false })).toString('latin1');
+    const bytes = new Uint8Array(Buffer.from(s.replace(/\/Kids \[ \d+ 0 R \]/, '/Kids [ 999 0 R ]'), 'latin1'));
+    expect(await extract(bytes)).toMatchObject({ status: 'unsupported', reason: expect.stringContaining('not a readable PDF') });
+  }, 30000);
+
   test('a payment reminder is not an invoice', async () => {
     expect(await extract(await invoicePdf({ Faktura: 'Betalningspåminnelse' }))).toMatchObject({ status: 'not-an-invoice' });
   }, 30000);
@@ -394,7 +473,9 @@ describe('generic PDF invoice extraction', () => {
       ),
     );
     expect(d.fields['/vatBreakdown/0/rate']).toBeUndefined();
-    expect(d.problems).toContainEqual(expect.objectContaining({ code: 'ambiguous', field: '/vatBreakdown' }));
+    expect(d.problems).toContainEqual(
+      expect.objectContaining({ code: 'ambiguous', field: '/vatBreakdown', region: expect.objectContaining({ page: 1 }) }),
+    );
   }, 30000);
 
   test('VAT read from labels that carry the rate', async () => {
@@ -431,7 +512,7 @@ describe('generic PDF invoice extraction', () => {
   test('different invoice numbers on later pages: only the first invoice is read', async () => {
     const d = draft(await extract(await invoicePdf({}, [], [{ edit: { '5001': '5002' } }])));
     expect(d.fields['/id']).toBe('5001');
-    expect(d.problems).toContainEqual(expect.objectContaining({ code: 'several-invoices' }));
+    expect(d.problems).toContainEqual(expect.objectContaining({ code: 'several-invoices', region: expect.objectContaining({ page: 2 }) }));
   }, 30000);
 
   test('two different values for one field leave it empty; lines of several invoices are not mixed', async () => {

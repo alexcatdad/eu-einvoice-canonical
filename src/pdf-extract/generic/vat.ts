@@ -135,6 +135,7 @@ export function vatTable(rows: Cell[][]): VatRow[] {
 function ratedLabels(found: Map<FieldKey, Hit[]>, problems: SourceWarning[]): VatRow[] {
   const byRate = new Map<string, VatRow>();
   const clash = new Set<string>();
+  let clashAt: PdfRegion | undefined;
   for (const [key, field] of [
     ['vatBase', 'taxableAmount'],
     ['vatTotal', 'taxAmount'],
@@ -142,7 +143,10 @@ function ratedLabels(found: Map<FieldKey, Hit[]>, problems: SourceWarning[]): Va
     for (const h of found.get(key) ?? []) {
       if (!h.rate || !hitValue(h)) continue;
       const row = byRate.get(h.rate) ?? { rate: { value: h.rate, region: regionOf(h.label) } };
-      if (row[field] && row[field].value !== hitValue(h)) clash.add(h.rate);
+      if (row[field] && row[field].value !== hitValue(h)) {
+        clash.add(h.rate);
+        clashAt ??= regionOfHit(h);
+      }
       row[field] = { value: hitValue(h)!, region: regionOfHit(h) };
       byRate.set(h.rate, row);
     }
@@ -151,6 +155,7 @@ function ratedLabels(found: Map<FieldKey, Hit[]>, problems: SourceWarning[]): Va
     code: 'ambiguous',
     field: '/vatBreakdown',
     message: `Different VAT amounts printed for rate ${[...clash].join(', ')} %`,
+    region: clashAt,
   });
   return [];
 }

@@ -49,7 +49,7 @@ export const SE_LABEL_PATTERNS = {
   rot: [`rot${S}avdrag`, 'rot'],
   rut: [`rut${S}avdrag`, 'rut'],
   householdWork: ['husarbete', '(?:preliminär )?skattereduktion'],
-  factoring: ['belåning', 'belånad', 'factoring', 'överlåten', 'överlåtelse(?:text)?', 'pantsatt'],
+  factoring: ['belåning', 'belånad', 'factoring', 'överlåt(?:en|et|na|it|its|s|else|elsen|elsetext)', 'pantsatt'],
   vatExempt: ['momsfri(?:tt)?', 'undantag(?:en)? från skatteplikt'],
   rounding: [`öres${S}(?:avrundning|avr|utjämning|utj)\\.?`, 'avrundning'],
 } as const satisfies Record<string, readonly string[]>;
