@@ -76,7 +76,8 @@ convert --eu-trust[=<snapshot.json>] checks signers against a trusted-list snaps
   einvoice mcp [--allow-dir <dir>]...           Model Context Protocol server on stdio, for AI agents; files only
                                              inside the allowed directories
 A file argument of "-" reads stdin.
-Flags: --pretty  --quiet  --limits '<json>'  --validate  --help
+convert --extract-pdf reads invoices from the text of PDFs without embedded XML; incomplete results are reported, not written.
+Flags: --pretty  --quiet  --limits '<json>'  --validate  --extract-pdf  --help
 Exit codes: 0 ok, 1 usage, 2 unsafe/malformed input, 3 unsupported format, 4 validation failed,
             5 partially converted, 6 validator unavailable, 7 internal error.`;
 
@@ -88,6 +89,7 @@ interface Parsed {
   pretty: boolean;
   quiet: boolean;
   validate: boolean;
+  extractPdf: boolean;
   euTrust?: string | true;
   out?: string;
   expect?: string;
@@ -104,7 +106,7 @@ interface Parsed {
 }
 
 function parseArgs(argv: string[]): Parsed {
-  const p: Parsed = { command: '', files: [], pretty: false, quiet: false, validate: false, allowDir: [] };
+  const p: Parsed = { command: '', files: [], pretty: false, quiet: false, validate: false, extractPdf: false, allowDir: [] };
   const takesValue = new Set([
     '--out',
     '--expect',
@@ -144,6 +146,9 @@ function parseArgs(argv: string[]): Parsed {
         break;
       case '--validate':
         p.validate = true;
+        break;
+      case '--extract-pdf':
+        p.extractPdf = true;
         break;
       case '--eu-trust':
         p.euTrust = value ?? true;
@@ -309,6 +314,7 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
       return EXIT.ok;
     }
 
+    if (args.extractPdf && args.command !== 'convert') note(`--extract-pdf only applies to convert; ignored for ${args.command}`);
     let validator: Validator | null = null;
     if (args.validate) {
       if (args.command !== 'convert') note(`--validate only applies to convert; ignored for ${args.command}`);
@@ -392,9 +398,14 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
         ...(euTrust ? { euTrust, now: deps.now } : {}),
         validate: args.validate && args.command === 'convert',
         validation: deps.validation,
+        extractPdf: args.extractPdf && args.command === 'convert',
       });
-      for (const o of r.outcomes) {
-        if (o.status === 'ok') {
+      for (const o of [...r.outcomes, ...(r.pdfOutcomes ?? [])]) {
+        if (o.status === 'draft') {
+          for (const p of o.draft.problems) err(`${label}: ${p.message}`);
+          err(`${label}: read from the PDF text as an incomplete draft, not an invoice`);
+          tally.fail(EXIT.unsupported);
+        } else if (o.status === 'ok') {
           let failure: number | undefined;
           for (const inv of o.invoices) {
             if (args.validate && args.command === 'convert' && !validationPassed(inv.source.validation)) {
@@ -421,7 +432,8 @@ export async function main(argv: string[], io: IO, deps: Deps = {}): Promise<num
           if (failure === undefined) tally.good();
           else tally.fail(failure);
         } else if (o.status === 'not-an-invoice') {
-          err(`${label}: not an invoice (${o.detection.kind === 'other-document' ? o.detection.label : 'unknown'})`);
+          const what = 'reason' in o ? o.reason : o.detection.kind === 'other-document' ? o.detection.label : 'unknown';
+          err(`${label}: not an invoice (${what})`);
           tally.fail(EXIT.unsupported);
         } else if (o.status === 'unsupported') {
           err(`${label}: ${o.reason}`);
