@@ -1,0 +1,142 @@
+/**
+ * VAT breakdown (BG-23), from the first source that has one, in this order:
+ * 1. a VAT table: a header with a rate column ("Moms %") and a VAT base or amount column, one row per rate;
+ * 2. labels that carry a rate ("Momspl belopp 25 %", "Moms kr 25 %");
+ * 3. one rate printed for the whole invoice, with the labelled VAT total and base.
+ * Interest rates (dröjsmålsränta) are never read as VAT.
+ */
+import type { PdfRegion, SourceWarning } from '../../canonical.js';
+import type { ReadValue } from '../generic.js';
+import { classifyRates, findLabels } from '../se/index.js';
+import { type Cell, overlapX, regionOf } from './cells.js';
+import { type FieldKey, fieldLabel, type Parsed, parseAmount, parseRate } from './fields.js';
+import type { Item } from './items.js';
+
+export type VatRow = Partial<Record<'rate' | 'categoryCode' | 'taxableAmount' | 'taxAmount' | 'exemptionReason', ReadValue>>;
+type Hit = { parsed: Parsed; value: Cell | { region: PdfRegion }; label: Cell; rate?: string };
+
+const hitValue = (h: Hit) => ('value' in h.parsed ? h.parsed.value : undefined);
+const regionOfHit = (h: Hit) => ('region' in h.value ? h.value.region : regionOf(h.value));
+const category = (rate: ReadValue): ReadValue => ({ value: Number(rate.value) > 0 ? 'S' : 'Z', region: rate.region });
+
+export function vatBreakdown(
+  rows: Cell[][],
+  found: Map<FieldKey, Hit[]>,
+  items: Item[],
+  values: Record<string, ReadValue>,
+  problems: SourceWarning[],
+): VatRow[] {
+  let out = vatTable(rows);
+  if (!out.length) out = ratedLabels(found, problems);
+  if (!out.length) {
+    const rates = new Map<string, PdfRegion>();
+    for (const h of found.get('vatRate') ?? [])
+      if (classifyRates(`${h.label.text} ${hitValue(h)} %`)[0]?.kind !== 'interest') rates.set(hitValue(h)!, regionOfHit(h));
+    for (const i of items) if (i.rate && !rates.has(i.rate.value)) rates.set(i.rate.value, i.rate.region);
+    if (rates.size === 1) {
+      const [[value, region]] = [...rates];
+      const base = (found.get('vatBase') ?? []).filter((h) => !h.rate);
+      const row: VatRow = { rate: { value, region }, taxAmount: values['/totals/vatTotal'] };
+      if (values['/totals/taxExclusive']) row.taxableAmount = values['/totals/taxExclusive'];
+      else if (base.length && new Set(base.map(hitValue)).size === 1)
+        row.taxableAmount = { value: hitValue(base[0])!, region: regionOfHit(base[0]) };
+      out = [row];
+    } else if (rates.size > 1)
+      problems.push({
+        code: 'vat-breakdown',
+        field: '/vatBreakdown',
+        message: `Several VAT rates (${[...rates.keys()].join(', ')}) without a readable breakdown`,
+      });
+  }
+  for (const row of out) if (row.rate) row.categoryCode = category(row.rate);
+  if (!out.length && !values['/totals/vatTotal']) {
+    // Momsfritt: no VAT printed and a statement that the sale is exempt -> category E with that statement as reason
+    const exempt = rows.flat().filter((c) => findLabels(c.text).some((l) => l.label === 'vatExempt'));
+    if (new Set(exempt.map((c) => c.text)).size === 1) {
+      const reason = { value: exempt[0].text, region: regionOf(exempt[0]) };
+      const base = values['/totals/taxExclusive'] ?? values['/totals/lineNetTotal'];
+      out = [{ categoryCode: { value: 'E', region: reason.region }, exemptionReason: reason, ...(base ? { taxableAmount: base } : {}) }];
+    }
+  }
+  const known = new Set(out.map((r) => r.rate?.value));
+  for (const i of items)
+    if (i.rate && !known.has(i.rate.value))
+      problems.push({
+        code: 'not-reconciling',
+        field: '/vatBreakdown',
+        message: `Line VAT rate ${i.rate.value} % is not in the VAT breakdown`,
+        region: i.rate.region,
+      });
+  if (out.length === 1 && !values['/totals/vatTotal'] && out[0].taxAmount) values['/totals/vatTotal'] = out[0].taxAmount;
+  return out;
+}
+
+const RATE_HEADER = (k: FieldKey[]) => k.includes('vatRate');
+const BASE_HEADER = (k: FieldKey[]) => k.includes('vatBase') || k.includes('taxExclusive');
+const TAX_HEADER = (k: FieldKey[]) => k.includes('vatTotal');
+
+/** Rows of the first VAT table: a header with a rate column and VAT base and amount columns. */
+export function vatTable(rows: Cell[][]): VatRow[] {
+  for (const [r, header] of rows.entries()) {
+    const keys = header.map((c) => fieldLabel(c.text)?.keys ?? []);
+    const rateCol = keys.findIndex(RATE_HEADER);
+    if (rateCol < 0 || !keys.some(BASE_HEADER) || !keys.some(TAX_HEADER)) continue;
+    const spans = header.map((c, k) => {
+      const prev = header[k - 1];
+      const next = header[k + 1];
+      const x0 = prev ? (prev.x + prev.width + c.x) / 2 : c.x - 40;
+      const x1 = next ? (c.x + c.width + next.x) / 2 : c.x + c.width + 40;
+      return { x: x0, width: x1 - x0 };
+    });
+    const out: VatRow[] = [];
+    let prev = header[0];
+    for (const row of rows.slice(r + 1)) {
+      if (row[0].page !== prev.page || row[0].line.y - (prev.line.y + prev.line.height) > 1.6 * Math.max(prev.height, 8)) break;
+      const at = (k: number) => {
+        const cells = row.filter((c) => {
+          let best = -1;
+          for (const [j, s] of spans.entries())
+            if (overlapX(s, c) >= Math.min(c.width, s.width) / 2 && (best < 0 || overlapX(s, c) > overlapX(spans[best], c))) best = j;
+          return best === k;
+        });
+        return cells.length === 1 ? cells[0] : undefined;
+      };
+      const rateCell = at(rateCol);
+      const rate = rateCell && parseRate(rateCell.text);
+      if (!rateCell || !rate) break;
+      const pick = (test: (k: FieldKey[]) => boolean): ReadValue | undefined => {
+        const k = keys.findIndex(test);
+        const c = k < 0 ? undefined : at(k);
+        const a = c && parseAmount(c.text);
+        return c && a ? { value: a, region: regionOf(c) } : undefined;
+      };
+      out.push({ rate: { value: rate, region: regionOf(rateCell) }, taxableAmount: pick(BASE_HEADER), taxAmount: pick(TAX_HEADER) });
+      prev = row[0];
+    }
+    if (out.length) return out;
+  }
+  return [];
+}
+
+function ratedLabels(found: Map<FieldKey, Hit[]>, problems: SourceWarning[]): VatRow[] {
+  const byRate = new Map<string, VatRow>();
+  const clash = new Set<string>();
+  for (const [key, field] of [
+    ['vatBase', 'taxableAmount'],
+    ['vatTotal', 'taxAmount'],
+  ] as const)
+    for (const h of found.get(key) ?? []) {
+      if (!h.rate || !hitValue(h)) continue;
+      const row = byRate.get(h.rate) ?? { rate: { value: h.rate, region: regionOf(h.label) } };
+      if (row[field] && row[field].value !== hitValue(h)) clash.add(h.rate);
+      row[field] = { value: hitValue(h)!, region: regionOfHit(h) };
+      byRate.set(h.rate, row);
+    }
+  if (!clash.size) return [...byRate.values()];
+  problems.push({
+    code: 'ambiguous',
+    field: '/vatBreakdown',
+    message: `Different VAT amounts printed for rate ${[...clash].join(', ')} %`,
+  });
+  return [];
+}

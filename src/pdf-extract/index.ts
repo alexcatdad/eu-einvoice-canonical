@@ -2,9 +2,13 @@
  * Deterministic extraction of an invoice from the text layer of a PDF without embedded XML: no OCR, no language model,
  * no network. Used by `convert(..., { extractPdf: true })`, which loads this module on demand.
  *
- * This version is a stub: every PDF is reported as unsupported.
+ * Steps: layout model and text quality check (layout.ts), payment reminders as not an invoice, generic Swedish rules
+ * (generic.ts), then reconciliation (generic/build.ts): only a complete, reconciling result is `ok`.
  */
 import type { CanonicalInvoice, PdfRegion, SourceWarning } from '../canonical.js';
+import { buildExtraction } from './generic/build.js';
+import { readInvoice } from './generic.js';
+import { extractLayout } from './layout.js';
 
 export interface PdfExtractOptions {
   /** SHA-256 (hex) of the received file, for `source.fileSha256`. */
@@ -43,7 +47,9 @@ export type PdfExtraction =
 /** Reads one PDF. Deterministic: the same bytes and library version always give the same result. Throws only on internal faults. */
 export type PdfExtractor = (bytes: Uint8Array, options: PdfExtractOptions) => Promise<PdfExtraction>;
 
-export const extractPdfInvoice: PdfExtractor = async () => ({
-  status: 'unsupported',
-  reason: 'PDF without embedded XML: invoice extraction from the PDF text is not available yet',
-});
+export const extractPdfInvoice: PdfExtractor = async (bytes, options) => {
+  const layout = await extractLayout(bytes);
+  if (!layout.quality.supported)
+    return { status: 'unsupported', reason: `PDF text cannot be read: ${layout.quality.reasons.map((r) => r.detail).join('; ')}` };
+  return buildExtraction(readInvoice(layout), options);
+};
