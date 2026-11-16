@@ -5,6 +5,8 @@ name: Public corpora
 # 2. correctness: a manifest of files whose format is clear from their folder must all match
 # 3. real-world run: every file is converted with validation and line relations, and the report
 #    (artifact corpus-report) feeds the Real-world results page of the site (scripts/fetch-corpus-report.sh)
+# 4. PDF extraction: the visible page of every hybrid PDF is read with extractPdf and compared with its embedded
+#    XML (scripts/pdf-eval.ts paired, counts-only report pdf-eval-report); any wrong value fails the job
 # The clones are pinned in scripts/fetch-corpora.sh; licences are recorded in test/corpus/SOURCES.md.
 
 on:
@@ -51,11 +53,16 @@ jobs:
         run: bun scripts/sweep.ts --expect test/corpus/expected.json | tee corpus-expect.txt
       - name: Real-world run (convert every file, 60 s per file)
         run: bun scripts/corpus-run.ts test/corpus/repos --out dist/corpus-report.json --details dist/corpus-details.ndjson --md dist/corpus-report.md --pins corpus-pins.txt --jobs 4 --timeout 60 > corpus-run.log
+      - name: PDF extraction against embedded XML (fails on any wrong value)
+        if: ${{ !cancelled() }}
+        timeout-minutes: 30
+        run: bun scripts/pdf-eval.ts paired test/corpus/repos --out dist/pdf-eval-paired.json --md dist/pdf-eval-paired.md --gate > pdf-eval.log
       - name: Summary
         if: always()
         run: |
           {
             [ -f dist/corpus-report.md ] && cat dist/corpus-report.md
+            [ -f dist/pdf-eval-paired.md ] && cat dist/pdf-eval-paired.md
             echo '## Public corpora'
             echo '### Pinned commits'; echo '```'; cat corpus-pins.txt; echo '```'
             echo '### Known answers'; echo '```'; tail -n 40 corpus-expect.txt; echo '```'
@@ -69,6 +76,15 @@ jobs:
           path: |
             dist/corpus-report.json
             dist/corpus-report.md
+          if-no-files-found: warn
+      - name: Upload the PDF extraction report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pdf-eval-report
+          path: |
+            dist/pdf-eval-paired.json
+            dist/pdf-eval-paired.md
           if-no-files-found: warn
       - name: Upload per-file results
         if: always()
@@ -88,3 +104,4 @@ jobs:
             corpus-report.txt
             corpus-expect.txt
             corpus-run.log
+            pdf-eval.log

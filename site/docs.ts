@@ -64,12 +64,20 @@ export const PAGES: PageDef[] = [
     sections: ['Command line'],
   },
   {
+    slug: 'pdf-extraction',
+    title: 'PDF text extraction',
+    description:
+      'Opt-in, deterministic reading of invoices from PDFs without embedded XML: outcomes, drafts, field provenance, Swedish mapping and runtimes.',
+    group: 'Use it',
+    sections: ['PDF text extraction (opt-in)'],
+  },
+  {
     slug: 'pdf-invoice-skill',
     title: 'PDF invoice conversion skill',
     description:
       'Convert born-digital invoice PDFs into UBL or CII with a Codex skill, source-fidelity checks, validation and canonical round-trip verification.',
     group: 'Use it',
-    sections: ['PDF text extraction (opt-in, in development)', 'PDF invoice conversion skill'],
+    sections: ['PDF invoice conversion skill'],
   },
   {
     slug: 'mcp',
