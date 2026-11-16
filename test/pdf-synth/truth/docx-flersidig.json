@@ -1,0 +1,1507 @@
+{
+  "schemaVersion": 1,
+  "file": "docx-flersidig.pdf",
+  "sha256": "3aa52327aeb64a439652180c15c42e2f2d3a3cd73be1ff67eee83544915f4625",
+  "documentType": "invoice",
+  "typeCode": "380",
+  "invoicePages": [1, 2],
+  "pricesIncludeVat": false,
+  "fields": {
+    "id": {
+      "value": "1105"
+    },
+    "issueDate": {
+      "value": "2026-03-26"
+    },
+    "dueDate": {
+      "value": "2026-04-26"
+    },
+    "currency": {
+      "value": "SEK"
+    },
+    "seller.name": {
+      "value": "Provkonsult Syntet AB"
+    },
+    "seller.legalRegistrationId": {
+      "value": "9999990048"
+    },
+    "seller.vatId": {
+      "value": "SE999999004801"
+    },
+    "seller.taxRegistrationId": {
+      "value": "Godkänd för F-skatt"
+    },
+    "buyer.name": {
+      "value": "Fiktiv Kund AB"
+    },
+    "payee.name": {
+      "status": "absent"
+    },
+    "payment.bankgiro": {
+      "value": "99990046"
+    },
+    "payment.plusgiro": {
+      "status": "absent"
+    },
+    "payment.iban": {
+      "status": "absent"
+    },
+    "payment.bic": {
+      "status": "absent"
+    },
+    "payment.remittanceInformation": {
+      "value": "202611059"
+    },
+    "totals.lineNetTotal": {
+      "value": "250925.00"
+    },
+    "totals.allowanceTotal": {
+      "status": "absent"
+    },
+    "totals.chargeTotal": {
+      "status": "absent"
+    },
+    "totals.taxExclusive": {
+      "status": "absent"
+    },
+    "totals.vatTotal": {
+      "value": "62731.25"
+    },
+    "totals.taxInclusive": {
+      "value": "313656.25"
+    },
+    "totals.prepaid": {
+      "status": "absent"
+    },
+    "totals.prepaidNote": {
+      "status": "absent"
+    },
+    "totals.rounding": {
+      "status": "absent"
+    },
+    "totals.payable": {
+      "value": "313656.25"
+    }
+  },
+  "vatBreakdown": {
+    "rows": [
+      {
+        "categoryCode": "S",
+        "rate": {
+          "value": "25"
+        },
+        "taxableAmount": {
+          "value": "250925.00"
+        },
+        "taxAmount": {
+          "value": "62731.25"
+        }
+      }
+    ]
+  },
+  "lines": {
+    "rows": [
+      {
+        "item.name": {
+          "value": "Konsulttimme analys vecka 1"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "950.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "1900.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme utveckling vecka 1"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "1100.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "3300.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme test vecka 1"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "875.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "3500.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Resetid vecka 1"
+        },
+        "quantity": {
+          "value": "5"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "650.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "3250.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Projektledning vecka 1"
+        },
+        "quantity": {
+          "value": "6"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "950.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "5700.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Dokumentation vecka 1"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "1100.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "2200.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Granskning av underlag vecka 1"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "875.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "2625.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Mötestid kund vecka 1"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "650.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "2600.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme analys vecka 2"
+        },
+        "quantity": {
+          "value": "5"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "950.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "4750.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme utveckling vecka 2"
+        },
+        "quantity": {
+          "value": "6"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "1100.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "6600.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme test vecka 2"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "875.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "1750.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Resetid vecka 2"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "650.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "1950.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Projektledning vecka 2"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "950.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "3800.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Dokumentation vecka 2"
+        },
+        "quantity": {
+          "value": "5"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "1100.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "5500.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Granskning av underlag vecka 2"
+        },
+        "quantity": {
+          "value": "6"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "875.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "5250.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Mötestid kund vecka 2"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "650.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "1300.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme analys vecka 3"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "950.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "2850.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme utveckling vecka 3"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "1100.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "4400.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme test vecka 3"
+        },
+        "quantity": {
+          "value": "5"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "875.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "4375.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Resetid vecka 3"
+        },
+        "quantity": {
+          "value": "6"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "650.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "3900.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Projektledning vecka 3"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "950.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "1900.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Dokumentation vecka 3"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "1100.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "3300.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Granskning av underlag vecka 3"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "875.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "3500.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Mötestid kund vecka 3"
+        },
+        "quantity": {
+          "value": "5"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "650.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "3250.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme analys vecka 4"
+        },
+        "quantity": {
+          "value": "6"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "950.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "5700.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme utveckling vecka 4"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "1100.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "2200.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme test vecka 4"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "875.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "2625.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Resetid vecka 4"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "650.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "2600.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Projektledning vecka 4"
+        },
+        "quantity": {
+          "value": "5"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "950.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "4750.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Dokumentation vecka 4"
+        },
+        "quantity": {
+          "value": "6"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "1100.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "6600.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Granskning av underlag vecka 4"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "875.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "1750.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Mötestid kund vecka 4"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "650.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "1950.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme analys vecka 5"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "950.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "3800.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme utveckling vecka 5"
+        },
+        "quantity": {
+          "value": "5"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "1100.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "5500.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme test vecka 5"
+        },
+        "quantity": {
+          "value": "6"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "875.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "5250.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Resetid vecka 5"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "650.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "1300.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Projektledning vecka 5"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "950.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "2850.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Dokumentation vecka 5"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "1100.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "4400.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Granskning av underlag vecka 5"
+        },
+        "quantity": {
+          "value": "5"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "875.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "4375.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Mötestid kund vecka 5"
+        },
+        "quantity": {
+          "value": "6"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "650.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "3900.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme analys vecka 6"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "950.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "1900.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme utveckling vecka 6"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "1100.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "3300.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme test vecka 6"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "875.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "3500.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Resetid vecka 6"
+        },
+        "quantity": {
+          "value": "5"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "650.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "3250.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Projektledning vecka 6"
+        },
+        "quantity": {
+          "value": "6"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "950.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "5700.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Dokumentation vecka 6"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "1100.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "2200.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Granskning av underlag vecka 6"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "875.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "2625.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Mötestid kund vecka 6"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "650.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "2600.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme analys vecka 7"
+        },
+        "quantity": {
+          "value": "5"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "950.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "4750.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme utveckling vecka 7"
+        },
+        "quantity": {
+          "value": "6"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "1100.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "6600.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme test vecka 7"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "875.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "1750.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Resetid vecka 7"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "650.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "1950.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Projektledning vecka 7"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "950.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "3800.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Dokumentation vecka 7"
+        },
+        "quantity": {
+          "value": "5"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "1100.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "5500.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Granskning av underlag vecka 7"
+        },
+        "quantity": {
+          "value": "6"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "875.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "5250.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Mötestid kund vecka 7"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "650.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "1300.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme analys vecka 8"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "950.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "2850.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme utveckling vecka 8"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "1100.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "4400.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme test vecka 8"
+        },
+        "quantity": {
+          "value": "5"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "875.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "4375.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Resetid vecka 8"
+        },
+        "quantity": {
+          "value": "6"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "650.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "3900.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Projektledning vecka 8"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "950.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "1900.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Dokumentation vecka 8"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "1100.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "3300.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Granskning av underlag vecka 8"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "875.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "3500.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Mötestid kund vecka 8"
+        },
+        "quantity": {
+          "value": "5"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "650.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "3250.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme analys vecka 9"
+        },
+        "quantity": {
+          "value": "6"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "950.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "5700.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme utveckling vecka 9"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "1100.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "2200.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimme test vecka 9"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "875.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "2625.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Resetid vecka 9"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "650.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "2600.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Projektledning vecka 9"
+        },
+        "quantity": {
+          "value": "5"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "950.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "4750.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Dokumentation vecka 9"
+        },
+        "quantity": {
+          "value": "6"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "1100.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "6600.00"
+        }
+      }
+    ]
+  },
+  "notes": "Synthetic (scripts/pdf-synth): Word, item table over several pages with the header row repeated"
+}

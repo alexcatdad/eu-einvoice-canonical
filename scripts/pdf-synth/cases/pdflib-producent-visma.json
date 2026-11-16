@@ -1,0 +1,46 @@
+{
+  "file": "pdflib-producent-visma",
+  "covers": "pdf-lib layout with a spoofed Visma Producer and Creator",
+  "renderer": "pdflib",
+  "document": "invoice",
+  "number": "1120",
+  "issueDate": "2026-03-14",
+  "dueDate": "2026-04-14",
+  "customer": "K-520",
+  "ocr": "202611208",
+  "seller": {
+    "name": "Provkonsult Syntet AB",
+    "address": ["Exempelgatan 4", "999 04 Testby"],
+    "orgnr": "9999990048",
+    "fskatt": true,
+    "bankgiro": "99990046"
+  },
+  "buyer": {
+    "name": "Fiktiv Kund AB",
+    "address": ["Provvägen 2", "999 12 Testby"]
+  },
+  "lines": [
+    {
+      "name": "Ramverksavtal support",
+      "qty": "1",
+      "unit": "mån",
+      "price": "4500.00",
+      "rate": 25
+    },
+    {
+      "name": "Licens användare",
+      "qty": "15",
+      "unit": "st",
+      "price": "89.00",
+      "rate": 25
+    },
+    {
+      "name": "Utbildning halvdag",
+      "qty": "1",
+      "unit": "st",
+      "price": "7200.00",
+      "rate": 25
+    }
+  ],
+  "variant": "producer-visma"
+}

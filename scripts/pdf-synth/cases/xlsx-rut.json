@@ -1,0 +1,44 @@
+{
+  "file": "xlsx-rut",
+  "covers": "Excel, RUT deduction for household services",
+  "renderer": "xlsx",
+  "document": "invoice",
+  "number": "1109",
+  "issueDate": "2026-03-03",
+  "dueDate": "2026-04-03",
+  "customer": "K-509",
+  "ocr": "202611091",
+  "seller": {
+    "name": "Låtsasstäd Syntet AB",
+    "address": ["Exempelgatan 5", "999 05 Testby"],
+    "orgnr": "9999990055",
+    "fskatt": true,
+    "bankgiro": "99990020"
+  },
+  "buyer": {
+    "name": "Kim Exempelsson",
+    "address": ["Låtsasstigen 7", "999 13 Testby"]
+  },
+  "lines": [
+    {
+      "name": "Hemstädning",
+      "qty": "12",
+      "unit": "tim",
+      "price": "450.00",
+      "rate": 25,
+      "labour": true
+    },
+    {
+      "name": "Fönsterputs",
+      "qty": "1",
+      "unit": "st",
+      "price": "600.00",
+      "rate": 25,
+      "labour": true
+    }
+  ],
+  "deduction": {
+    "kind": "RUT",
+    "percent": 50
+  }
+}

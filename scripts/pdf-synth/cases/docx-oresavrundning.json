@@ -1,0 +1,46 @@
+{
+  "file": "docx-oresavrundning",
+  "covers": "Word, öresavrundning to whole kronor",
+  "renderer": "docx",
+  "document": "invoice",
+  "number": "1113",
+  "issueDate": "2026-03-07",
+  "dueDate": "2026-04-07",
+  "customer": "K-513",
+  "ocr": "202611133",
+  "seller": {
+    "name": "Syntetisk Catering AB",
+    "address": ["Exempelgatan 1", "999 01 Testby"],
+    "orgnr": "9999990014",
+    "fskatt": true,
+    "bankgiro": "99990012"
+  },
+  "buyer": {
+    "name": "Fiktiv Kund AB",
+    "address": ["Provvägen 2", "999 12 Testby"]
+  },
+  "lines": [
+    {
+      "name": "Kontorsmaterial",
+      "qty": "3",
+      "unit": "st",
+      "price": "33.33",
+      "rate": 25
+    },
+    {
+      "name": "Pärmar",
+      "qty": "7",
+      "unit": "st",
+      "price": "12.45",
+      "rate": 25
+    },
+    {
+      "name": "Skrivarpapper",
+      "qty": "2",
+      "unit": "fp",
+      "price": "58.90",
+      "rate": 25
+    }
+  ],
+  "rounding": true
+}

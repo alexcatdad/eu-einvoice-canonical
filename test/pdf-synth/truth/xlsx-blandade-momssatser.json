@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 1,
+  "file": "xlsx-blandade-momssatser.pdf",
+  "sha256": "8c451e2f16c8dac7dbbd7ef1206ab1edcdfd4f23042449a6aa27488e01880782",
+  "documentType": "invoice",
+  "typeCode": "380",
+  "invoicePages": [1],
+  "pricesIncludeVat": false,
+  "fields": {
+    "id": {
+      "value": "1103"
+    },
+    "issueDate": {
+      "value": "2026-03-24"
+    },
+    "dueDate": {
+      "value": "2026-04-24"
+    },
+    "currency": {
+      "value": "SEK"
+    },
+    "seller.name": {
+      "value": "Provkonsult Syntet AB"
+    },
+    "seller.legalRegistrationId": {
+      "value": "9999990048"
+    },
+    "seller.vatId": {
+      "value": "SE999999004801"
+    },
+    "seller.taxRegistrationId": {
+      "value": "Godkänd för F-skatt"
+    },
+    "buyer.name": {
+      "value": "Fiktiv Kund AB"
+    },
+    "payee.name": {
+      "status": "absent"
+    },
+    "payment.bankgiro": {
+      "value": "99990046"
+    },
+    "payment.plusgiro": {
+      "status": "absent"
+    },
+    "payment.iban": {
+      "status": "absent"
+    },
+    "payment.bic": {
+      "status": "absent"
+    },
+    "payment.remittanceInformation": {
+      "value": "202611034"
+    },
+    "totals.lineNetTotal": {
+      "value": "11925.00"
+    },
+    "totals.allowanceTotal": {
+      "status": "absent"
+    },
+    "totals.chargeTotal": {
+      "status": "absent"
+    },
+    "totals.taxExclusive": {
+      "status": "absent"
+    },
+    "totals.vatTotal": {
+      "value": "2476.20"
+    },
+    "totals.taxInclusive": {
+      "value": "14401.20"
+    },
+    "totals.prepaid": {
+      "status": "absent"
+    },
+    "totals.prepaidNote": {
+      "status": "absent"
+    },
+    "totals.rounding": {
+      "status": "absent"
+    },
+    "totals.payable": {
+      "value": "14401.20"
+    }
+  },
+  "vatBreakdown": {
+    "rows": [
+      {
+        "categoryCode": "S",
+        "rate": {
+          "value": "25"
+        },
+        "taxableAmount": {
+          "value": "8040.00"
+        },
+        "taxAmount": {
+          "value": "2010.00"
+        }
+      },
+      {
+        "categoryCode": "S",
+        "rate": {
+          "value": "12"
+        },
+        "taxableAmount": {
+          "value": "3885.00"
+        },
+        "taxAmount": {
+          "value": "466.20"
+        }
+      }
+    ]
+  },
+  "lines": {
+    "rows": [
+      {
+        "item.name": {
+          "value": "Hotellrum enkel"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "natt"
+        },
+        "price.net": {
+          "value": "1150.00"
+        },
+        "vat.rate": {
+          "value": "12"
+        },
+        "netAmount": {
+          "value": "3450.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Frukost"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "145.00"
+        },
+        "vat.rate": {
+          "value": "12"
+        },
+        "netAmount": {
+          "value": "435.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Parkering"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "dygn"
+        },
+        "price.net": {
+          "value": "180.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "540.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Konsulttimmar workshop"
+        },
+        "quantity": {
+          "value": "6"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "1250.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "7500.00"
+        }
+      }
+    ]
+  },
+  "notes": "Synthetic (scripts/pdf-synth): Excel, mixed 25 % and 12 % VAT"
+}

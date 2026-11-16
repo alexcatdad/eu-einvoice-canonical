@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "file": "xlsx-momsfritt.pdf",
+  "sha256": "c58e9732cf15765ccc5fa5d9190dd3140238ba4777696c499f7b9140f87ec50b",
+  "documentType": "invoice",
+  "typeCode": "380",
+  "invoicePages": [1],
+  "pricesIncludeVat": false,
+  "fields": {
+    "id": {
+      "value": "1112"
+    },
+    "issueDate": {
+      "value": "2026-03-06"
+    },
+    "dueDate": {
+      "value": "2026-04-06"
+    },
+    "currency": {
+      "value": "SEK"
+    },
+    "seller.name": {
+      "value": "Låtsasstäd Syntet AB"
+    },
+    "seller.legalRegistrationId": {
+      "value": "9999990055"
+    },
+    "seller.vatId": {
+      "value": "SE999999005501"
+    },
+    "seller.taxRegistrationId": {
+      "value": "Godkänd för F-skatt"
+    },
+    "buyer.name": {
+      "value": "Fiktiv Kund AB"
+    },
+    "payee.name": {
+      "status": "absent"
+    },
+    "payment.bankgiro": {
+      "value": "99990020"
+    },
+    "payment.plusgiro": {
+      "status": "absent"
+    },
+    "payment.iban": {
+      "status": "absent"
+    },
+    "payment.bic": {
+      "status": "absent"
+    },
+    "payment.remittanceInformation": {
+      "value": "202611125"
+    },
+    "totals.lineNetTotal": {
+      "value": "4000.00"
+    },
+    "totals.allowanceTotal": {
+      "status": "absent"
+    },
+    "totals.chargeTotal": {
+      "status": "absent"
+    },
+    "totals.taxExclusive": {
+      "status": "absent"
+    },
+    "totals.vatTotal": {
+      "value": "0.00"
+    },
+    "totals.taxInclusive": {
+      "value": "4000.00"
+    },
+    "totals.prepaid": {
+      "status": "absent"
+    },
+    "totals.prepaidNote": {
+      "status": "absent"
+    },
+    "totals.rounding": {
+      "status": "absent"
+    },
+    "totals.payable": {
+      "value": "4000.00"
+    }
+  },
+  "vatBreakdown": {
+    "rows": [
+      {
+        "categoryCode": "E",
+        "rate": {
+          "status": "absent"
+        },
+        "taxableAmount": {
+          "value": "4000.00"
+        },
+        "taxAmount": {
+          "value": "0.00"
+        },
+        "exemptionReason": {
+          "value": "Momsfri omsättning enligt mervärdesskattelagen (sjukvård)."
+        }
+      }
+    ]
+  },
+  "lines": {
+    "rows": [
+      {
+        "item.name": {
+          "value": "Behandling fysioterapi"
+        },
+        "quantity": {
+          "value": "6"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "650.00"
+        },
+        "vat.rate": {
+          "value": "0"
+        },
+        "netAmount": {
+          "value": "3900.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Journalkopia"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "100.00"
+        },
+        "vat.rate": {
+          "value": "0"
+        },
+        "netAmount": {
+          "value": "100.00"
+        }
+      }
+    ]
+  },
+  "notes": "Synthetic (scripts/pdf-synth): Excel, VAT-exempt sale (category E) with exemption statement"
+}

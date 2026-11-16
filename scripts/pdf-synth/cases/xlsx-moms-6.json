@@ -1,0 +1,46 @@
+{
+  "file": "xlsx-moms-6",
+  "covers": "Excel, 6 % VAT only (books and passenger transport), PlusGiro, no Netto line",
+  "renderer": "xlsx",
+  "document": "invoice",
+  "number": "1101",
+  "issueDate": "2026-03-22",
+  "dueDate": "2026-04-22",
+  "customer": "K-501",
+  "ocr": "202611018",
+  "seller": {
+    "name": "Testförlaget Syntet AB",
+    "address": ["Exempelgatan 2", "999 02 Testby"],
+    "orgnr": "9999990022",
+    "fskatt": true,
+    "plusgiro": "9999012"
+  },
+  "buyer": {
+    "name": "Fiktiv Kund AB",
+    "address": ["Provvägen 2", "999 12 Testby"]
+  },
+  "lines": [
+    {
+      "name": "Kursbok Grundläggande bokföring",
+      "qty": "12",
+      "unit": "st",
+      "price": "389.00",
+      "rate": 6
+    },
+    {
+      "name": "Arbetsbok Moms i praktiken",
+      "qty": "12",
+      "unit": "st",
+      "price": "149.00",
+      "rate": 6
+    },
+    {
+      "name": "Busstransport studieresa",
+      "qty": "1",
+      "unit": "st",
+      "price": "4800.00",
+      "rate": 6
+    }
+  ],
+  "netto": false
+}

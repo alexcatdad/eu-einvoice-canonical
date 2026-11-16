@@ -1,0 +1,61 @@
+{
+  "file": "docx-blandade-momssatser",
+  "covers": "Word, mixed 25 %, 12 % and 6 % VAT, Bankgiro plus IBAN and BIC",
+  "renderer": "docx",
+  "document": "invoice",
+  "number": "1102",
+  "issueDate": "2026-03-23",
+  "dueDate": "2026-04-23",
+  "customer": "K-502",
+  "ocr": "202611026",
+  "seller": {
+    "name": "Exempelbygg Syntet AB",
+    "address": ["Exempelgatan 3", "999 03 Testby"],
+    "orgnr": "9999990030",
+    "fskatt": true,
+    "bankgiro": "99990020",
+    "iban": "SE9399900000000000000001",
+    "bic": "SYNTSESS"
+  },
+  "buyer": {
+    "name": "Fiktiv Kund AB",
+    "address": ["Provvägen 2", "999 12 Testby"]
+  },
+  "lines": [
+    {
+      "name": "Konferenslokal heldag",
+      "qty": "1",
+      "unit": "st",
+      "price": "8500.00",
+      "rate": 25
+    },
+    {
+      "name": "Lunch konferens",
+      "qty": "18",
+      "unit": "st",
+      "price": "135.00",
+      "rate": 12
+    },
+    {
+      "name": "Fika förmiddag",
+      "qty": "18",
+      "unit": "st",
+      "price": "45.00",
+      "rate": 12
+    },
+    {
+      "name": "Programhäfte tryckt",
+      "qty": "18",
+      "unit": "st",
+      "price": "60.00",
+      "rate": 6
+    },
+    {
+      "name": "Teknikhyra projektor",
+      "qty": "1",
+      "unit": "st",
+      "price": "950.00",
+      "rate": 25
+    }
+  ]
+}

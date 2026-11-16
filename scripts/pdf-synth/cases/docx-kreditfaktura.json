@@ -1,0 +1,39 @@
+{
+  "file": "docx-kreditfaktura",
+  "covers": "Word, credit note (kreditfaktura, 381) with negative quantities and amounts",
+  "renderer": "docx",
+  "document": "credit-note",
+  "number": "1104",
+  "issueDate": "2026-03-25",
+  "dueDate": "2026-04-25",
+  "customer": "K-504",
+  "ocr": "202611042",
+  "seller": {
+    "name": "Syntetisk Catering AB",
+    "address": ["Exempelgatan 1", "999 01 Testby"],
+    "orgnr": "9999990014",
+    "fskatt": true,
+    "bankgiro": "99990012"
+  },
+  "buyer": {
+    "name": "Fiktiv Kund AB",
+    "address": ["Provvägen 2", "999 12 Testby"]
+  },
+  "lines": [
+    {
+      "name": "Lunchbuffé, felaktigt debiterad",
+      "qty": "-4",
+      "unit": "st",
+      "price": "125.00",
+      "rate": 12
+    },
+    {
+      "name": "Kaffe och bulle, ej levererat",
+      "qty": "-10",
+      "unit": "st",
+      "price": "38.00",
+      "rate": 12
+    }
+  ],
+  "credits": "1001"
+}

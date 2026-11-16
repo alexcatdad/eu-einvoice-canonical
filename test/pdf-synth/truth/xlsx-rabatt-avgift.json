@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "file": "xlsx-rabatt-avgift.pdf",
+  "sha256": "bb35d387e6d6e7051689e260652f71783748bb9740760c3b01ebe04fa25c9be1",
+  "documentType": "invoice",
+  "typeCode": "380",
+  "invoicePages": [1],
+  "pricesIncludeVat": false,
+  "fields": {
+    "id": {
+      "value": "1114"
+    },
+    "issueDate": {
+      "value": "2026-03-08"
+    },
+    "dueDate": {
+      "value": "2026-04-08"
+    },
+    "currency": {
+      "value": "SEK"
+    },
+    "seller.name": {
+      "value": "Provkonsult Syntet AB"
+    },
+    "seller.legalRegistrationId": {
+      "value": "9999990048"
+    },
+    "seller.vatId": {
+      "value": "SE999999004801"
+    },
+    "seller.taxRegistrationId": {
+      "value": "Godkänd för F-skatt"
+    },
+    "buyer.name": {
+      "value": "Fiktiv Kund AB"
+    },
+    "payee.name": {
+      "status": "absent"
+    },
+    "payment.bankgiro": {
+      "value": "99990046"
+    },
+    "payment.plusgiro": {
+      "status": "absent"
+    },
+    "payment.iban": {
+      "status": "absent"
+    },
+    "payment.bic": {
+      "status": "absent"
+    },
+    "payment.remittanceInformation": {
+      "value": "202611141"
+    },
+    "totals.lineNetTotal": {
+      "value": "17940.00"
+    },
+    "totals.allowanceTotal": {
+      "value": "1500.00"
+    },
+    "totals.chargeTotal": {
+      "value": "49.00"
+    },
+    "totals.taxExclusive": {
+      "value": "16489.00"
+    },
+    "totals.vatTotal": {
+      "value": "4122.25"
+    },
+    "totals.taxInclusive": {
+      "value": "20611.25"
+    },
+    "totals.prepaid": {
+      "status": "absent"
+    },
+    "totals.prepaidNote": {
+      "status": "absent"
+    },
+    "totals.rounding": {
+      "status": "absent"
+    },
+    "totals.payable": {
+      "value": "20611.25"
+    }
+  },
+  "vatBreakdown": {
+    "rows": [
+      {
+        "categoryCode": "S",
+        "rate": {
+          "value": "25"
+        },
+        "taxableAmount": {
+          "value": "16489.00"
+        },
+        "taxAmount": {
+          "value": "4122.25"
+        }
+      }
+    ]
+  },
+  "lines": {
+    "rows": [
+      {
+        "item.name": {
+          "value": "Kontorsstol"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "2490.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "9960.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Skrivbord"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "3990.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "7980.00"
+        }
+      }
+    ]
+  },
+  "notes": "Synthetic (scripts/pdf-synth): Excel, document-level allowance (Rabatt) and charge (Fakturaavgift)"
+}

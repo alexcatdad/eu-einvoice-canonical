@@ -1,0 +1,41 @@
+{
+  "file": "docx-factoring",
+  "covers": "Word, factoring: payee and Bankgiro of a finance company",
+  "renderer": "docx",
+  "document": "invoice",
+  "number": "1111",
+  "issueDate": "2026-03-05",
+  "dueDate": "2026-04-05",
+  "customer": "K-511",
+  "ocr": "202611117",
+  "seller": {
+    "name": "Provkonsult Syntet AB",
+    "address": ["Exempelgatan 4", "999 04 Testby"],
+    "orgnr": "9999990048",
+    "fskatt": true
+  },
+  "buyer": {
+    "name": "Fiktiv Kund AB",
+    "address": ["Provvägen 2", "999 12 Testby"]
+  },
+  "lines": [
+    {
+      "name": "Konsulttimmar mars",
+      "qty": "32",
+      "unit": "tim",
+      "price": "1100.00",
+      "rate": 25
+    },
+    {
+      "name": "Resekostnader",
+      "qty": "1",
+      "unit": "st",
+      "price": "1840.00",
+      "rate": 25
+    }
+  ],
+  "payee": {
+    "name": "Fakturaköp Syntet AB",
+    "bankgiro": "99990038"
+  }
+}

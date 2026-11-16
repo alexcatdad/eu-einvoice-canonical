@@ -1,0 +1,46 @@
+{
+  "file": "pdflib-type0-utan-tounicode",
+  "covers": "pdf-lib, embedded Type0 (CIDFontType2, Identity-H, CID = glyph id) without ToUnicode",
+  "renderer": "pdflib",
+  "document": "invoice",
+  "number": "1118",
+  "issueDate": "2026-03-12",
+  "dueDate": "2026-04-12",
+  "customer": "K-518",
+  "ocr": "202611182",
+  "seller": {
+    "name": "Provkonsult Syntet AB",
+    "address": ["Exempelgatan 4", "999 04 Testby"],
+    "orgnr": "9999990048",
+    "fskatt": true,
+    "bankgiro": "99990046"
+  },
+  "buyer": {
+    "name": "Fiktiv Kund AB",
+    "address": ["Provvägen 2", "999 12 Testby"]
+  },
+  "lines": [
+    {
+      "name": "Ramverksavtal support",
+      "qty": "1",
+      "unit": "mån",
+      "price": "4500.00",
+      "rate": 25
+    },
+    {
+      "name": "Licens användare",
+      "qty": "15",
+      "unit": "st",
+      "price": "89.00",
+      "rate": 25
+    },
+    {
+      "name": "Utbildning halvdag",
+      "qty": "1",
+      "unit": "st",
+      "price": "7200.00",
+      "rate": 25
+    }
+  ],
+  "variant": "type0-gid"
+}

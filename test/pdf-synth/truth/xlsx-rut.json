@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "file": "xlsx-rut.pdf",
+  "sha256": "c0295653b99d1425986b0f101031c58c0d8b2629764a167a72bbdabe08621215",
+  "documentType": "invoice",
+  "typeCode": "380",
+  "invoicePages": [1],
+  "pricesIncludeVat": false,
+  "fields": {
+    "id": {
+      "value": "1109"
+    },
+    "issueDate": {
+      "value": "2026-03-03"
+    },
+    "dueDate": {
+      "value": "2026-04-03"
+    },
+    "currency": {
+      "value": "SEK"
+    },
+    "seller.name": {
+      "value": "Låtsasstäd Syntet AB"
+    },
+    "seller.legalRegistrationId": {
+      "value": "9999990055"
+    },
+    "seller.vatId": {
+      "value": "SE999999005501"
+    },
+    "seller.taxRegistrationId": {
+      "value": "Godkänd för F-skatt"
+    },
+    "buyer.name": {
+      "value": "Kim Exempelsson"
+    },
+    "payee.name": {
+      "status": "absent"
+    },
+    "payment.bankgiro": {
+      "value": "99990020"
+    },
+    "payment.plusgiro": {
+      "status": "absent"
+    },
+    "payment.iban": {
+      "status": "absent"
+    },
+    "payment.bic": {
+      "status": "absent"
+    },
+    "payment.remittanceInformation": {
+      "value": "202611091"
+    },
+    "totals.lineNetTotal": {
+      "value": "6000.00"
+    },
+    "totals.allowanceTotal": {
+      "status": "absent"
+    },
+    "totals.chargeTotal": {
+      "status": "absent"
+    },
+    "totals.taxExclusive": {
+      "status": "absent"
+    },
+    "totals.vatTotal": {
+      "value": "1500.00"
+    },
+    "totals.taxInclusive": {
+      "value": "7500.00"
+    },
+    "totals.prepaid": {
+      "value": "3750.00"
+    },
+    "totals.prepaidNote": {
+      "value": "RUT"
+    },
+    "totals.rounding": {
+      "status": "absent"
+    },
+    "totals.payable": {
+      "value": "3750.00"
+    }
+  },
+  "vatBreakdown": {
+    "rows": [
+      {
+        "categoryCode": "S",
+        "rate": {
+          "value": "25"
+        },
+        "taxableAmount": {
+          "value": "6000.00"
+        },
+        "taxAmount": {
+          "value": "1500.00"
+        }
+      }
+    ]
+  },
+  "lines": {
+    "rows": [
+      {
+        "item.name": {
+          "value": "Hemstädning"
+        },
+        "quantity": {
+          "value": "12"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "450.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "5400.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Fönsterputs"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "600.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "600.00"
+        }
+      }
+    ]
+  },
+  "notes": "Synthetic (scripts/pdf-synth): Excel, RUT deduction for household services"
+}

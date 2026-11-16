@@ -1,0 +1,47 @@
+{
+  "file": "xlsx-rabatt-avgift",
+  "covers": "Excel, document-level allowance (Rabatt) and charge (Fakturaavgift)",
+  "renderer": "xlsx",
+  "document": "invoice",
+  "number": "1114",
+  "issueDate": "2026-03-08",
+  "dueDate": "2026-04-08",
+  "customer": "K-514",
+  "ocr": "202611141",
+  "seller": {
+    "name": "Provkonsult Syntet AB",
+    "address": ["Exempelgatan 4", "999 04 Testby"],
+    "orgnr": "9999990048",
+    "fskatt": true,
+    "bankgiro": "99990046"
+  },
+  "buyer": {
+    "name": "Fiktiv Kund AB",
+    "address": ["Provvägen 2", "999 12 Testby"]
+  },
+  "lines": [
+    {
+      "name": "Kontorsstol",
+      "qty": "4",
+      "unit": "st",
+      "price": "2490.00",
+      "rate": 25
+    },
+    {
+      "name": "Skrivbord",
+      "qty": "2",
+      "unit": "st",
+      "price": "3990.00",
+      "rate": 25
+    }
+  ],
+  "allowance": {
+    "amount": "1500.00",
+    "rate": 25
+  },
+  "charge": {
+    "label": "Fakturaavgift",
+    "amount": "49.00",
+    "rate": 25
+  }
+}
