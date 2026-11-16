@@ -10,7 +10,7 @@
 import type { CanonicalInvoice, PdfRegion, SourceWarning } from '../canonical.js';
 import { buildExtraction } from './generic/build.js';
 import { readInvoice } from './generic.js';
-import { extractLayout } from './layout.js';
+import { DEFAULT_PDF_LIMITS, extractLayout, type PdfLimits } from './layout.js';
 import { applyPaymentQr, findQrCodes, qrPaymentFacts } from './qr.js';
 import { applyRules, BUNDLED_PROFILES, loadPdfRuleSet, PdfRuleError, type PdfRuleSet } from './rules/index.js';
 
@@ -24,6 +24,8 @@ export interface PdfExtractOptions {
    * generic rules and the bundled generator profiles. An invalid template throws `PdfRuleError`.
    */
   templates?: readonly unknown[];
+  /** Work limits ({@link DEFAULT_PDF_LIMITS} for any left out); a PDF over one is `unsupported`. */
+  limits?: Partial<PdfLimits>;
 }
 
 /**
@@ -70,11 +72,11 @@ export const extractPdfInvoice: PdfExtractor = async (bytes, options) => {
   const wrong = templates.find((t) => t.kind !== 'issuer-template');
   if (wrong) throw new PdfRuleError(wrong.id, ['/kind: callers pass issuer templates only']);
   try {
-    const layout = await extractLayout(bytes);
+    const layout = await extractLayout(bytes, { limits: options.limits });
     if (!layout.quality.supported) {
       const reason = `PDF text cannot be read: ${layout.quality.reasons.map((r) => r.detail).join('; ')}`;
       // The text stays unread; a payment QR code still gives payment facts (decoding is not OCR)
-      const qr = layout.pages.length ? qrPaymentFacts(await findQrCodes(bytes)) : undefined;
+      const qr = layout.pages.length ? qrPaymentFacts(await findQrCodes(bytes, layout.pages.length)) : undefined;
       if (!qr) return { status: 'unsupported', reason };
       const payment: PdfPaymentFacts = { fields: {}, pdfProvenance: {} };
       for (const [k, { value, region }] of Object.entries(qr)) {
@@ -96,4 +98,4 @@ export const extractPdfInvoice: PdfExtractor = async (bytes, options) => {
 
 const PDFJS_PARSE_ERRORS = new Set(['UnknownErrorException', 'InvalidPDFException', 'FormatError']);
 
-export { loadPdfRuleSet, PdfRuleError, type PdfRuleSet };
+export { DEFAULT_PDF_LIMITS, loadPdfRuleSet, type PdfLimits, PdfRuleError, type PdfRuleSet };

@@ -3,10 +3,13 @@
  *
  * pdfjs-dist is loaded on demand, like pdf-lib in envelope-pdf.ts, so it stays out of the initial bundle. Its modern
  * build is used, so the native canvas package it lists as optional is never loaded (the legacy build loads it on
- * import in Node). That build needs a current runtime (Node 26+, Bun 1.4+, current browsers); older ones get the
- * `unsupported-runtime` reason instead of an exception. In Node, pdf.js prints one "Please use the `legacy` build"
- * warning on first load; it has no setting to turn that off before import. The worker runs in the calling thread,
- * so no Worker, worker URL or fetch is involved.
+ * import in Node). That build calls built-ins only Bun 1.4+ and current browsers have (Node keeps Math.sumPrecise
+ * behind a flag); other runtimes get the `unsupported-runtime` reason instead of an exception. pdf.js prints one
+ * "Please use the `legacy` build" warning on first load in Bun; it has no setting to turn that off before import.
+ * The worker runs in the calling thread, so no Worker, worker URL or fetch is involved.
+ *
+ * Work is bounded by {@link PdfLimits}: a file over a limit gives the `too-large` reason. The page, text run and
+ * operator limits are deterministic; the time limit is checked between pages and depends on the machine.
  *
  * Fonts that need predefined CMaps (non-Identity CJK encodings) or non-embedded standard font files read nothing
  * from the network: without `cMapUrl`/`standardFontDataUrl` their text may come out empty or garbled, which the
@@ -81,7 +84,29 @@ export interface LayoutOptions {
   cMapUrl?: string;
   /** Directory or URL of pdf.js's standard font data (ending in "/"); not used unless given. */
   standardFontDataUrl?: string;
+  /** Work limits; each one left out takes its {@link DEFAULT_PDF_LIMITS} value. */
+  limits?: Partial<PdfLimits>;
 }
+
+/** Bounds on the work done for one PDF, in the manner of `UnwrapLimits`. */
+export interface PdfLimits {
+  /** Pages per PDF. Checked before any page is read. */
+  maxPages: number;
+  /** Text runs (pdf.js text items) across all pages. */
+  maxTextRuns: number;
+  /** Drawing operators across all pages. */
+  maxOperators: number;
+  /** Time spent reading pages, in milliseconds; checked after each page. */
+  maxMilliseconds: number;
+}
+
+/** Well above any invoice: the largest synthetic invoice has 3 pages and reads in well under a second. */
+export const DEFAULT_PDF_LIMITS: PdfLimits = {
+  maxPages: 100,
+  maxTextRuns: 200_000,
+  maxOperators: 2_000_000,
+  maxMilliseconds: 20_000,
+};
 
 export type Pdfjs = typeof import('pdfjs-dist');
 
@@ -121,17 +146,23 @@ const unsupported = (reason: UnsupportedReason, encrypted = false): LayoutDocume
   quality: { supported: false, reasons: [reason] },
 });
 
+const UNREADABLE = 'The file is not a readable PDF';
+const tooLarge = (limit: keyof PdfLimits, limits: PdfLimits) =>
+  unsupported({ code: 'too-large', detail: `The PDF is over the extraction limit ${limit} (${limits[limit]})` });
+
 export async function extractLayout(bytes: Uint8Array, options: LayoutOptions = {}): Promise<LayoutDocument> {
   const missing = missingRuntimeFeatures();
   if (missing.length)
     return unsupported({
       code: 'unsupported-runtime',
-      detail: `PDF extraction needs Node 26+, Bun 1.4+ or a current browser (missing ${missing.join(', ')})`,
+      detail: `PDF extraction is supported on Bun 1.4+ and current browsers; this runtime lacks ${missing.join(', ')}`,
     });
+  const { limits: given, ...urls } = options;
+  const limits = { ...DEFAULT_PDF_LIMITS, ...given };
   const lib = await pdfjs();
   const task = lib.getDocument({
     data: bytes.slice(), // pdf.js may take ownership of the buffer
-    ...options,
+    ...urls,
     verbosity: lib.VerbosityLevel.ERRORS,
     disableFontFace: true,
     useSystemFonts: false,
@@ -140,19 +171,24 @@ export async function extractLayout(bytes: Uint8Array, options: LayoutOptions = 
     stopAtErrors: false,
   });
   try {
-    const doc = await task.promise.catch((error: unknown) => {
-      if (error instanceof lib.PasswordException) return 'encrypted' as const;
-      if (error instanceof lib.InvalidPDFException) return 'unreadable' as const;
-      throw error;
-    });
+    const doc = await task.promise.catch((error: unknown) =>
+      error instanceof lib.PasswordException ? ('encrypted' as const) : ('unreadable' as const),
+    );
     if (typeof doc === 'string') {
-      const detail = doc === 'encrypted' ? 'The file needs a password to open' : 'The file is not a readable PDF';
+      const detail = doc === 'encrypted' ? 'The file needs a password to open' : UNREADABLE;
       return unsupported({ code: doc, detail }, doc === 'encrypted');
     }
-    const { info } = (await doc.getMetadata()) as { info: Record<string, unknown> };
+    if (doc.numPages > limits.maxPages) return tooLarge('maxPages', limits);
+    const { info } = (await parsed(doc.getMetadata())) as { info: Record<string, unknown> };
     const text = (key: string) => (typeof info[key] === 'string' && info[key] ? { [key.toLowerCase()]: info[key] } : {});
     const pages: LayoutPage[] = [];
-    for (let n = 1; n <= doc.numPages; n++) pages.push(await readPage(lib, await doc.getPage(n), n));
+    const work = { started: performance.now(), runs: 0, operators: 0 };
+    for (let n = 1; n <= doc.numPages; n++) {
+      const page = await readPage(lib, await parsed(doc.getPage(n)), n, limits, work);
+      if (typeof page === 'string') return tooLarge(page, limits);
+      pages.push(page);
+      if (performance.now() - work.started > limits.maxMilliseconds) return tooLarge('maxMilliseconds', limits);
+    }
     return {
       ...(text('Producer') as { producer?: string }),
       ...(text('Creator') as { creator?: string }),
@@ -161,18 +197,39 @@ export async function extractLayout(bytes: Uint8Array, options: LayoutOptions = 
       pages,
       quality: checkQuality(pages),
     };
+  } catch (error) {
+    if (error instanceof Unparsable) return unsupported({ code: 'unreadable', detail: UNREADABLE });
+    throw error;
   } finally {
     await task.destroy();
   }
 }
 
+/** A pdf.js call failed on the file's structure (bad xref, stream or object); unlike a fault in this module, it is the file's. */
+class Unparsable {}
+const parsed = <T>(p: Promise<T>): Promise<T> =>
+  p.catch(() => {
+    throw new Unparsable();
+  });
+
 type PdfPage = Awaited<ReturnType<Awaited<ReturnType<Pdfjs['getDocument']>['promise']>['getPage']>>;
 
-async function readPage(lib: Pdfjs, page: PdfPage, number: number): Promise<LayoutPage> {
+/** Reads one page, or names the limit the running totals in `work` went over. */
+async function readPage(
+  lib: Pdfjs,
+  page: PdfPage,
+  number: number,
+  limits: PdfLimits,
+  work: { runs: number; operators: number },
+): Promise<LayoutPage | 'maxTextRuns' | 'maxOperators'> {
   const viewport = page.getViewport({ scale: 1 });
   const vt = viewport.transform as Matrix;
-  const content = await page.getTextContent();
-  const ops = await page.getOperatorList(); // also resolves the fonts used by the text
+  const content = await parsed(page.getTextContent());
+  work.runs += content.items.length;
+  if (work.runs > limits.maxTextRuns) return 'maxTextRuns';
+  const ops = await parsed(page.getOperatorList()); // also resolves the fonts used by the text
+  work.operators += ops.fnArray.length;
+  if (work.operators > limits.maxOperators) return 'maxOperators';
   const fonts = new Map<string, PageFont>();
   const fontOf = (id: string): PageFont => {
     let font = fonts.get(id);

@@ -218,10 +218,17 @@ describe('generic PDF invoice extraction', () => {
     if (o?.status !== 'ok') throw new Error('UBL did not convert');
     const v = o.invoices[0].source.validation!;
     expect([v.schema, v.semantic]).toEqual(['passed', 'passed']);
+    // The Peppol bundle is held locally (bun run restore:local-validation); CI always has it.
+    if (v.profile === 'unavailable') {
+      if (process.env.CI) throw new Error('Peppol validator bundle missing in CI');
+      console.warn('SKIPPED Peppol check: validator bundle not restored locally (bun run restore:local-validation)');
+      return;
+    }
     // Peppol also needs a buyer reference (BT-10) and the buyer's electronic address (BT-49), which the PDF does not print
+    expect(v.profile).toBe('failed');
     const fatal = v.findings.filter((f) => f.severity === 'fatal');
     expect(fatal.filter((f) => f.layer !== 'profile')).toEqual([]);
-    expect(fatal.map((f) => f.ruleId).filter((id) => id !== 'PEPPOL-EN16931-R003' && id !== 'PEPPOL-EN16931-R010')).toEqual([]);
+    expect([...new Set(fatal.map((f) => f.ruleId))].sort()).toEqual(['PEPPOL-EN16931-R003', 'PEPPOL-EN16931-R010']);
   }, 60000);
 
   test('amounts that do not reconcile give a draft, never an invoice', async () => {

@@ -37,7 +37,12 @@ export interface PdfEvalReport {
   excluded: string[];
   /** Paired mode: PDFs that gave no invoice from embedded XML, so have no key. */
   noReference: number;
-  gate: { wrong: number; passed: boolean };
+  /**
+   * Passes when no value is wrong, no document errored and something was read: at least one scored value and one
+   * `ok` or `draft` document, and in Swedish mode at least half of the documents `ok` or `draft`. `failures` names
+   * each broken condition.
+   */
+  gate: { wrong: number; errors: number; scored: number; extracted: number; passed: boolean; failures: string[] };
 }
 
 const zeroFields = (): FieldCounts => Object.fromEntries(VERDICTS.map((v) => [v, 0])) as FieldCounts;
@@ -102,13 +107,14 @@ export function aggregate(
     if (s.message && (s.status === 'unsupported' || s.status === 'not-an-invoice')) cluster(unsupported, s.message, s.id);
     if (s.message && s.status === 'error') cluster(errors, s.message, s.id);
   }
+  const scored = totals.correct + totals.missing + totals.wrong;
   const top = (m: Map<string, Cluster>) => [...m.values()].sort((a, b) => b.count - a.count || a.message.localeCompare(b.message));
   return {
     generatedAt: meta.generatedAt ?? new Date().toISOString(),
     mode: meta.mode,
     commit: meta.commit,
     documents: { ...documents, withWrong: documents.withWrong.sort() },
-    totals: { ...totals, scored: totals.correct + totals.missing + totals.wrong },
+    totals: { ...totals, scored },
     fields: Object.fromEntries(Object.entries(fields).sort(([a], [b]) => a.localeCompare(b))),
     byDocType,
     expectedProblems: { identifierCheck: ic, notReconciling: nr },
@@ -118,8 +124,18 @@ export function aggregate(
     errors: top(errors),
     excluded: [...(meta.excluded ?? [])].sort(),
     noReference: meta.noReference ?? 0,
-    gate: { wrong: totals.wrong, passed: totals.wrong === 0 },
+    gate: gate(totals.wrong, documents.error, scored, documents.ok + documents.draft, meta.mode === 'swedish' ? documents.total / 2 : 0),
   };
+}
+
+function gate(wrong: number, errors: number, scored: number, extracted: number, minExtracted: number): PdfEvalReport['gate'] {
+  const failures = [
+    wrong ? `${wrong} wrong values` : '',
+    errors ? `${errors} documents errored` : '',
+    scored ? '' : 'no values scored',
+    !extracted ? 'no ok or draft documents' : extracted < minExtracted ? `only ${extracted} documents ok or draft` : '',
+  ].filter(Boolean);
+  return { wrong, errors, scored, extracted, passed: !failures.length, failures };
 }
 
 const row = (cells: (string | number)[]) => `| ${cells.join(' | ')} |`;
@@ -130,7 +146,7 @@ export function renderMarkdown(r: PdfEvalReport, countsOnly = false): string {
   const out = [
     `## PDF extraction evaluation (${r.mode === 'swedish' ? 'Swedish answer key' : 'paired public corpus'})`,
     '',
-    `Gate: **${r.gate.passed ? 'passed' : 'failed'}**, ${r.gate.wrong} wrong of ${r.totals.scored} scored values.`,
+    `Gate: **${r.gate.passed ? 'passed' : `failed (${r.gate.failures.join(', ')})`}**, ${r.gate.wrong} wrong of ${r.totals.scored} scored values.`,
     '',
     row(['Documents', ...DOC_STATUSES, 'ok, all correct']),
     row(Array(DOC_STATUSES.length + 2).fill('---')),

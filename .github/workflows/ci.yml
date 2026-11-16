@@ -39,6 +39,10 @@ jobs:
         uses: ./.github/actions/swedish-pdf-eval
         with:
           ssh-key: ${{ secrets.VALIDATION_CACHE_SSH_KEY }}
+      - name: Synthetic Swedish PDF answer key (public; zero wrong values, no errors)
+        if: matrix.gate == 'tests'
+        shell: bash
+        run: bun scripts/pdf-eval.ts swedish test/pdf-synth --out "$RUNNER_TEMP/pdf-eval-synthetic.json" --gate | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Library static, coverage and package checks
         if: matrix.gate == 'tests'
         run: bun run check:lib:static && bun run check:lib:tests

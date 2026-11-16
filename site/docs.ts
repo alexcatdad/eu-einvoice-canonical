@@ -67,7 +67,7 @@ export const PAGES: PageDef[] = [
     slug: 'pdf-extraction',
     title: 'PDF text extraction',
     description:
-      'Opt-in, deterministic reading of invoices from PDFs without embedded XML: outcomes, drafts, field provenance, Swedish mapping and runtimes.',
+      'Opt-in, deterministic reading of invoices from PDFs without embedded XML: outcomes, drafts, payment QR codes, rule layers, Swedish mapping and runtimes.',
     group: 'Use it',
     sections: ['PDF text extraction (opt-in)'],
   },
