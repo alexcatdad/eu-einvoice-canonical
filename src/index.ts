@@ -308,8 +308,8 @@ async function extractFromPdf(
   skipped.splice(i, 1);
   const pdf: PdfSource = { filename, sha256: fileSha256, byteLength: bytes.length };
   try {
-    // Loaded on demand, like envelope-pdf.ts, so the extractor stays out of the initial bundle.
-    const { extractPdfInvoice } = await import('./pdf-extract/index.js');
+    // Loaded on demand and, like validation, left out of browser bundles: pdf.js and its worker are large.
+    const { extractPdfInvoice } = await import(/* @vite-ignore */ './pdf-extract/index.js');
     const r = await extractPdfInvoice(bytes, { fileSha256, filename });
     return [r.status === 'ok' ? { status: 'ok', invoices: [r.invoice], pdf } : { ...r, pdf }];
   } catch (e) {

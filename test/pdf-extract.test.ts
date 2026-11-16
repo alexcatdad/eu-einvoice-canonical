@@ -35,7 +35,7 @@ describe('convert extractPdf', () => {
     expect(r.pdfOutcomes).toEqual([
       {
         status: 'unsupported',
-        reason: expect.stringContaining('PDF without embedded XML'),
+        reason: expect.stringContaining('No invoice fields were recognised'),
         pdf: { filename: 'plain.pdf', sha256: r.fileSha256, byteLength: bytes.length },
       },
     ]);
@@ -74,7 +74,7 @@ describe('convert extractPdf', () => {
     expect(validateResult({ fileSha256: 'x', outcomes: [], pdfOutcomes: [{ ...draft, pdf: undefined }], skipped: [] })).toBe(false);
   });
 
-  test('the stub extractor reports every PDF as unsupported', async () => {
+  test('the extractor reports a PDF without invoice fields as unsupported', async () => {
     expect(await extractPdfInvoice(await plain(), { fileSha256: '0' })).toMatchObject({ status: 'unsupported' });
   });
 });
@@ -92,7 +92,7 @@ describe('einvoice convert --extract-pdf', () => {
     writeFileSync(file, await plain());
     const r = await run('convert', '--extract-pdf', file);
     expect(r.code).toBe(EXIT.unsupported);
-    expect(r.stderr).toContain('PDF without embedded XML');
+    expect(r.stderr).toContain('No invoice fields were recognised');
     expect(r.stdout.trim()).toBe('[]');
   });
 
