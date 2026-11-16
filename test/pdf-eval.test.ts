@@ -243,7 +243,7 @@ test('the report holds counts and ids only, and the gate fails on a wrong value'
       generatedAt: 'T',
     },
   );
-  expect(report.gate).toEqual({ wrong: 1, passed: false });
+  expect(report.gate).toMatchObject({ wrong: 1, errors: 0, extracted: 1, passed: false, failures: ['1 wrong values'] });
   expect(report.documents).toMatchObject({ total: 2, ok: 1, unsupported: 1, withWrong: ['abababababab'] });
   expect(report.totals.scored).toBeGreaterThan(0);
   expect(report.unsupported[0]).toMatchObject({ message: "Garbled text on page N '…'", count: 1, examples: ['cdcdcdcdcdcd'] });
@@ -252,6 +252,24 @@ test('the report holds counts and ids only, and the gate fails on a wrong value'
   const counts = renderMarkdown(report, true);
   expect(counts).toContain('Documents with wrong values: 1.');
   for (const v of ['abababababab', 'cdcdcdcdcdcd', 'Garbled']) expect(counts).not.toContain(v);
+});
+
+test('the gate fails when extraction collapses, even with no wrong value', () => {
+  const t = truth();
+  const failed = (outcome: Parameters<typeof score>[1]) =>
+    aggregate([score(fromTruth(t), outcome)], { mode: 'swedish', generatedAt: 'T' }).gate;
+  expect(failed({ status: 'error', pdf, error: 'Internal error: x' })).toMatchObject({
+    wrong: 0,
+    passed: false,
+    failures: ['1 documents errored', 'no values scored', 'no ok or draft documents'],
+  });
+  expect(failed({ status: 'unsupported', pdf, reason: 'no text' }).failures).toEqual(['no values scored', 'no ok or draft documents']);
+  const unsupported = score(fromTruth(t), { status: 'unsupported', pdf, reason: 'no text' });
+  const partial = aggregate([score(fromTruth(t), ok(invoice())), unsupported, unsupported], { mode: 'swedish', generatedAt: 'T' });
+  expect(partial.gate.failures).toEqual(['only 1 documents ok or draft']);
+  expect(renderMarkdown(partial, true)).toContain('Gate: **failed (only 1 documents ok or draft)**, 0 wrong of');
+  expect(aggregate([], { mode: 'swedish', generatedAt: 'T' }).gate.failures).toEqual(['no values scored', 'no ok or draft documents']);
+  expect(failed(ok(invoice()))).toMatchObject({ passed: true, failures: [] });
 });
 
 async function blankPdf() {
@@ -273,7 +291,11 @@ test('Swedish mode reads truth/ next to the PDFs and checks their SHA-256', asyn
   expect(r.documents.total).toBe(2);
   expect(r.documents.unsupported).toBe(1); // a page without text
   expect(r.errors).toEqual([{ message: 'PDF does not match the truth file SHA-N', count: 1, examples: ['abababababab'] }]);
-  expect(r.gate.passed).toBe(true);
+  expect(r.gate).toMatchObject({
+    wrong: 0,
+    passed: false,
+    failures: ['1 documents errored', 'no values scored', 'no ok or draft documents'],
+  });
 });
 
 test('paired mode keys hybrid PDFs by their XML, skips others, and honours the exclude list', async () => {

@@ -14,7 +14,8 @@
  * document with a wrong value so it can be checked against the page.
  *
  * The report holds counts, normalised messages, problem codes and file ids only; nothing read from a file is
- * printed. `--gate` exits 1 when any value is wrong. `--counts-only` also leaves file ids and message text out of
+ * printed. `--gate` exits 1 when any value is wrong, any document errored, or nothing was read (no scored value,
+ * no `ok` or `draft` document). `--counts-only` also leaves file ids and message text out of
  * the printed and `--md` report (the `--out` JSON keeps them).
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';

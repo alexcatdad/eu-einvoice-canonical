@@ -7,8 +7,10 @@ import type { LayoutPage } from '../layout.js';
 export type UnsupportedCode =
   /** The file needs a password to open. */
   | 'encrypted'
-  /** The JavaScript runtime lacks built-ins pdf.js needs (Node 26+, Bun 1.4+ or a current browser). */
+  /** The JavaScript runtime lacks built-ins pdf.js needs (supported: Bun 1.4+ and current browsers). */
   | 'unsupported-runtime'
+  /** The file is over one of the extraction limits (pages, text runs, operators, time). */
+  | 'too-large'
   /** The file could not be parsed as a PDF. */
   | 'unreadable'
   /** A page has no text layer and no images. */

@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import { degrees, PDFDocument, PDFHexString, PDFName, type PDFPage, rgb, StandardFonts } from 'pdf-lib';
+import { extractPdfInvoice } from '../src/pdf-extract/index.js';
 import { groupLines } from '../src/pdf-extract/layout/group.js';
-import { extractLayout, missingRuntimeFeatures, type TextRun } from '../src/pdf-extract/layout.js';
+import { extractLayout, missingRuntimeFeatures, type PdfLimits, type TextRun } from '../src/pdf-extract/layout.js';
 
 /** Synthetic PDFs only; every text below is generic vocabulary. */
 async function pdf(draw: (page: PDFPage, font: Awaited<ReturnType<PDFDocument['embedFont']>>, doc: PDFDocument) => void | Promise<void>) {
@@ -219,13 +220,37 @@ describe('text quality', () => {
       expect((await extractLayout(await invoice())).quality.reasons).toEqual([
         {
           code: 'unsupported-runtime',
-          detail: 'PDF extraction needs Node 26+, Bun 1.4+ or a current browser (missing Math.sumPrecise)',
+          detail: 'PDF extraction is supported on Bun 1.4+ and current browsers; this runtime lacks Math.sumPrecise',
         },
       ]);
+      expect(await extractPdfInvoice(await invoice(), { fileSha256: 'f'.repeat(64) })).toEqual({
+        status: 'unsupported',
+        reason: 'PDF text cannot be read: PDF extraction is supported on Bun 1.4+ and current browsers; this runtime lacks Math.sumPrecise',
+      });
     } finally {
       if (sumPrecise) Object.defineProperty(Math, 'sumPrecise', sumPrecise);
     }
     expect(missingRuntimeFeatures()).toEqual([]);
+  });
+
+  test('stops at the work limits', async () => {
+    const twoPages = await pdf(async (page, font, doc) => {
+      page.drawText('Faktura', { x: 50, y: 790, size: 18, font });
+      doc.addPage([595, 842]).drawText('Sida 2', { x: 50, y: 790, size: 10, font });
+    });
+    const reason = async (limits: Partial<PdfLimits>) => (await extractLayout(twoPages, { limits })).quality.reasons;
+    const over = (limit: string, value: number) => [
+      { code: 'too-large' as const, detail: `The PDF is over the extraction limit ${limit} (${value})` },
+    ];
+    expect(await reason({ maxPages: 1 })).toEqual(over('maxPages', 1));
+    expect(await reason({ maxTextRuns: 1 })).toEqual(over('maxTextRuns', 1));
+    expect(await reason({ maxOperators: 1 })).toEqual(over('maxOperators', 1));
+    expect(await reason({ maxMilliseconds: -1 })).toEqual(over('maxMilliseconds', -1));
+    expect(await reason({ maxPages: 2, maxTextRuns: 2 })).toEqual([]);
+    expect(await extractPdfInvoice(twoPages, { fileSha256: 'f'.repeat(64), limits: { maxPages: 1 } })).toEqual({
+      status: 'unsupported',
+      reason: 'PDF text cannot be read: The PDF is over the extraction limit maxPages (1)',
+    });
   });
 
   test('reports bytes that are not a PDF', async () => {
