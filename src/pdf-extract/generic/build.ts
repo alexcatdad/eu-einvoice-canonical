@@ -61,9 +61,11 @@ function buildInvoice(
   options: PdfExtractOptions,
 ): { invoice: CanonicalInvoice; problems?: undefined } | { problems: SourceWarning[] } {
   const v = read.values;
-  const get = (k: string) => v[k]?.value;
+  // A rule layer's default stands only where no value was read, and is recorded as derived
+  const defaults = Object.entries(read.defaults ?? {}).filter(([k]) => !v[k]);
+  const get = (k: string) => v[k]?.value ?? read.defaults?.[k]?.value;
   const problems: SourceWarning[] = [];
-  const derived: { field: string; rule: string }[] = [];
+  const derived: { field: string; rule: string }[] = defaults.map(([field, d]) => ({ field, rule: d.rule }));
   const need = (k: string, what: string) => {
     if (get(k) === undefined) problems.push({ code: 'missing', field: k, message: `${what} was not found` });
     return get(k) ?? '';
@@ -234,7 +236,11 @@ function buildInvoice(
     const accountId = get(`/payments/0/creditTransfers/${k}/accountId`);
     return accountId ? [{ accountId, serviceProviderId: get(`/payments/0/creditTransfers/${k}/serviceProviderId`) }] : [];
   });
-  if (transfers.length) derive('/payments/0/meansCode', 'Bankgiro, Plusgiro or IBAN printed: credit transfer (30)');
+  const meansCode = get('/payments/0/meansCode') ?? '30';
+  // Without an account there is no payment instruction for a means code default to describe
+  if (!transfers.length) derived.splice(0, derived.length, ...derived.filter((d) => d.field !== '/payments/0/meansCode'));
+  if (transfers.length && !defaults.some(([k]) => k === '/payments/0/meansCode'))
+    derive('/payments/0/meansCode', 'Bankgiro, Plusgiro or IBAN printed: credit transfer (30)');
   const orgNumber = get('/seller/legalRegistrationId/value');
   if (orgNumber) derive('/seller/endpoint', 'Organisation number as Peppol endpoint (scheme 0007)');
   const note = get('/notes/0/text');
@@ -265,7 +271,7 @@ function buildInvoice(
     payments: transfers.length
       ? [
           {
-            meansCode: '30' as never,
+            meansCode: meansCode as never,
             remittanceInformation: get('/payments/0/remittanceInformation'),
             creditTransfers: transfers.map((t) => ({ accountId: t.accountId, serviceProviderId: t.serviceProviderId })),
           },

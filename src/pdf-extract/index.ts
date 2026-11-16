@@ -4,18 +4,25 @@
  * no network. Used by `convert(..., { extractPdf: true })`, which loads this module on demand.
  *
  * Steps: layout model and text quality check (layout.ts), payment reminders as not an invoice, generic Swedish rules
- * (generic.ts), then reconciliation (generic/build.ts): only a complete, reconciling result is `ok`.
+ * (generic.ts), rule layers (rules/: generator profile, then issuer template), then reconciliation (generic/build.ts):
+ * only a complete, reconciling result is `ok`.
  */
 import type { CanonicalInvoice, PdfRegion, SourceWarning } from '../canonical.js';
 import { buildExtraction } from './generic/build.js';
 import { readInvoice } from './generic.js';
 import { extractLayout } from './layout.js';
+import { applyRules, BUNDLED_PROFILES, loadPdfRuleSet, PdfRuleError, type PdfRuleSet } from './rules/index.js';
 
 export interface PdfExtractOptions {
   /** SHA-256 (hex) of the received file, for `source.fileSha256`. */
   fileSha256: string;
   /** Name of the received file, for `source.filename`. */
   filename?: string;
+  /**
+   * Issuer templates (JSON following schemas/pdf-rule-set.v1.schema.json, kind `issuer-template`), applied after the
+   * generic rules and the bundled generator profiles. An invalid template throws `PdfRuleError`.
+   */
+  templates?: readonly unknown[];
 }
 
 /**
@@ -49,8 +56,13 @@ export type PdfExtraction =
 export type PdfExtractor = (bytes: Uint8Array, options: PdfExtractOptions) => Promise<PdfExtraction>;
 
 export const extractPdfInvoice: PdfExtractor = async (bytes, options) => {
+  const templates = (options.templates ?? []).map(loadPdfRuleSet);
+  const wrong = templates.find((t) => t.kind !== 'issuer-template');
+  if (wrong) throw new PdfRuleError(wrong.id, ['/kind: callers pass issuer templates only']);
   const layout = await extractLayout(bytes);
   if (!layout.quality.supported)
     return { status: 'unsupported', reason: `PDF text cannot be read: ${layout.quality.reasons.map((r) => r.detail).join('; ')}` };
-  return buildExtraction(readInvoice(layout), options);
+  return buildExtraction(applyRules(layout, readInvoice(layout), BUNDLED_PROFILES, templates), options);
 };
+
+export { loadPdfRuleSet, PdfRuleError, type PdfRuleSet };

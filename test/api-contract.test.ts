@@ -284,7 +284,7 @@ describe('endpoints', () => {
   test('formats lists the registry; schemas serve the generated files; health reports the versions', async () => {
     const formats = await conforms(await fetch(`${base}/v1/formats`), 'GET', '/v1/formats');
     expect(formats.formats.length).toBe(describeFormats().length);
-    for (const name of ['canonical-invoice', 'convert-result', 'inspect-result']) {
+    for (const name of ['canonical-invoice', 'convert-result', 'inspect-result', 'pdf-rule-set']) {
       const res = await fetch(`${base}/v1/schemas/${name}`);
       expect(res.headers.get('content-type')).toBe('application/schema+json');
       const served = await conforms(res, 'GET', `/v1/schemas/${name}`);

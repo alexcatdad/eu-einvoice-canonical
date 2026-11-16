@@ -71,10 +71,11 @@ function headerColumns(row: Cell[]): Column[] | undefined {
   return cols as Column[];
 }
 
-export function findItemTables(rows: Cell[][]): ItemTable[] {
+/** Every item table; `headerOf` gives the columns of a header line (rule layers pass their own header definitions). */
+export function findItemTables(rows: Cell[][], headerOf: (row: Cell[]) => (Column | undefined)[] | undefined = headerColumns): ItemTable[] {
   const tables: ItemTable[] = [];
   for (let i = 0; i < rows.length; i++) {
-    const cols = headerColumns(rows[i]);
+    const cols = headerOf(rows[i]);
     if (!cols) continue;
     const table = readTable(rows, i, cols);
     tables.push(table);
@@ -190,7 +191,7 @@ function wraps(nameX: number, nameEnd: number, cells: Cell[], span: { x: number;
   return firstWord + 0.3 * cells[0].fontSize > span.x + span.width - nameEnd;
 }
 
-function merge(boxes: { page: number; x: number; y: number; width: number; height: number }[]): PdfRegion {
+export function merge(boxes: { page: number; x: number; y: number; width: number; height: number }[]): PdfRegion {
   const x = Math.min(...boxes.map((b) => b.x));
   const y = Math.min(...boxes.map((b) => b.y));
   const r = (n: number) => Math.round(n * 100) / 100;

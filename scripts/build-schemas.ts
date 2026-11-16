@@ -32,6 +32,7 @@ export const SCHEMAS = [
   { type: 'CanonicalInvoice', file: `canonical-invoice.${schemaVersion}.schema.json`, title: 'CanonicalInvoice' },
   { type: 'ConvertResult', file: `convert-result.${schemaVersion}.schema.json`, title: 'ConvertResult' },
   { type: 'InspectResult', file: `inspect-result.${schemaVersion}.schema.json`, title: 'InspectResult' },
+  { type: 'PdfRuleSet', file: `pdf-rule-set.${schemaVersion}.schema.json`, title: 'PdfRuleSet' },
 ] as const;
 
 /** Pattern definitions for the branded string types. */

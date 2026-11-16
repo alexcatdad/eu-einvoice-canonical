@@ -10,6 +10,7 @@ import { type Detection, detectXml } from './detect.js';
 import { type Skipped, type UnwrapLimits, type UnwrapOptions, unwrap, type XmlPayload } from './envelope.js';
 import { NotImplementedError, PARSERS, ParseError } from './parsers/index.js';
 import type { InvoiceDraft } from './pdf-extract/index.js';
+import { PdfRuleError } from './pdf-extract/rules/load.js';
 import { clearProbeCache } from './probe.js';
 import { applyRelations } from './relations/rules.js';
 import { signatureFindings, signatureStatus } from './signature/index.js';
@@ -35,6 +36,8 @@ export {
 export { CREDIT_TYPE_CODES } from './parsers/context.js';
 export { IMPLEMENTED_FAMILIES, NotImplementedError, ParseError } from './parsers/index.js';
 export type { InvoiceDraft, PdfExtraction, PdfExtractOptions, PdfExtractor } from './pdf-extract/index.js';
+export { loadPdfRuleSet, PdfRuleError } from './pdf-extract/rules/load.js';
+export type * from './pdf-extract/rules/types.js';
 export {
   ANNOTATION_KINDS,
   AnnotationInputError,
@@ -168,9 +171,10 @@ export interface ConvertOptions extends UnwrapOptions {
    * Read invoices from the text layer of a received PDF that has no usable embedded XML, instead of skipping it.
    * The result is in `pdfOutcomes`; incomplete results are `draft` outcomes.
    * Deterministic: no OCR, no language model, no network. Off by default. Only the received file itself is read
-   * this way, not PDFs inside a ZIP.
+   * this way, not PDFs inside a ZIP. `{ templates }` also applies the caller's issuer templates (JSON following
+   * schemas/pdf-rule-set.v1.schema.json); an invalid template makes `convert()` throw `PdfRuleError`.
    */
-  extractPdf?: boolean;
+  extractPdf?: boolean | { templates?: readonly unknown[] };
 }
 
 /** Loaded lazily: compiled CLI includes the module, while browser hosts supply worker adapters. */
@@ -258,7 +262,9 @@ export async function convert(
     }
   });
   clearProbeCache();
-  const pdfOutcomes = options.extractPdf ? await extractFromPdf(bytes, filename, fileSha256, skipped) : undefined;
+  const pdfOutcomes = options.extractPdf
+    ? await extractFromPdf(bytes, filename, fileSha256, skipped, options.extractPdf === true ? undefined : options.extractPdf.templates)
+    : undefined;
   if (options.validate) {
     let validation: typeof import('./validation/index.js') | undefined;
     let loadError = '';
@@ -300,6 +306,7 @@ async function extractFromPdf(
   filename: string | undefined,
   fileSha256: string,
   skipped: Skipped[],
+  templates: readonly unknown[] | undefined,
 ): Promise<PdfOutcome[] | undefined> {
   const isPdf = bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46;
   const own = (s: Skipped) => s.name === filename;
@@ -310,9 +317,10 @@ async function extractFromPdf(
   try {
     // Loaded on demand and, like validation, left out of browser bundles: pdf.js and its worker are large.
     const { extractPdfInvoice } = await import(/* @vite-ignore */ './pdf-extract/index.js');
-    const r = await extractPdfInvoice(bytes, { fileSha256, filename });
+    const r = await extractPdfInvoice(bytes, { fileSha256, filename, templates });
     return [r.status === 'ok' ? { status: 'ok', invoices: [r.invoice], pdf } : { ...r, pdf }];
   } catch (e) {
+    if (e instanceof PdfRuleError) throw e;
     return [{ status: 'error', pdf, error: `Internal error: ${e instanceof Error ? e.message : String(e)}` }];
   }
 }
