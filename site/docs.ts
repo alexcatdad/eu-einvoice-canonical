@@ -69,7 +69,7 @@ export const PAGES: PageDef[] = [
     description:
       'Convert born-digital invoice PDFs into UBL or CII with a Codex skill, source-fidelity checks, validation and canonical round-trip verification.',
     group: 'Use it',
-    sections: ['PDF invoice conversion skill'],
+    sections: ['PDF text extraction (opt-in, in development)', 'PDF invoice conversion skill'],
   },
   {
     slug: 'mcp',
