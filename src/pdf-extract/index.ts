@@ -4,13 +4,14 @@
  * no network. Used by `convert(..., { extractPdf: true })`, which loads this module on demand.
  *
  * Steps: layout model and text quality check (layout.ts), payment reminders as not an invoice, generic Swedish rules
- * (generic.ts), rule layers (rules/: generator profile, then issuer template), then reconciliation (generic/build.ts):
+ * (generic.ts), rule layers (rules/: generator profile, then issuer template), payment QR codes (qr.ts), then reconciliation (generic/build.ts):
  * only a complete, reconciling result is `ok`.
  */
 import type { CanonicalInvoice, PdfRegion, SourceWarning } from '../canonical.js';
 import { buildExtraction } from './generic/build.js';
 import { readInvoice } from './generic.js';
 import { extractLayout } from './layout.js';
+import { applyPaymentQr, findQrCodes } from './qr.js';
 import { applyRules, BUNDLED_PROFILES, loadPdfRuleSet, PdfRuleError, type PdfRuleSet } from './rules/index.js';
 
 export interface PdfExtractOptions {
@@ -62,7 +63,9 @@ export const extractPdfInvoice: PdfExtractor = async (bytes, options) => {
   const layout = await extractLayout(bytes);
   if (!layout.quality.supported)
     return { status: 'unsupported', reason: `PDF text cannot be read: ${layout.quality.reasons.map((r) => r.detail).join('; ')}` };
-  return buildExtraction(applyRules(layout, readInvoice(layout), BUNDLED_PROFILES, templates), options);
+  const read = applyRules(layout, readInvoice(layout), BUNDLED_PROFILES, templates);
+  const codes = read.notAnInvoice ? [] : await findQrCodes(bytes, read.pages);
+  return buildExtraction(applyPaymentQr(read, codes), options);
 };
 
 export { loadPdfRuleSet, PdfRuleError, type PdfRuleSet };

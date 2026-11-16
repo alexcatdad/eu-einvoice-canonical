@@ -83,7 +83,7 @@ export interface LayoutOptions {
   standardFontDataUrl?: string;
 }
 
-type Pdfjs = typeof import('pdfjs-dist');
+export type Pdfjs = typeof import('pdfjs-dist');
 
 /** Built-ins the modern pdf.js build calls without a fallback. */
 export function missingRuntimeFeatures(): string[] {
@@ -98,7 +98,7 @@ export function missingRuntimeFeatures(): string[] {
 type Matrix = [number, number, number, number, number, number];
 
 let loading: Promise<Pdfjs> | undefined;
-function pdfjs(): Promise<Pdfjs> {
+export function pdfjs(): Promise<Pdfjs> {
   loading ??= (async () => {
     // pdf.js runs its worker code in this thread when it finds the handler here: no Worker, no worker URL.
     const g = globalThis as { pdfjsWorker?: unknown };
