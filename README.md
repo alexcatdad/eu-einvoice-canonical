@@ -121,6 +121,10 @@ JSON goes to stdout only; every error is one line on stderr.
 
 With several failures and no success the code of the first failure is used; with at least one success it is 5.
 
+## PDF text extraction (opt-in, in development)
+
+Extraction of invoices from PDFs without embedded XML is deterministic (no OCR, no network) and is built on a layout model of the PDF's text layer (`src/pdf-extract/layout.ts`, using `pdfjs-dist`). It loads only when PDF extraction is requested, so the rest of the library keeps its runtime support. That path needs Node 26+, Bun 1.4+ or a current browser; on older runtimes it reports the file as unsupported (`unsupported-runtime`) instead of failing. In Node, pdf.js prints one "Please use the `legacy` build" warning when it first loads; the legacy build is not used because it loads a native canvas module in Node. `pdfjs-dist` lists `@napi-rs/canvas` as an optional dependency, so package managers download it unless optional dependencies are omitted (`npm install --omit=optional`, `bun install --omit optional`); extraction never loads it.
+
 ## PDF invoice conversion skill
 
 The repository-scoped [`pdf-invoice-to-xml` skill](.agents/skills/pdf-invoice-to-xml/SKILL.md) guides Codex through one-off transcription of born-digital invoice PDFs without usable embedded XML into UBL/CII, with source-fidelity, arithmetic, validation and round-trip checks. Invoke `$pdf-invoice-to-xml` in a fresh session in this checkout. [Setup and tool prerequisites](.agents/skills/pdf-invoice-to-xml/references/tools.md) also cover installation in another project. The skill uses the active model and local tools; it adds no PDF dependencies to canonical conversion. OCR is outside its initial scope.
