@@ -94,6 +94,82 @@ function draft(r: PdfExtraction) {
   return r.draft;
 }
 
+/**
+ * A second synthetic layout: a large "FAKTURA" title over a letterhead in body text, the seller's identity in a
+ * footer line with "·" separators, item headings "À-pris" and "Moms %" printed close together, and a VAT table
+ * headed "Momssats | Underlag | Moms". `items`, `vat` and `totals` replace those blocks.
+ */
+async function letterheadPdf(
+  items: Text[][] = [
+    ['Konsultarbete', '10', 'tim', '1 000,00', '25', '10 000,00'].map((t, i) => [ITEM_X[i], 0, t] as Text),
+    ['Kurslitteratur', '4', 'fp', '250,00', '12', '1 000,00'].map((t, i) => [ITEM_X[i], 0, t] as Text),
+  ],
+  vat: [string, string, string][] = [
+    ['25 %', '10 000,00', '2 500,00'],
+    ['12 %', '1 000,00', '120,00'],
+  ],
+  totals: [string, string][] = [
+    ['Netto', '11 000,00'],
+    ['Moms', '2 620,00'],
+    ['Summa inkl. moms', '13 620,00'],
+    ['Att betala (kr)', '13 620,00'],
+  ],
+  extra: Text[] = [],
+): Promise<Uint8Array> {
+  const texts: Text[] = [
+    [55, 40, 'FAKTURA', 20],
+    [61, 70, 'Provbolaget AB'],
+    [61, 82, 'Exempelgatan 1'],
+    [61, 94, '999 01 Testby'],
+    [309, 70, 'Fakturanummer'],
+    [448, 70, '2001'],
+    [309, 82, 'Fakturadatum'],
+    [448, 82, '2026-05-04'],
+    [309, 94, 'Förfallodatum'],
+    [448, 94, '2026-06-03'],
+    [55, 131, 'Fakturaadress'],
+    [55, 143, 'Kund Två AB'],
+    [55, 155, 'Provvägen 2'],
+    [55, 167, '999 02 Testby'],
+    [61, 192, 'Beskrivning'],
+    [280, 192, 'Antal'],
+    [313, 192, 'Enhet'],
+    [385, 192, 'À-pris'],
+    [412, 192, 'Moms %'],
+    [506, 192, 'Belopp'],
+    ...items.flatMap((row, r) => row.map(([x, , t]) => [x, 205 + 13 * r, t] as Text)),
+    [61, 256, 'Momssats'],
+    [337, 256, 'Underlag'],
+    [509, 256, 'Moms'],
+    ...vat.flatMap(
+      ([rate, base, tax], r) =>
+        [
+          [61, 268 + 12 * r, rate],
+          [335, 268 + 12 * r, base],
+          [500, 268 + 12 * r, tax],
+        ] as Text[],
+    ),
+    ...totals.flatMap(
+      ([label, amount], r) =>
+        [
+          [303, 305 + 12 * r, label],
+          [495, 305 + 12 * r, amount],
+        ] as Text[],
+    ),
+    [61, 378, `Bankgiro: ${ID.bankgiro}`],
+    [61, 390, `OCR-nummer: ${ID.ocr}`],
+    [55, 797, `Provbolaget AB · Org.nr ${ID.org} · Momsreg.nr ${ID.vat} · Godkänd för F-skatt`],
+    ...extra,
+  ];
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const page = doc.addPage([595, 842]);
+  for (const [x, y, text, size = 9] of texts) page.drawText(text, { x, y: 842 - y - size, size, font });
+  return doc.save();
+}
+/** x of the item columns in `letterheadPdf`: description, quantity, unit, price, VAT rate, amount. */
+const ITEM_X = [61, 290, 313, 374, 430, 495];
+
 describe('generic PDF invoice extraction', () => {
   test('a complete, reconciling invoice is ok, with page regions and derived totals marked', async () => {
     const inv = ok(await extract(await invoicePdf()));
@@ -382,6 +458,93 @@ describe('generic PDF invoice extraction', () => {
     const doc = await PDFDocument.create();
     doc.addPage();
     expect(await extract(await doc.save())).toMatchObject({ status: 'unsupported', reason: expect.stringContaining('cannot be read') });
+  }, 30000);
+
+  test('letterhead in body text, footer identity line, close headings and a "Momssats" VAT table: ok', async () => {
+    const inv = ok(await extract(await letterheadPdf()));
+    expect(inv.seller).toMatchObject({
+      name: 'Provbolaget AB',
+      legalRegistrationId: { value: '5599001236' },
+      vatId: ID.vat,
+      address: { line1: 'Exempelgatan 1', postalCode: '999 01', city: 'Testby' },
+    });
+    expect(inv.buyer.name).toBe('Kund Två AB');
+    expect(inv.lines.map((l) => [l.price?.net, l.vat?.rate, l.unitCode]) as unknown).toEqual([
+      ['1000.00', '25', 'HUR'],
+      ['250.00', '12', 'XPK'],
+    ]);
+    expect(inv.vatBreakdown.map((b) => [b.categoryCode, b.rate, b.taxableAmount, b.taxAmount]) as unknown).toEqual([
+      ['S', '25', '10000.00', '2500.00'],
+      ['S', '12', '1000.00', '120.00'],
+    ]);
+    expect(inv.totals.vatTotal as string).toBe('2620.00');
+  }, 30000);
+
+  test('momsfritt with a printed 0 % rate and "Momsfri" in the VAT table: category E with the statement, never Z', async () => {
+    const statement = 'Momsfri omsättning enligt mervärdesskattelagen.';
+    const inv = ok(
+      await extract(
+        await letterheadPdf(
+          [['Behandling', '2', 'st', '2 000,00', '0', '4 000,00'].map((t, i) => [ITEM_X[i], 0, t] as Text)],
+          [['Momsfri', '4 000,00', '0,00']],
+          [
+            ['Netto', '4 000,00'],
+            ['Moms', '0,00'],
+            ['Summa inkl. moms', '4 000,00'],
+            ['Att betala (kr)', '4 000,00'],
+          ],
+          [[61, 360, statement]],
+        ),
+      ),
+    );
+    expect(inv.vatBreakdown as unknown).toEqual([
+      { categoryCode: 'E', rate: '0', taxableAmount: '4000.00', taxAmount: '0.00', exemptionReason: statement },
+    ]);
+    expect(inv.lines[0].vat?.categoryCode).toBe('E');
+  }, 30000);
+
+  test('a deduction label wrapped over two lines ("Avgår skattereduktion grön / teknik") is read as prepaid', async () => {
+    const inv = ok(
+      await extract(
+        await letterheadPdf(
+          undefined,
+          undefined,
+          [
+            ['Netto', '11 000,00'],
+            ['Moms', '2 620,00'],
+            ['Summa inkl. moms', '13 620,00'],
+            ['Avgår skattereduktion grön', '2 000,00'],
+            ['Att betala (kr)', '11 620,00'],
+          ],
+          [
+            [303, 362, 'teknik'],
+            [61, 410, 'Skattereduktion för grön teknik har dragits av.'],
+          ],
+        ),
+      ),
+    );
+    expect(inv.totals).toMatchObject({ prepaid: '2000.00', payable: '11620.00' });
+    expect(inv.notes).toEqual([{ text: 'GRON_TEKNIK' }]);
+  }, 30000);
+
+  test('a footer line right under the last item ends the item table', async () => {
+    const items = [['Konsultarbete', '11', 'tim', '1 000,00', '25', '11 000,00'].map((t, i) => [ITEM_X[i], 0, t] as Text)];
+    const inv = ok(
+      await extract(
+        await letterheadPdf(
+          items,
+          [['25 %', '11 000,00', '2 750,00']],
+          [
+            ['Netto', '11 000,00'],
+            ['Moms', '2 750,00'],
+            ['Summa inkl. moms', '13 750,00'],
+            ['Att betala (kr)', '13 750,00'],
+          ],
+          [[55, 222, 'Sida 1 av 1 · Provbolaget AB']],
+        ),
+      ),
+    );
+    expect(inv.lines.map((l) => l.item.name)).toEqual(['Konsultarbete']);
   }, 30000);
 
   test('a PDF without recognisable invoice fields is unsupported', async () => {

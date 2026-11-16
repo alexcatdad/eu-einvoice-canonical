@@ -24,6 +24,10 @@ const UNITS: Record<string, string> = {
   h: 'HUR',
   dag: 'DAY',
   dagar: 'DAY',
+  dygn: 'DAY',
+  fp: 'XPK',
+  förp: 'XPK',
+  förpackning: 'XPK',
   mån: 'MON',
   månad: 'MON',
   kg: 'KGM',
@@ -61,9 +65,11 @@ function buildInvoice(
   options: PdfExtractOptions,
 ): { invoice: CanonicalInvoice; problems?: undefined } | { problems: SourceWarning[] } {
   const v = read.values;
-  const get = (k: string) => v[k]?.value;
+  // A rule layer's default stands only where no value was read, and is recorded as derived
+  const defaults = Object.entries(read.defaults ?? {}).filter(([k]) => !v[k]);
+  const get = (k: string) => v[k]?.value ?? read.defaults?.[k]?.value;
   const problems: SourceWarning[] = [];
-  const derived: { field: string; rule: string }[] = [];
+  const derived: { field: string; rule: string }[] = defaults.map(([field, d]) => ({ field, rule: d.rule }));
   const need = (k: string, what: string) => {
     if (get(k) === undefined) problems.push({ code: 'missing', field: k, message: `${what} was not found` });
     return get(k) ?? '';
@@ -77,8 +83,8 @@ function buildInvoice(
   const buyerName = need('/buyer/name', 'Buyer name (BT-44)');
   const payable = need('/totals/payable', 'Amount due (BT-115)') as Decimal;
   const exemptOnly = get('/vatBreakdown/0/categoryCode') === 'E' && get('/vatBreakdown/1/categoryCode') === undefined;
-  const vatTotal = (exemptOnly ? '0.00' : need('/totals/vatTotal', 'Total VAT (BT-110)')) as Decimal;
-  if (exemptOnly) derived.push({ field: '/totals/vatTotal', rule: 'VAT-exempt sale (momsfri): no VAT' });
+  const vatTotal = (exemptOnly ? (get('/totals/vatTotal') ?? '0.00') : need('/totals/vatTotal', 'Total VAT (BT-110)')) as Decimal;
+  if (exemptOnly && !get('/totals/vatTotal')) derived.push({ field: '/totals/vatTotal', rule: 'VAT-exempt sale (momsfri): no VAT' });
   if (!read.lineCount) problems.push({ code: 'missing', field: '/lines', message: 'No invoice lines (BG-25) were found' });
 
   const address = (party: '/seller' | '/buyer') => {
@@ -107,6 +113,7 @@ function buildInvoice(
   const vatRows: number[] = [];
   for (let k = 0; get(`/vatBreakdown/${k}/categoryCode`) !== undefined; k++) vatRows.push(k);
   const exempt = vatRows.length === 1 && get('/vatBreakdown/0/categoryCode') === 'E';
+  const anyExempt = vatRows.some((k) => get(`/vatBreakdown/${k}/categoryCode`) === 'E');
   const singleRate = vatRows.length === 1 ? (exempt ? '0' : get('/vatBreakdown/0/rate')) : undefined;
   const lines: Line[] = [];
   for (let i = 0; i < read.lineCount; i++) {
@@ -167,7 +174,7 @@ function buildInvoice(
       vat:
         rate === undefined
           ? undefined
-          : { categoryCode: (exempt ? 'E' : Number(rate) > 0 ? 'S' : 'Z') as VatCategoryCode, rate: rate as Decimal },
+          : { categoryCode: (Number(rate) > 0 ? 'S' : anyExempt ? 'E' : 'Z') as VatCategoryCode, rate: rate as Decimal },
       item: { name: name ?? '', classifications: [], attributes: [] },
     });
   }
@@ -202,8 +209,8 @@ function buildInvoice(
       derive(`${p}/taxableAmount`, 'One VAT rate: the taxable amount is BT-109');
     }
     const isExempt = get(`${p}/categoryCode`) === 'E';
-    const taxAmount = (isExempt ? '0.00' : get(`${p}/taxAmount`)) as Decimal | undefined;
-    if (isExempt) derive(`${p}/taxAmount`, 'VAT-exempt sale (momsfri): no VAT, rate 0');
+    const taxAmount = (get(`${p}/taxAmount`) ?? (isExempt ? '0.00' : undefined)) as Decimal | undefined;
+    if (isExempt && !get(`${p}/taxAmount`)) derive(`${p}/taxAmount`, 'VAT-exempt sale (momsfri): no VAT');
     if (taxableAmount === undefined || taxAmount === undefined)
       problems.push({
         code: 'missing',
@@ -234,7 +241,11 @@ function buildInvoice(
     const accountId = get(`/payments/0/creditTransfers/${k}/accountId`);
     return accountId ? [{ accountId, serviceProviderId: get(`/payments/0/creditTransfers/${k}/serviceProviderId`) }] : [];
   });
-  if (transfers.length) derive('/payments/0/meansCode', 'Bankgiro, Plusgiro or IBAN printed: credit transfer (30)');
+  const meansCode = get('/payments/0/meansCode') ?? '30';
+  // Without an account there is no payment instruction for a means code default to describe
+  if (!transfers.length) derived.splice(0, derived.length, ...derived.filter((d) => d.field !== '/payments/0/meansCode'));
+  if (transfers.length && !defaults.some(([k]) => k === '/payments/0/meansCode'))
+    derive('/payments/0/meansCode', 'Bankgiro, Plusgiro or IBAN printed: credit transfer (30)');
   const orgNumber = get('/seller/legalRegistrationId/value');
   if (orgNumber) derive('/seller/endpoint', 'Organisation number as Peppol endpoint (scheme 0007)');
   const note = get('/notes/0/text');
@@ -265,7 +276,7 @@ function buildInvoice(
     payments: transfers.length
       ? [
           {
-            meansCode: '30' as never,
+            meansCode: meansCode as never,
             remittanceInformation: get('/payments/0/remittanceInformation'),
             creditTransfers: transfers.map((t) => ({ accountId: t.accountId, serviceProviderId: t.serviceProviderId })),
           },

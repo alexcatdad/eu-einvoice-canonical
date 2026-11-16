@@ -71,20 +71,46 @@ function headerColumns(row: Cell[]): Column[] | undefined {
   return cols as Column[];
 }
 
-export function findItemTables(rows: Cell[][]): ItemTable[] {
+/** Every item table; `headerOf` gives the columns of a header line (rule layers pass their own header definitions). */
+export function findItemTables(rows: Cell[][], headerOf: (row: Cell[]) => (Column | undefined)[] | undefined = headerColumns): ItemTable[] {
   const tables: ItemTable[] = [];
   for (let i = 0; i < rows.length; i++) {
-    const cols = headerColumns(rows[i]);
+    const header = splitHeader(rows[i]);
+    const cols = headerOf(header);
     if (!cols) continue;
-    const table = readTable(rows, i, cols);
+    const table = readTable(rows, i, cols, header);
     tables.push(table);
     i += table.lines.size - 1;
   }
   return tables;
 }
 
-function readTable(rows: Cell[][], start: number, cols: (Column | undefined)[]): ItemTable {
-  const header = rows[start];
+/**
+ * A header line whose headings sit too close to form separate segments ("À-pris Moms %"): such a segment is split into
+ * its text runs when every run is a known heading, else at the one word boundary where both halves are known headings
+ * (each half's position estimated from its share of the characters).
+ */
+function splitHeader(row: Cell[]): Cell[] {
+  return row.flatMap((cell) => {
+    if (columnOf(cell.text)) return [cell];
+    const runs = cell.line.segments[cell.index]?.runs ?? [];
+    if (runs.length > 1 && runs.every((r) => columnOf(r.text)))
+      return runs.map((r) => ({ ...cell, text: r.text.trim(), x: r.x, y: r.y, width: r.width, height: r.height, fontSize: r.fontSize }));
+    const words = cell.text.split(' ');
+    const cuts = words.slice(1).flatMap((_, i) => {
+      const left = words.slice(0, i + 1).join(' ');
+      return columnOf(left) && columnOf(words.slice(i + 1).join(' ')) ? [left.length + 1] : [];
+    });
+    if (cuts.length !== 1) return [cell];
+    const at = cell.x + (cell.width * cuts[0]) / cell.text.length;
+    return [
+      { ...cell, text: cell.text.slice(0, cuts[0] - 1), width: at - cell.x },
+      { ...cell, text: cell.text.slice(cuts[0]), x: at, width: cell.x + cell.width - at },
+    ];
+  });
+}
+
+function readTable(rows: Cell[][], start: number, cols: (Column | undefined)[], header: Cell[]): ItemTable {
   // Column spans reach halfway to the neighbouring headers, so left- and right-aligned values both fall inside.
   const spans = header.map((c, k) => {
     const prev = header[k - 1];
@@ -167,6 +193,8 @@ function readTable(rows: Cell[][], start: number, cols: (Column | undefined)[]):
     } else if ([...placed.keys()].every((k) => k === 'desc') && placed.has('desc') && items.length) {
       const last = items[items.length - 1];
       const cells = placed.get('desc')!;
+      // Text that does not start at the description's edge is not part of the item, e.g. a page footer
+      if (last.name && Math.abs(cells[0].x - last.name.region.x) > 2) break;
       const more = text(cells)!;
       if (DATE_ONLY.test(more.value)) continue;
       if (last.name && !last.unclearName && wraps(last.name.region.x, nameEnd.get(last) ?? 0, cells, spans[cols.indexOf('desc')])) {
@@ -190,7 +218,7 @@ function wraps(nameX: number, nameEnd: number, cells: Cell[], span: { x: number;
   return firstWord + 0.3 * cells[0].fontSize > span.x + span.width - nameEnd;
 }
 
-function merge(boxes: { page: number; x: number; y: number; width: number; height: number }[]): PdfRegion {
+export function merge(boxes: { page: number; x: number; y: number; width: number; height: number }[]): PdfRegion {
   const x = Math.min(...boxes.map((b) => b.x));
   const y = Math.min(...boxes.map((b) => b.y));
   const r = (n: number) => Math.round(n * 100) / 100;

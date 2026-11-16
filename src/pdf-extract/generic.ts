@@ -9,8 +9,8 @@
  */
 import type { PdfRegion, SourceWarning } from '../canonical.js';
 import { below, belowAll, type Cell, cellRows, regionOf, rightOf } from './generic/cells.js';
-import { type FieldKey, fieldLabel, type Parsed, parseField } from './generic/fields.js';
-import { findItemTables } from './generic/items.js';
+import { type FieldKey, fieldLabel, inlinePair, type Parsed, parseField } from './generic/fields.js';
+import { findItemTables, type Item } from './generic/items.js';
 import { vatBreakdown, vatTable } from './generic/vat.js';
 import type { LayoutDocument, Line } from './layout.js';
 import { findLabels, isReminder, matchLabel, normalize } from './se/index.js';
@@ -30,6 +30,10 @@ export interface GenericRead {
   pricesIncludeVat: boolean;
   /** Number of item lines read. */
   lineCount: number;
+  /** Set when only the first pages were read (a file with several invoices): the number of pages read. */
+  pages?: number;
+  /** Values no page prints, set by a rule layer's defaults: used only when no value was read, and recorded as derived. */
+  defaults?: Record<string, { value: string; rule: string }>;
 }
 
 const POINTER: Partial<Record<FieldKey, string>> = {
@@ -69,6 +73,7 @@ export function readInvoice(layout: LayoutDocument): GenericRead {
   while (end < ids.length && (ids[end] === undefined || ids[end] === ids[first])) end++;
   if (first < 0 || end === ids.length) return whole;
   const read = readPages({ ...layout, pages: layout.pages.slice(0, end) });
+  read.pages = end;
   read.problems.push({ code: 'several-invoices', message: `The file holds several invoices; only the first, on pages 1-${end}, is read` });
   return read;
 }
@@ -94,20 +99,24 @@ function readPages(layout: LayoutDocument): GenericRead {
   for (const row of free)
     for (const cell of row) {
       const label = fieldLabel(cell.text);
-      const inline = label ? undefined : /^([^:]{2,40}):\s*(\S.*)$/u.exec(cell.text);
-      const inlineLabel = inline ? fieldLabel(inline[1]) : undefined;
-      const lab = label ?? inlineLabel;
-      for (const [k, key] of (lab?.keys ?? []).entries()) {
+      if (!label) {
+        // "Fakturanummer: 941", "Org.nr 559900-1236", also between "·" separators in a footer line
+        for (const part of cell.text.split(/\s+[·•]\s+/u)) {
+          const pair = inlinePair(part);
+          for (const key of pair?.label.keys ?? []) {
+            const parsed = key === 'buyer' || key === 'sellerAddress' ? undefined : parseField(key, pair!.value);
+            if (parsed) add(key, { parsed, value: { region: regionOf(cell) }, label: cell, rate: pair!.label.rate });
+          }
+        }
+        continue;
+      }
+      const lab = label;
+      for (const [k, key] of lab.keys.entries()) {
         if (key === 'buyer' || key === 'sellerAddress') {
-          if (label) addresses.push({ key, label: cell });
+          addresses.push({ key, label: cell });
           continue;
         }
-        const rate = lab?.rate;
-        if (inline) {
-          const parsed = parseField(key, inline[2]);
-          if (parsed) add(key, { parsed, value: { region: regionOf(cell) }, label: cell, rate });
-          continue;
-        }
+        const rate = lab.rate;
         // A "Moms" column may hold the rate ("25%") rather than the amount
         const asRate = (c: Cell) => (key === 'vatTotal' && c.text.includes('%') ? parseField('vatRate', c.text) : undefined);
         const parse = (c: Cell | undefined) => {
@@ -119,7 +128,7 @@ function readPages(layout: LayoutDocument): GenericRead {
         const r = rightOf(rows, cell);
         // Values printed side by side under a combined label ("Fakturanummer / Kundnummer") pair up by position.
         const under = belowAll(rows, cell);
-        const b = under.length === 1 ? under[0] : lab && under.length === lab.parts ? under[lab.part[k]] : undefined;
+        const b = under.length === 1 ? under[0] : under.length === lab.parts ? under[lab.part[k]] : undefined;
         const viaRight = parse(r);
         const viaBelow = viaRight ? undefined : parse(b);
         if (viaRight && r) add(key, { parsed: viaRight, value: r, label: cell, rate });
@@ -204,29 +213,7 @@ function readPages(layout: LayoutDocument): GenericRead {
   // Item lines; several invoice numbers on the same pages means several invoices, whose lines are not mixed
   const several = new Set((found.get('id') ?? []).map((h) => ('value' in h.parsed ? h.parsed.value : ''))).size > 1;
   const items = several ? [] : tables.flatMap((t) => t.items);
-  items.forEach((item, i) => {
-    const p = `/lines/${i}`;
-    if (item.unclearName)
-      problems.push({
-        code: 'ambiguous',
-        field: `${p}/item/name`,
-        message: `Line ${i + 1}: text under the item may be part of its description or a note`,
-        region: item.unclearName,
-      });
-    else if (item.name) values[`${p}/item/name`] = item.name;
-    if (item.quantity) values[`${p}/quantity`] = item.quantity;
-    if (item.unitText) values[`${p}/unitText`] = item.unitText;
-    if (item.price) values[`${p}/price/net`] = item.price;
-    if (item.rate) values[`${p}/vat/rate`] = item.rate;
-    values[`${p}/netAmount`] = item.amount;
-    if (item.discount)
-      problems.push({
-        code: 'line-discount',
-        field: `${p}/price/net`,
-        message: `Line ${i + 1} has a discount column; its net price is not read`,
-        region: item.discount.region,
-      });
-  });
+  itemValues(items, values, problems);
   if (!items.length && tables.length)
     problems.push({
       code: 'missing',
@@ -242,9 +229,10 @@ function readPages(layout: LayoutDocument): GenericRead {
   });
 
   // Parties
-  const sellerName = findSellerName(layout, rows);
+  for (const a of addresses) if (a.key === 'buyer') readAddress('/buyer', a.label, rows, values, true);
+  const sellerName = findSellerName(layout, rows, values['/buyer/name']?.value);
   if (sellerName) values['/seller/name'] = { value: sellerName.text, region: regionOf(sellerName) };
-  for (const a of addresses) readAddress(a.key === 'buyer' ? '/buyer' : '/seller', a.label, rows, values, a.key === 'buyer');
+  for (const a of addresses) if (a.key === 'sellerAddress') readAddress('/seller', a.label, rows, values, false);
   // A letterhead: the seller's address printed under its name
   if (sellerName && !values['/seller/address/postalCode']) readAddress('/seller', sellerName, rows, values, false, false);
   const fSkatt = free.flat().filter((c) => {
@@ -281,6 +269,33 @@ function readPages(layout: LayoutDocument): GenericRead {
   return { values, problems, pricesIncludeVat, lineCount: items.length };
 }
 
+/** Writes item lines as `/lines/k/...` values, with a problem where a line's description or net price is unclear. */
+export function itemValues(items: Item[], values: Record<string, ReadValue>, problems: SourceWarning[]) {
+  items.forEach((item, i) => {
+    const p = `/lines/${i}`;
+    if (item.unclearName)
+      problems.push({
+        code: 'ambiguous',
+        field: `${p}/item/name`,
+        message: `Line ${i + 1}: text under the item may be part of its description or a note`,
+        region: item.unclearName,
+      });
+    else if (item.name) values[`${p}/item/name`] = item.name;
+    if (item.quantity) values[`${p}/quantity`] = item.quantity;
+    if (item.unitText) values[`${p}/unitText`] = item.unitText;
+    if (item.price) values[`${p}/price/net`] = item.price;
+    if (item.rate) values[`${p}/vat/rate`] = item.rate;
+    values[`${p}/netAmount`] = item.amount;
+    if (item.discount)
+      problems.push({
+        code: 'line-discount',
+        field: `${p}/price/net`,
+        message: `Line ${i + 1} has a discount column; its net price is not read`,
+        region: item.discount.region,
+      });
+  });
+}
+
 /** ROT, RUT or grön teknik, when the page names exactly one of them. */
 function prepaidNote(label: Cell, rows: Cell[][], region: PdfRegion, values: Record<string, ReadValue>, problems: SourceWarning[]) {
   const kinds = new Set<string>();
@@ -298,8 +313,11 @@ function prepaidNote(label: Cell, rows: Cell[][], region: PdfRegion, values: Rec
     });
 }
 
-/** The issuer's name: the largest text at the top of the first page, when it is a company name or printed again elsewhere. */
-function findSellerName(layout: LayoutDocument, rows: Cell[][]): Cell | undefined {
+/**
+ * The issuer's name: the largest text at the top of the first page when it is a company name; otherwise the one company
+ * name at the top that is printed again on the line with the organisation or VAT number (a letterhead in body text).
+ */
+function findSellerName(layout: LayoutDocument, rows: Cell[][], buyerName: string | undefined): Cell | undefined {
   const first = layout.pages[0];
   if (!first) return undefined;
   const top = rows
@@ -315,9 +333,16 @@ function findSellerName(layout: LayoutDocument, rows: Cell[][]): Cell | undefine
   if (!top.length) return undefined;
   const size = Math.max(...top.map((c) => c.fontSize));
   const biggest = top.filter((c) => c.fontSize === size);
-  if (new Set(biggest.map((c) => c.text)).size !== 1) return undefined;
-  const cell = biggest[0];
-  return COMPANY_FORM.test(normalize(cell.text)) ? cell : undefined;
+  if (new Set(biggest.map((c) => c.text)).size === 1 && COMPANY_FORM.test(normalize(biggest[0].text))) return biggest[0];
+  // The name must also stand on the line that carries the seller's organisation or VAT number
+  const identity = rows.filter((r) => findLabels(r[0].line.text).some((l) => l.label === 'orgNumber' || l.label === 'vatNumber'));
+  const named = top.filter(
+    (c) =>
+      c.text !== buyerName &&
+      COMPANY_FORM.test(normalize(c.text)) &&
+      identity.some((r) => r[0].line !== c.line && r[0].line.text.includes(c.text)),
+  );
+  return new Set(named.map((c) => c.text)).size === 1 ? named[0] : undefined;
 }
 
 /** An address block under a label: name (buyer only), street lines, then "NNN NN City". */
