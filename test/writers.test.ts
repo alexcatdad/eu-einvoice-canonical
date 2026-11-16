@@ -9,6 +9,7 @@ import {
   convert,
   detectXml,
   FORMATS_BY_ID,
+  type FormatId,
   type Line,
   type Party,
   type PaymentInstructions,
@@ -383,7 +384,7 @@ for (const file of listFixtures().filter((f) => !/(^|\/)(README\.md|expected\.js
     for (const [i, inv] of o.invoices.entries()) converted.push({ label: o.invoices.length > 1 ? `${file}#${i}` : file, file, inv });
   }
 }
-const family = (inv: CanonicalInvoice) => FORMATS_BY_ID[inv.source.format]?.family;
+const family = (inv: CanonicalInvoice) => FORMATS_BY_ID[inv.source.format as FormatId]?.family;
 
 describe('round trip: parse, write, parse again', () => {
   test('there are fixtures to try, EN 16931 ones among them', () => {

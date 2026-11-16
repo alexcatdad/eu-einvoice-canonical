@@ -109,6 +109,16 @@ function generate(type: string, file: string): string {
       const { const: _c, type: _t, ...rest } = node;
       return { $ref: `#/$defs/${name}`, ...rest };
     }
+    // A primitive in a union with literals (`FormatId | 'pdf-text'`) arrives merged into one enum.
+    const marked = Array.isArray(node.enum) ? node.enum.filter((v: unknown) => typeof v === 'string' && v.startsWith(MARK)) : [];
+    if (marked.length > 0) {
+      const { enum: values, type: _t, ...rest } = node;
+      const literals = values.filter((v: unknown) => !marked.includes(v));
+      return walk({
+        anyOf: [...marked.map((m: string) => ({ const: m })), ...(literals.length ? [{ type: 'string', enum: literals }] : [])],
+        ...rest,
+      });
+    }
     // Closed objects would reject fields added in a later minor release.
     return Object.fromEntries(
       Object.entries(node)

@@ -6,7 +6,7 @@
  */
 
 import type { Address, AllowanceCharge, CanonicalInvoice, Identifier, Line, Party, Period, VatInfo } from '../index.js';
-import { FORMATS_BY_ID } from '../index.js';
+import { FORMATS_BY_ID, type FormatId } from '../index.js';
 import {
   countryLocale,
   countryName,
@@ -336,7 +336,7 @@ function account(t: T, id: string): [string, Value] {
 export function buildInvoiceView(inv: CanonicalInvoice, lang?: string, options: ViewOptions = {}): InvoiceView {
   const safe = safeLang(lang);
   const labelLocale = resolveLocale(safe);
-  const countries = FORMATS_BY_ID[inv.source.format]?.countries;
+  const countries = FORMATS_BY_ID[inv.source.format as FormatId]?.countries;
   const locale =
     options.locale !== undefined
       ? resolveLocale(options.locale)
@@ -483,7 +483,7 @@ export function buildInvoiceView(inv: CanonicalInvoice, lang?: string, options: 
       [t('type'), present(inv.typeCode) ? text(inv.typeCode) : undefined],
       [t('currency'), cur],
       // The registry's name for the format; the id stays in the title (and in the canonical JSON).
-      [t('format'), text(FORMATS_BY_ID[inv.source.format]?.name ?? inv.source.format, { title: inv.source.format })],
+      [t('format'), text(FORMATS_BY_ID[inv.source.format as FormatId]?.name ?? inv.source.format, { title: inv.source.format })],
     ]),
     facts,
     due: { label: credit ? t('credited') : t('payable'), value: text(money(tot.payable)) },
