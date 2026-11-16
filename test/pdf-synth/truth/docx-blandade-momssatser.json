@@ -1,0 +1,231 @@
+{
+  "schemaVersion": 1,
+  "file": "docx-blandade-momssatser.pdf",
+  "sha256": "89c3acd35fe18caa8817d79f09beb2232ae6943cc4b1c6512780772ab23ac0d5",
+  "documentType": "invoice",
+  "typeCode": "380",
+  "invoicePages": [1],
+  "pricesIncludeVat": false,
+  "fields": {
+    "id": {
+      "value": "1102"
+    },
+    "issueDate": {
+      "value": "2026-03-23"
+    },
+    "dueDate": {
+      "value": "2026-04-23"
+    },
+    "currency": {
+      "value": "SEK"
+    },
+    "seller.name": {
+      "value": "Exempelbygg Syntet AB"
+    },
+    "seller.legalRegistrationId": {
+      "value": "9999990030"
+    },
+    "seller.vatId": {
+      "value": "SE999999003001"
+    },
+    "seller.taxRegistrationId": {
+      "value": "Godkänd för F-skatt"
+    },
+    "buyer.name": {
+      "value": "Fiktiv Kund AB"
+    },
+    "payee.name": {
+      "status": "absent"
+    },
+    "payment.bankgiro": {
+      "value": "99990020"
+    },
+    "payment.plusgiro": {
+      "status": "absent"
+    },
+    "payment.iban": {
+      "value": "SE9399900000000000000001"
+    },
+    "payment.bic": {
+      "value": "SYNTSESS"
+    },
+    "payment.remittanceInformation": {
+      "value": "202611026"
+    },
+    "totals.lineNetTotal": {
+      "value": "13770.00"
+    },
+    "totals.allowanceTotal": {
+      "status": "absent"
+    },
+    "totals.chargeTotal": {
+      "status": "absent"
+    },
+    "totals.taxExclusive": {
+      "status": "absent"
+    },
+    "totals.vatTotal": {
+      "value": "2816.10"
+    },
+    "totals.taxInclusive": {
+      "value": "16586.10"
+    },
+    "totals.prepaid": {
+      "status": "absent"
+    },
+    "totals.prepaidNote": {
+      "status": "absent"
+    },
+    "totals.rounding": {
+      "status": "absent"
+    },
+    "totals.payable": {
+      "value": "16586.10"
+    }
+  },
+  "vatBreakdown": {
+    "rows": [
+      {
+        "categoryCode": "S",
+        "rate": {
+          "value": "25"
+        },
+        "taxableAmount": {
+          "value": "9450.00"
+        },
+        "taxAmount": {
+          "value": "2362.50"
+        }
+      },
+      {
+        "categoryCode": "S",
+        "rate": {
+          "value": "12"
+        },
+        "taxableAmount": {
+          "value": "3240.00"
+        },
+        "taxAmount": {
+          "value": "388.80"
+        }
+      },
+      {
+        "categoryCode": "S",
+        "rate": {
+          "value": "6"
+        },
+        "taxableAmount": {
+          "value": "1080.00"
+        },
+        "taxAmount": {
+          "value": "64.80"
+        }
+      }
+    ]
+  },
+  "lines": {
+    "rows": [
+      {
+        "item.name": {
+          "value": "Konferenslokal heldag"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "8500.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "8500.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Lunch konferens"
+        },
+        "quantity": {
+          "value": "18"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "135.00"
+        },
+        "vat.rate": {
+          "value": "12"
+        },
+        "netAmount": {
+          "value": "2430.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Fika förmiddag"
+        },
+        "quantity": {
+          "value": "18"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "45.00"
+        },
+        "vat.rate": {
+          "value": "12"
+        },
+        "netAmount": {
+          "value": "810.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Programhäfte tryckt"
+        },
+        "quantity": {
+          "value": "18"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "60.00"
+        },
+        "vat.rate": {
+          "value": "6"
+        },
+        "netAmount": {
+          "value": "1080.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Teknikhyra projektor"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "950.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "950.00"
+        }
+      }
+    ]
+  },
+  "notes": "Synthetic (scripts/pdf-synth): Word, mixed 25 %, 12 % and 6 % VAT, Bankgiro plus IBAN and BIC"
+}

@@ -1,0 +1,39 @@
+{
+  "file": "xlsx-momsfritt",
+  "covers": "Excel, VAT-exempt sale (category E) with exemption statement",
+  "renderer": "xlsx",
+  "document": "invoice",
+  "number": "1112",
+  "issueDate": "2026-03-06",
+  "dueDate": "2026-04-06",
+  "customer": "K-512",
+  "ocr": "202611125",
+  "seller": {
+    "name": "Låtsasstäd Syntet AB",
+    "address": ["Exempelgatan 5", "999 05 Testby"],
+    "orgnr": "9999990055",
+    "fskatt": true,
+    "bankgiro": "99990020"
+  },
+  "buyer": {
+    "name": "Fiktiv Kund AB",
+    "address": ["Provvägen 2", "999 12 Testby"]
+  },
+  "lines": [
+    {
+      "name": "Behandling fysioterapi",
+      "qty": "6",
+      "unit": "st",
+      "price": "650.00",
+      "rate": 0
+    },
+    {
+      "name": "Journalkopia",
+      "qty": "1",
+      "unit": "st",
+      "price": "100.00",
+      "rate": 0
+    }
+  ],
+  "exemptReason": "Momsfri omsättning enligt mervärdesskattelagen (sjukvård)."
+}

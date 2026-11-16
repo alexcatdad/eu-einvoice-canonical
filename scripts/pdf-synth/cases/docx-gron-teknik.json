@@ -1,0 +1,36 @@
+{
+  "file": "docx-gron-teknik",
+  "covers": "Word, grön teknik deduction (solar installation)",
+  "renderer": "docx",
+  "document": "invoice",
+  "number": "1110",
+  "issueDate": "2026-03-04",
+  "dueDate": "2026-04-04",
+  "customer": "K-510",
+  "ocr": "202611109",
+  "seller": {
+    "name": "Fiktiv Energiteknik AB",
+    "address": ["Exempelgatan 6", "999 06 Testby"],
+    "orgnr": "9999990063",
+    "fskatt": true,
+    "plusgiro": "9999020"
+  },
+  "buyer": {
+    "name": "Kim Exempelsson",
+    "address": ["Låtsasstigen 7", "999 13 Testby"]
+  },
+  "lines": [
+    {
+      "name": "Solcellsanläggning 10 kW inklusive installation",
+      "qty": "1",
+      "unit": "st",
+      "price": "96000.00",
+      "rate": 25,
+      "labour": true
+    }
+  ],
+  "deduction": {
+    "kind": "GRON_TEKNIK",
+    "percent": 15
+  }
+}

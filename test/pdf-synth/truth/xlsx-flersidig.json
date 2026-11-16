@@ -1,0 +1,1707 @@
+{
+  "schemaVersion": 1,
+  "file": "xlsx-flersidig.pdf",
+  "sha256": "c1d725765d6909c272847086410efd6c57877fb6073f0d516d3d80ce5ea3a9ba",
+  "documentType": "invoice",
+  "typeCode": "380",
+  "invoicePages": [1, 2, 3],
+  "pricesIncludeVat": false,
+  "fields": {
+    "id": {
+      "value": "1106"
+    },
+    "issueDate": {
+      "value": "2026-03-27"
+    },
+    "dueDate": {
+      "value": "2026-04-27"
+    },
+    "currency": {
+      "value": "SEK"
+    },
+    "seller.name": {
+      "value": "Exempelbygg Syntet AB"
+    },
+    "seller.legalRegistrationId": {
+      "value": "9999990030"
+    },
+    "seller.vatId": {
+      "value": "SE999999003001"
+    },
+    "seller.taxRegistrationId": {
+      "value": "Godkänd för F-skatt"
+    },
+    "buyer.name": {
+      "value": "Fiktiv Kund AB"
+    },
+    "payee.name": {
+      "status": "absent"
+    },
+    "payment.bankgiro": {
+      "value": "99990020"
+    },
+    "payment.plusgiro": {
+      "status": "absent"
+    },
+    "payment.iban": {
+      "value": "SE9399900000000000000001"
+    },
+    "payment.bic": {
+      "value": "SYNTSESS"
+    },
+    "payment.remittanceInformation": {
+      "value": "202611067"
+    },
+    "totals.lineNetTotal": {
+      "value": "26880.00"
+    },
+    "totals.allowanceTotal": {
+      "status": "absent"
+    },
+    "totals.chargeTotal": {
+      "status": "absent"
+    },
+    "totals.taxExclusive": {
+      "status": "absent"
+    },
+    "totals.vatTotal": {
+      "value": "6720.00"
+    },
+    "totals.taxInclusive": {
+      "value": "33600.00"
+    },
+    "totals.prepaid": {
+      "status": "absent"
+    },
+    "totals.prepaidNote": {
+      "status": "absent"
+    },
+    "totals.rounding": {
+      "status": "absent"
+    },
+    "totals.payable": {
+      "value": "33600.00"
+    }
+  },
+  "vatBreakdown": {
+    "rows": [
+      {
+        "categoryCode": "S",
+        "rate": {
+          "value": "25"
+        },
+        "taxableAmount": {
+          "value": "26880.00"
+        },
+        "taxAmount": {
+          "value": "6720.00"
+        }
+      }
+    ]
+  },
+  "lines": {
+    "rows": [
+      {
+        "item.name": {
+          "value": "Artikel 100 specialutförande med förlängd garanti och installation på plats hos kunden"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "49.90"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "49.90"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 101 standardutförande"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "129.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "258.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 102 standardutförande"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "315.50"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "946.50"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 103 standardutförande"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "22.40"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "89.60"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 104 standardutförande"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "49.90"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "49.90"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 105 standardutförande"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "129.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "258.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 106 standardutförande"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "315.50"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "946.50"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 107 specialutförande med förlängd garanti och installation på plats hos kunden"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "22.40"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "89.60"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 108 standardutförande"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "49.90"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "49.90"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 109 standardutförande"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "129.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "258.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 110 standardutförande"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "315.50"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "946.50"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 111 standardutförande"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "22.40"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "89.60"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 112 standardutförande"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "49.90"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "49.90"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 113 standardutförande"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "129.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "258.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 114 specialutförande med förlängd garanti och installation på plats hos kunden"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "315.50"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "946.50"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 115 standardutförande"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "22.40"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "89.60"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 116 standardutförande"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "49.90"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "49.90"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 117 standardutförande"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "129.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "258.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 118 standardutförande"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "315.50"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "946.50"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 119 standardutförande"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "22.40"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "89.60"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 120 standardutförande"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "49.90"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "49.90"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 121 specialutförande med förlängd garanti och installation på plats hos kunden"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "129.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "258.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 122 standardutförande"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "315.50"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "946.50"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 123 standardutförande"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "22.40"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "89.60"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 124 standardutförande"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "49.90"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "49.90"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 125 standardutförande"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "129.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "258.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 126 standardutförande"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "315.50"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "946.50"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 127 standardutförande"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "22.40"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "89.60"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 128 specialutförande med förlängd garanti och installation på plats hos kunden"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "49.90"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "49.90"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 129 standardutförande"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "129.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "258.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 130 standardutförande"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "315.50"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "946.50"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 131 standardutförande"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "22.40"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "89.60"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 132 standardutförande"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "49.90"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "49.90"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 133 standardutförande"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "129.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "258.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 134 standardutförande"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "315.50"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "946.50"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 135 specialutförande med förlängd garanti och installation på plats hos kunden"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "22.40"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "89.60"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 136 standardutförande"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "49.90"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "49.90"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 137 standardutförande"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "129.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "258.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 138 standardutförande"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "315.50"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "946.50"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 139 standardutförande"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "22.40"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "89.60"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 140 standardutförande"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "49.90"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "49.90"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 141 standardutförande"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "129.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "258.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 142 specialutförande med förlängd garanti och installation på plats hos kunden"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "315.50"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "946.50"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 143 standardutförande"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "22.40"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "89.60"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 144 standardutförande"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "49.90"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "49.90"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 145 standardutförande"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "129.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "258.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 146 standardutförande"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "315.50"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "946.50"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 147 standardutförande"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "22.40"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "89.60"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 148 standardutförande"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "49.90"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "49.90"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 149 specialutförande med förlängd garanti och installation på plats hos kunden"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "129.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "258.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 150 standardutförande"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "315.50"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "946.50"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 151 standardutförande"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "22.40"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "89.60"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 152 standardutförande"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "49.90"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "49.90"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 153 standardutförande"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "129.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "258.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 154 standardutförande"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "315.50"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "946.50"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 155 standardutförande"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "22.40"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "89.60"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 156 specialutförande med förlängd garanti och installation på plats hos kunden"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "49.90"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "49.90"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 157 standardutförande"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "129.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "258.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 158 standardutförande"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "315.50"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "946.50"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 159 standardutförande"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "22.40"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "89.60"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 160 standardutförande"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "49.90"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "49.90"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 161 standardutförande"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "129.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "258.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 162 standardutförande"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "315.50"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "946.50"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 163 specialutförande med förlängd garanti och installation på plats hos kunden"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "22.40"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "89.60"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 164 standardutförande"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "49.90"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "49.90"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 165 standardutförande"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "129.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "258.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 166 standardutförande"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "315.50"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "946.50"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 167 standardutförande"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "22.40"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "89.60"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 168 standardutförande"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "49.90"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "49.90"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 169 standardutförande"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "129.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "258.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 170 specialutförande med förlängd garanti och installation på plats hos kunden"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "315.50"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "946.50"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 171 standardutförande"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "22.40"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "89.60"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 172 standardutförande"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "49.90"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "49.90"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 173 standardutförande"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "129.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "258.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 174 standardutförande"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "315.50"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "946.50"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 175 standardutförande"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "22.40"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "89.60"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 176 standardutförande"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "49.90"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "49.90"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 177 specialutförande med förlängd garanti och installation på plats hos kunden"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "129.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "258.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 178 standardutförande"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "315.50"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "946.50"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Artikel 179 standardutförande"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "22.40"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "89.60"
+        }
+      }
+    ]
+  },
+  "notes": "Synthetic (scripts/pdf-synth): Excel, item table over several pages with print titles and wrapped cells"
+}

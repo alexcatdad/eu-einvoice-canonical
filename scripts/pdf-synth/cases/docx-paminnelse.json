@@ -1,0 +1,32 @@
+{
+  "file": "docx-paminnelse",
+  "covers": "Word, payment reminder (påminnelse): not an invoice, no answer key",
+  "renderer": "docx",
+  "document": "reminder",
+  "number": "1001",
+  "issueDate": "2026-04-20",
+  "dueDate": "2026-04-01",
+  "customer": "K-515",
+  "ocr": "20260014",
+  "seller": {
+    "name": "Syntetisk Catering AB",
+    "address": ["Exempelgatan 1", "999 01 Testby"],
+    "orgnr": "9999990014",
+    "fskatt": true,
+    "bankgiro": "99990012"
+  },
+  "buyer": {
+    "name": "Fiktiv Kund AB",
+    "address": ["Provvägen 2", "999 12 Testby"]
+  },
+  "lines": [
+    {
+      "name": "Lunchbuffé",
+      "qty": "24",
+      "unit": "st",
+      "price": "125.00",
+      "rate": 12
+    }
+  ],
+  "reminderFee": "60.00"
+}
