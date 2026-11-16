@@ -17,6 +17,10 @@ runs:
         ssh-key: ${{ inputs.ssh-key }}
         persist-credentials: false
         path: .qualification-cache
+        sparse-checkout: |
+          /cache.json
+          /qualification.zip
+        sparse-checkout-cone-mode: false
     - name: Verify and restore matching qualification inputs
       if: inputs.ssh-key != ''
       id: restore
