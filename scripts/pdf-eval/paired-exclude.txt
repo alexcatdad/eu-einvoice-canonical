@@ -1,0 +1,2 @@
+# Hybrid PDFs whose visible page and embedded XML are known to disagree, left out of the paired evaluation.
+# One path per line, relative to the corpora directory (test/corpus/repos), as listed in the report.
