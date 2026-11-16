@@ -146,7 +146,7 @@ PDF results go to `ConvertResult.pdfOutcomes`, not `outcomes`, so existing `Conv
 | `not-an-invoice` | `reason`: recognised as another document, such as a payment reminder (påminnelse) |
 | `error` | `error`: internal error |
 
-Field provenance: an `ok` invoice has `source.format: 'pdf-text'`, `source.syntaxDocumentType: 'PDF'`, `source.payloadSha256` of the PDF and `source.pdfProvenance`, a map of canonical path to `{ page, x, y, width, height }` (page from 1, PDF points, origin top left of the displayed page). It holds printed values only; values computed from them (totals not printed, a single VAT rate applied to lines, the seller endpoint from the organisation number) are listed in `source.derived` and have the `derived` origin in `source.valueOrigins`.
+Field provenance: an `ok` invoice has `source.format: 'pdf-text'`, `source.syntaxDocumentType: 'PDF'`, `source.payloadSha256` of the PDF and `source.pdfProvenance`, a map of canonical path to `{ page, x, y, width, height }` (page from 1, PDF points, origin top left of the displayed page). It holds printed values only; values computed from them (totals not printed, a single VAT rate applied to lines, the seller endpoint from the organisation number or VAT number) are listed in `source.derived` and have the `derived` origin in `source.valueOrigins`.
 
 Swedish mapping:
 
@@ -157,13 +157,23 @@ Swedish mapping:
 - Payment reminders: `not-an-invoice`.
 - Identifiers are checked: OCR reference, Bankgiro, Plusgiro and organisation number (Luhn), SE VAT number, IBAN (mod 97). A value that fails its check is kept as printed and reported. Personal identity numbers are never kept.
 
-Peppol: the buyer reference (BT-10) and the buyer electronic address (BT-49) are usually not printed on PDFs. An `ok` invoice is complete EN 16931 but may lack them; supply both before sending it over Peppol (rules PEPPOL-EN16931-R003 and R010).
+Payment QR codes: Swedish UsingQR payment codes are decoded, both from embedded images and from codes drawn as vector paths, without OCR or page rendering. Their amount due, due date and Bankgiro, Plusgiro or IBAN fill payment fields the text does not give, with the code's region as provenance, and cross-check the printed ones: a disagreement is a `qr-conflict` problem and the printed value is kept. The OCR reference from a code (`iref`) is only compared with a printed OCR reference and never fills the field, because it often carries the invoice number instead. Swish and other payloads are ignored.
+
+Rule layers: the generic rules read every layout; generator profiles then refine them for one invoicing program's layouts, selected by the PDF's Producer or Creator and a layout fingerprint; issuer templates last refine them for one issuer's layout. A later layer replaces an earlier layer's value field by field. One generator profile is bundled, for Visma Spcs/Spiris. No templates for real issuers are bundled; callers pass their own:
+
+```ts
+const r = await convert(bytes, 'invoice.pdf', undefined, { extractPdf: { templates: [myTemplate] } });
+```
+
+Templates and profiles are declarative JSON following [`schemas/pdf-rule-set.v1.schema.json`](schemas/pdf-rule-set.v1.schema.json) (types `PdfRuleSet` and related); callers pass `kind: 'issuer-template'` only. A template is selected when one of its seller VAT IDs, organisation numbers, Bankgiro, Plusgiro or IBAN numbers is printed (and any seller identifier the generic rules read is among them), or when all of its keywords are printed. It names fields by label or page region, address blocks and the item table header, and is applied only with the exact `pdfjsVersion` it names. When several rule sets of a layer match, none is applied and the result reports it. An invalid template makes `convert()` throw `PdfRuleError`; `loadPdfRuleSet` checks one in advance.
+
+Peppol: the buyer reference (BT-10) and the buyer electronic address (BT-49) are usually not printed on PDFs. An `ok` invoice is complete EN 16931 but may lack them; supply both before sending it over Peppol (rules PEPPOL-EN16931-R003 and R010). The seller electronic address (BT-34) is the printed organisation number or, when none is printed, the organisation number taken from a seller SE VAT number that passes its checks (scheme 0007); it is listed in `source.derived`.
 
 Command line: `einvoice convert --extract-pdf <file...>` prints or writes `ok` invoices like converted XML. A draft prints its problems on stderr, is never written and exits 3, as do `unsupported` and `not-an-invoice`; `error` exits 7.
 
-Limits: only a received PDF file is read, not PDFs inside a ZIP. The HTTP server and the MCP server do not offer the option.
+Limits: only a received PDF file is read, not PDFs inside a ZIP. Page and work limits bound extraction; a PDF over them is `unsupported` with the reason. The HTTP server and the MCP server do not offer the option.
 
-Runtime: the text layer is read with the modern build of `pdfjs-dist`, loaded only when extraction is requested, so the rest of the library keeps its runtime support. Extraction needs Node 26+, Bun 1.4+ or a current browser; on older runtimes the file is `unsupported` (`unsupported-runtime`) instead of failing. In Node, pdf.js prints one "Please use the `legacy` build" warning when it first loads; the legacy build is not used because it loads a native canvas module in Node. `pdfjs-dist` lists `@napi-rs/canvas` as an optional dependency, so package managers download it unless optional dependencies are omitted (`npm install --omit=optional`, `bun install --omit optional`); extraction never loads it.
+Runtime: the text layer is read with the modern build of `pdfjs-dist`, loaded only when extraction is requested, so the rest of the library keeps its runtime support. Extraction is supported on Bun 1.4+ and current browsers only, not on Node: the modern build needs `Math.sumPrecise`, which V8 ships behind a flag, so no released Node version runs it. On other runtimes the file is `unsupported` (`unsupported-runtime`) with a reason naming the supported runtimes, instead of failing. The legacy build is not used because it loads a native canvas module in Node. `pdfjs-dist` lists `@napi-rs/canvas` as an optional dependency, so package managers download it unless optional dependencies are omitted (`npm install --omit=optional`, `bun install --omit optional`); extraction never loads it.
 
 Evaluation: [`scripts/pdf-eval.ts`](scripts/pdf-eval.ts) scores extraction field by field (correct, missing, wrong) and writes a counts-only report. The weekly public corpora workflow runs its `paired` mode, which reads the visible page of the hybrid PDFs in the pinned public corpora with the embedded files ignored and compares it with the embedded XML; it fails on any wrong value.
 
