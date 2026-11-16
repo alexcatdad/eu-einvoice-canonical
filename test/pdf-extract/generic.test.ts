@@ -135,14 +135,17 @@ describe('generic PDF invoice extraction', () => {
     expect(inv.source.valueOrigins?.['/totals/taxInclusive']).toBe('derived');
   }, 30000);
 
-  test('the UBL written from an ok result passes schema and EN 16931 validation', async () => {
+  test('the UBL written from an ok result passes schema and EN 16931 validation; Peppol lacks only buyer data the PDF does not print', async () => {
     const xml = toUbl(ok(await extract(await invoicePdf())));
     const r = await convert(new TextEncoder().encode(xml), 'synthetic.xml', undefined, { validate: true });
     const o = r.outcomes[0];
     if (o?.status !== 'ok') throw new Error('UBL did not convert');
     const v = o.invoices[0].source.validation!;
     expect([v.schema, v.semantic]).toEqual(['passed', 'passed']);
-    expect(v.findings.filter((f) => f.severity === 'fatal')).toEqual([]);
+    // Peppol also needs a buyer reference (BT-10) and the buyer's electronic address (BT-49), which the PDF does not print
+    const fatal = v.findings.filter((f) => f.severity === 'fatal');
+    expect(fatal.filter((f) => f.layer !== 'profile')).toEqual([]);
+    expect(fatal.map((f) => f.ruleId).filter((id) => id !== 'PEPPOL-EN16931-R003' && id !== 'PEPPOL-EN16931-R010')).toEqual([]);
   }, 60000);
 
   test('amounts that do not reconcile give a draft, never an invoice', async () => {

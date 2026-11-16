@@ -1,3 +1,4 @@
+/// <reference path="./layout/pdfjs-worker.d.ts" />
 /**
  * Deterministic extraction of an invoice from the text layer of a PDF without embedded XML: no OCR, no language model,
  * no network. Used by `convert(..., { extractPdf: true })`, which loads this module on demand.
