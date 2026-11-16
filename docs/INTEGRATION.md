@@ -96,6 +96,12 @@ All three flags default to off. Provenance maps canonical JSON Pointers to sourc
 
 `skipped[]` separately records material that never became a usable XML outcome, with reasons such as unsafe XML, extraction limits or detached signatures. Empty outcomes do not mean success. Mixed batches can have successful invoices, failed outcomes and skipped entries together; define acceptance for the whole result explicitly. Conversion reports bad input through outcomes/skips; caller file I/O and other infrastructure failures still need normal error handling. Validation can also be attached to a failed conversion outcome.
 
+## PDFs without embedded XML
+
+A PDF with no usable embedded invoice XML is listed in `skipped[]` ("PDF without a usable embedded XML"). Reading such a PDF's text layer is opt-in with `convert(bytes, filename, undefined, { extractPdf: true })`, and its result goes to `ConvertResult.pdfOutcomes`, not `outcomes`, so the handling above is unchanged. The statuses are `ok`, `draft`, `unsupported`, `not-an-invoice` and `error`; a `draft` is never a valid invoice.
+
+PDF extraction is supported on Bun 1.4+ and current browsers only, **not on Node**: it uses the modern `pdfjs-dist` build, which needs `Math.sumPrecise`, and V8 ships that behind a flag. On Node every such file comes back as `unsupported` with the reason `unsupported-runtime`; the rest of the library is unaffected because `pdfjs-dist` is loaded only when extraction is requested. `pdfjs-dist` lists the native `@napi-rs/canvas` as an optional dependency that extraction never loads; `npm install --omit=optional` skips the download. See the README section on PDF extraction for statuses, provenance, payment QR codes, rule layers and limits.
+
 ## Conversion success is not validation completeness
 
 `status: 'ok'` means mapping succeeded. Arithmetic checks run after parsing and add warnings without rewriting values. With `validate: true`, reports appear on `outcome.validation` and `invoice.source.validation`:
