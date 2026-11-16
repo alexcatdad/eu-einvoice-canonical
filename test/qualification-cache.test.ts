@@ -17,7 +17,10 @@ function fixture() {
   temporary.push(root);
   for (const dir of ['scripts', 'src', 'validation/licenses', 'validation/bundles/approved', 'validation/bundles/held'])
     mkdirSync(join(root, dir), { recursive: true });
-  for (const file of ['bun.lock', 'package.json', 'src/hash.ts', 'scripts/spec.ts']) writeFileSync(join(root, file), 'synthetic input');
+  for (const file of ['bun.lock', 'package.json', 'src/hash.ts', 'scripts/spec.ts', 'scripts/fetch-corpora.sh'])
+    writeFileSync(join(root, file), '// synthetic input');
+  writeFileSync(join(root, 'scripts/build-validation-bundles.ts'), "import './spec.js';\nimport '../src/hash.js';\n");
+  writeFileSync(join(root, 'scripts/qualification-cache.ts'), "import 'node:fs';\n");
   writeFileSync(join(root, 'validation/NOTICE'), 'Synthetic notice');
   writeFileSync(join(root, 'validation/licenses/LICENSE.txt'), 'Synthetic license');
   const xml = '<synthetic/>';
@@ -82,6 +85,8 @@ test('source pins, recipes, dependencies, license policy and runtimes invalidate
   for (const file of [
     'bun.lock',
     'package.json',
+    'scripts/build-validation-bundles.ts',
+    'scripts/qualification-cache.ts',
     'scripts/spec.ts',
     'src/hash.ts',
     'validation/local-source-pins.json',
@@ -97,6 +102,19 @@ test('source pins, recipes, dependencies, license policy and runtimes invalidate
     writeFileSync(path, original);
   }
   expect(restoreQualificationCache(root, cache, 'different-runtime')).toBe(false);
+});
+
+test('scripts outside the bundle recipes keep the cache', () => {
+  const { root, cache } = fixture();
+  writeFileSync(join(root, 'scripts/fetch-corpora.sh'), 'changed corpus pin');
+  writeFileSync(join(root, 'scripts/unrelated.ts'), 'export {};');
+  expect(restoreQualificationCache(root, cache, 'test-runtime')).toBe(true);
+});
+
+test('an unresolved recipe import fails closed', () => {
+  const { root } = fixture();
+  writeFileSync(join(root, 'scripts/build-validation-bundles.ts'), "import './absent.js';\n");
+  expect(() => qualificationCacheKey(root, 'test-runtime')).toThrow('Unresolved recipe import');
 });
 
 test('a missing private cache is a miss, not successful qualification', () => {
