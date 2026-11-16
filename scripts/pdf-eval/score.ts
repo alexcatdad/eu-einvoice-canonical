@@ -351,7 +351,7 @@ export function score(exp: Expected, outcome: PdfOutcome | undefined): DocScore 
       if (i >= 0) used.add(i);
       for (const [fk, f] of Object.entries(VAT_FIELDS)) judge(`vatBreakdown.${fk}`, f, row[fk], gotVat[i]);
     }
-    if (doc) gotVat.forEach((_, j) => count(s.fields, 'vatBreakdown.rows', used.has(j) ? 'correct' : 'wrong'));
+    if (doc) for (let j = 0; j < gotVat.length; j++) count(s.fields, 'vatBreakdown.rows', used.has(j) ? 'correct' : 'wrong');
   }
 
   // Lines: aligned by index only when the counts agree, so one missed line does not shift every later one.
