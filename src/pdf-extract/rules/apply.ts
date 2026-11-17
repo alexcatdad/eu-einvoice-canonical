@@ -167,7 +167,11 @@ function readField(rule: PdfFieldRule, type: string, rows: Cell[][], field: stri
   const ok = parsed.filter((f) => f.p);
   if (!ok.length) return problem('rule-no-match', `The text printed for ${field} is not a value of its type`, found[0].region);
   if (ok.some((f) => f.p && 'personal' in f.p))
-    return problem('personal-number', `The ${field} is a personal identity number; it is not kept`, ok[0].region);
+    return problem(
+      'personal-number',
+      `The ${field} is a personal identity number; it is not used for the field and the printed text is kept as unmapped text`,
+      ok[0].region,
+    );
   const values = new Set(ok.map((f) => (f.p as { value: string }).value));
   if (values.size > 1) return problem('ambiguous', `Different values printed for ${field}: ${[...values].join(', ')}`, ok[0].region);
   const first = ok[0].p as { value: string; checkFailed?: true };

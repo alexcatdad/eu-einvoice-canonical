@@ -799,6 +799,15 @@ export interface PdfRegion {
   height: number;
 }
 
+/**
+ * Printed text of a PDF's invoice pages that maps to no invoice field, kept verbatim with its region: the text of a block
+ * of vertically adjacent text segments, one line per segment. Canonical result only; never written to UBL.
+ */
+export interface PdfUnmappedText {
+  text: string;
+  region: PdfRegion;
+}
+
 /** A problem found while reading the source, with the canonical field and the place on the page when known. */
 export interface SourceWarning {
   code: string;
@@ -841,6 +850,11 @@ export interface SourceMeta {
   provenance?: Record<string, string>;
   /** Field-level provenance for `format: 'pdf-text'`: canonical path -> the region of the page the value was read from. */
   pdfProvenance?: Record<string, PdfRegion>;
+  /**
+   * For `format: 'pdf-text'`: printed text on the invoice pages that is in no field and was not used to read the layout,
+   * kept verbatim. Each block has an `unmapped-text` warning whose `field` is `/source/unmappedText/<index>`.
+   */
+  unmappedText?: PdfUnmappedText[];
   validation?: ValidationSummary;
   warnings: SourceWarning[];
 }

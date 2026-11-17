@@ -7,7 +7,7 @@
  * rules derive rather than read (a VAT category, a giro's service provider) carry the region of the value they
  * come from. Nothing is computed here; `build.ts` reconciles and fills derived totals.
  */
-import type { PdfRegion, SourceWarning } from '../canonical.js';
+import type { PdfRegion, PdfUnmappedText, SourceWarning } from '../canonical.js';
 import { below, belowAll, type Cell, cellRows, overlapX, regionOf, rightOf } from './generic/cells.js';
 import { contactBlocks } from './generic/contacts.js';
 import { type FieldKey, type FieldLabel, fieldLabel, inlinePair, type Parsed, parseField } from './generic/fields.js';
@@ -46,6 +46,8 @@ export interface GenericRead {
   bankName?: ReadValue;
   /** Printed text used to read the layout, not a value (table headings, a contact block's label): never `unmapped-text`. */
   consumed?: PdfRegion[];
+  /** Printed text on the invoice pages in no field and not layout text, kept verbatim (set last, by `unmappedText`). */
+  unmappedText?: PdfUnmappedText[];
 }
 
 /** The seller's contact details and registered seat, read from a footer (a contact block names its party itself). */
@@ -82,6 +84,7 @@ const POINTER: Partial<Record<FieldKey, string>> = {
   allowance: '/totals/allowanceTotal',
   prepaid: '/totals/prepaid',
   buyerReference: '/buyerReference',
+  accountingRef: '/accountingRef',
   orderReference: '/purchaseOrderRef',
   buyerOrgNumber: '/buyer/legalRegistrationId/value',
   buyerVatNumber: '/buyer/vatId',
@@ -291,12 +294,13 @@ function readPages(layout: LayoutDocument): GenericRead {
         if (texts.length === 1) bankName = { value: `${label}: ${t.value}`, region: merge([regionOf(t.label), t.region]) };
         continue;
       }
-      // Identifiers printed with different values are not joined: none is kept, which does not stop an ok result
+      // Identifiers printed with different values are not joined: none is used for the field (the printed texts stay as
+      // unmapped text), which does not stop an ok result
       if (texts.length > 1 && !JOINED_KEYS.has(key)) {
         warnings.push({
           code: 'ambiguous',
           field: pointer,
-          message: `Different values printed for ${key}; none is kept`,
+          message: `Different values printed for ${key}; none is used for the field and the printed text is kept as unmapped text`,
           region: texts[0].region,
         });
         continue;
@@ -321,13 +325,14 @@ function readPages(layout: LayoutDocument): GenericRead {
       continue;
     }
     const [h] = hits;
-    // A buyer identifier that is a personal identity number or fails its check digits is not kept, and is no reason to stop
+    // A buyer identifier that is a personal identity number or fails its check digits is not used for the field (its
+    // printed text stays as unmapped text), and is no reason to stop
     if ((key === 'buyerOrgNumber' || key === 'buyerVatNumber') && ('personal' in h.parsed || h.parsed.checkFailed)) continue;
     if ('personal' in h.parsed) {
       problems.push({
         code: 'personal-number',
         field,
-        message: `The ${key} is a personal identity number; it is not kept`,
+        message: `The ${key} is a personal identity number; it is not used for the field and the printed text is kept as unmapped text`,
         region: regionOfValue(h.value),
       });
       continue;
@@ -489,7 +494,7 @@ export function itemValues(items: Item[], read: Pick<GenericRead, 'values' | 'pr
       problems.push({
         code: 'ambiguous',
         field: `${p}/note`,
-        message: `Line ${i + 1}: unlabelled text under the item is kept as its note; it may belong to the description`,
+        message: `Line ${i + 1}: unlabelled text under the item is kept as its note; uncertain placement, it may belong to the description`,
         region: merge(item.unclearNote),
       });
     if (item.datedNote)

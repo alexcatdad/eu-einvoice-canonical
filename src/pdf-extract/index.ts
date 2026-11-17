@@ -7,13 +7,13 @@
  * (generic.ts), rule layers (rules/: generator profile, then issuer template), payment QR codes (qr.ts), then reconciliation (generic/build.ts):
  * only a complete, reconciling result is `ok`.
  */
-import type { CanonicalInvoice, PdfRegion, SourceWarning } from '../canonical.js';
+import type { CanonicalInvoice, PdfRegion, PdfUnmappedText, SourceWarning } from '../canonical.js';
 import { attachment, invoicePageCount, invoicePages } from './attachment.js';
 import { buildExtraction } from './generic/build.js';
 import { freeTextValues } from './generic/free-text.js';
 import { remarkNote, termsSentences, unmappedText } from './generic/unmapped.js';
-import { readInvoice } from './generic.js';
-import { DEFAULT_PDF_LIMITS, extractLayout, type PdfLimits } from './layout.js';
+import { type GenericRead, readInvoice } from './generic.js';
+import { DEFAULT_PDF_LIMITS, extractLayout, type LayoutDocument, type PdfLimits } from './layout.js';
 import { applyPaymentQr, findQrCodes, qrPaymentFacts } from './qr.js';
 import { applyRules, BUNDLED_PROFILES, loadPdfRuleSet, PdfRuleError, type PdfRuleSet } from './rules/index.js';
 
@@ -42,6 +42,8 @@ export interface InvoiceDraft {
   pdfProvenance: Record<string, PdfRegion>;
   /** Why the draft is not an invoice: missing, ambiguous or contradictory fields and failed reconciliation, with page and position when known. */
   problems: SourceWarning[];
+  /** Printed text on the invoice pages in no field and not layout text, kept verbatim, as `source.unmappedText` of an invoice. */
+  unmappedText?: PdfUnmappedText[];
 }
 
 /**
@@ -70,7 +72,16 @@ export type PdfExtraction =
 /** Reads one PDF. Deterministic: the same bytes and library version always give the same result. Throws only on internal faults. */
 export type PdfExtractor = (bytes: Uint8Array, options: PdfExtractOptions) => Promise<PdfExtraction>;
 
-export const extractPdfInvoice: PdfExtractor = async (bytes, options) => {
+export const extractPdfInvoice: PdfExtractor = async (bytes, options) => (await readPdf(bytes, options)).result;
+
+/**
+ * The extraction with the layout of the invoice pages and the final read, for tests of the text coverage
+ * (`textCoverage(layout, read)`); `layout` and `read` are absent when the text was not read.
+ */
+export async function readPdf(
+  bytes: Uint8Array,
+  options: PdfExtractOptions,
+): Promise<{ result: PdfExtraction; layout?: LayoutDocument; read?: GenericRead }> {
   const templates = (options.templates ?? []).map(loadPdfRuleSet);
   const wrong = templates.find((t) => t.kind !== 'issuer-template');
   if (wrong) throw new PdfRuleError(wrong.id, ['/kind: callers pass issuer templates only']);
@@ -83,13 +94,13 @@ export const extractPdfInvoice: PdfExtractor = async (bytes, options) => {
       const reason = `PDF text cannot be read: ${layout.quality.reasons.map((r) => r.detail).join('; ')}`;
       // The text stays unread; a payment QR code still gives payment facts (decoding is not OCR)
       const qr = layout.pages.length ? qrPaymentFacts(await findQrCodes(bytes, layout.pages.length)) : undefined;
-      if (!qr) return { status: 'unsupported', reason };
+      if (!qr) return { result: { status: 'unsupported', reason } };
       const payment: PdfPaymentFacts = { fields: {}, pdfProvenance: {} };
       for (const [k, { value, region }] of Object.entries(qr)) {
         payment.fields[k] = value;
         payment.pdfProvenance[k] = region;
       }
-      return { status: 'unsupported', reason, payment };
+      return { result: { status: 'unsupported', reason, payment } };
     }
     const ruled = applyRules(layout, readInvoice(layout), BUNDLED_PROFILES, templates);
     if (pages) ruled.pages ??= pages;
@@ -98,7 +109,8 @@ export const extractPdfInvoice: PdfExtractor = async (bytes, options) => {
     const paid = applyPaymentQr(read, codes);
     const attached = pages && !read.notAnInvoice ? await attachment(bytes, pages + 1, whole.pages.length, options.filename) : undefined;
     if (attached?.problem) paid.problems.push(attached.problem);
-    const result = buildExtraction(read.notAnInvoice ? paid : unmappedText(layout, paid), options);
+    const final = read.notAnInvoice ? paid : unmappedText(layout, paid);
+    const result = buildExtraction(final, options);
     if (result.status === 'ok' && attached?.file) {
       result.invoice.attachments.push(attached.file);
       result.invoice.source.derived.push({
@@ -106,14 +118,14 @@ export const extractPdfInvoice: PdfExtractor = async (bytes, options) => {
         rule: `Pages ${pages! + 1}-${whole.pages.length} follow the pages the invoice's page numbering counts: embedded unchanged as one PDF`,
       });
     }
-    return result;
+    return { result, layout, read: final };
   } catch (error) {
     // pdf.js reports a damaged file it opened (a page tree or object it cannot parse) with these exceptions
     if (error instanceof Error && PDFJS_PARSE_ERRORS.has(error.name))
-      return { status: 'unsupported', reason: `The file is not a readable PDF: ${error.message}` };
+      return { result: { status: 'unsupported', reason: `The file is not a readable PDF: ${error.message}` } };
     throw error;
   }
-};
+}
 
 const PDFJS_PARSE_ERRORS = new Set(['UnknownErrorException', 'InvalidPDFException', 'FormatError']);
 

@@ -298,7 +298,9 @@ export function score(exp: Expected, outcome: PdfOutcome | undefined): DocScore 
       ...new Set([
         ...(outcome?.status === 'draft' ? Object.keys(outcome.draft.fields).filter((p) => !isKnownPointer(p)) : []),
         ...problems.flatMap((p) =>
-          p.field && !isKnownPointer(p.field) && !/^\/(payments|payee|notes|vatBreakdown|lines)(\/|$)/.test(p.field) ? [p.field] : [],
+          p.field && !isKnownPointer(p.field) && !/^\/(payments|payee|notes|vatBreakdown|lines|source)(\/|$)/.test(p.field)
+            ? [p.field]
+            : [],
         ),
       ]),
     ].map(pointerPattern),

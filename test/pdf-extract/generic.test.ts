@@ -590,11 +590,12 @@ describe('generic PDF invoice extraction', () => {
     expect(d.problems).toContainEqual(expect.objectContaining({ code: 'ambiguous', field: '/id' }));
   }, 30000);
 
-  test('a personal identity number is flagged and never kept', async () => {
+  test('a personal identity number is flagged and in no field; its printed text is kept as unmapped text', async () => {
     const d = draft(await extract(await invoicePdf({ [ID.org]: '811218-9876', [ID.vat]: null })));
     expect(d.fields['/seller/legalRegistrationId/value']).toBeUndefined();
     const p = d.problems.find((x) => x.code === 'personal-number');
     expect(p?.message).not.toMatch(/\d{6}/);
+    expect(d.unmappedText?.map((u) => u.text)).toContain('811218-9876');
   }, 30000);
 
   test('prices including VAT, factoring and unmapped units give a draft with each reason', async () => {
@@ -779,7 +780,7 @@ describe('item rows without an amount, page numbering and attached pages', () =>
     expect(different['/lines/1/national/orderReference']?.value).toBe('AO-2');
   });
 
-  test('an identifier printed with two different values (customer number) is not kept, with a warning only', async () => {
+  test('an identifier printed with two different values (customer number) is in no field; both texts are kept as unmapped text', async () => {
     const inv = ok(
       await extract(
         await invoicePdf({}, [
@@ -790,7 +791,25 @@ describe('item rows without an amount, page numbering and attached pages', () =>
     );
     expect(inv.buyer.identifiers).toEqual([]);
     expect(inv.source.warnings).toContainEqual(expect.objectContaining({ code: 'ambiguous', field: '/buyer/identifiers/0/value' }));
+    expect(inv.source.unmappedText?.map((u) => u.text)).toEqual(['Kundnr: K-101\nKundnr: K-102']);
     expect(ok(await extract(await invoicePdf({}, [[60, 400, 'Kundnr: K-101']]))).buyer.identifiers).toEqual([{ value: 'K-101' }]);
+  }, 30000);
+
+  test('"Konteringsreferens" is the buyer accounting reference (BT-19), on its own or in the buyer contact block', async () => {
+    const inv = ok(await extract(await invoicePdf({}, [[60, 400, 'Konteringsreferens: 4010-77']])));
+    expect(inv.accountingRef).toBe('4010-77');
+    expect(inv.source.pdfProvenance?.['/accountingRef']).toMatchObject({ page: 1, x: 60 });
+    expect(toUbl(inv)).toContain('<cbc:AccountingCost>4010-77</cbc:AccountingCost>');
+    const block = ok(
+      await extract(
+        await invoicePdf({}, [
+          [60, 400, 'KÖPARENS KONTAKT'],
+          [60, 412, 'Telefon: 0100000020'],
+          [60, 424, 'Konteringsreferens: KST 12'],
+        ]),
+      ),
+    );
+    expect([block.accountingRef, block.buyer.contact?.phone]).toEqual(['KST 12', '0100000020']);
   }, 30000);
 
   test('an OCR reference that is the invoice number without a check digit is kept with a warning, not a problem', async () => {

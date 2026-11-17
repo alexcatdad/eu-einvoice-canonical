@@ -1916,6 +1916,13 @@
             "$ref": "#/$defs/SourceWarning"
           },
           "description": "Why the draft is not an invoice: missing, ambiguous or contradictory fields and failed reconciliation, with page and position when known."
+        },
+        "unmappedText": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PdfUnmappedText"
+          },
+          "description": "Printed text on the invoice pages in no field and not layout text, kept verbatim, as `source.unmappedText` of an invoice."
         }
       },
       "required": [
@@ -2894,6 +2901,22 @@
       ],
       "description": "The PDF an outcome of `convert(..., { extractPdf: true })` was read from."
     },
+    "PdfUnmappedText": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "region": {
+          "$ref": "#/$defs/PdfRegion"
+        }
+      },
+      "required": [
+        "text",
+        "region"
+      ],
+      "description": "Printed text of a PDF's invoice pages that maps to no invoice field, kept verbatim with its region: the text of a block of vertically adjacent text segments, one line per segment. Canonical result only; never written to UBL."
+    },
     "Percentage": {
       "$ref": "#/$defs/Decimal"
     },
@@ -3629,6 +3652,13 @@
             "$ref": "#/$defs/PdfRegion"
           },
           "description": "Field-level provenance for `format: 'pdf-text'`: canonical path -> the region of the page the value was read from."
+        },
+        "unmappedText": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PdfUnmappedText"
+          },
+          "description": "For `format: 'pdf-text'`: printed text on the invoice pages that is in no field and was not used to read the layout, kept verbatim. Each block has an `unmapped-text` warning whose `field` is `/source/unmappedText/<index>`."
         },
         "validation": {
           "$ref": "#/$defs/ValidationSummary"

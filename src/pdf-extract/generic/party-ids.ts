@@ -98,7 +98,7 @@ export function endpointValues(ids: PartyId[], values: Record<string, ReadValue>
       problems.push({
         code: 'personal-number',
         field,
-        message: `The ${party} electronic address is a personal identity number; it is not kept`,
+        message: `The ${party} electronic address is a personal identity number; it is not used for the field and the printed text is kept as unmapped text`,
         region,
       });
       continue;
@@ -119,7 +119,7 @@ export function endpointValues(ids: PartyId[], values: Record<string, ReadValue>
 
 /**
  * Writes the parties' other identifiers with their scheme: the seller may have several (BT-29); the buyer has one
- * (BT-46), so one printed after another buyer identifier is reported and not kept.
+ * (BT-46), so one printed after another buyer identifier is reported and stays as unmapped text.
  */
 export function identifierValues(ids: PartyId[], values: Record<string, ReadValue>, warnings: SourceWarning[]) {
   for (const party of ['seller', 'buyer'] as const) {
@@ -133,7 +133,8 @@ export function identifierValues(ids: PartyId[], values: Record<string, ReadValu
         warnings.push({
           code: 'ambiguous',
           field: '/buyer/identifiers',
-          message: 'Another buyer identifier is printed; the buyer has one (BT-46), so only the first is kept',
+          message:
+            'Another buyer identifier is printed; the buyer has one (BT-46), so only the first is used for the field and the printed text is kept as unmapped text',
           region,
         });
         continue;

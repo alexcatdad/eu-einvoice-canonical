@@ -70,9 +70,12 @@ test('invoice note (BT-22), payment terms (BT-20) and item note (BT-127) are rea
   expect(inv.lines[0].note).toBe('Aggregat 1-3\nTestgatan 12');
   expect(inv.lines[0].item.name).toBe('Serviceavtal kvartal 2');
 
-  // Text that maps to no field: reported by region, without the text; none of it inside a value read
+  // Text that maps to no field: kept verbatim in unmappedText, its warning pointing at it without copying the text
   const unmapped = inv.source.warnings.filter((w) => w.code === 'unmapped-text');
-  for (const w of unmapped) expect(w.message).toMatch(/^Printed text that maps to no invoice field \(\d+ text segments?\)$/);
+  for (const w of unmapped)
+    expect(w.message).toMatch(/^Printed text that maps to no invoice field \(\d+ text segments?\), kept as printed$/);
+  const kept = inv.source.unmappedText ?? [];
+  expect(unmapped.map((w) => [w.field, w.region])).toEqual(kept.map((u, i) => [`/source/unmappedText/${i}`, u.region]));
   // Only the issuer's remark on page 2; the phone under the seller's contact is the seller's, after the contact block's
   expect(unmapped.map((w) => [w.region?.page, Math.round(w.region?.y ?? 0)])).toEqual([[2, 228]]);
   expect(inv.seller.contact?.phone).toBe('0100000001\n010-000 0000');

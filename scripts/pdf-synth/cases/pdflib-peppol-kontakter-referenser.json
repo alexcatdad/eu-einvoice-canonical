@@ -1,6 +1,6 @@
 {
   "file": "pdflib-peppol-kontakter-referenser",
-  "covers": "pdf-lib, Peppol viewer page followed by the issuer's own page: buyer and seller contact blocks (BT-56-58, BT-41-43) with three different phone numbers, seller GLN party ID (BT-29), a buyer GLN besides the customer number (BT-46 holds one: reported, not kept), invoiced object (BT-18), document reference without its file (BG-24), payment means code and text (BT-81/82), terms sentences joined to the payment terms (BT-20), bank name in the note (BT-22), visiting address (BT-33), table headings, zero document-level totals and repeated values that are not unmapped text",
+  "covers": "pdf-lib, Peppol viewer page followed by the issuer's own page: buyer and seller contact blocks (BT-56-58, BT-41-43) with three different phone numbers, seller GLN party ID (BT-29), a buyer GLN besides the customer number (BT-46 holds one: reported, kept as unmapped text), invoiced object (BT-18), document reference without its file (BG-24), payment means code and text (BT-81/82), terms sentences joined to the payment terms (BT-20), bank name in the note (BT-22), visiting address (BT-33), table headings, zero document-level totals and repeated values that are not unmapped text",
   "renderer": "pdflib",
   "layout": "peppol-and-issuer",
   "document": "invoice",

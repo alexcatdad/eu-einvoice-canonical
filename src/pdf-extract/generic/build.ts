@@ -64,7 +64,12 @@ export function buildExtraction(printed: GenericRead, options: PdfExtractOptions
   )
     return { status: 'unsupported', reason: 'No invoice fields were recognised in the PDF text (layout not covered by the rules)' };
   const draft = (extra: SourceWarning[]): PdfExtraction => {
-    const d: InvoiceDraft = { fields: {}, pdfProvenance: {}, problems: [...read.problems, ...extra, ...read.warnings] };
+    const d: InvoiceDraft = {
+      fields: {},
+      pdfProvenance: {},
+      problems: [...read.problems, ...extra, ...read.warnings],
+      ...(read.unmappedText ? { unmappedText: read.unmappedText } : {}),
+    };
     for (const [k, { value, region }] of Object.entries(v)) {
       d.fields[k] = value;
       d.pdfProvenance[k] = region;
@@ -361,6 +366,7 @@ function buildInvoice(
       contact: contact('/buyer'),
     },
     buyerReference: get('/buyerReference'),
+    accountingRef: get('/accountingRef'),
     purchaseOrderRef: get('/purchaseOrderRef'),
     ...(get('/invoicedObjectId/value') ? { invoicedObjectId: { value: get('/invoicedObjectId/value')! } } : {}),
     additionalParties: [],
@@ -413,6 +419,7 @@ function buildInvoice(
       derived,
       valueOrigins: Object.fromEntries([...Object.keys(v).map((k) => [k, 'source']), ...derived.map((d) => [d.field, 'derived'])]),
       pdfProvenance: Object.fromEntries(Object.entries(v).map(([k, r]) => [k, r.region])) as Record<string, PdfRegion>,
+      ...(read.unmappedText ? { unmappedText: read.unmappedText } : {}),
       warnings: read.warnings,
     },
   };
