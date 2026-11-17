@@ -58,7 +58,7 @@ export function buildExtraction(printed: GenericRead, options: PdfExtractOptions
   )
     return { status: 'unsupported', reason: 'No invoice fields were recognised in the PDF text (layout not covered by the rules)' };
   const draft = (extra: SourceWarning[]): PdfExtraction => {
-    const d: InvoiceDraft = { fields: {}, pdfProvenance: {}, problems: [...read.problems, ...extra] };
+    const d: InvoiceDraft = { fields: {}, pdfProvenance: {}, problems: [...read.problems, ...extra, ...read.warnings] };
     for (const [k, { value, region }] of Object.entries(v)) {
       d.fields[k] = value;
       d.pdfProvenance[k] = region;
@@ -296,7 +296,7 @@ function buildInvoice(
   if (!printedSeller && orgNumber) derive('/seller/endpoint', 'Organisation number as Peppol endpoint (scheme 0007)');
   else if (!printedSeller && endpointId)
     derive('/seller/endpoint', 'Organisation number from the seller SE VAT number (SE + org.nr + 01) as Peppol endpoint (scheme 0007)');
-  const note = get('/notes/0/text');
+  const notes = [0, 1].flatMap((k) => (get(`/notes/${k}/text`) ? [{ text: get(`/notes/${k}/text`)! }] : []));
 
   const invoice: CanonicalInvoice = {
     kind: get('/typeCode') === '381' ? 'creditNote' : 'invoice',
@@ -306,7 +306,8 @@ function buildInvoice(
     selfBilled: false,
     currency: currency as CanonicalInvoice['currency'],
     dueDate: get('/dueDate') as IsoDate | undefined,
-    notes: note ? [{ text: note }] : [],
+    notes,
+    paymentTerms: get('/paymentTerms'),
     specificationId: '',
     precedingInvoices: [],
     seller: {
@@ -376,7 +377,7 @@ function buildInvoice(
       derived,
       valueOrigins: Object.fromEntries([...Object.keys(v).map((k) => [k, 'source']), ...derived.map((d) => [d.field, 'derived'])]),
       pdfProvenance: Object.fromEntries(Object.entries(v).map(([k, r]) => [k, r.region])) as Record<string, PdfRegion>,
-      warnings: [],
+      warnings: read.warnings,
     },
   };
   const mismatch = reconcile(invoice, lineSum);

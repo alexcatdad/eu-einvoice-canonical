@@ -311,6 +311,6 @@ export function qrPaymentFacts(codes: readonly QrCode[]): Record<string, ReadVal
   const cur = usable[0]?.qr?.fields.cur?.toUpperCase();
   const values: Record<string, ReadValue> =
     cur && /^[A-Z]{3}$/u.test(cur) ? { '/currency': { value: cur, region: usable[0].code.region } } : {};
-  const out = applyPaymentQr({ values, problems: [], pricesIncludeVat: false, lineCount: 0 }, codes);
+  const out = applyPaymentQr({ values, problems: [], warnings: [], pricesIncludeVat: false, lineCount: 0 }, codes);
   return out.problems.length || Object.keys(out.values).length <= Object.keys(values).length ? undefined : out.values;
 }

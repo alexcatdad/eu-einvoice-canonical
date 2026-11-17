@@ -83,6 +83,12 @@ function peppol(spec: CaseSpec, f: Figures, page: number): Placed[] {
     });
     return y + 9 * (lines.length + 1);
   };
+  if (spec.invoiceNote) {
+    t(298, 112, 'Anteckning', { bold: true });
+    spec.invoiceNote.forEach((n, i) => {
+      t(298, 121 + 9 * i, n);
+    });
+  }
   t(157, 112, 'KÖPARENS KONTAKT', { bold: true });
   if (spec.buyerReference) t(157, 121, spec.buyerReference);
   t(157, 130, 'Telefon: 0100000000');
@@ -148,7 +154,7 @@ function peppol(spec: CaseSpec, f: Figures, page: number): Placed[] {
   total('Belopp att betala:', `${dot(f.payable)} SEK`);
   y += 6;
   t(16, y, 'Betalningsvillkor:');
-  t(16, y + 11, '30 dgr netto');
+  t(16, y + 11, spec.paymentTerms?.peppol ?? '30 dgr netto');
   y += 25;
 
   t(16, y, 'BETALINSTRUKTION', { bold: true });
@@ -225,7 +231,7 @@ function issuer(spec: CaseSpec, f: Figures, page: number): Placed[] {
     t(342, 98 + 11 * i, l);
   });
   t(342, 194, 'Betalningsvillkor:');
-  t(431, 194, '30 dgr netto');
+  t(431, 194, spec.paymentTerms?.issuer ?? '30 dgr netto');
 
   t(52, 212, 'Fakturan avser', { bold: true });
   t(271, 212, 'Antal', { bold: true });

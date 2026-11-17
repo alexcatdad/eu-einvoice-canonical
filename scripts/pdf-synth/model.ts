@@ -73,6 +73,10 @@ export interface CaseSpec {
   layout?: Layout;
   buyerReference?: string;
   orderReference?: string;
+  /** Peppol viewer only: invoice note lines (BT-22), printed under an "Anteckning" heading. */
+  invoiceNote?: string[];
+  /** Fixed layouts: the payment terms text (BT-20) on the Peppol viewer page and on the issuer page. Default "30 dgr netto". */
+  paymentTerms?: { peppol?: string; issuer?: string };
 }
 
 /** What the page shows. Renderers lay this out and add nothing. */
@@ -348,7 +352,9 @@ function validate(spec: CaseSpec) {
     if (p.gln && !parseGln(p.gln)) fail(`${p.name}: GLN check digit`);
     const [scheme, id] = p.peppolId?.split(':') ?? [];
     if (p.peppolId && !(scheme === '0007' ? id === p.orgnr : scheme === '0088' && id === p.gln)) fail(`${p.name}: Peppol ID`);
-    if ((p.gln || p.peppolId) && spec.layout !== 'peppol-viewer') fail('GLN and Peppol IDs are printed by the Peppol viewer layout');
+    if ((p.gln || p.peppolId) && !spec.layout?.startsWith('peppol')) fail('GLN and Peppol IDs are printed by the Peppol viewer layout');
   }
+  if (spec.invoiceNote && !spec.layout?.startsWith('peppol')) fail('invoice notes are printed by the Peppol viewer layout');
+  if (spec.paymentTerms && !spec.layout) fail('payment terms are printed by the fixed layouts');
   if (spec.exemptReason !== undefined && spec.lines.some((l) => l.rate !== 0)) fail('exempt invoices have rate 0 lines only');
 }

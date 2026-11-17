@@ -382,7 +382,7 @@ describe('generic PDF invoice extraction', () => {
     expect(inv.source.valueOrigins?.['/seller/endpoint']).toBe('derived');
   }, 30000);
 
-  test('a labelled note under an item and the lines after it are the line note (BT-127); unlabelled lines stay unclear', async () => {
+  test('a labelled note under an item and the lines after it are the line note (BT-127); unlabelled lines are kept there and reported', async () => {
     const inv = ok(
       await extract(
         await invoicePdf({}, [
@@ -395,8 +395,9 @@ describe('generic PDF invoice extraction', () => {
     expect(inv.lines[1].item.name).toBe('Licens');
     expect(inv.source.pdfProvenance?.['/lines/1/note']).toMatchObject({ page: 1, x: 60 });
     const d = draft(await extract(await invoicePdf({}, [[60, 226, 'avser mars']])));
-    expect(d.fields['/lines/1/note']).toBeUndefined();
-    expect(d.problems).toContainEqual(expect.objectContaining({ code: 'ambiguous', field: '/lines/1/item/name' }));
+    expect(d.fields['/lines/1/note']).toBe('avser mars');
+    expect(d.fields['/lines/1/item/name']).toBe('Licens');
+    expect(d.problems).toContainEqual(expect.objectContaining({ code: 'ambiguous', field: '/lines/1/note' }));
   }, 30000);
 
   test('labels ending in an abbreviation full stop ("Org. nr.:") are read; a failing org.nr is kept and flagged', async () => {
@@ -437,11 +438,12 @@ describe('generic PDF invoice extraction', () => {
     expect(await extract(await invoicePdf({ Faktura: 'Betalningspåminnelse' }))).toMatchObject({ status: 'not-an-invoice' });
   }, 30000);
 
-  test('a note under an item that is not a wrapped description leaves the name empty, with a problem', async () => {
+  test('text under an item that is not a wrapped description is its note, with a problem; the name is the item row', async () => {
     const d = draft(await extract(await invoicePdf({ 'enligt avtal': null }, [[60, 226, 'Ring oss vid frågor']])));
-    expect(d.fields['/lines/1/item/name']).toBeUndefined();
+    expect(d.fields['/lines/1/item/name']).toBe('Licens');
+    expect(d.fields['/lines/1/note']).toBe('Ring oss vid frågor');
     expect(d.fields['/lines/1/netAmount']).toBe('1000.00');
-    expect(d.problems).toContainEqual(expect.objectContaining({ code: 'ambiguous', field: '/lines/1/item/name' }));
+    expect(d.problems).toContainEqual(expect.objectContaining({ code: 'ambiguous', field: '/lines/1/note' }));
   }, 30000);
 
   test('ok and draft outcomes of convert match the published result schema', async () => {

@@ -156,6 +156,8 @@ Swedish mapping:
 - Kreditfaktura: type code 381 (credit note).
 - Payment reminders: `not-an-invoice`.
 - Identifiers are checked: OCR reference, Bankgiro, Plusgiro and organisation number (Luhn), SE VAT number, IBAN (mod 97). A value that fails its check is kept as printed and reported. Personal identity numbers are never kept.
+- Free text is kept verbatim, one printed line per line: text under an item is its line note (BT-127; unlabelled text there is also reported, as it may belong to the description), a labelled invoice note ("Anteckning", "Meddelande") is BT-22, and payment terms ("Betalningsvillkor") are BT-20. Texts printed differently on several pages are kept one after the other, with a `joined-text` warning at each further one.
+- No printed text is dropped silently: text that maps to no field is reported by region as `unmapped-text`, without copying the text. It does not stop an `ok` result (it is listed in `source.warnings`).
 
 Payment QR codes: Swedish UsingQR payment codes are decoded, both from embedded images and from codes drawn as vector paths, without OCR or page rendering. Their amount due, due date and Bankgiro, Plusgiro or IBAN fill payment fields the text does not give, with the code's region as provenance, and cross-check the printed ones: a disagreement is a `qr-conflict` problem and the printed value is kept. The OCR reference from a code (`iref`) is only compared with a printed OCR reference and never fills the field, because it often carries the invoice number instead. Swish and other payloads are ignored. A PDF with no usable text layer stays `unsupported`; when it carries a Swedish payment QR code, the outcome also has `payment` with only the facts decoded from the code, each with its region as provenance.
 

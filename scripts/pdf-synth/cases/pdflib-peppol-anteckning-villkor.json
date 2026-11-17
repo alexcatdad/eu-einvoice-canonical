@@ -1,0 +1,41 @@
+{
+  "file": "pdflib-peppol-anteckning-villkor",
+  "covers": "pdf-lib, Peppol viewer page followed by the issuer's own page: invoice note under an Anteckning heading (BT-22), payment terms printed differently on the two pages (BT-20), labelled item note (BT-127), printed text that maps to no field",
+  "renderer": "pdflib",
+  "layout": "peppol-and-issuer",
+  "document": "invoice",
+  "pages": 2,
+  "number": "1133",
+  "issueDate": "2026-05-18",
+  "dueDate": "2026-06-17",
+  "customer": "K-532",
+  "ocr": "202611331",
+  "buyerReference": "REF-2026-0518",
+  "invoiceNote": ["Avser serviceavtal 2026", "Ring före besök"],
+  "paymentTerms": { "peppol": "30 dagar netto", "issuer": "Netto 30 dagar från fakturadatum" },
+  "seller": {
+    "name": "Provservice Syntet AB",
+    "address": ["Provvägen 7", "999 32 Testby"],
+    "orgnr": "9999990105",
+    "peppolId": "0007:9999990105",
+    "fskatt": true,
+    "bankgiro": "99990095"
+  },
+  "buyer": {
+    "name": "Exempelbostäder AB",
+    "address": ["Testgatan 12", "999 42 Teststad"],
+    "orgnr": "9999990113",
+    "peppolId": "0007:9999990113"
+  },
+  "lines": [
+    {
+      "name": "Serviceavtal kvartal 2",
+      "qty": "1",
+      "unit": "st",
+      "unitCode": "EA",
+      "price": "4800.00",
+      "rate": 25,
+      "note": ["Aggregat 1-3", "Testgatan 12"]
+    }
+  ]
+}

@@ -218,6 +218,7 @@ const read = (values: Record<string, string> = {}, more: Partial<GenericRead> = 
     Object.entries(values).map(([k, value]) => [k, { value, region: { page: 1, x: 0, y: 0, width: 1, height: 1 } }]),
   ),
   problems: [],
+  warnings: [],
   pricesIncludeVat: false,
   lineCount: 0,
   ...more,
