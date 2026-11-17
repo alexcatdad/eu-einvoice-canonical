@@ -1,0 +1,40 @@
+{
+  "file": "pdflib-peppol-kopar-id",
+  "covers": "pdf-lib, Swedish Peppol BIS viewer rendering: buyer GLN party ID (BT-46), seller DUNS party ID (BT-29), a party ID whose scheme is not an ISO 6523 code (not read, reported as unmapped text), buyer contact e-mail only",
+  "renderer": "pdflib",
+  "layout": "peppol-viewer",
+  "document": "invoice",
+  "number": "1142",
+  "issueDate": "2026-06-03",
+  "dueDate": "2026-07-03",
+  "customer": "K-542",
+  "ocr": "202611422",
+  "buyerReference": "REF-2026-0603",
+  "buyerContact": { "email": "inkop@exempelbostader.invalid" },
+  "seller": {
+    "name": "Provservice Syntet AB",
+    "address": ["Provvägen 7", "999 32 Testby"],
+    "orgnr": "9999990105",
+    "ids": ["0060:999999999", "9955:SE999999015401"],
+    "peppolId": "0007:9999990105",
+    "fskatt": true,
+    "bankgiro": "99990095"
+  },
+  "buyer": {
+    "name": "Exempelbostäder AB",
+    "address": ["Testgatan 12", "999 42 Teststad"],
+    "orgnr": "9999990113",
+    "gln": "9999999000027",
+    "peppolId": "0007:9999990113"
+  },
+  "lines": [
+    {
+      "name": "Filterbyte",
+      "qty": "3",
+      "unit": "st",
+      "unitCode": "EA",
+      "price": "420.00",
+      "rate": 25
+    }
+  ]
+}

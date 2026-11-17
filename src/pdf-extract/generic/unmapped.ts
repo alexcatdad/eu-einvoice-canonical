@@ -5,11 +5,12 @@
  * The messages are generic: the text itself is not copied, as it may carry personal data.
  */
 import type { PdfRegion, SourceWarning } from '../../canonical.js';
+import { cmp, isZero } from '../../values.js';
 import type { GenericRead } from '../generic.js';
 import type { LayoutDocument } from '../layout.js';
 import { matchLabel, normalize } from '../se/index.js';
 import { fieldLabel, inlinePair, parseAmount, parseRate } from './fields.js';
-import { isFreeTextLabel } from './free-text.js';
+import { appendText, isFreeTextLabel } from './free-text.js';
 import { columnOf, merge } from './items.js';
 
 const DATED = /^(?:\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?) +\p{L}/u;
@@ -18,6 +19,10 @@ const TITLE = /^(?:faktura|kreditfaktura|invoice|sida \d+(?: \(\d+\)| av \d+)?|\
 /** Section headings and titles in capitals ("SKATTESAMMANRÄKNING", "FAKTURA"). */
 const HEADING = /^[^\p{Ll}]*\p{Lu}{3}[^\p{Ll}]*$/u;
 const compact = (s: string) => normalize(s).replace(/[\s.:-]/gu, '');
+/** A document-level discount or fee total as Peppol viewers print it ("Summa rabatter (huvudnivå):"). */
+const LEVEL_TOTAL = /^summa (rabatter|avgifter) \(huvudnivå\):?$/u;
+/** A sentence on payment terms printed outside the labelled terms: late-payment interest, or the seller's general terms. */
+const TERMS = /dröjsmålsränta|efter förfallo(?:dagen|datum)\b.*\bränta\b|\ballmänna (?:avtals|leverans)?villkor\b/u;
 
 const inside = (a: PdfRegion, b: PdfRegion) => {
   const w = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
@@ -38,10 +43,22 @@ function headings(text: string, parts = 3): boolean {
 
 /** The text segments on the pages read that map to no field, in reading order. */
 export function unmappedSegments(layout: LayoutDocument, read: GenericRead): Segment[] {
-  const used = [...Object.values(read.values).map((v) => v.region), ...[...read.problems, ...read.warnings].map((p) => p.region)].filter(
-    (r): r is PdfRegion => !!r,
-  );
+  const used = [
+    ...Object.values(read.values).map((v) => v.region),
+    ...[...read.problems, ...read.warnings].map((p) => p.region),
+    ...(read.consumed ?? []),
+  ].filter((r): r is PdfRegion => !!r);
   const v = read.values;
+  // A zero document-level discount or fee total, where none is read: it states what the result holds
+  const none = (key: string) => !v[`/totals/${key}`] || isZero(v[`/totals/${key}`].value);
+  for (const p of layout.pages)
+    for (const l of p.lines) {
+      const [label, amount, ...rest] = l.segments;
+      const kind = LEVEL_TOTAL.exec(normalize(label?.text ?? ''))?.[1];
+      const a = amount && parseAmount(amount.text);
+      if (kind && !rest.length && a && isZero(a) && none(kind === 'rabatter' ? 'allowanceTotal' : 'chargeTotal'))
+        used.push(...[label, amount].map((s) => ({ page: p.number, x: s.x, y: s.y, width: s.width, height: s.height })));
+    }
   const postal = (p: string) =>
     v[`${p}/address/postalCode`] ? [`${v[`${p}/address/postalCode`].value} ${v[`${p}/address/city`]?.value ?? ''}`] : [];
   const texts = new Set(
@@ -54,15 +71,29 @@ export function unmappedSegments(layout: LayoutDocument, read: GenericRead): Seg
     const c = compact(t);
     return c.length >= 5 && [...texts].some((v) => v.length > c.length && v.includes(c));
   };
-  const amounts = new Set<string>(Object.values(read.values).flatMap((v) => parseAmount(v.value) ?? []));
+  const amounts = Object.values(v).flatMap((x) => (parseAmount(x.value) ? [{ a: parseAmount(x.value)!, page: x.region.page }] : []));
+  const exact = new Set(amounts.map((x) => x.a));
+  // On another page, an amount or rate with decimals compares by value ("25,00" printed for the rate 25)
+  const isAmount = (t: string, page: number) => {
+    const a = parseAmount(t) ?? parseRate(t);
+    return !!a && (exact.has(a) || (/\d[,.]\d{2}$/u.test(t) && amounts.some((x) => x.page !== page && cmp(a, x.a) === 0)));
+  };
+  // A quantity with its unit printed again on another page ("1 st" for "1.00 EA")
+  const quantities = Object.entries(v).flatMap(([k, x]) => (/^\/lines\/\d+\/quantity$/u.test(k) ? [x] : []));
+  const isQuantity = (t: string, page: number) => {
+    const m = /^(-?\d[\d ]*(?:[,.]\d+)?) ?\p{L}{1,6}\.?$/u.exec(t);
+    const q = m && parseAmount(m[1]);
+    return !!q && quantities.some((x) => x.region.page !== page && cmp(q, x.value) === 0);
+  };
   // A whole text that is a label or column heading, a section heading, or a value read elsewhere ("Label: value" too)
-  const known = (printed: string): boolean => {
+  const known = (printed: string, page: number): boolean => {
     // "Organisationsnummer: 5560000001 [0007]": the scheme suffix aside
     const text = printed.replace(/\s*\[[0-9A-Z]{2,4}\]$/u, '');
     const pair = /^([^:]{2,40}):\s*(\S.*)$/u.exec(text);
     return (
       texts.has(compact(text)) ||
-      amounts.has(parseAmount(text) ?? parseRate(text) ?? '') ||
+      isAmount(text, page) ||
+      isQuantity(text, page) ||
       !!fieldLabel(text) ||
       !!matchLabel(text) ||
       !!columnOf(text) ||
@@ -81,7 +112,7 @@ export function unmappedSegments(layout: LayoutDocument, read: GenericRead): Seg
         l.segments.map((s) => ({ page: p.number, x: s.x, y: s.y, width: s.width, height: s.height, text: s.text.trim() })),
       ),
     )
-    .filter((s) => /[\p{L}\p{N}]/u.test(s.text) && !used.some((r) => inside(s, r)) && !known(s.text))
+    .filter((s) => /[\p{L}\p{N}]/u.test(s.text) && !used.some((r) => inside(s, r)) && !known(s.text, s.page))
     .sort((a, b) => a.page - b.page || a.y - b.y || a.x - b.x);
 }
 
@@ -151,4 +182,23 @@ export function unmappedText(layout: LayoutDocument, read: GenericRead): Generic
     region: b.region,
   }));
   return { ...read, warnings: [...read.warnings, ...warnings] };
+}
+
+/**
+ * Text whose every sentence is on payment terms, printed outside the labelled terms ("Efter förfallodagen debiteras
+ * ränta ...", "Våra allmänna villkor finns på ..."), is part of the payment terms (BT-20): appended in page order after the terms read,
+ * each with its own region. A sentence already contained in the terms is a repeat and adds nothing.
+ */
+export function termsSentences(layout: LayoutDocument, read: GenericRead): GenericRead {
+  const values = { ...read.values };
+  const warnings = [...read.warnings];
+  for (const s of unmappedSegments(layout, read)) {
+    // Every sentence of the text is on the terms, so that no other text goes with it
+    const sentences = s.text.split(/(?<=[.!?])\s+(?=\p{Lu})/u);
+    if (s.text.split(' ').length < 4 || !sentences.every((t) => TERMS.test(normalize(t)))) continue;
+    if (compact(values['/paymentTerms']?.value ?? '').includes(compact(s.text))) continue;
+    const { text, ...region } = s;
+    appendText('/paymentTerms', { value: text, region }, values, warnings);
+  }
+  return { ...read, values, warnings };
 }

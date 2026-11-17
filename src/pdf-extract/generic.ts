@@ -9,9 +9,10 @@
  */
 import type { PdfRegion, SourceWarning } from '../canonical.js';
 import { below, belowAll, type Cell, cellRows, overlapX, regionOf, rightOf } from './generic/cells.js';
+import { contactBlocks } from './generic/contacts.js';
 import { type FieldKey, type FieldLabel, fieldLabel, inlinePair, type Parsed, parseField } from './generic/fields.js';
 import { findItemTables, type Item, merge } from './generic/items.js';
-import { endpointValues, type PartyId, partyId } from './generic/party-ids.js';
+import { endpointValues, identifierValues, type PartyId, partyId } from './generic/party-ids.js';
 import { vatBreakdown, vatTable } from './generic/vat.js';
 import type { LayoutDocument, Line } from './layout.js';
 import { findLabels, isReminder, matchLabel, normalize } from './se/index.js';
@@ -41,15 +42,28 @@ export interface GenericRead {
   flipped?: true;
   /** The late-payment interest as printed with its label ("Dröjsmålsränta 12 %"): part of the payment terms (BT-20), never VAT. */
   lateInterest?: ReadValue;
+  /** The bank's name as printed at "Bank": no EN 16931 field holds it, so it is kept in the invoice note (BT-22). */
+  bankName?: ReadValue;
+  /** Printed text used to read the layout, not a value (table headings, a contact block's label): never `unmapped-text`. */
+  consumed?: PdfRegion[];
 }
 
-/** Keys whose differently printed values are all kept, joined in reading order, instead of making the field ambiguous. */
+/** The seller's contact details and registered seat, read from a footer (a contact block names its party itself). */
 const SELLER_FOOTER = new Set<FieldKey>(['phone', 'email', 'legalInfo']);
 /** A label's own text: without a trailing colon, or without the value printed after its colon in the same cell. */
 const labelOf = (c: Cell) => c.text.replace(/\s*:.*$/u, '');
-/** Free text, joined when printed differently; the other text keys are identifiers, never joined. */
-const JOINED_KEYS = new Set<FieldKey>(['buyerContact', 'sellerContact', 'legalInfo']);
-const TEXT_KEYS = new Set<FieldKey>(['buyerId', 'buyerContact', 'sellerContact', 'phone', 'email', 'legalInfo', 'lateInterest']);
+/**
+ * Free text and contact details, joined in page order when printed differently (phone numbers compared by their digits,
+ * e-mail addresses without case); the other text keys are identifiers, never joined.
+ */
+const JOINED_KEYS = new Set<FieldKey>(['buyerContact', 'sellerContact', 'legalInfo', 'phone', 'email', 'buyerPhone', 'buyerEmail']);
+const TEXT_KEYS = new Set<FieldKey>([...JOINED_KEYS, 'buyerId', 'lateInterest', 'bankName']);
+const sameAs = (key: FieldKey, value: string) =>
+  key === 'phone' || key === 'buyerPhone'
+    ? value.replace(/\D/gu, '')
+    : key === 'email' || key === 'buyerEmail'
+      ? value.toLowerCase()
+      : value;
 
 const POINTER: Partial<Record<FieldKey, string>> = {
   id: '/id',
@@ -73,10 +87,13 @@ const POINTER: Partial<Record<FieldKey, string>> = {
   buyerVatNumber: '/buyer/vatId',
   buyerId: '/buyer/identifiers/0/value',
   buyerContact: '/buyer/contact/name',
+  buyerPhone: '/buyer/contact/phone',
+  buyerEmail: '/buyer/contact/email',
   sellerContact: '/seller/contact/name',
   phone: '/seller/contact/phone',
   email: '/seller/contact/email',
   legalInfo: '/seller/additionalLegalInfo',
+  invoicedObject: '/invoicedObjectId/value',
 };
 
 const TITLE = /^(?:faktura\p{L}*|kreditfaktura|invoice|kvitto|orderbekräftelse|sida \d.*|\d+ ?\(\d+\))$/u;
@@ -116,6 +133,7 @@ function readPages(layout: LayoutDocument): GenericRead {
   const problems: SourceWarning[] = [];
   const warnings: SourceWarning[] = [];
   let lateInterest: ReadValue | undefined;
+  let bankName: ReadValue | undefined;
   const identityRows = new Set(
     rows
       .filter((r) => r.some((c) => fieldLabel(c.text)?.keys.some((k) => k === 'orgNumber' || k === 'vatNumber' || k === 'bankgiro')))
@@ -140,25 +158,42 @@ function readPages(layout: LayoutDocument): GenericRead {
   const tables = findItemTables(rows);
   const inTable = new Set<Line>(tables.flatMap((t) => [...t.lines]));
   const free = rows.filter((r) => !inTable.has(r[0].line));
+  const contacts = contactBlocks(free);
+  const consumed: PdfRegion[] = [...tables.flatMap((t) => t.layout), ...contacts.labels].map(regionOf);
 
   // Labelled values
-  type Hit = { parsed: Parsed; value: Cell | { region: PdfRegion }; label: Cell; rate?: string };
+  /** `block`: read from a contact block, which names its party. */
+  type Hit = { parsed: Parsed; value: Cell | { region: PdfRegion }; label: Cell; rate?: string; block?: true };
   const found = new Map<FieldKey, Hit[]>();
   const add = (key: FieldKey, hit: Hit) => found.set(key, [...(found.get(key) ?? []), hit]);
   const addresses: { key: 'buyer' | 'sellerAddress'; label: Cell }[] = [];
   const partyIds: PartyId[] = [];
+  for (const h of contacts.hits) add(h.key, { parsed: h.parsed, value: h.cell, label: h.cell, block: true });
   for (const row of free)
     for (const cell of row) {
+      if (contacts.cells.has(cell)) continue;
       // "Köparens PEPPOL-ID: 9999990113 [0007]", "Organisationsnummer: 9999990113 [0007]" in a party block
       const pid = partyId(rows, cell);
       if (pid) {
         if (pid.kind === 'orgNumber')
           add(pid.party === 'seller' ? 'orgNumber' : 'buyerOrgNumber', { parsed: pid.parsed, value: cell, label: cell });
+        if (pid.kind === 'vatNumber')
+          add(pid.party === 'seller' ? 'vatNumber' : 'buyerVatNumber', { parsed: pid.parsed, value: cell, label: cell });
         partyIds.push(pid);
+        continue;
+      }
+      // "Bank" (not "bank." ending a sentence), with the bank's name beside it, under it or in the same cell
+      const bank = /^Bank(?:namn)?(?::\s*| +(?=\p{Lu}))(\p{L}.*)$/u.exec(cell.text.trim());
+      const bankName = bank && parseField('bankName', bank[1]);
+      if (bankName) {
+        add('bankName', { parsed: bankName, value: { region: regionOf(cell) }, label: cell });
         continue;
       }
       // "Datum" heading the column beside "Fakturanr" is the invoice date
       const label =
+        (/^Bank(?:namn)?:?$/u.test(cell.text.trim())
+          ? ({ keys: ['bankName'], part: [0], parts: 1 } satisfies FieldLabel as FieldLabel)
+          : undefined) ??
         fieldLabel(cell.text) ??
         (normalize(cell.text).replace(/:$/u, '') === 'datum' && row.some((c) => fieldLabel(c.text)?.keys.includes('id'))
           ? ({ keys: ['issueDate'], part: [0], parts: 1 } satisfies FieldLabel as FieldLabel)
@@ -201,11 +236,13 @@ function readPages(layout: LayoutDocument): GenericRead {
       }
     }
 
-  paymentTable(free, add);
+  const payment = paymentTable(free, add, values);
+  consumed.push(...payment.consumed);
 
   const regionOfValue = (v: Cell | { region: PdfRegion }) => ('region' in v ? v.region : regionOf(v));
   // Under a multi-row VAT table, a column heading such as "Moms" labels a per-rate amount, not the total
   const vt = vatTable(rows);
+  if (vt.length) consumed.push(...vt.header.map(regionOf));
   if (vt.length > 1) {
     const cells = new Set(vt.flatMap((r) => [r.taxAmount, r.taxableAmount]).map((v) => v && JSON.stringify(v.region)));
     for (const key of ['vatTotal', 'taxExclusive'] as const)
@@ -219,15 +256,23 @@ function readPages(layout: LayoutDocument): GenericRead {
     const hits = key === 'vatTotal' ? all.filter((h) => !h.rate) : all;
     if (!hits.length) continue;
     if (key === 'lineNetTotal' && pricesIncludeVat) continue;
+    // The first of the hits that print the same value; the seller's footer keys among those in a footer or contact block
+    const pool = SELLER_FOOTER.has(key) ? hits.filter((h) => h.block || inFooter(h.label)) : hits;
     const distinct = new Map<string, (typeof hits)[number]>();
-    for (const h of hits) distinct.set('personal' in h.parsed ? '' : h.parsed.value, h);
+    for (const h of TEXT_KEYS.has(key) ? pool : hits) {
+      const k = 'personal' in h.parsed ? '' : sameAs(key, h.parsed.value);
+      if (!distinct.has(k)) distinct.set(k, h);
+    }
     const pointer = key === 'bankgiro' || key === 'plusgiro' || key === 'iban' || key === 'bic' ? undefined : POINTER[key];
     const field = pointer ?? `/payments/0/${key}`;
     // Contact details and free text printed differently in several places are all kept, in reading order
     if (TEXT_KEYS.has(key)) {
       // The seller's phone, e-mail and registered seat stand in a footer: low on the page, or beside the seller's identifiers
-      const own = SELLER_FOOTER.has(key) ? [...distinct.values()].filter((h) => inFooter(h.label)) : [...distinct.values()];
+      const own = [...distinct.values()];
       if (!own.length) continue;
+      // In page order
+      const at = (h: Hit) => regionOfValue(h.value);
+      own.sort((a, b) => at(a).page - at(b).page || at(a).y - at(b).y || at(a).x - at(b).x);
       const texts = own.map((h) => ({
         value:
           key === 'legalInfo' ? `${labelOf(h.label)}: ${(h.parsed as { value: string }).value}` : (h.parsed as { value: string }).value,
@@ -237,6 +282,13 @@ function readPages(layout: LayoutDocument): GenericRead {
       if (key === 'lateInterest') {
         const [t] = texts;
         lateInterest = { value: `${labelOf(t.label)} ${t.value}`, region: merge([regionOf(t.label), t.region]) };
+        continue;
+      }
+      if (key === 'bankName') {
+        // The label as printed, also where the name follows it in the same cell ("Bank Handelsbanken")
+        const [t] = texts;
+        const label = labelOf(t.label).endsWith(t.value) ? labelOf(t.label).slice(0, -t.value.length).trim() : labelOf(t.label);
+        if (texts.length === 1) bankName = { value: `${label}: ${t.value}`, region: merge([regionOf(t.label), t.region]) };
         continue;
       }
       // Identifiers printed with different values are not joined: none is kept, which does not stop an ok result
@@ -300,6 +352,8 @@ function readPages(layout: LayoutDocument): GenericRead {
   }
 
   endpointValues(partyIds, values, problems);
+  identifierValues(partyIds, values, warnings);
+  documentReferences(free, values, warnings);
 
   // Payment accounts, in a fixed order
   let transfer = 0;
@@ -415,6 +469,8 @@ function readPages(layout: LayoutDocument): GenericRead {
     lineCount: items.length,
     ...(Object.keys(defaults).length ? { defaults } : {}),
     ...(lateInterest ? { lateInterest } : {}),
+    ...(bankName ? { bankName } : {}),
+    consumed,
   };
 }
 
@@ -477,22 +533,35 @@ export function itemValues(items: Item[], read: Pick<GenericRead, 'values' | 'pr
     });
 }
 
+/** UNCL 4461 payment means codes that EN 16931 rule BR-CL-16 accepts (ZZZ aside). */
+const MEANS = (n: number) => (n >= 1 && n <= 70) || (n >= 74 && n <= 78) || (n >= 91 && n <= 98);
+
 /**
  * A payment instruction table as Peppol viewers print it: columns "Betalsystem eller BIC" and "Kontonr", one row per
- * account. SE:BANKGIRO and SE:PLUSGIRO rows give a giro number; a row with a BIC gives an IBAN and its BIC.
+ * account. SE:BANKGIRO and SE:PLUSGIRO rows give a giro number; a row with a BIC gives an IBAN and its BIC. The
+ * "Betalsätt kod" column ("30 (Kontobaserad betalning)") gives the payment means code (BT-81) and text (BT-82) when
+ * every row prints the same. Returns the headings and repeated means cells, used to read the table.
  */
-function paymentTable(rows: Cell[][], add: (key: FieldKey, hit: { parsed: Parsed; value: Cell; label: Cell }) => void) {
+function paymentTable(
+  rows: Cell[][],
+  add: (key: FieldKey, hit: { parsed: Parsed; value: Cell; label: Cell }) => void,
+  values: Record<string, ReadValue>,
+): { consumed: PdfRegion[] } {
   for (const [r, header] of rows.entries()) {
     const system = header.find((c) => normalize(c.text) === 'betalsystem eller bic');
     const account = header.find((c) => /^konto ?(?:nr|nummer)$/u.test(normalize(c.text)));
     if (!system || !account) continue;
+    const meansHead = header.find((c) => /^betalsätt(?: ?kod)?$/u.test(normalize(c.text)));
+    const means: Cell[] = [];
     let prev = header[0];
     for (const row of rows.slice(r + 1)) {
       if (row[0].page !== prev.page || row[0].line.y - (prev.line.y + prev.line.height) > 1.6 * Math.max(prev.height, 8)) break;
-      const under = (h: Cell) => row.filter((c) => overlapX(c, h) > 0);
+      // Mostly under the heading: a long value in the column before may reach under the next heading's start
+      const under = (h: Cell) => row.filter((c) => overlapX(c, h) >= Math.min(c.width, h.width) / 2);
       const [sys, acc] = [under(system), under(account)];
       if (sys.length !== 1 || acc.length !== 1) break;
       prev = row[0];
+      if (meansHead) means.push(...under(meansHead));
       const giro = { 'se:bankgiro': 'bankgiro', 'se:plusgiro': 'plusgiro' }[normalize(sys[0].text)] as FieldKey | undefined;
       const bic = giro ? undefined : parseField('bic', sys[0].text);
       const key = giro ?? (bic ? 'iban' : undefined);
@@ -501,7 +570,49 @@ function paymentTable(rows: Cell[][], add: (key: FieldKey, hit: { parsed: Parsed
       add(key, { parsed, value: acc[0], label: account });
       if (bic) add('bic', { parsed: bic, value: sys[0], label: system });
     }
-    return;
+    if (prev === header[0]) return { consumed: [] };
+    const m = means.map((c) => /^(\d{1,2}) \(([^()]+)\)$/u.exec(c.text.trim()));
+    if (!m.length || m.some((x) => !x || x[0] !== m[0]![0]) || !MEANS(+m[0]![1])) return { consumed: header.map(regionOf) };
+    values['/payments/0/meansCode'] = { value: m[0]![1], region: regionOf(means[0]) };
+    values['/payments/0/meansText'] = { value: m[0]![2].trim(), region: regionOf(means[0]) };
+    return { consumed: [...header, ...means.slice(1)].map(regionOf) };
+  }
+  return { consumed: [] };
+}
+
+/**
+ * Document references as Peppol viewers print them under "ÖVRIGA DOKUMENTREFERENSER": "Referens: <id> - <description>",
+ * optionally followed by the attached file's type and name ("- Filtyp: ...", "- Filnamn: ..."). Each is a supporting
+ * document reference (BG-24, BT-122 and BT-123) without content: the file was attached to the e-invoice, not to the PDF.
+ */
+function documentReferences(rows: Cell[][], values: Record<string, ReadValue>, warnings: SourceWarning[]) {
+  let k = 0;
+  for (const head of rows.flat()) {
+    if (!/^övriga dokumentreferenser$/u.test(normalize(head.text))) continue;
+    let at = below(rows, head);
+    while (at && Math.abs(at.x - head.x) <= 2) {
+      const m = /^referens: (\S.*?)(?: - (\S.*))?$/iu.exec(at.text.trim());
+      if (!m) break;
+      const lines = [at];
+      for (
+        let f = below(rows, at);
+        f && Math.abs(f.x - head.x) <= 2 && /^- (?:filtyp|filnamn): \S/iu.test(f.text.trim());
+        f = below(rows, f)
+      )
+        lines.push(f);
+      const region = merge(lines.map(regionOf));
+      values[`/attachments/${k}/id`] = { value: m[1], region };
+      if (m[2]) values[`/attachments/${k}/description`] = { value: m[2], region };
+      if (lines.length > 1)
+        warnings.push({
+          code: 'attachment-not-embedded',
+          field: `/attachments/${k}`,
+          message: 'The referenced document is a file attached to the e-invoice and not contained in the PDF: only its reference is kept',
+          region,
+        });
+      k++;
+      at = below(rows, lines[lines.length - 1]);
+    }
   }
 }
 

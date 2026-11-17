@@ -19,6 +19,8 @@ export interface Party {
   gln?: string;
   /** Peppol viewer only: the electronic address as "<EAS scheme>:<value>", printed as "Köparens/Säljarens PEPPOL-ID". */
   peppolId?: string;
+  /** Peppol viewer only: further party IDs as "<scheme>:<value>", printed as "ID: <value> [<scheme>]" after the GLN. */
+  ids?: string[];
 }
 export interface Seller extends Party {
   orgnr: string;
@@ -80,6 +82,25 @@ export interface CaseSpec {
   paymentTerms?: { peppol?: string; issuer?: string };
   /** A multi-page construction invoice with attached documents (construction.ts); `lines` is then unused. */
   construction?: Construction;
+  /** Peppol viewer: phone and e-mail under "KÖPARENS KONTAKT", instead of the default phone line. */
+  buyerContact?: { phone?: string; email?: string };
+  /**
+   * Fixed layouts: the seller's contact phone and e-mail, under "SÄLJARENS KONTAKT" on the Peppol viewer page instead
+   * of the default phone line, and at "Frågor ang. fakturan:" on the issuer page.
+   */
+  sellerContact?: { phone: string; email: string };
+  /** Issuer layout: the phone number in the footer. Default 010-000 0000. */
+  footerPhone?: string;
+  /** Peppol viewer: a terms text printed under the invoice note, after a gap. */
+  peppolTerms?: string;
+  /** Peppol viewer: "ÖVRIGA DOKUMENTREFERENSER" with one reference, optionally with its attached file's type and name. */
+  documentReference?: { id: string; description: string; file?: { type: string; name: string } };
+  /** Peppol viewer: "Faktureringsobjekt: <id>" (BT-18). */
+  invoicedObject?: string;
+  /** Issuer layout: "Besöksadress:" in the footer, the address under it. */
+  visitingAddress?: string;
+  /** Issuer layout: the label "Urspr. faktura:" with no value. */
+  originalInvoiceLabel?: boolean;
 }
 
 /** What the page shows. Renderers lay this out and add nothing. */

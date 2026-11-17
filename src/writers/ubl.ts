@@ -245,7 +245,8 @@ function paymentMeansOf(p: PaymentInstructions, creditNoteDue: string | undefine
     const card = first ? p.card : undefined;
     return cacK(
       'PaymentMeans',
-      cbc('PaymentMeansCode', p.meansCode, { name: p.meansText }),
+      // The means text once (UBL-SR-46), on the first
+      cbc('PaymentMeansCode', p.meansCode, { name: first ? p.meansText : undefined }),
       first ? cbc('PaymentDueDate', creditNoteDue) : undefined,
       cbc('PaymentID', p.remittanceInformation),
       card

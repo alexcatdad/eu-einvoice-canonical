@@ -50,7 +50,11 @@ export type FieldKey =
   | 'email'
   | 'legalInfo'
   | 'exemptBase'
-  | 'lateInterest';
+  | 'lateInterest'
+  | 'buyerPhone'
+  | 'buyerEmail'
+  | 'invoicedObject'
+  | 'bankName';
 
 /** Labels the shared lexicon does not cover: address blocks, fees and discounts beside the totals, VAT base. */
 const EXTRA: [FieldKey, RegExp][] = [
@@ -69,7 +73,8 @@ const EXTRA: [FieldKey, RegExp][] = [
   ['sellerContact', /^vår (?:referens|kontakt(?:person)?)$/u],
   ['phone', /^(?:telefon(?:nummer)?|tfn|tel)$/u],
   ['email', /^(?:e-?post(?:adress)?|e-?mail)$/u],
-  ['legalInfo', /^(?:företagets|styrelsens|bolagets) säte$/u],
+  ['legalInfo', /^(?:företagets|styrelsens|bolagets) säte$|^besöksadress$/u],
+  ['invoicedObject', /^faktureringsobjekt$/u],
   ['buyerId', /^kund ?(?:nr|nummer)$/u],
   // Amount outside the scope of VAT, as with reverse charge ("Ej momspl.")
   ['exemptBase', /^ej moms ?pl(?:iktigt)?\.?(?: belopp)?$|^momsfritt belopp$/u],
@@ -290,6 +295,7 @@ export function parseField(key: FieldKey, raw: string): Parsed | undefined {
     // Free text, but never another label ("Vår referens", "Betalningsvillkor:"); an order number has a digit
     case 'buyerReference':
     case 'orderReference':
+    case 'invoicedObject':
       return s && s.length <= 60 && !/:$/u.test(s) && !fieldLabel(s) && !findLabels(s).length && (key === 'buyerReference' || /\d/u.test(s))
         ? { value: s }
         : undefined;
@@ -303,11 +309,15 @@ export function parseField(key: FieldKey, raw: string): Parsed | undefined {
     case 'buyerId':
       return s.length <= 40 && /\d/u.test(s) && !parseSeDate(s) && !findLabels(s).length ? { value: s } : undefined;
     case 'phone':
+    case 'buyerPhone':
       return /^\+?\d[\d ()-]{5,20}\d$/u.test(s) ? { value: s } : undefined;
     case 'email':
+    case 'buyerEmail':
       return /^[^\s@]+@[^\s@]+\.\p{L}{2,}$/u.test(s) ? { value: s } : undefined;
     case 'lateInterest':
       return parseRate(s) ? { value: s } : undefined;
+    case 'bankName':
+      return /^\p{L}[\p{L} .&-]{1,38}$/u.test(s) && !fieldLabel(s) && !findLabels(s).length ? { value: s } : undefined;
     case 'buyerOrgNumber':
       return parseField('orgNumber', s);
     case 'buyerVatNumber':

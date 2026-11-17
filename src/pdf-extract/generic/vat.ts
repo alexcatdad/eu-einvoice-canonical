@@ -26,7 +26,7 @@ export function vatBreakdown(
   values: Record<string, ReadValue>,
   problems: SourceWarning[],
 ): VatRow[] {
-  let out = vatTable(rows);
+  let out: VatRow[] = vatTable(rows);
   if (!out.length) out = ratedLabels(found, problems);
   if (!out.length) {
     const rates = new Map<string, PdfRegion>();
@@ -100,8 +100,8 @@ const RATE_HEADER = (k: FieldKey[]) => k.includes('vatRate');
 const BASE_HEADER = (k: FieldKey[]) => k.includes('vatBase') || k.includes('taxExclusive');
 const TAX_HEADER = (k: FieldKey[]) => k.includes('vatTotal');
 
-/** Rows of the first VAT table: a header with a rate column and VAT base and amount columns. */
-export function vatTable(rows: Cell[][]): VatRow[] {
+/** Rows of the first VAT table: a header with a rate column and VAT base and amount columns; `header` its heading cells. */
+export function vatTable(rows: Cell[][]): VatRow[] & { header: Cell[] } {
   for (const [r, header] of rows.entries()) {
     const keys = header.map((c) => fieldLabel(c.text)?.keys ?? []);
     const rateCol = keys.findIndex(RATE_HEADER);
@@ -145,9 +145,9 @@ export function vatTable(rows: Cell[][]): VatRow[] {
       });
       prev = row[0];
     }
-    if (out.length) return out;
+    if (out.length) return Object.assign(out, { header });
   }
-  return [];
+  return Object.assign([], { header: [] });
 }
 
 function ratedLabels(found: Map<FieldKey, Hit[]>, problems: SourceWarning[]): VatRow[] {

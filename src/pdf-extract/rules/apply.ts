@@ -212,6 +212,7 @@ function readLines(tag: string, rule: PdfTableRule, rows: Cell[][], out: Generic
   out.problems = out.problems.filter((p) => p.field !== '/lines' && !p.field?.startsWith('/lines/'));
   out.warnings = out.warnings.filter((p) => !p.field?.startsWith('/lines/'));
   const items = tables.flatMap((t) => t.items);
+  out.consumed = [...(out.consumed ?? []), ...tables.flatMap((t) => t.layout.map(regionOf))];
   out.lineCount = items.length;
   if (items.length) itemValues(items, out);
   else
@@ -294,6 +295,10 @@ function readAddressBlock(tag: string, party: '/seller' | '/buyer', rule: PdfAdd
   const last = block[block.length - 1];
   out.values[`${field}/postalCode`] = { value: `${postal[1]} ${postal[2]}`, region: regionOf(last) };
   out.values[`${field}/city`] = { value: postal[3], region: regionOf(last) };
+  // The country code on its own line under the postal line ("SE"), where every block printed agrees
+  const country = blocks.map((b) => below(rows, b[b.length - 1]));
+  if (country.every((c) => c && clean(c.text) === 'SE' && Math.abs(c.x - last.x) <= 2))
+    out.values[`${field}/countryCode`] = { value: 'SE', region: regionOf(country[0]!) };
 }
 
 const ACCOUNTS = ['bankgiro', 'plusgiro', 'iban'] as const;

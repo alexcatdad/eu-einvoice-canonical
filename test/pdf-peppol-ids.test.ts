@@ -55,9 +55,14 @@ test('invoice note (BT-22), payment terms (BT-20) and item note (BT-127) are rea
   const outcome = (await convert(pdf(name), `${name}.pdf`, undefined, { extractPdf: true })).pdfOutcomes?.[0];
   if (outcome?.status !== 'ok') throw new Error(`not converted: ${outcome?.status}`);
   const inv = outcome.invoices[0];
-  expect(inv.notes).toEqual([{ text: 'Avser serviceavtal 2026\nRing före besök' }]);
-  // Printed differently on the two pages: both kept, in page order; the second with its own region
-  expect(inv.paymentTerms).toBe('30 dagar netto\nNetto 30 dagar från fakturadatum');
+  // The bank's name in the issuer's footer has no field of its own: kept in the note
+  const note = 'Avser serviceavtal 2026\nRing före besök\nBank: Testbanken';
+  expect(inv.notes).toEqual([{ text: note }]);
+  // Printed differently on the two pages: both kept, in page order; the second with its own region. Then the terms
+  // sentences of the issuer's footer
+  const terms =
+    '30 dagar netto\nNetto 30 dagar från fakturadatum\nEfter förfallodagen debiteras ränta enligt räntelagen.\nAllmänna villkor lämnas på begäran.';
+  expect(inv.paymentTerms).toBe(terms);
   expect(inv.source.pdfProvenance?.['/paymentTerms']).toMatchObject({ page: 1 });
   expect(inv.source.warnings).toContainEqual(
     expect.objectContaining({ code: 'joined-text', field: '/paymentTerms', region: expect.objectContaining({ page: 2 }) }),
@@ -67,20 +72,18 @@ test('invoice note (BT-22), payment terms (BT-20) and item note (BT-127) are rea
 
   // Text that maps to no field: reported by region, without the text; none of it inside a value read
   const unmapped = inv.source.warnings.filter((w) => w.code === 'unmapped-text');
-  expect(unmapped).toHaveLength(15);
-  expect(unmapped.filter((w) => w.region?.page === 2)).toHaveLength(5);
   for (const w of unmapped) expect(w.message).toMatch(/^Printed text that maps to no invoice field \(\d+ text segments?\)$/);
-  // "Telefon: 0100000001" under the seller's contact (not the footer phone, BT-42), and the issuer's remark on page 2
-  expect(unmapped.some((w) => w.region?.page === 1 && Math.round(w.region.y) === 486)).toBe(true);
-  expect(unmapped.some((w) => w.region?.page === 2 && Math.round(w.region.y) === 228)).toBe(true);
+  // Only the issuer's remark on page 2; the phone under the seller's contact is the seller's, after the contact block's
+  expect(unmapped.map((w) => [w.region?.page, Math.round(w.region?.y ?? 0)])).toEqual([[2, 228]]);
+  expect(inv.seller.contact?.phone).toBe('0100000001\n010-000 0000');
 
   const ubl = toUbl(inv);
-  expect(ubl).toContain('<cbc:Note>Avser serviceavtal 2026\nRing före besök</cbc:Note>');
-  expect(ubl).toMatch(/<cac:PaymentTerms>\s*<cbc:Note>30 dagar netto\nNetto 30 dagar från fakturadatum<\/cbc:Note>\s*<\/cac:PaymentTerms>/);
+  expect(ubl).toContain(`<cbc:Note>${note}</cbc:Note>`);
+  expect(/<cac:PaymentTerms>\s*<cbc:Note>([^<]*)<\/cbc:Note>/.exec(ubl)?.[1]).toBe(terms);
   expect(ubl).toContain('<cbc:Note>Aggregat 1-3\nTestgatan 12</cbc:Note>');
   const cii = toCii(inv);
-  expect(cii).toContain('<ram:Content>Avser serviceavtal 2026\nRing före besök</ram:Content>');
-  expect(cii).toContain('<ram:Description>30 dagar netto\nNetto 30 dagar från fakturadatum</ram:Description>');
+  expect(cii).toContain(`<ram:Content>${note}</ram:Content>`);
+  expect(cii).toContain(`<ram:Description>${terms}</ram:Description>`);
   expect(cii).toContain('<ram:Content>Aggregat 1-3\nTestgatan 12</ram:Content>');
 
   const validated = (await convert(new TextEncoder().encode(ubl), `${name}.xml`, undefined, { validate: true })).outcomes[0];

@@ -40,6 +40,8 @@ const DATE_ONLY = /^[\d\s.:/–-]+$/u;
 const QTY_UNIT = /^(-?\d[\d ]*(?:[,.]\d+)?)\s*(\p{L}[\p{L}.²³0-9]*)?$/u;
 /** A labelled note under an item ("Anteckning: ..."): it and the description lines after it are the item's note (BT-127). */
 const NOTE = /^(?:anteckning|notering|kommentar|not) ?: ?/iu;
+/** The name of the unit code printed above it, as Peppol viewers print it under the quantity ("(Kvantitetskod: styck)"). */
+const UNIT_NAME = /^\((?:kvantitetskod|enhetskod): [^()]+\)$/iu;
 
 /**
  * Headings of a second header line under the item header ("Ordernr  Följesedel  Leveransdatum"): each item may be followed
@@ -84,6 +86,8 @@ export interface ItemTable {
   items: Item[];
   /** Every line of the table, header included: their cells are not read as labels or values elsewhere. */
   lines: Set<Line>;
+  /** Text that is part of the table's layout, not a value: its headings and the unit-code names under quantities. */
+  layout: Cell[];
 }
 
 function headerColumns(row: Cell[]): Column[] | undefined {
@@ -148,6 +152,7 @@ function readTable(rows: Cell[][], start: number, cols: (Column | undefined)[], 
     return best < 0 ? undefined : cols[best];
   };
   const lines = new Set<Line>([header[0].line]);
+  const layout = [...header];
   const items: Item[] = [];
   const nameEnd = new Map<Item, number>();
   let inNote = false;
@@ -184,6 +189,16 @@ function readTable(rows: Cell[][], start: number, cols: (Column | undefined)[], 
     for (const cell of row) {
       const col = place(cell);
       if (col) placed.set(col, [...(placed.get(col) ?? []), cell]);
+    }
+    // A second heading line before the first item ("Fakturerad / kvantitet"), under columns other than the description
+    const headings = !items.length && !subHeader && i === start + 1 && gap <= 0.6 * Math.max(line.height, 8);
+    if (headings && row.every((c) => place(c) && place(c) !== 'desc' && !/\d/u.test(c.text))) {
+      layout.push(...row);
+      continue;
+    }
+    if (items.length && row.every((c) => UNIT_NAME.test(c.text) && ['qty', 'qtyUnit', 'unit'].includes(place(c) ?? ''))) {
+      layout.push(...row);
+      continue;
     }
     const one = (col: Column) => {
       const cells = placed.get(col);
@@ -299,7 +314,7 @@ function readTable(rows: Cell[][], start: number, cols: (Column | undefined)[], 
       if (line) addNote(last, { value: line, region: more.region });
     }
   }
-  return { header, items, lines };
+  return { header, items, lines, layout };
 }
 
 /** Appends one text line to the item's note (BT-127). */

@@ -61,6 +61,7 @@ export const SE_LABEL_PATTERNS = {
   paymentTerms: ['betalningsvillkor', 'betalvillkor'],
   note: ['anteckning(?:ar)?', 'notering', 'meddelande'],
   deliveryTerms: ['leveransvillkor'],
+  precedingInvoice: [`urspr(?:unglig)?\\.? ?faktura(?:${S}(?:nr|nummer))?`],
   deliveryDate: [`lev(?:erans)?${S}datum`],
   customerNumber: [`kund${S}(?:nr|nummer)`],
   contact: ['(?:er|vår) kontakt(?:person)?', 'vår referens'],
