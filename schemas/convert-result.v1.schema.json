@@ -2908,12 +2908,12 @@
           "type": "string"
         },
         "region": {
-          "$ref": "#/$defs/PdfRegion"
+          "$ref": "#/$defs/PdfRegion",
+          "description": "Absent for text drawn with no usable position (a zero-size or damaged text transform), kept as drawn."
         }
       },
       "required": [
-        "text",
-        "region"
+        "text"
       ],
       "description": "Printed text of a PDF's invoice pages that maps to no invoice field, kept verbatim with its region: the text of a block of vertically adjacent text segments, one line per segment. Canonical result only; never written to UBL."
     },

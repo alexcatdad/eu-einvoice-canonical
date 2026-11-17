@@ -60,6 +60,11 @@ export interface LayoutPage {
   width: number;
   height: number;
   runs: TextRun[];
+  /**
+   * Text drawn with no usable position (a zero-size or damaged text transform), in drawing order: never in `runs` or the
+   * layout read from them. One string per origin such text is drawn from in turn, its runs joined as drawn.
+   */
+  unplaced: string[];
   lines: Line[];
   blocks: Block[];
   tables: TableCandidate[];
@@ -242,11 +247,12 @@ async function readPage(
   };
 
   const runs: TextRun[] = [];
+  const unplaced: string[] = [];
+  let from: string | undefined; // where the last text with no usable position was drawn from
   for (const item of content.items) {
     if (!('str' in item) || !item.str.trim()) continue;
     const m = lib.Util.transform(vt, item.transform) as Matrix;
     const size = Math.hypot(m[2], m[3]);
-    if (!size) continue;
     const style = content.styles[item.fontName];
     const ascent = finite(style?.ascent) || 0.8;
     const descent = finite(style?.descent, -0.2);
@@ -260,15 +266,25 @@ async function readPage(
     const ys = corners.map((c) => c[1]);
     const x = Math.min(...xs);
     const y = Math.min(...ys);
-    // A damaged transform places the text nowhere: no position to read it at
-    if (![...xs, ...ys].every(Number.isFinite)) continue;
+    const width = Math.max(...xs) - x;
+    const height = Math.max(...ys) - y;
+    // A zero-size or damaged transform places the text nowhere: kept, but not used to read the layout
+    if (!size || ![size, x, y, width, height].every(Number.isFinite)) {
+      // pdf.js splits such text into one run per character, all drawn from the same origin
+      const origin = `${item.transform[4]} ${item.transform[5]}`;
+      if (origin === from) unplaced[unplaced.length - 1] += item.str;
+      else unplaced.push(item.str);
+      from = origin;
+      continue;
+    }
+    from = undefined;
     runs.push({
       page: number,
       text: item.str,
       x: round(x),
       y: round(y),
-      width: round(Math.max(...xs) - x),
-      height: round(Math.max(...ys) - y),
+      width: round(width),
+      height: round(height),
       fontName: fontOf(item.fontName).name,
       fontSize: round(size),
       rotation: (((Math.round((Math.atan2(-m[1], m[0]) * 180) / Math.PI) % 360) + 360) % 360) + 0,
@@ -283,6 +299,7 @@ async function readPage(
     width: round(viewport.width),
     height: round(viewport.height),
     runs: [...runs].sort((a, b) => a.y - b.y || a.x - b.x),
+    unplaced,
     lines,
     blocks: groupBlocks(lines),
     tables: findTables(lines, rules),
