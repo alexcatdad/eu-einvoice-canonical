@@ -327,7 +327,16 @@ function readPages(layout: LayoutDocument): GenericRead {
     const [h] = hits;
     // A buyer identifier that is a personal identity number or fails its check digits is not used for the field (its
     // printed text stays as unmapped text), and is no reason to stop
-    if ((key === 'buyerOrgNumber' || key === 'buyerVatNumber') && ('personal' in h.parsed || h.parsed.checkFailed)) continue;
+    if ((key === 'buyerOrgNumber' || key === 'buyerVatNumber') && ('personal' in h.parsed || h.parsed.checkFailed)) {
+      if ('personal' in h.parsed)
+        warnings.push({
+          code: 'personal-number',
+          field,
+          message: `The ${key} is a personal identity number; it is not used for the field and the printed text is kept as unmapped text`,
+          region: regionOfValue(h.value),
+        });
+      continue;
+    }
     if ('personal' in h.parsed) {
       problems.push({
         code: 'personal-number',

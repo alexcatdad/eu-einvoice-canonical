@@ -809,7 +809,7 @@ describe('item rows without an amount, page numbering and attached pages', () =>
       ],
       // A remark in capitals with a number is not a heading
       [[[60, 400, 'OBS! NYTT BANKGIRO 123-4567']], ['OBS! NYTT BANKGIRO 123-4567']],
-      // A buyer organisation number that is a personal identity number
+      // A buyer organisation number that is a (fictitious) personal identity number: flagged, and kept as printed
       [[[60, 400, 'Ert org.nr: 811218-9876']], ['Ert org.nr: 811218-9876']],
       // Two different buyer electronic addresses
       [
@@ -820,6 +820,10 @@ describe('item rows without an amount, page numbering and attached pages', () =>
         ['Köparens PEPPOL-ID: 5560000001 [0007]', 'Köparens PEPPOL-ID: 5599001244 [0007]'],
       ],
     ];
+    const personal = await extract(await invoicePdf({}, cases[2][0]));
+    expect(personal.status === 'ok' && personal.invoice.source.warnings).toContainEqual(
+      expect.objectContaining({ code: 'personal-number', field: '/buyer/legalRegistrationId/value' }),
+    );
     for (const [extra, kept] of cases) {
       const r = await extract(await invoicePdf({}, extra));
       const texts = (r.status === 'ok' ? r.invoice.source.unmappedText : r.status === 'draft' ? r.draft.unmappedText : [])?.flatMap((u) =>
