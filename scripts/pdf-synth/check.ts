@@ -55,6 +55,7 @@ try {
         ...p.notes,
         ...p.payment.flat(),
         ...p.footer,
+        ...(p.placed ?? []).map((t) => t.text),
       ];
       for (const g of [p.items, p.vat]) if (g) printed.push(...g.header, ...g.rows.flat());
       const lost = [...new Set(printed.flatMap((t) => t.split(/[\s:·]+/)).filter((w) => w && !words.has(w)))];

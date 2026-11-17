@@ -149,7 +149,7 @@ export interface PdfRuleLayout {
 
 /**
  * Selects a rule set. A generator profile is selected when the PDF's Producer or Creator contains one of the given
- * texts (case-insensitive). An issuer template is selected when one of the issuer's identifiers is printed on the
+ * texts (case-insensitive); with neither given, by its layouts' fingerprints alone (each layout then needs one). An issuer template is selected when one of the issuer's identifiers is printed on the
  * page (and the seller identifiers the generic rules read, if any, are among them), or when every keyword is printed.
  */
 export interface PdfRuleMatch {

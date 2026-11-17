@@ -15,8 +15,13 @@ const S = '[ .:-]{0,3}';
 export const SE_LABEL_PATTERNS = {
   invoiceNumber: [`fakt(?:ura)?${S}(?:nr|nummer|no)`],
   invoiceDate: [`fakt(?:ura)?${S}datum`],
-  dueDate: [`förf(?:allo)?${S}(?:datum|dag)`, 'förfaller(?: till betalning)?', '(?:att )?betalas? senast', 'sista betalningsdag(?:en)?'],
-  amountDue: [`(?:(?:summa|totalt|belopp) )?att betala(?: sek| kr)?`, 'total fordran'],
+  dueDate: [
+    `förf(?:allo)?${S}(?:datum|dag)`,
+    'förfaller(?: till betalning)?',
+    '(?:att )?betalas? senast',
+    'sista betal(?:nings)?(?:dag(?:en)?|datum)',
+  ],
+  amountDue: [`(?:(?:summa|totalt|belopp) )?att betala(?: i)?(?: sek| kr)?`, 'total fordran'],
   total: [
     'summa',
     'totalt?',
@@ -24,10 +29,10 @@ export const SE_LABEL_PATTERNS = {
     'totalbelopp(?:et)?',
     'totalsumma',
     'fakturabelopp(?:et)?',
-    `(?:summa|totalt?|belopp) inkl(?:\\.|usive)? moms`,
+    `(?:summa|totalt?|belopp|totalbelopp(?:et)?) inkl(?:\\.|usive)? moms`,
   ],
   vat: ['moms', 'mervärdes?skatt', 'momsbelopp', '(?:summa|varav) moms'],
-  net: ['netto(?:belopp)?', `(?:(?:summa|totalt?|belopp|pris) )?exkl(?:\\.|usive)? moms`],
+  net: ['netto(?:belopp)?', `(?:(?:summa|totalt?|belopp|pris|totalbelopp(?:et)?) )?exkl(?:\\.|usive)? moms`, 'summa radbelopp'],
   orgNumber: [`org(?:anisations)?${S}(?:nr|nummer)`],
   vatNumber: [
     `moms${S}reg(?:istrerings)?${S}(?:nr|nummer)`,
@@ -51,7 +56,7 @@ export const SE_LABEL_PATTERNS = {
   householdWork: ['husarbete', '(?:preliminär )?skattereduktion'],
   factoring: ['belåning', 'belånad', 'factoring', 'överlåt(?:en|et|na|it|its|s|else|elsen|elsetext)', 'pantsatt'],
   vatExempt: ['momsfri(?:tt)?', 'undantag(?:en)? från skatteplikt'],
-  rounding: [`öres${S}(?:avrundning|avr|utjämning|utj)\\.?`, 'avrundning'],
+  rounding: [`öres${S}(?:avrundning|avr|utjämning|utj)\\.?`, 'avrundning', 'beloppsutjämning'],
 } as const satisfies Record<string, readonly string[]>;
 
 export type SeLabel = keyof typeof SE_LABEL_PATTERNS;

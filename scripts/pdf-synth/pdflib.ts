@@ -5,14 +5,18 @@
  * - no-ruling: Helvetica, table without any lines
  * - type0-gid: embedded DejaVu Sans as a Type0/CIDFontType2 font, Identity-H with CID = glyph id, no ToUnicode
  * - producer-word / producer-visma: Helvetica with a Producer and Creator of another generator
+ * - fixed layouts (layouts.ts): Helvetica whose font descriptor declares a tall ascent and descent, so each text box is
+ *   about twice as tall as its glyphs and reaches into the next line, as in some generators' output
  */
 import {
   beginText,
   endText,
   moveText,
+  PDFDict,
   PDFDocument,
   type PDFFont,
   PDFHexString,
+  PDFName,
   type PDFPage,
   type PDFRef,
   PDFString,
@@ -38,6 +42,10 @@ export async function toPdfLib(p: Printed, variant: Variant, ttf?: Uint8Array): 
   const [producer, creator] = PRODUCERS[variant] ?? ['pdf-lib (https://github.com/Hopding/pdf-lib)', 'pdf-synth'];
   doc.setProducer(producer);
   doc.setCreator(creator);
+  if (p.placed) {
+    await placed(doc, p);
+    return doc.save({ useObjectStreams: false });
+  }
   let face: Face;
   if (variant === 'type0-gid') {
     if (!ttf) throw new Error('type0-gid needs the DejaVu Sans font file');
@@ -52,6 +60,38 @@ export async function toPdfLib(p: Printed, variant: Variant, ttf?: Uint8Array): 
   }
   layout(doc, p, face, variant === 'standard14');
   return doc.save({ useObjectStreams: false });
+}
+
+/** Draws a fixed-position layout on A4 pages. */
+async function placed(doc: PDFDocument, p: Printed) {
+  const [W, H] = [595.28, 841.89];
+  const [reg, bold] = [await doc.embedFont(StandardFonts.Helvetica), await doc.embedFont(StandardFonts.HelveticaBold)];
+  const pages = Array.from({ length: Math.max(...p.placed!.map((t) => t.page)) }, () => doc.addPage([W, H]));
+  for (const t of p.placed!) {
+    const font = t.bold ? bold : reg;
+    const size = t.size ?? 8;
+    const x = t.right ? t.x - font.widthOfTextAtSize(t.text, size) : t.x;
+    pages[t.page - 1].drawText(t.text, { x, y: H - t.y, size, font, color: rgb(0, 0, 0) });
+  }
+  await doc.flush();
+  for (const [f, name] of [
+    [reg, 'Helvetica'],
+    [bold, 'Helvetica-Bold'],
+  ] as const)
+    doc.context.lookup(f.ref, PDFDict).set(
+      PDFName.of('FontDescriptor'),
+      doc.context.obj({
+        Type: 'FontDescriptor',
+        FontName: name,
+        Flags: 32,
+        FontBBox: [-166, -225, 1000, 931],
+        ItalicAngle: 0,
+        Ascent: 1300,
+        Descent: -950,
+        CapHeight: 718,
+        StemV: 88,
+      }),
+    );
 }
 
 /** A4, one column of blocks; the item table continues on a new page with its header repeated. */

@@ -159,7 +159,10 @@ describe('rule-set loader and schema', () => {
     expect(() => loadPdfRuleSet({ ...valid[0], layouts: [{ name: 'a', fields: { '/lines/0/netAmount': { label: 'x' } } }] })).toThrow(
       'not a field a rule can read',
     );
-    expect(() => loadPdfRuleSet({ ...valid[0], match: { orgNumber: [ID.org] } })).toThrow('producer or creator only');
+    expect(() => loadPdfRuleSet({ ...valid[0], match: { orgNumber: [ID.org] } })).toThrow('producer, creator or layout fingerprint only');
+    // Without producer or creator, every layout needs a fingerprint
+    expect(() => loadPdfRuleSet({ ...valid[0], match: {}, layouts: [{ name: 'a' }] })).toThrow('needs a fingerprint on every layout');
+    expect(loadPdfRuleSet({ ...valid[0], match: {}, layouts: [{ name: 'a', fingerprint: ['x'] }] }).id).toBe(valid[0].id);
     expect(() => loadPdfRuleSet({ ...valid[1], match: { producer: ['x'] } })).toThrow('identifiers or keywords only');
     expect(() => loadPdfRuleSet({ ...valid[0], layouts: [{ name: 'a', fields: { '/id': {} } }] })).toThrow('needs a label or a region');
   });
@@ -340,7 +343,10 @@ describe('caller templates through the API', () => {
 
 describe('bundled generator profiles', () => {
   test('every bundled profile is valid for the pinned pdfjs-dist version', () => {
-    expect(BUNDLED_PROFILES.map((p) => [p.id, p.kind, p.pdfjsVersion])).toEqual([['visma-spcs', 'generator-profile', PDFJS_VERSION]]);
+    expect(BUNDLED_PROFILES.map((p) => [p.id, p.kind, p.pdfjsVersion])).toEqual([
+      ['visma-spcs', 'generator-profile', PDFJS_VERSION],
+      ['peppol-bis-viewer-sv', 'generator-profile', PDFJS_VERSION],
+    ]);
   });
 
   test('the Visma profile reads the footer address block of a synthetic page in its layout', async () => {

@@ -17,8 +17,11 @@ const MINUS = '[-−–]';
 const SPACED = /^(\d{1,3}(?:[    ]\d{3})+|\d+)(?:,(\d+))?$/u;
 /** Dot thousands separators are only unambiguous next to a comma fraction: "1.234,56". */
 const DOTTED = /^(\d{1,3}(?:\.\d{3})+),(\d+)$/u;
-/** A dot decimal is accepted only with exactly two decimals; "1.234" stays ambiguous. */
-const DOT_DECIMAL = /^(\d+)\.(\d{2})$/u;
+/**
+ * A dot decimal is accepted only with exactly two decimals; "1.234" stays ambiguous. Space thousands with a dot
+ * decimal ("1 234.50", as Peppol viewers print) and a bare fraction (".50") are unambiguous.
+ */
+const DOT_DECIMAL = /^(\d{1,3}(?:[    ]\d{3})+|\d*)\.(\d{2})$/u;
 
 /**
  * Parses a Swedish amount: "1 234,56", "22 697 kr", "SEK 1.234,56", "100:-", "-0,40",
@@ -54,7 +57,7 @@ export function parseSeAmount(raw: string): SeAmount | undefined {
   s = signed ? (signed[1] ?? signed[2]) : paren ? paren[1] : s;
   const m = SPACED.exec(s) ?? DOTTED.exec(s) ?? DOT_DECIMAL.exec(s);
   if (!m || (whole && m[2] !== undefined)) return undefined;
-  const int = m[1].replace(/\D/gu, '');
+  const int = m[1].replace(/\D/gu, '') || '0';
   const value = toDecimal(`${negative ? '-' : ''}${int}${m[2] ? `.${m[2]}` : ''}`);
   return currency ? { value, currency: 'SEK' } : { value };
 }

@@ -1,0 +1,40 @@
+{
+  "file": "pdflib-peppol-visning",
+  "covers": "pdf-lib, Swedish Peppol BIS viewer rendering: dot decimals, party blocks, two-line table header, line notes, VAT summary with two rates, payment instruction table, tall text boxes",
+  "renderer": "pdflib",
+  "layout": "peppol-viewer",
+  "document": "invoice",
+  "number": "1121",
+  "issueDate": "2026-03-21",
+  "dueDate": "2026-04-20",
+  "customer": "K-521",
+  "ocr": "202611216",
+  "buyerReference": "REF-2026-0417",
+  "seller": {
+    "name": "Provhiss Syntet AB",
+    "address": ["Box 4711", "999 31 Testby"],
+    "orgnr": "9999990071",
+    "fskatt": true,
+    "bankgiro": "99990095",
+    "iban": "SE9399900000000000000001",
+    "bic": "SYNTSESS"
+  },
+  "buyer": {
+    "name": "Fastighets AB Exempelhus",
+    "address": ["Provgatan 3", "c/o Fiktiv Förvaltning AB", "999 41 Teststad"],
+    "orgnr": "9999990089"
+  },
+  "lines": [
+    {
+      "name": "Årlig kontroll hiss",
+      "qty": "1",
+      "unit": "st",
+      "unitCode": "EA",
+      "price": "2140.00",
+      "rate": 25,
+      "note": ["Provhiss A, plan 1-4", "Provgatan 3", "Testby"]
+    },
+    { "name": "Lunch vid utbildning", "qty": "3", "unit": "st", "unitCode": "EA", "price": "118.30", "rate": 12 }
+  ],
+  "rounding": true
+}

@@ -144,6 +144,9 @@ describe('parseSeAmount', () => {
     ['SEK 1 234,56', '1234.56', true],
     ['1.234,56', '1234.56'],
     ['1234.56', '1234.56'],
+    ['1 234.56', '1234.56'],
+    ['1 870.00 SEK', '1870.00', true],
+    ['.50', '0.50'],
     ['100:-', '100', true],
     ['100,-', '100', true],
     ['1 500:- kr', '1500', true],
@@ -158,7 +161,24 @@ describe('parseSeAmount', () => {
   for (const [raw, value, sek] of OK)
     test(`"${raw}" -> ${value}`, () => assert.deepEqual(parseSeAmount(raw), sek ? { value, currency: 'SEK' } : { value }));
 
-  for (const bad of ['', 'kr', '1.234', '12 34', '1 2345', '1,234.56', '100,50:-', '(-5)', '12:50', 'abc', '1e5', '1 234,', '--5'])
+  for (const bad of [
+    '',
+    'kr',
+    '1.234',
+    '12 34',
+    '1 2345',
+    '1,234.56',
+    '100,50:-',
+    '(-5)',
+    '12:50',
+    'abc',
+    '1e5',
+    '1 234,',
+    '--5',
+    '1 234.5',
+    '12 34.56',
+    '.5',
+  ])
     test(`"${bad}" is rejected`, () => assert.equal(parseSeAmount(bad), undefined));
 });
 

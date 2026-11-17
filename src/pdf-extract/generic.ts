@@ -8,8 +8,8 @@
  * come from. Nothing is computed here; `build.ts` reconciles and fills derived totals.
  */
 import type { PdfRegion, SourceWarning } from '../canonical.js';
-import { below, belowAll, type Cell, cellRows, regionOf, rightOf } from './generic/cells.js';
-import { type FieldKey, fieldLabel, inlinePair, type Parsed, parseField } from './generic/fields.js';
+import { below, belowAll, type Cell, cellRows, overlapX, regionOf, rightOf } from './generic/cells.js';
+import { type FieldKey, type FieldLabel, fieldLabel, inlinePair, type Parsed, parseField } from './generic/fields.js';
 import { findItemTables, type Item } from './generic/items.js';
 import { vatBreakdown, vatTable } from './generic/vat.js';
 import type { LayoutDocument, Line } from './layout.js';
@@ -54,10 +54,16 @@ const POINTER: Partial<Record<FieldKey, string>> = {
   charge: '/totals/chargeTotal',
   allowance: '/totals/allowanceTotal',
   prepaid: '/totals/prepaid',
+  buyerReference: '/buyerReference',
+  orderReference: '/purchaseOrderRef',
+  buyerOrgNumber: '/buyer/legalRegistrationId/value',
+  buyerVatNumber: '/buyer/vatId',
 };
 
 const TITLE = /^(?:faktura\p{L}*|kreditfaktura|invoice|kvitto|orderbekräftelse|sida \d.*|\d+ ?\(\d+\))$/u;
 const COMPANY_FORM = /\b(?:ab|hb|kb|aktiebolag|ek\.? ?för\.?|ekonomisk förening|kommun|region|stiftelse|förening)\.?$/u;
+/** A company form anywhere in a name ("Fastighets AB Exempel"). */
+const COMPANY_WORD = /(?:^|\s)(?:ab|hb|kb|aktiebolag)(?:\s|$)/u;
 const POSTAL = /^(?:SE-?)?(\d{3}) ?(\d{2}) +(\p{L}[\p{L} -]*)$/u;
 const PRICES_INCLUDE_VAT = /(?:mervärdesskatt|moms(?:en)?) ingår|priser(?:na)? (?:är )?inkl/u;
 
@@ -107,7 +113,12 @@ function readPages(layout: LayoutDocument): GenericRead {
   const addresses: { key: 'buyer' | 'sellerAddress'; label: Cell }[] = [];
   for (const row of free)
     for (const cell of row) {
-      const label = fieldLabel(cell.text);
+      // "Datum" heading the column beside "Fakturanr" is the invoice date
+      const label =
+        fieldLabel(cell.text) ??
+        (normalize(cell.text).replace(/:$/u, '') === 'datum' && row.some((c) => fieldLabel(c.text)?.keys.includes('id'))
+          ? ({ keys: ['issueDate'], part: [0], parts: 1 } satisfies FieldLabel as FieldLabel)
+          : undefined);
       if (!label) {
         // "Fakturanummer: 941", "Org.nr 559900-1236", also between "·" separators in a footer line
         for (const part of cell.text.split(/\s+[·•]\s+/u)) {
@@ -139,11 +150,14 @@ function readPages(layout: LayoutDocument): GenericRead {
         const under = belowAll(rows, cell);
         const b = under.length === 1 ? under[0] : under.length === lab.parts ? under[lab.part[k]] : undefined;
         const viaRight = parse(r);
-        const viaBelow = viaRight ? undefined : parse(b);
+        // Under an empty reference field stands the next heading: a reference below its label needs a digit
+        const viaBelow = viaRight || (key === 'buyerReference' && !/\d/u.test(b?.text ?? '')) ? undefined : parse(b);
         if (viaRight && r) add(key, { parsed: viaRight, value: r, label: cell, rate });
         else if (viaBelow && b) add(key, { parsed: viaBelow, value: b, label: cell, rate });
       }
     }
+
+  paymentTable(free, add);
 
   const regionOfValue = (v: Cell | { region: PdfRegion }) => ('region' in v ? v.region : regionOf(v));
   // Under a multi-row VAT table, a column heading such as "Moms" labels a per-rate amount, not the total
@@ -175,6 +189,8 @@ function readPages(layout: LayoutDocument): GenericRead {
       continue;
     }
     const [h] = hits;
+    // A buyer identifier that is a personal identity number or fails its check digits is not kept, and is no reason to stop
+    if ((key === 'buyerOrgNumber' || key === 'buyerVatNumber') && ('personal' in h.parsed || h.parsed.checkFailed)) continue;
     if ('personal' in h.parsed) {
       problems.push({
         code: 'personal-number',
@@ -189,6 +205,7 @@ function readPages(layout: LayoutDocument): GenericRead {
       problems.push({ code: 'identifier-check', field, message: `The ${key} fails its check digits; kept as printed`, region: v.region });
     if (pointer) values[pointer] = v;
     if (key === 'orgNumber') values['/seller/legalRegistrationId/schemeId'] = { value: '0007', region: v.region };
+    if (key === 'buyerOrgNumber') values['/buyer/legalRegistrationId/schemeId'] = { value: '0007', region: v.region };
     if (key === 'prepaid') prepaidNote(h.label, rows, v.region, values, problems);
   }
 
@@ -244,16 +261,25 @@ function readPages(layout: LayoutDocument): GenericRead {
   for (const a of addresses) if (a.key === 'sellerAddress') readAddress('/seller', a.label, rows, values, false);
   // A letterhead: the seller's address printed under its name
   if (sellerName && !values['/seller/address/postalCode']) readAddress('/seller', sellerName, rows, values, false, false);
-  // "Godkänd för F-skatt" alone in a cell, or between "·" separators in a footer line
-  const fSkatt = free.flat().flatMap((c) =>
+  addressWindow(layout, rows, values);
+  // "Godkänd för F-skatt" alone in a cell, or between "·" separators in a footer line; failing that, as a Peppol viewer
+  // prints it: "ID för säljarens skatteregistrering: Godkänd för F-skatt [TAX]"
+  const isFSkatt = (text: string) => {
+    const labels = findLabels(text);
+    return labels.length === 1 && labels[0].label === 'fSkatt' && text.split(' ').length <= 6;
+  };
+  const plain = free.flat().flatMap((c) =>
     c.text
       .split(/\s+[·•]\s+/u)
-      .filter((text) => {
-        const labels = findLabels(text);
-        return labels.length === 1 && labels[0].label === 'fSkatt' && text.split(' ').length <= 6;
-      })
+      .filter(isFSkatt)
       .map((text) => ({ text, cell: c })),
   );
+  const fSkatt = plain.length
+    ? plain
+    : free.flat().flatMap((c) => {
+        const text = /:\s+([^:]+?)\s*\[TAX\]$/u.exec(c.text)?.[1];
+        return text && isFSkatt(text) ? [{ text, cell: c }] : [];
+      });
   if (new Set(fSkatt.map((f) => f.text)).size === 1)
     values['/seller/taxRegistrationId'] = { value: fSkatt[0].text, region: regionOf(fSkatt[0].cell) };
 
@@ -317,6 +343,34 @@ export function itemValues(items: Item[], values: Record<string, ReadValue>, pro
   });
 }
 
+/**
+ * A payment instruction table as Peppol viewers print it: columns "Betalsystem eller BIC" and "Kontonr", one row per
+ * account. SE:BANKGIRO and SE:PLUSGIRO rows give a giro number; a row with a BIC gives an IBAN and its BIC.
+ */
+function paymentTable(rows: Cell[][], add: (key: FieldKey, hit: { parsed: Parsed; value: Cell; label: Cell }) => void) {
+  for (const [r, header] of rows.entries()) {
+    const system = header.find((c) => normalize(c.text) === 'betalsystem eller bic');
+    const account = header.find((c) => /^konto ?(?:nr|nummer)$/u.test(normalize(c.text)));
+    if (!system || !account) continue;
+    let prev = header[0];
+    for (const row of rows.slice(r + 1)) {
+      if (row[0].page !== prev.page || row[0].line.y - (prev.line.y + prev.line.height) > 1.6 * Math.max(prev.height, 8)) break;
+      const under = (h: Cell) => row.filter((c) => overlapX(c, h) > 0);
+      const [sys, acc] = [under(system), under(account)];
+      if (sys.length !== 1 || acc.length !== 1) break;
+      prev = row[0];
+      const giro = { 'se:bankgiro': 'bankgiro', 'se:plusgiro': 'plusgiro' }[normalize(sys[0].text)] as FieldKey | undefined;
+      const bic = giro ? undefined : parseField('bic', sys[0].text);
+      const key = giro ?? (bic ? 'iban' : undefined);
+      const parsed = key && parseField(key, acc[0].text);
+      if (!key || !parsed) continue;
+      add(key, { parsed, value: acc[0], label: account });
+      if (bic) add('bic', { parsed: bic, value: sys[0], label: system });
+    }
+    return;
+  }
+}
+
 /** ROT, RUT or grön teknik, when the page names exactly one of them. */
 function prepaidNote(label: Cell, rows: Cell[][], region: PdfRegion, values: Record<string, ReadValue>, problems: SourceWarning[]) {
   const kinds = new Set<string>();
@@ -351,10 +405,9 @@ function findSellerName(layout: LayoutDocument, rows: Cell[][], buyerName: strin
         !TITLE.test(normalize(c.text)) &&
         !fieldLabel(c.text),
     );
-  if (!top.length) return undefined;
   const size = Math.max(...top.map((c) => c.fontSize));
   const biggest = top.filter((c) => c.fontSize === size);
-  if (new Set(biggest.map((c) => c.text)).size === 1 && COMPANY_FORM.test(normalize(biggest[0].text))) return biggest[0];
+  if (biggest.length && new Set(biggest.map((c) => c.text)).size === 1 && COMPANY_FORM.test(normalize(biggest[0].text))) return biggest[0];
   // The name must also stand on the line that carries the seller's organisation or VAT number
   const identity = rows.filter((r) => findLabels(r[0].line.text).some((l) => l.label === 'orgNumber' || l.label === 'vatNumber'));
   const named = top.filter(
@@ -363,7 +416,45 @@ function findSellerName(layout: LayoutDocument, rows: Cell[][], buyerName: strin
       COMPANY_FORM.test(normalize(c.text)) &&
       identity.some((r) => r[0].line !== c.line && r[0].line.text.includes(c.text)),
   );
-  return new Set(named.map((c) => c.text)).size === 1 ? named[0] : undefined;
+  if (named.length) return new Set(named.map((c) => c.text)).size === 1 ? named[0] : undefined;
+  // A footer: the one company name on a line whose columns are headed "Org.nr" or "Momsreg.nr" (the name heads its own column)
+  const footer = rows
+    .filter((r) => r.some((c) => fieldLabel(c.text)?.keys.some((k) => k === 'orgNumber' || k === 'vatNumber')))
+    .flatMap((r) => r.filter((c) => c.text !== buyerName && !fieldLabel(c.text) && COMPANY_FORM.test(normalize(c.text))));
+  return new Set(footer.map((c) => c.text)).size === 1 ? footer[0] : undefined;
+}
+
+/**
+ * The buyer's block in an address window when no label names it: the one stack of left-aligned lines in the upper part
+ * of the first page that starts with a company name and ends in a postal line, and is not the seller's.
+ */
+function addressWindow(layout: LayoutDocument, rows: Cell[][], values: Record<string, ReadValue>) {
+  const first = layout.pages[0];
+  if (!first || values['/buyer/name'] || values['/buyer/address/postalCode']) return;
+  const blocks = rows
+    .flat()
+    .filter((c) => c.page === first.number && c.y < first.height * 0.35 && COMPANY_WORD.test(normalize(c.text)) && !fieldLabel(c.text))
+    .flatMap((start) => {
+      const block = [start];
+      for (let at = below(rows, start); at && block.length < 5; at = below(rows, at)) {
+        if (Math.abs(at.x - start.x) > 2 || fieldLabel(at.text)) return [];
+        block.push(at);
+        if (POSTAL.test(at.text)) return [block];
+      }
+      return [];
+    })
+    .filter((b, _, all) => b[0].text !== values['/seller/name']?.value && !all.some((o) => o.indexOf(b[0]) > 0));
+  // The name, one or two street lines and the postal line
+  if (blocks.length !== 1 || blocks[0].length < 3 || blocks[0].length > 4) return;
+  const [name, ...rest] = blocks[0];
+  const postal = POSTAL.exec(rest.pop()!.text)!;
+  const last = blocks[0][blocks[0].length - 1];
+  values['/buyer/name'] = { value: name.text, region: regionOf(name) };
+  rest.forEach((c, i) => {
+    values[`/buyer/address/line${i + 1}`] = { value: c.text, region: regionOf(c) };
+  });
+  values['/buyer/address/postalCode'] = { value: `${postal[1]} ${postal[2]}`, region: regionOf(last) };
+  values['/buyer/address/city'] = { value: postal[3], region: regionOf(last) };
 }
 
 /** An address block under a label: name (buyer only), street lines, then "NNN NN City". */

@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "file": "pdflib-peppol-med-original.pdf",
+  "sha256": "e949c59080ed22f429999f89ad37720405bff7d1526e3cc5a1ec85d626261fcc",
+  "documentType": "invoice",
+  "typeCode": "380",
+  "invoicePages": [1, 2],
+  "pricesIncludeVat": false,
+  "fields": {
+    "id": {
+      "value": "1123"
+    },
+    "issueDate": {
+      "value": "2026-03-23"
+    },
+    "dueDate": {
+      "value": "2026-04-22"
+    },
+    "currency": {
+      "value": "SEK"
+    },
+    "seller.name": {
+      "value": "Provhiss Syntet AB"
+    },
+    "seller.legalRegistrationId": {
+      "value": "9999990071"
+    },
+    "seller.vatId": {
+      "value": "SE999999007101"
+    },
+    "seller.taxRegistrationId": {
+      "value": "Godkänd för F-skatt"
+    },
+    "buyer.name": {
+      "value": "Fastighets AB Exempelhus"
+    },
+    "payee.name": {
+      "status": "absent"
+    },
+    "payment.bankgiro": {
+      "value": "99990095"
+    },
+    "payment.plusgiro": {
+      "status": "absent"
+    },
+    "payment.iban": {
+      "value": "SE9399900000000000000001"
+    },
+    "payment.bic": {
+      "value": "SYNTSESS"
+    },
+    "payment.remittanceInformation": {
+      "value": "202611232"
+    },
+    "totals.lineNetTotal": {
+      "value": "1655.00"
+    },
+    "totals.allowanceTotal": {
+      "status": "absent"
+    },
+    "totals.chargeTotal": {
+      "status": "absent"
+    },
+    "totals.taxExclusive": {
+      "value": "1655.00"
+    },
+    "totals.vatTotal": {
+      "value": "413.75"
+    },
+    "totals.taxInclusive": {
+      "value": "2068.75"
+    },
+    "totals.prepaid": {
+      "status": "absent"
+    },
+    "totals.prepaidNote": {
+      "status": "absent"
+    },
+    "totals.rounding": {
+      "value": "0.25"
+    },
+    "totals.payable": {
+      "value": "2069.00"
+    }
+  },
+  "vatBreakdown": {
+    "rows": [
+      {
+        "categoryCode": "S",
+        "rate": {
+          "value": "25"
+        },
+        "taxableAmount": {
+          "value": "1655.00"
+        },
+        "taxAmount": {
+          "value": "413.75"
+        }
+      }
+    ]
+  },
+  "lines": {
+    "rows": [
+      {
+        "item.name": {
+          "value": "Besiktning hiss"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "EA"
+        },
+        "price.net": {
+          "value": "1655.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "1655.00"
+        }
+      }
+    ]
+  },
+  "notes": "Synthetic (scripts/pdf-synth): pdf-lib, Peppol viewer page followed by the issuer's own page: the viewer's table is read, the issuer page's unlabelled notes and other unit do not count"
+}

@@ -9,7 +9,7 @@ import type { PdfRegion, SourceWarning } from '../../canonical.js';
 import type { ReadValue } from '../generic.js';
 import { classifyRates, findLabels, normalize } from '../se/index.js';
 import { type Cell, overlapX, regionOf } from './cells.js';
-import { type FieldKey, fieldLabel, type Parsed, parseAmount, parseRate } from './fields.js';
+import { type FieldKey, fieldLabel, type Parsed, parseAmount, parseCategoryRate, parseRate } from './fields.js';
 import type { Item } from './items.js';
 
 export type VatRow = Partial<Record<'rate' | 'categoryCode' | 'taxableAmount' | 'taxAmount' | 'exemptionReason', ReadValue>>;
@@ -111,7 +111,7 @@ export function vatTable(rows: Cell[][]): VatRow[] {
       const rateCell = at(rateCol);
       // "Momsfri" in the rate column: an exempt row
       const exemptRow = rateCell && findLabels(rateCell.text).some((l) => l.label === 'vatExempt');
-      const rate = rateCell && (exemptRow ? '0' : parseRate(rateCell.text));
+      const rate = rateCell && (exemptRow ? '0' : (parseRate(rateCell.text) ?? parseCategoryRate(rateCell.text)));
       if (!rateCell || !rate) break;
       const pick = (test: (k: FieldKey[]) => boolean): ReadValue | undefined => {
         const k = keys.findIndex(test);
