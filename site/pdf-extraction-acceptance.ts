@@ -1,7 +1,8 @@
 /**
  * The built converter reads PDFs without embedded XML from their text layer, by default, with synthetic PDFs only
  * (test/pdf-synth/). In every engine: an invoice converts, a draft is labelled as not valid and offers no XML export,
- * other documents and unreadable text give their reason, a browser without the needed built-ins gets the plain-words
+ * other documents and unreadable text give their reason, a scan shows its payment QR code's facts and offers no export,
+ * a browser without the needed built-ins gets the plain-words
  * reason, and pdf.js (its worker included) loads from the site itself.
  */
 import assert from 'node:assert/strict';
@@ -73,6 +74,29 @@ for (const [name, engine] of Object.entries({ chromium, firefox, webkit })) {
     assert.match(await page.locator('.json').innerText(), /"status": "draft"/);
     await page.getByRole('tab', { name: 'Invoice', exact: true }).click();
 
+    // A scan without a text layer: unread, but the payment QR code's facts are shown with their place; no export
+    const scan = await drop(page, 'pdflib-skannad-qr.pdf');
+    assert.match(scan, /PDF not read.*PDF text cannot be read: No text layer/);
+    assert.match(scan, /Payment details from the payment QR code only/);
+    for (const [field, value] of [
+      ['/currency', 'SEK'],
+      ['/totals/payable', '14250.00'],
+      ['/dueDate', '2026-04-15'],
+      ['/payments/0/creditTransfers/0/accountId', '99990079'],
+      ['/payments/0/creditTransfers/0/serviceProviderId', 'SE:BANKGIRO'],
+    ])
+      assert.ok(scan.includes(`${field} ${value} · page 1, x 0, y 0`), `${field} ${value} not shown`);
+    await page.getByRole('tab', { name: 'JSON', exact: true }).click();
+    assert.equal(
+      await page
+        .locator('.json-bar')
+        .getByRole('button', { name: /^Write as (UBL|CII)$/ })
+        .count(),
+      0,
+    );
+    assert.match(await page.locator('.json').innerText(), /"status": "unsupported"/);
+    await page.getByRole('tab', { name: 'Invoice', exact: true }).click();
+
     assert.match(await drop(page, 'docx-paminnelse.pdf'), /Not an invoice.*Payment reminder/);
     assert.match(await drop(page, 'pdflib-type0-utan-tounicode.pdf'), /PDF not read.*PDF text cannot be read/);
     assert.deepEqual(violations, []);
@@ -85,7 +109,9 @@ for (const [name, engine] of Object.entries({ chromium, firefox, webkit })) {
     await old.goto(base);
     await old.locator('.sheet-invoice').waitFor();
     assert.match(await drop(old, 'docx-moms-12.pdf'), /This browser cannot read PDF invoices: it lacks Math\.sumPrecise\./);
-    console.log(`${name}: PDF invoice, draft, other document, unreadable text and missing built-ins as expected`);
+    console.log(
+      `${name}: PDF invoice, draft, scan with payment QR code, other document, unreadable text and missing built-ins as expected`,
+    );
   } finally {
     await browser.close();
   }

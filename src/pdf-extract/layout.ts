@@ -260,6 +260,8 @@ async function readPage(
     const ys = corners.map((c) => c[1]);
     const x = Math.min(...xs);
     const y = Math.min(...ys);
+    // A damaged transform places the text nowhere: no position to read it at
+    if (![...xs, ...ys].every(Number.isFinite)) continue;
     runs.push({
       page: number,
       text: item.str,

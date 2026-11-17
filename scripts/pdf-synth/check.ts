@@ -6,7 +6,7 @@
  * - LibreOffice PDFs: same page count and same extracted text, line by line (LibreOffice is not byte-reproducible)
  * - pdf-lib PDFs: same bytes, and no CreationDate, ModDate or /ID
  * - answer keys: equal to the key derived from the spec; sha256 matches the committed PDF
- * - every word the spec prints appears in the committed PDF's text layer (except the font case without ToUnicode)
+ * - every word the spec prints appears in the committed PDF's text layer (except the font case without ToUnicode and the scan)
  */
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -43,7 +43,7 @@ try {
     const [a, b] = [await pageTexts(old), await pageTexts(now)];
     if (a.length !== (m.spec.pages ?? 1)) err(`${a.length} pages, spec says ${m.spec.pages ?? 1}`);
     if (!isDeepStrictEqual(a, b)) err('extracted text differs from a fresh rendering');
-    if (m.spec.variant !== 'type0-gid') {
+    if (m.spec.variant !== 'type0-gid' && m.spec.variant !== 'scan-qr') {
       const words = new Set(a.join(' ').split(/[\s:·]+/));
       const p = m.printed;
       const printed = [

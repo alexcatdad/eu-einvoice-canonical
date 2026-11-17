@@ -8,7 +8,7 @@ import { buildConstruction, type Construction } from './construction.js';
 import { type Layout, type Placed, placeLayout } from './layouts.js';
 
 export type Renderer = 'docx' | 'xlsx' | 'pdflib';
-export type Variant = 'standard14' | 'no-ruling' | 'type0-gid' | 'producer-word' | 'producer-visma';
+export type Variant = 'standard14' | 'no-ruling' | 'type0-gid' | 'producer-word' | 'producer-visma' | 'scan-qr';
 
 export interface Party {
   name: string;
@@ -118,6 +118,8 @@ export interface Printed {
   footer: string[];
   /** A fixed-position layout: every text with its place; the fields above are then empty. */
   placed?: Placed[];
+  /** Variant scan-qr: the page is a scanned image with no text layer, and this payment QR code (UsingQR JSON) on it. */
+  qr?: string;
 }
 
 const ore = (s: string) => Math.round(Number(s) * 100);
@@ -246,6 +248,22 @@ export function build(spec: CaseSpec): Model {
         payment,
         footer: [s.name, `Org.nr ${orgnr(s.orgnr)}`, `Momsreg.nr ${vatId(s.orgnr)}`, ...(s.fskatt ? ['Godkänd för F-skatt'] : [])],
       };
+  if (spec.variant === 'scan-qr') {
+    const ymd = (d: string) => d.replaceAll('-', '');
+    printed.qr = JSON.stringify({
+      uqr: 1,
+      tp: 1,
+      nme: s.name,
+      cid: orgnr(s.orgnr),
+      iref: spec.ocr,
+      idt: ymd(spec.issueDate),
+      ddt: ymd(spec.dueDate),
+      due: payable / 100,
+      cur: 'SEK',
+      pt: 'BG',
+      acc: giro(payTo.bankgiro!),
+    });
+  }
 
   // What the fixed layouts print: the Peppol viewer prints the totals with and without VAT, the issuer layout always
   // prints the rounding box but no total with or without VAT
@@ -372,6 +390,8 @@ function validate(spec: CaseSpec) {
   if (!/^[a-z0-9-]+$/.test(spec.file)) fail('file name');
   for (const l of spec.lines) if (!/^-?\d+(\.\d+)?$/.test(l.qty) || !/^\d+(\.\d+)?$/.test(l.price)) fail(`line ${l.name}`);
   if (spec.layout && spec.renderer !== 'pdflib') fail('fixed layouts are drawn by pdf-lib');
+  if (spec.variant === 'scan-qr' && (spec.renderer !== 'pdflib' || spec.layout || !s.bankgiro || !spec.ocr))
+    fail('scan-qr is a pdf-lib block layout with a Bankgiro and an OCR reference');
   if (spec.buyer.orgnr && (!luhn(spec.buyer.orgnr) || containsPersonalNumber(spec.buyer.orgnr))) fail('buyer org.nr');
   for (const p of [s, spec.buyer]) {
     if (p.gln && !parseGln(p.gln)) fail(`${p.name}: GLN check digit`);

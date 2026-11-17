@@ -1,0 +1,32 @@
+{
+  "file": "pdflib-skannad-qr",
+  "covers": "pdf-lib, scanned page without a text layer carrying a payment QR code (UsingQR: amount, due date, Bankgiro, OCR reference)",
+  "renderer": "pdflib",
+  "document": "invoice",
+  "number": "1122",
+  "issueDate": "2026-03-16",
+  "dueDate": "2026-04-15",
+  "customer": "K-522",
+  "ocr": "202611224",
+  "seller": {
+    "name": "Skanntest Syntet AB",
+    "address": ["Exempelgatan 22", "999 22 Testby"],
+    "orgnr": "9999990154",
+    "fskatt": true,
+    "bankgiro": "99990079"
+  },
+  "buyer": {
+    "name": "Fiktiv Kund AB",
+    "address": ["Provvägen 2", "999 12 Testby"]
+  },
+  "lines": [
+    {
+      "name": "Konsulttimmar",
+      "qty": "12",
+      "unit": "tim",
+      "price": "950.00",
+      "rate": 25
+    }
+  ],
+  "variant": "scan-qr"
+}
