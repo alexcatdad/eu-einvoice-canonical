@@ -42,7 +42,15 @@ export type FieldKey =
   | 'buyerReference'
   | 'orderReference'
   | 'buyerOrgNumber'
-  | 'buyerVatNumber';
+  | 'buyerVatNumber'
+  | 'buyerId'
+  | 'buyerContact'
+  | 'sellerContact'
+  | 'phone'
+  | 'email'
+  | 'legalInfo'
+  | 'exemptBase'
+  | 'lateInterest';
 
 /** Labels the shared lexicon does not cover: address blocks, fees and discounts beside the totals, VAT base. */
 const EXTRA: [FieldKey, RegExp][] = [
@@ -57,6 +65,15 @@ const EXTRA: [FieldKey, RegExp][] = [
   ['vatRate', /^moms ?sats(?:en)?$/u],
   ['vatBase', /^(?:beskattnings)?underlag$/u],
   ['vatBase', /^(?:moms|skatte)underlag$|^underlag (?:för )?moms$|^moms ?pl(?:iktigt)?\.? ?belopp$|^skattepliktigt belopp$/u],
+  // Seller contact and legal details, as printed in a letterhead or footer
+  ['sellerContact', /^vår (?:referens|kontakt(?:person)?)$/u],
+  ['phone', /^(?:telefon(?:nummer)?|tfn|tel)$/u],
+  ['email', /^(?:e-?post(?:adress)?|e-?mail)$/u],
+  ['legalInfo', /^(?:företagets|styrelsens|bolagets) säte$/u],
+  ['buyerId', /^kund ?(?:nr|nummer)$/u],
+  // Amount outside the scope of VAT, as with reverse charge ("Ej momspl.")
+  ['exemptBase', /^ej moms ?pl(?:iktigt)?\.?(?: belopp)?$|^momsfritt belopp$/u],
+  ['lateInterest', /^dröjsmålsränta$/u],
   // Column headings of a VAT summary as Peppol viewers print it
   ['vatRate', /^momskategori$/u],
   ['vatTotal', /^skattebelopp$/u],
@@ -64,7 +81,8 @@ const EXTRA: [FieldKey, RegExp][] = [
 
 /** Labels of the buyer's own references and identifiers ("Er referens", "Ert org.nr"). */
 const BUYER: [FieldKey, RegExp][] = [
-  ['buyerReference', /^(?:er referens|beställarreferens|köparens referens)$/u],
+  ['buyerReference', /^(?:er referens(?:kod)?|beställarreferens|köparens referens)$/u],
+  ['buyerContact', /^(?:er|kundens) kontakt(?:person)?$/u],
   ['orderReference', /^(?:ert (?:beställnings|order) ?(?:nr|nummer)|orderreferens)$/u],
   ['buyerOrgNumber', /^(?:ert|kundens|köparens) org(?:anisations)?[ .:-]{0,3}(?:nr|nummer)$/u],
   [
@@ -275,6 +293,21 @@ export function parseField(key: FieldKey, raw: string): Parsed | undefined {
       return s && s.length <= 60 && !/:$/u.test(s) && !fieldLabel(s) && !findLabels(s).length && (key === 'buyerReference' || /\d/u.test(s))
         ? { value: s }
         : undefined;
+    // Names and other free text: never another label
+    case 'buyerContact':
+    case 'sellerContact':
+    case 'legalInfo':
+      return s.length <= 80 && /\p{L}{2}/u.test(s) && !/:$/u.test(s) && !fieldLabel(s) && !findLabels(s).some((l) => l.start === 0)
+        ? { value: s }
+        : undefined;
+    case 'buyerId':
+      return s.length <= 40 && /\d/u.test(s) && !parseSeDate(s) && !findLabels(s).length ? { value: s } : undefined;
+    case 'phone':
+      return /^\+?\d[\d ()-]{5,20}\d$/u.test(s) ? { value: s } : undefined;
+    case 'email':
+      return /^[^\s@]+@[^\s@]+\.\p{L}{2,}$/u.test(s) ? { value: s } : undefined;
+    case 'lateInterest':
+      return parseRate(s) ? { value: s } : undefined;
     case 'buyerOrgNumber':
       return parseField('orgNumber', s);
     case 'buyerVatNumber':

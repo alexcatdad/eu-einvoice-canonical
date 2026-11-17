@@ -350,9 +350,9 @@ describe('bundled generator profiles', () => {
   });
 
   test('the Visma profile reads the footer address block of a synthetic page in its layout', async () => {
-    // A text right of "Adress" (as in that layout) stops the generic rules from reading the block under it
+    // A text right of "Adress" that is no label stops the generic rules from reading the block under it
     const extra: Text[] = [
-      [130, 700, 'Telefon'],
+      [130, 700, 'Fax'],
       [330, 760, 'Företagets säte'],
       [430, 760, 'Organisationsnr'],
       [330, 150, 'Vår referens'],

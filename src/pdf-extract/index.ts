@@ -7,10 +7,11 @@
  * (generic.ts), rule layers (rules/: generator profile, then issuer template), payment QR codes (qr.ts), then reconciliation (generic/build.ts):
  * only a complete, reconciling result is `ok`.
  */
-import type { CanonicalInvoice, PdfRegion, SourceWarning } from '../canonical.js';
+import type { Attachment, CanonicalInvoice, PdfRegion, SourceWarning } from '../canonical.js';
+import { attachedPages, invoicePageCount, invoicePages } from './attachment.js';
 import { buildExtraction } from './generic/build.js';
 import { freeTextValues } from './generic/free-text.js';
-import { unmappedText } from './generic/unmapped.js';
+import { remarkNote, unmappedText } from './generic/unmapped.js';
 import { readInvoice } from './generic.js';
 import { DEFAULT_PDF_LIMITS, extractLayout, type PdfLimits } from './layout.js';
 import { applyPaymentQr, findQrCodes, qrPaymentFacts } from './qr.js';
@@ -74,7 +75,10 @@ export const extractPdfInvoice: PdfExtractor = async (bytes, options) => {
   const wrong = templates.find((t) => t.kind !== 'issuer-template');
   if (wrong) throw new PdfRuleError(wrong.id, ['/kind: callers pass issuer templates only']);
   try {
-    const layout = await extractLayout(bytes, { limits: options.limits });
+    const whole = await extractLayout(bytes, { limits: options.limits });
+    // Pages after those the page numbering counts are attached documents: not read, embedded as they are
+    const pages = invoicePageCount(whole);
+    const layout = pages ? invoicePages(whole, pages) : whole;
     if (!layout.quality.supported) {
       const reason = `PDF text cannot be read: ${layout.quality.reasons.map((r) => r.detail).join('; ')}`;
       // The text stays unread; a payment QR code still gives payment facts (decoding is not OCR)
@@ -88,10 +92,21 @@ export const extractPdfInvoice: PdfExtractor = async (bytes, options) => {
       return { status: 'unsupported', reason, payment };
     }
     const ruled = applyRules(layout, readInvoice(layout), BUNDLED_PROFILES, templates);
-    const read = ruled.notAnInvoice ? ruled : freeTextValues(layout, ruled);
+    if (pages) ruled.pages ??= pages;
+    const read = ruled.notAnInvoice ? ruled : remarkNote(layout, freeTextValues(layout, ruled));
     const codes = read.notAnInvoice ? [] : await findQrCodes(bytes, read.pages);
     const paid = applyPaymentQr(read, codes);
-    return buildExtraction(read.notAnInvoice ? paid : unmappedText(layout, paid), options);
+    const attached = pages && !read.notAnInvoice ? await attachment(bytes, pages + 1, whole.pages.length, options.filename) : undefined;
+    if (attached?.problem) paid.problems.push(attached.problem);
+    const result = buildExtraction(read.notAnInvoice ? paid : unmappedText(layout, paid), options);
+    if (result.status === 'ok' && attached?.file) {
+      result.invoice.attachments.push(attached.file);
+      result.invoice.source.derived.push({
+        field: `/attachments/${result.invoice.attachments.length - 1}`,
+        rule: `Pages ${pages! + 1}-${whole.pages.length} follow the pages the invoice's page numbering counts: embedded unchanged as one PDF`,
+      });
+    }
+    return result;
   } catch (error) {
     // pdf.js reports a damaged file it opened (a page tree or object it cannot parse) with these exceptions
     if (error instanceof Error && PDFJS_PARSE_ERRORS.has(error.name))
@@ -99,6 +114,26 @@ export const extractPdfInvoice: PdfExtractor = async (bytes, options) => {
     throw error;
   }
 };
+
+/** The attached pages as one PDF, or the problem that kept them from being copied (the result is then a draft). */
+async function attachment(
+  bytes: Uint8Array,
+  from: number,
+  to: number,
+  filename?: string,
+): Promise<{ file?: Attachment; problem?: SourceWarning }> {
+  try {
+    return { file: await attachedPages(bytes, from, to, filename) };
+  } catch (error) {
+    return {
+      problem: {
+        code: 'attachment',
+        field: '/attachments',
+        message: `Pages ${from}-${to} are attached documents but could not be copied: ${error instanceof Error ? error.message : String(error)}`,
+      } satisfies SourceWarning,
+    };
+  }
+}
 
 const PDFJS_PARSE_ERRORS = new Set(['UnknownErrorException', 'InvalidPDFException', 'FormatError']);
 

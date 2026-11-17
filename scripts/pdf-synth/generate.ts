@@ -14,6 +14,7 @@ import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSyn
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { sha256Hex } from '../../src/hash.js';
+import { toConstructionDocx, withAttachments } from './construction.js';
 import { build, type CaseSpec, type Model } from './model.js';
 import { toDocx, toXlsx } from './office.js';
 import { toPdfLib } from './pdflib.js';
@@ -58,17 +59,22 @@ export async function generate(outDir: string): Promise<Model[]> {
     mkdirSync(inDir);
     mkdirSync(convDir);
     for (const m of models) {
-      if (m.spec.renderer === 'docx') writeFileSync(join(inDir, `${m.spec.file}.docx`), await toDocx(m.printed));
+      if (m.spec.renderer === 'docx')
+        writeFileSync(join(inDir, `${m.spec.file}.docx`), await (m.spec.construction ? toConstructionDocx(m) : toDocx(m.printed)));
       if (m.spec.renderer === 'xlsx') writeFileSync(join(inDir, `${m.spec.file}.xlsx`), await toXlsx(m.printed));
     }
     await convertInContainer(inDir, convDir);
     const ttf = new Uint8Array(readFileSync(join(convDir, 'DejaVuSans.ttf')));
     mkdirSync(join(outDir, 'truth'), { recursive: true });
-    for (const m of models) {
-      const pdf =
+    // Cases with attached documents come last: they attach other cases' PDFs
+    for (const m of [...models.filter((x) => !x.spec.construction), ...models.filter((x) => x.spec.construction)]) {
+      const rendered =
         m.spec.renderer === 'pdflib'
           ? await toPdfLib(m.printed, m.spec.variant ?? 'standard14', ttf)
           : new Uint8Array(readFileSync(join(convDir, `${m.spec.file}.pdf`)));
+      const pdf = m.spec.construction
+        ? await withAttachments(rendered, m.spec.construction, (file) => new Uint8Array(readFileSync(join(outDir, `${file}.pdf`))))
+        : rendered;
       writeFileSync(join(outDir, `${m.spec.file}.pdf`), pdf);
       if (!m.truth) continue;
       const { schemaVersion, file, ...rest } = m.truth;

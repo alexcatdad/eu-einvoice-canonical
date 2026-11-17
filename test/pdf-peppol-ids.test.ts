@@ -67,11 +67,11 @@ test('invoice note (BT-22), payment terms (BT-20) and item note (BT-127) are rea
 
   // Text that maps to no field: reported by region, without the text; none of it inside a value read
   const unmapped = inv.source.warnings.filter((w) => w.code === 'unmapped-text');
-  expect(unmapped).toHaveLength(20);
-  expect(unmapped.filter((w) => w.region?.page === 2)).toHaveLength(8);
+  expect(unmapped).toHaveLength(15);
+  expect(unmapped.filter((w) => w.region?.page === 2)).toHaveLength(5);
   for (const w of unmapped) expect(w.message).toMatch(/^Printed text that maps to no invoice field \(\d+ text segments?\)$/);
-  // "Telefon: 0100000000" under the buyer, and the issuer's remark on page 2
-  expect(unmapped.some((w) => w.region?.page === 1 && Math.round(w.region.y) === 120)).toBe(true);
+  // "Telefon: 0100000001" under the seller's contact (not the footer phone, BT-42), and the issuer's remark on page 2
+  expect(unmapped.some((w) => w.region?.page === 1 && Math.round(w.region.y) === 486)).toBe(true);
   expect(unmapped.some((w) => w.region?.page === 2 && Math.round(w.region.y) === 228)).toBe(true);
 
   const ubl = toUbl(inv);

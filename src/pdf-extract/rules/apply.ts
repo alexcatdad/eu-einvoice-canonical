@@ -213,7 +213,7 @@ function readLines(tag: string, rule: PdfTableRule, rows: Cell[][], out: Generic
   out.warnings = out.warnings.filter((p) => !p.field?.startsWith('/lines/'));
   const items = tables.flatMap((t) => t.items);
   out.lineCount = items.length;
-  if (items.length) itemValues(items, out.values, out.problems, out.warnings);
+  if (items.length) itemValues(items, out);
   else
     out.problems.push({
       code: 'rule-no-match',

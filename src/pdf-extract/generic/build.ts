@@ -46,6 +46,12 @@ const UNITS: Record<string, string> = {
   mon: 'MON',
 };
 
+/** VAT categories without VAT, and why the VAT amount is 0. */
+const NO_VAT: Record<string, string> = {
+  E: 'VAT-exempt sale (momsfri): no VAT',
+  AE: 'Reverse charge (omvänd betalningsskyldighet): no VAT charged by the seller',
+};
+
 export function buildExtraction(printed: GenericRead, options: PdfExtractOptions): PdfExtraction {
   if (printed.notAnInvoice) return { status: 'not-an-invoice', reason: printed.notAnInvoice };
   const read = creditNoteMagnitudes(printed);
@@ -116,9 +122,10 @@ function buildInvoice(
   const sellerName = need('/seller/name', 'Seller name (BT-27)');
   const buyerName = need('/buyer/name', 'Buyer name (BT-44)');
   const payable = need('/totals/payable', 'Amount due (BT-115)') as Decimal;
-  const exemptOnly = get('/vatBreakdown/0/categoryCode') === 'E' && get('/vatBreakdown/1/categoryCode') === undefined;
+  const exemptOnly = NO_VAT[get('/vatBreakdown/0/categoryCode') ?? ''] !== undefined && get('/vatBreakdown/1/categoryCode') === undefined;
   const vatTotal = (exemptOnly ? (get('/totals/vatTotal') ?? '0.00') : need('/totals/vatTotal', 'Total VAT (BT-110)')) as Decimal;
-  if (exemptOnly && !get('/totals/vatTotal')) derived.push({ field: '/totals/vatTotal', rule: 'VAT-exempt sale (momsfri): no VAT' });
+  if (exemptOnly && !get('/totals/vatTotal'))
+    derived.push({ field: '/totals/vatTotal', rule: NO_VAT[get('/vatBreakdown/0/categoryCode')!] });
   if (!read.lineCount) problems.push({ code: 'missing', field: '/lines', message: 'No invoice lines (BG-25) were found' });
 
   const address = (party: '/seller' | '/buyer') => {
@@ -146,8 +153,9 @@ function buildInvoice(
   // Lines
   const vatRows: number[] = [];
   for (let k = 0; get(`/vatBreakdown/${k}/categoryCode`) !== undefined; k++) vatRows.push(k);
-  const exempt = vatRows.length === 1 && get('/vatBreakdown/0/categoryCode') === 'E';
-  const anyExempt = vatRows.some((k) => get(`/vatBreakdown/${k}/categoryCode`) === 'E');
+  const exempt = vatRows.length === 1 && exemptOnly;
+  // A zero-rate line is in the exempt (E) or reverse-charge (AE) category the breakdown names, else zero-rated (Z)
+  const zeroCategory = vatRows.map((k) => get(`/vatBreakdown/${k}/categoryCode`)).find((c) => NO_VAT[c ?? ''] !== undefined);
   const singleRate = vatRows.length === 1 ? (exempt ? '0' : get('/vatBreakdown/0/rate')) : undefined;
   const lines: Line[] = [];
   for (let i = 0; i < read.lineCount; i++) {
@@ -204,13 +212,17 @@ function buildInvoice(
       unitText,
       netAmount,
       allowances: [],
-      charges: [],
+      charges: get(`${p}/charges/0/amount`)
+        ? [{ amount: get(`${p}/charges/0/amount`) as Decimal, reason: get(`${p}/charges/0/reason`) }]
+        : [],
       price: price === undefined ? undefined : { net: price },
       vat:
         rate === undefined
           ? undefined
-          : { categoryCode: (Number(rate) > 0 ? 'S' : anyExempt ? 'E' : 'Z') as VatCategoryCode, rate: rate as Decimal },
-      item: { name: name ?? '', classifications: [], attributes: [] },
+          : { categoryCode: (Number(rate) > 0 ? 'S' : (zeroCategory ?? 'Z')) as VatCategoryCode, rate: rate as Decimal },
+      item: { name: name ?? '', sellerId: get(`${p}/item/sellerId`), classifications: [], attributes: [] },
+      ...(get(`${p}/orderLineRef`) ? { orderLineRef: get(`${p}/orderLineRef`) } : {}),
+      ...(get(`${p}/national/orderReference`) ? { national: { orderReference: get(`${p}/national/orderReference`)! } } : {}),
     });
   }
 
@@ -243,9 +255,11 @@ function buildInvoice(
       taxableAmount = taxExclusive;
       derive(`${p}/taxableAmount`, 'One VAT rate: the taxable amount is BT-109');
     }
-    const isExempt = get(`${p}/categoryCode`) === 'E';
+    const category = get(`${p}/categoryCode`) ?? '';
+    const isExempt = NO_VAT[category] !== undefined;
     const taxAmount = (get(`${p}/taxAmount`) ?? (isExempt ? '0.00' : undefined)) as Decimal | undefined;
-    if (isExempt && !get(`${p}/taxAmount`)) derive(`${p}/taxAmount`, 'VAT-exempt sale (momsfri): no VAT');
+    if (isExempt && !get(`${p}/taxAmount`)) derive(`${p}/taxAmount`, NO_VAT[category]);
+    if (category === 'AE') derive(`${p}/exemptionReasonCode`, 'Reverse charge (AE): VATEX-EU-AE');
     if (taxableAmount === undefined || taxAmount === undefined)
       problems.push({
         code: 'missing',
@@ -259,6 +273,7 @@ function buildInvoice(
       categoryCode: get(`${p}/categoryCode`) as VatCategoryCode,
       rate: (isExempt ? '0' : get(`${p}/rate`)) as Decimal,
       exemptionReason: get(`${p}/exemptionReason`),
+      ...(category === 'AE' ? { exemptionReasonCode: 'VATEX-EU-AE' } : {}),
     };
   });
   if ((chargeTotal || allowanceTotal) && !singleRate)
@@ -298,6 +313,10 @@ function buildInvoice(
     derive('/seller/endpoint', 'Organisation number from the seller SE VAT number (SE + org.nr + 01) as Peppol endpoint (scheme 0007)');
   const notes = [0, 1].flatMap((k) => (get(`/notes/${k}/text`) ? [{ text: get(`/notes/${k}/text`)! }] : []));
 
+  const contact = (party: '/seller' | '/buyer') => {
+    const c = { name: get(`${party}/contact/name`), phone: get(`${party}/contact/phone`), email: get(`${party}/contact/email`) };
+    return c.name || c.phone || c.email ? c : undefined;
+  };
   const invoice: CanonicalInvoice = {
     kind: get('/typeCode') === '381' ? 'creditNote' : 'invoice',
     typeCode: (get('/typeCode') ?? '380') as never,
@@ -319,10 +338,12 @@ function buildInvoice(
       nationalTaxIds: [],
       endpoint: sellerEndpoint,
       address: sellerAddress,
+      additionalLegalInfo: get('/seller/additionalLegalInfo'),
+      contact: contact('/seller'),
     },
     buyer: {
       name: buyerName,
-      identifiers: [],
+      identifiers: get('/buyer/identifiers/0/value') ? [{ value: get('/buyer/identifiers/0/value')! }] : [],
       legalRegistrationId: get('/buyer/legalRegistrationId/value')
         ? { value: get('/buyer/legalRegistrationId/value')!, schemeId: '0007' }
         : undefined,
@@ -330,6 +351,7 @@ function buildInvoice(
       nationalTaxIds: [],
       endpoint: printedEndpoint('/buyer'),
       address: buyerAddress,
+      contact: contact('/buyer'),
     },
     buyerReference: get('/buyerReference'),
     purchaseOrderRef: get('/purchaseOrderRef'),

@@ -1,0 +1,142 @@
+{
+  "file": "docx-bygg-bilagor",
+  "covers": "Word, 3-page maintenance invoice with attached supplier invoices: page numbering, repeated header and footer, two-row item header with order numbers, headings priced 0,00, fee rows included in re-invoiced costs, wrapped dated time lines, reverse charge (Ej momspl.), negative öresavrundning, dated remark under the amount due",
+  "renderer": "docx",
+  "document": "invoice",
+  "pages": 7,
+  "number": "70418",
+  "issueDate": "2026-03-20",
+  "dueDate": "2026-04-19",
+  "customer": "",
+  "seller": {
+    "name": "Provservice VVS och Ventilation i Exempelstad Aktiebolag",
+    "address": ["Industrigatan 4", "123 45 Exempelstad"],
+    "orgnr": "9999990139",
+    "fskatt": true,
+    "bankgiro": "99990103"
+  },
+  "buyer": {
+    "name": "Testbostäder i Provby AB",
+    "address": ["c/o Provby Fastigheter", "123 99 Provby"],
+    "orgnr": "9999990147"
+  },
+  "lines": [],
+  "construction": {
+    "sellerLines": ["Provservice VVS och Ventilation i", "Exempelstad Aktiebolag"],
+    "footerLines": ["Provservice VVS och", "Ventilation i Exempelstad Aktiebolag"],
+    "street": "Industrigatan 4",
+    "postal": "123 45 Exempelstad",
+    "phone": "010-000 00 00",
+    "email": "info@example.com",
+    "seat": "Exempelstad",
+    "contact": "Kim Exempel",
+    "buyerContact": "Robin Prov",
+    "terms": [
+      "Netto 20 dagar. Reklamation senast 8 dagar",
+      "efter fakturadatum. Frågor om fakturan",
+      "besvaras via: kundtjanst@example.com"
+    ],
+    "interest": "12,00 %",
+    "pages": [
+      [
+        {
+          "heading": "MATERIAL OCH UNDERLEVERANTÖRER"
+        },
+        {
+          "heading": "Maskinhyra"
+        },
+        {
+          "cost": "Exempel Liftuthyrning AB [61504]",
+          "price": "2350.00",
+          "fee": "94.00",
+          "order": "AO-77031"
+        },
+        {
+          "heading": "Rör och ventilationsmaterial"
+        },
+        {
+          "cost": "Prov VVS-grossist AB [88213]",
+          "price": "6725.50",
+          "fee": "269.02",
+          "order": "AO-77031"
+        },
+        {
+          "heading": "Underleverantör ventilation"
+        },
+        {
+          "cost": "Testventilation i Provby AB [4410]",
+          "price": "9800.00",
+          "fee": "392.00",
+          "order": "AO-77031"
+        },
+        {
+          "heading": "ARBETSTID"
+        },
+        {
+          "heading": "Anna"
+        },
+        {
+          "art": "AP",
+          "text": ["2026-03-02, Planering och beställning av", "material inför start"],
+          "qty": "1.00",
+          "unit": "tim",
+          "price": "0.00"
+        },
+        {
+          "art": "IN",
+          "text": ["2026-03-03, Inmätning av ytor i trapphus", "och källarförråd"],
+          "qty": "2.00",
+          "unit": "tim",
+          "price": "655.00",
+          "order": "AO-77031"
+        }
+      ],
+      [
+        {
+          "heading": "Bertil"
+        },
+        {
+          "art": "VE",
+          "text": ["2026-03-09, Byte av ventilationsdon i", "lägenhet 3 och 4"],
+          "qty": "3.00",
+          "unit": "tim",
+          "price": "325.00",
+          "order": "AO-77031"
+        },
+        {
+          "art": "VE",
+          "text": ["2026-03-10, Injustering av flöden"],
+          "qty": "1.50",
+          "unit": "tim",
+          "price": "325.00",
+          "order": "AO-77031"
+        },
+        {
+          "art": "VE",
+          "text": ["2026-03-11, Slutkontroll och protokoll."],
+          "qty": "2.00",
+          "unit": "tim",
+          "price": "325.00",
+          "order": "AO-77031"
+        },
+        {
+          "heading": "RAPPORTERAT I PROJEKTPORTAL"
+        },
+        {
+          "heading": "P-14, Etapp ett"
+        },
+        {
+          "art": "31",
+          "text": ["Rörklammer 22 mm 10 st [2026-03-11]"],
+          "qty": "4.00",
+          "unit": "st",
+          "price": "189.00",
+          "order": "AO-77031"
+        }
+      ]
+    ],
+    "statement": "Omvänd betalningsskyldighet",
+    "remark": "2026-03-20 kp",
+    "attachments": ["case:docx-moms-12", "case:pdflib-type0-utan-tounicode", "case:xlsx-blandade-momssatser", "scan"]
+  }
+}

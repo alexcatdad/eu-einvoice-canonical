@@ -7,7 +7,7 @@
  */
 import type { PdfRegion, SourceWarning } from '../../canonical.js';
 import type { ReadValue } from '../generic.js';
-import { classifyRates, findLabels, normalize } from '../se/index.js';
+import { classifyRates, findLabels, matchLabel, normalize } from '../se/index.js';
 import { type Cell, overlapX, regionOf } from './cells.js';
 import { type FieldKey, fieldLabel, type Parsed, parseAmount, parseCategoryRate, parseRate } from './fields.js';
 import type { Item } from './items.js';
@@ -65,7 +65,25 @@ export function vatBreakdown(
       if (reason) row.exemptionReason = { value: reason.text, region: regionOf(reason) };
       else problems.push({ code: 'missing', field: '/vatBreakdown', message: 'VAT-exempt sale without a readable exemption statement' });
     }
-  const known = new Set(out.map((r) => (r.categoryCode?.value === 'E' ? '0' : r.rate?.value)));
+  // Reverse charge: the statement that the buyer accounts for the VAT ("Omvänd betalningsskyldighet") and one amount outside
+  // the scope of VAT ("Ej momspl.") give one AE row, with the statement as exemption reason
+  const reverse = rows.flat().filter((c) => matchLabel(c.text) === 'reverseCharge');
+  const outside = found.get('exemptBase') ?? [];
+  if (
+    !out.length &&
+    new Set(reverse.map((c) => c.text)).size === 1 &&
+    noVat(values['/totals/vatTotal']) &&
+    outside.length &&
+    new Set(outside.map(hitValue)).size === 1
+  )
+    out = [
+      {
+        categoryCode: { value: 'AE', region: regionOf(reverse[0]) },
+        taxableAmount: { value: hitValue(outside[0])!, region: regionOfHit(outside[0]) },
+        exemptionReason: { value: reverse[0].text, region: regionOf(reverse[0]) },
+      },
+    ];
+  const known = new Set(out.map((r) => (r.categoryCode?.value === 'E' || r.categoryCode?.value === 'AE' ? '0' : r.rate?.value)));
   for (const i of items)
     if (i.rate && !known.has(i.rate.value))
       problems.push({
