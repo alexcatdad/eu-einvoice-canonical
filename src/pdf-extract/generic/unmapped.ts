@@ -62,11 +62,12 @@ const box = (page: number, b: { x: number; y: number; width: number; height: num
 });
 
 /**
- * Whether a field holding `value` holds the printed `run`: the run holds the value (a footer line with several values),
- * the value holds the run (after a label: "Telefon: 010-000 00 00"), or by digits for a value held normalised
- * ("1 250,00 kr", "20.03.2026").
+ * Whether the field at `pointer` holding `value` holds the printed `run`: the run holds the value (a footer line with
+ * several values), the value holds the run (after a label: "Telefon: 010-000 00 00"), by digits for a value held
+ * normalised ("1 250,00 kr", "20.03.2026"), or the name printed with a code ("(Standard)" after the VAT category "S").
  */
-export function textHeld(value: string, run: string): boolean {
+export function textHeld(pointer: string, value: string, run: string): boolean {
+  if (/\/(?:categoryCode|meansCode)$/u.test(pointer) && /^\([^()]+\)[,.]?$/u.test(run.trim())) return true;
   const t = letters(run.replace(/^[^:]{1,40}:\s*/u, ''));
   const v = letters(value);
   const d = t.replace(/\D/gu, '');
@@ -82,9 +83,11 @@ export function textCoverage(layout: LayoutDocument, read: GenericRead): Covered
   const v = read.values;
   // Each value's region, and the region of each further text joined to it, with the text the value holds
   const fields = [
-    ...Object.values(v).map((x) => ({ region: x.region, value: x.value })),
+    ...Object.entries(v).map(([pointer, x]) => ({ pointer, region: x.region, value: x.value })),
     ...read.warnings.flatMap((w) =>
-      w.code === 'joined-text' && w.region && w.field && v[w.field] ? [{ region: w.region, value: v[w.field].value }] : [],
+      w.code === 'joined-text' && w.region && w.field && v[w.field]
+        ? [{ pointer: w.field, region: w.region, value: v[w.field].value }]
+        : [],
     ),
   ];
   const consumed = [...(read.consumed ?? [])];
@@ -152,8 +155,9 @@ export function textCoverage(layout: LayoutDocument, read: GenericRead): Covered
         const kinds = segment.runs.map((r): TextCoverage => {
           const at = box(p.number, r);
           // In a field: in the field's region, and the field holds the run's text
-          if (fields.some((f) => inside(at, f.region) && textHeld(f.value, r.text))) return 'field';
-          return layoutText || !/[\p{L}\p{N}]/u.test(r.text) || consumed.some((c) => inside(at, c)) ? 'consumed' : 'unmapped';
+          if (fields.some((f) => inside(at, f.region) && textHeld(f.pointer, f.value, r.text))) return 'field';
+          // Layout text: the segment, or this run of it ("Anteckning:" before a note's text)
+          return layoutText || known(r.text.trim(), p.number) || consumed.some((c) => inside(at, c)) ? 'consumed' : 'unmapped';
         });
         return { page: p.number, segment, kinds };
       }),

@@ -65,17 +65,23 @@ export async function checkCoverage(bytes: Uint8Array): Promise<CoverageCheck | 
       out[c.kinds[i]]++;
       // In a field: in the region of a field the result holds, which holds the run's text
       if (c.kinds[i] === 'field') {
-        const value = fields.filter((f) => inside(at(c.page, run), f.region)).map((f) => valueAt(f.pointer));
-        if (!value.some((v) => v !== undefined && textHeld(v, run.text))) fail('field run not in the result');
+        const held = fields.filter((f) => inside(at(c.page, run), f.region));
+        if (!held.some((f) => valueAt(f.pointer) !== undefined && textHeld(f.pointer, valueAt(f.pointer)!, run.text)))
+          fail('field run not in the result');
       }
     });
     const runs = c.segment.runs.filter((_, i) => c.kinds[i] === 'unmapped');
-    if (runs.length) unmapped.push({ region: at(c.page, runs.length === c.segment.runs.length ? c.segment : runs[0]), text: '' });
+    if (runs.length) unmapped.push({ region: at(c.page, runs[0]), text: runs.map((r) => r.text).join('') });
   }
-  // Every unmapped segment is in exactly one entry, whose text has one line per segment, verbatim
-  const lines = entries.reduce((n, e) => n + e.text.split('\n').length, 0);
-  if (lines !== unmapped.length) fail('unmapped text not kept once');
-  for (const u of unmapped) if (entries.filter((e) => inside(u.region, e.region)).length !== 1) fail('unmapped text not kept once');
+  // Every unmapped run is kept once, verbatim: its segment is one line of the entry whose region holds it
+  const bare = (t: string) => t.replace(/\s+/gu, '');
+  const lines = entries.map((e) => e.text.split('\n').map(bare));
+  for (const u of unmapped) {
+    const k = entries.findIndex((e, i) => inside(u.region, e.region) && lines[i].includes(bare(u.text)));
+    if (k < 0) fail('unmapped text not kept');
+    else lines[k].splice(lines[k].indexOf(bare(u.text)), 1);
+  }
+  if (lines.some((l) => l.length)) fail('unmapped text kept twice or not printed');
   // Each entry has its unmapped-text warning
   const pointers = warnings.filter((w) => w.code === 'unmapped-text').map((w) => w.field);
   if (pointers.length !== entries.length || entries.some((_, i) => !pointers.includes(`/source/unmappedText/${i}`)))
