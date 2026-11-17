@@ -38,7 +38,11 @@ export type FieldKey =
   | 'prepaid'
   | 'buyer'
   | 'sellerAddress'
-  | 'vatBase';
+  | 'vatBase'
+  | 'buyerReference'
+  | 'orderReference'
+  | 'buyerOrgNumber'
+  | 'buyerVatNumber';
 
 /** Labels the shared lexicon does not cover: address blocks, fees and discounts beside the totals, VAT base. */
 const EXTRA: [FieldKey, RegExp][] = [
@@ -52,11 +56,26 @@ const EXTRA: [FieldKey, RegExp][] = [
   ['taxExclusive', /^(?:(?:summa|belopp|totalt) )?(?:ex|exl)\.? moms$/u],
   ['vatRate', /^moms ?sats(?:en)?$/u],
   ['vatBase', /^(?:beskattnings)?underlag$/u],
-  ['vatBase', /^(?:moms|skatte)underlag$|^underlag (?:för )?moms$|^moms ?pl(?:iktigt)?\.? ?belopp$/u],
+  ['vatBase', /^(?:moms|skatte)underlag$|^underlag (?:för )?moms$|^moms ?pl(?:iktigt)?\.? ?belopp$|^skattepliktigt belopp$/u],
+  // Column headings of a VAT summary as Peppol viewers print it
+  ['vatRate', /^momskategori$/u],
+  ['vatTotal', /^skattebelopp$/u],
+];
+
+/** Labels of the buyer's own references and identifiers ("Er referens", "Ert org.nr"). */
+const BUYER: [FieldKey, RegExp][] = [
+  ['buyerReference', /^(?:er referens|beställarreferens|köparens referens)$/u],
+  ['orderReference', /^(?:ert (?:beställnings|order) ?(?:nr|nummer)|orderreferens)$/u],
+  ['buyerOrgNumber', /^(?:ert|kundens|köparens) org(?:anisations)?[ .:-]{0,3}(?:nr|nummer)$/u],
+  [
+    'buyerVatNumber',
+    /^(?:ert|kundens|köparens) (?:moms[ .:-]{0,3}reg(?:istrerings)?[ .:-]{0,3}(?:nr|nummer)|momsnr|vat[ .-]?(?:nr|nummer))$/u,
+  ],
 ];
 
 /** Words that may stand next to a label without changing what it names ("Avgår skattereduktion", "Fakt nr / Kundnr"). */
-const FILLER = /^(?:avgår|ange|grön|teknik|fakturans|avdrag|varav|summa|totalt|belopp|att|för|sek|kr|nr|preliminär|vid|betalning|enligt)$/u;
+const FILLER =
+  /^(?:avgår|ange|grön|teknik|fakturans|avdrag|varav|summa|totalt|belopp|att|för|sek|kr|nr|preliminär|vid|betalning|enligt|vänligen)$/u;
 const BUYER_SIDE = /^(?:er|ert|kundens|köparens|mottagarens)\b/u;
 
 export interface FieldLabel {
@@ -85,6 +104,8 @@ export function fieldLabel(text: string): FieldLabel | undefined {
   const unit = /\s*\(?\s*(%|kr|sek)\s*\)?$/u.exec(t);
   if (unit && unit.index > 0) t = t.slice(0, unit.index);
   const percent = unit?.[1] === '%';
+  const buyer = BUYER.find(([, re]) => re.test(t));
+  if (buyer) return { keys: [buyer[0]], part: [0], parts: 1 };
   if (BUYER_SIDE.test(t) || /\d/u.test(t)) return undefined;
   const keys: FieldKey[] = [];
   const part: number[] = [];
@@ -127,7 +148,7 @@ function partKey(t: string, percent: boolean): FieldKey | undefined | null {
   for (const l of [...labels].reverse()) rest = rest.slice(0, l.start) + rest.slice(l.end);
   const words = rest.split(/[ -]+/u).filter(Boolean);
   if (!labels.length) return words.length <= 1 ? undefined : null;
-  if (words.length > 2 || words.some((w) => !FILLER.test(w))) return null;
+  if (words.length > 4 || words.some((w) => !FILLER.test(w))) return null;
   const keys = new Set(labels.map((l) => keyOf(l.label, t, percent)).filter((k) => k !== undefined));
   return keys.size === 1 ? [...keys][0] : keys.size ? null : undefined;
 }
@@ -180,6 +201,13 @@ export function parseRate(raw: string): Decimal | undefined {
   if (!m) return undefined;
   const frac = (m[2] ?? '').replace(/0+$/u, '');
   return toDecimal(frac ? `${m[1]}.${frac}` : m[1]);
+}
+
+/** A VAT category and rate as Peppol viewers print them, "S, 25.00%" or "VAT : S (Standard), 25.00%": the rate of a standard (S) or zero-rated (Z) line. */
+export function parseCategoryRate(raw: string): Decimal | undefined {
+  const m = /^(?:(?:vat|moms) ?: ?)?([SZ])(?: \([^)]*\))?, ?(\d{1,2}(?:[,.]\d{1,2})?) ?%$/iu.exec(clean(raw));
+  const rate = m ? parseRate(m[2]) : undefined;
+  return rate !== undefined && Number(rate) > 0 === (m![1].toUpperCase() === 'S') ? rate : undefined;
 }
 
 export function parseAmount(raw: string): Decimal | undefined {
@@ -241,6 +269,16 @@ export function parseField(key: FieldKey, raw: string): Parsed | undefined {
     case 'buyer':
     case 'sellerAddress':
       return undefined;
+    // Free text, but never another label ("Vår referens", "Betalningsvillkor:"); an order number has a digit
+    case 'buyerReference':
+    case 'orderReference':
+      return s && s.length <= 60 && !/:$/u.test(s) && !fieldLabel(s) && !findLabels(s).length && (key === 'buyerReference' || /\d/u.test(s))
+        ? { value: s }
+        : undefined;
+    case 'buyerOrgNumber':
+      return parseField('orgNumber', s);
+    case 'buyerVatNumber':
+      return parseField('vatNumber', s);
     case 'bic': {
       const b = parseBic(s);
       return b && REGIONS.of(b.slice(4, 6)) !== undefined ? { value: b } : undefined;

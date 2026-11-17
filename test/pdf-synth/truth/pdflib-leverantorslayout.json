@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "file": "pdflib-leverantorslayout.pdf",
+  "sha256": "f8cf4c5c13fcf6c2972c0f9e397a05acd80e63655fdfae4424d43e4fc280a3d6",
+  "documentType": "invoice",
+  "typeCode": "380",
+  "invoicePages": [1],
+  "pricesIncludeVat": false,
+  "fields": {
+    "id": {
+      "value": "1122"
+    },
+    "issueDate": {
+      "value": "2026-03-22"
+    },
+    "dueDate": {
+      "value": "2026-04-21"
+    },
+    "currency": {
+      "value": "SEK"
+    },
+    "seller.name": {
+      "value": "Provhiss Syntet AB"
+    },
+    "seller.legalRegistrationId": {
+      "value": "9999990071"
+    },
+    "seller.vatId": {
+      "value": "SE999999007101"
+    },
+    "seller.taxRegistrationId": {
+      "value": "Godkänd för F-skatt"
+    },
+    "buyer.name": {
+      "value": "Fastighets AB Exempelhus"
+    },
+    "payee.name": {
+      "status": "absent"
+    },
+    "payment.bankgiro": {
+      "value": "99990095"
+    },
+    "payment.plusgiro": {
+      "status": "absent"
+    },
+    "payment.iban": {
+      "value": "SE9399900000000000000001"
+    },
+    "payment.bic": {
+      "value": "SYNTSESS"
+    },
+    "payment.remittanceInformation": {
+      "value": "202611224"
+    },
+    "totals.lineNetTotal": {
+      "value": "1920.00"
+    },
+    "totals.allowanceTotal": {
+      "status": "absent"
+    },
+    "totals.chargeTotal": {
+      "status": "absent"
+    },
+    "totals.taxExclusive": {
+      "status": "absent"
+    },
+    "totals.vatTotal": {
+      "value": "480.00"
+    },
+    "totals.taxInclusive": {
+      "status": "absent"
+    },
+    "totals.prepaid": {
+      "status": "absent"
+    },
+    "totals.prepaidNote": {
+      "status": "absent"
+    },
+    "totals.rounding": {
+      "value": "0.00"
+    },
+    "totals.payable": {
+      "value": "2400.00"
+    }
+  },
+  "vatBreakdown": {
+    "rows": [
+      {
+        "categoryCode": "S",
+        "rate": {
+          "value": "25"
+        },
+        "taxableAmount": {
+          "value": "1920.00"
+        },
+        "taxAmount": {
+          "value": "480.00"
+        }
+      }
+    ]
+  },
+  "lines": {
+    "rows": [
+      {
+        "item.name": {
+          "value": "Servicebesök"
+        },
+        "quantity": {
+          "value": "1.5"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "960.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "1440.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Filterbyte"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "240.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "480.00"
+        }
+      }
+    ]
+  },
+  "notes": "Synthetic (scripts/pdf-synth): pdf-lib, issuer layout: date under 'Datum' beside 'Fakturanr', buyer references and identifiers, unlabelled address window, 'Fakturan avser' table, footer total boxes and company columns, tall text boxes"
+}

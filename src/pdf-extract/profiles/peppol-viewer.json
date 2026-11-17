@@ -1,0 +1,33 @@
+{
+  "$schema": "../../../schemas/pdf-rule-set.v1.schema.json",
+  "kind": "generator-profile",
+  "id": "peppol-bis-viewer-sv",
+  "version": 1,
+  "pdfjsVersion": "6.5.438",
+  "description": "Swedish rendering of a Peppol BIS Billing 3 invoice by an e-invoice viewer (sections KÖPAREN, SÄLJAREN, SKATTESAMMANRÄKNING, BETALINSTRUKTION). Selected by layout only: the Producer names a general PDF library.",
+  "match": {},
+  "layouts": [
+    {
+      "name": "Peppol BIS viewer",
+      "fingerprint": ["köparen", "säljaren", "skattesammanräkning", "betalinstruktion", "id för säljarens skatteregistrering"],
+      "fields": {
+        "/seller/vatId": { "label": "ID för säljarens skatteregistrering", "value": "inline" }
+      },
+      "addresses": {
+        "seller": { "label": "SÄLJAREN", "name": true },
+        "buyer": { "label": "KÖPAREN", "name": true }
+      },
+      "lines": {
+        "columns": {
+          "artikelnr": "artnr",
+          "Benämning": "desc",
+          "Fakturerad": "qty",
+          "Ápris": "price",
+          "Momskategori": "rate",
+          "Avgifter": "discount",
+          "Radbelopp": "amount"
+        }
+      }
+    }
+  ]
+}

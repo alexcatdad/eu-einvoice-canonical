@@ -7,14 +7,14 @@ import type { Decimal, PdfRegion } from '../../canonical.js';
 import type { Line } from '../layout.js';
 import { normalize } from '../se/index.js';
 import { type Cell, overlapX, regionOf } from './cells.js';
-import { fieldLabel, parseAmount, parseRate } from './fields.js';
+import { fieldLabel, parseAmount, parseCategoryRate, parseRate } from './fields.js';
 
 export type Column = 'desc' | 'pos' | 'vat' | 'artnr' | 'qty' | 'qtyUnit' | 'unit' | 'price' | 'rate' | 'discount' | 'amount' | 'date';
 
 const COLUMNS: [Column, RegExp][] = [
   [
     'desc',
-    /^(?:benämning|beskrivning|description|specifikation|text|produkt|tjänst|vara|artikel|artikel ?\/ ?tjänst|produkt ?\/ ?tjänst)$/u,
+    /^(?:benämning|beskrivning|description|specifikation|text|produkt|tjänst|vara|artikel|artikel ?\/ ?tjänst|produkt ?\/ ?tjänst|(?:fakturan )?avser)$/u,
   ],
   ['artnr', /^(?:art\.? ?nr\.?|artikelnr\.?|artikelnummer|art\.?)$/u],
   ['qtyUnit', /^(?:lev\.? )?(?:antal|ant\.?) (?:enh(?:et)?\.?)$/u],
@@ -34,9 +34,11 @@ const COLUMNS: [Column, RegExp][] = [
 const EDGE_REACH = 40;
 const SUBTOTAL = /^(?:deltotal|delsumma|subtotal)$/u;
 const TOTAL = /^(?:summa|totalt?|summa .*)$/u;
-const QTY_WITH_UNIT = /^-?\d[\d ]*(?:,\d+)?\s*\p{L}/u;
+const QTY_WITH_UNIT = /^-?\d[\d ]*(?:[,.]\d+)?\s*\p{L}/u;
 const DATE_ONLY = /^[\d\s.:/–-]+$/u;
-const QTY_UNIT = /^(-?\d[\d ]*(?:,\d+)?)\s*(\p{L}[\p{L}.²³0-9]*)?$/u;
+const QTY_UNIT = /^(-?\d[\d ]*(?:[,.]\d+)?)\s*(\p{L}[\p{L}.²³0-9]*)?$/u;
+/** A labelled note under an item ("Anteckning: ..."): it and the description lines after it are not the item's name. */
+const NOTE = /^(?:anteckning|notering|kommentar|not)\s?:/u;
 
 const columnOf = (text: string) => COLUMNS.find(([, re]) => re.test(normalize(text)))?.[0];
 
@@ -128,6 +130,7 @@ function readTable(rows: Cell[][], start: number, cols: (Column | undefined)[], 
   const lines = new Set<Line>([header[0].line]);
   const items: Item[] = [];
   const nameEnd = new Map<Item, number>();
+  let inNote = false;
   let prev = header[0].line;
   for (let i = start + 1; i < rows.length; i++) {
     const row = rows[i];
@@ -160,6 +163,7 @@ function readTable(rows: Cell[][], start: number, cols: (Column | undefined)[], 
         ? { value: cells.map((c) => c.text).join(' '), region: regionOf(cells.length === 1 ? cells[0] : merge(cells)) }
         : undefined;
     if (amountCell && amount) {
+      inNote = false;
       const item: Item = { amount: { value: amount, region: regionOf(amountCell) } };
       const name = text(placed.get('desc'));
       // "1 Framtagande ..." where the position number ran into the description
@@ -185,7 +189,7 @@ function readTable(rows: Cell[][], start: number, cols: (Column | undefined)[], 
       const pv = p && parseAmount(p.text);
       if (p && pv) item.price = { value: pv, region: regionOf(p) };
       const r = one('rate') ?? (one('vat')?.text.includes('%') ? one('vat') : undefined);
-      const rv = r && parseRate(r.text);
+      const rv = r && (parseRate(r.text) ?? parseCategoryRate(r.text));
       if (r && rv) item.rate = { value: rv, region: regionOf(r) };
       const d = one('discount');
       if (d && /\d/u.test(d.text)) item.discount = { value: d.text, region: regionOf(d) };
@@ -196,7 +200,8 @@ function readTable(rows: Cell[][], start: number, cols: (Column | undefined)[], 
       // Text that does not start at the description's edge is not part of the item, e.g. a page footer
       if (last.name && Math.abs(cells[0].x - last.name.region.x) > 2) break;
       const more = text(cells)!;
-      if (DATE_ONLY.test(more.value)) continue;
+      inNote ||= NOTE.test(normalize(more.value));
+      if (inNote || DATE_ONLY.test(more.value)) continue;
       if (last.name && !last.unclearName && wraps(last.name.region.x, nameEnd.get(last) ?? 0, cells, spans[cols.indexOf('desc')])) {
         nameEnd.set(last, Math.max(...cells.map((c) => c.x + c.width)));
         last.name = { value: `${last.name.value} ${more.value}`, region: merge([last.name.region, more.region]) };

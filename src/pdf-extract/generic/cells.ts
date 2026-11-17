@@ -69,8 +69,11 @@ export function belowAll(rows: Cell[][], cell: Cell): Cell[] {
   const limit = bottom(cell) + 1.6 * Math.max(cell.height, 8);
   for (const row of rows) {
     const first = row[0];
-    if (!first || first.page !== cell.page || first.line.y <= cell.y + cell.height / 2 || first.line.y > limit) continue;
-    const hits = row.filter((c) => overlapX(c, cell) > 0);
+    if (!first || first.page !== cell.page || first.line === cell.line || first.line.y > limit) continue;
+    // Each cell's own top, not its line's (a larger font beside it raises the line), and half the font size, not half the
+    // box: a text box can be far taller than its glyphs and reach into the next line
+    const own = cell.y + Math.min(cell.height, 1.2 * cell.fontSize) / 2;
+    const hits = row.filter((c) => c.y > own && overlapX(c, cell) > 0);
     if (hits.length) return hits;
   }
   return [];

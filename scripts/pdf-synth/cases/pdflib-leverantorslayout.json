@@ -1,0 +1,33 @@
+{
+  "file": "pdflib-leverantorslayout",
+  "covers": "pdf-lib, issuer layout: date under 'Datum' beside 'Fakturanr', buyer references and identifiers, unlabelled address window, 'Fakturan avser' table, footer total boxes and company columns, tall text boxes",
+  "renderer": "pdflib",
+  "layout": "issuer",
+  "document": "invoice",
+  "number": "1122",
+  "issueDate": "2026-03-22",
+  "dueDate": "2026-04-21",
+  "customer": "K-522",
+  "ocr": "202611224",
+  "buyerReference": "Testa Testsson",
+  "orderReference": "PO-88812",
+  "seller": {
+    "name": "Provhiss Syntet AB",
+    "address": ["Box 4711", "999 31 Testby"],
+    "orgnr": "9999990071",
+    "fskatt": true,
+    "bankgiro": "99990095",
+    "iban": "SE9399900000000000000001",
+    "bic": "SYNTSESS"
+  },
+  "buyer": {
+    "name": "Fastighets AB Exempelhus",
+    "address": ["c/o Fiktiv Förvaltning AB", "Provgatan 3", "999 41 Teststad"],
+    "orgnr": "9999990089"
+  },
+  "lines": [
+    { "name": "Servicebesök", "qty": "1.5", "unit": "tim", "price": "960.00", "rate": 25 },
+    { "name": "Filterbyte", "qty": "2", "unit": "st", "price": "240.00", "rate": 25 }
+  ],
+  "rounding": true
+}

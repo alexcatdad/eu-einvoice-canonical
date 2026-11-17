@@ -4,6 +4,7 @@
  */
 import { containsPersonalNumber, luhn, parseIban } from '../../src/pdf-extract/se/identifiers.js';
 import type { Truth } from '../pdf-eval/score.js';
+import { type Layout, type Placed, placeLayout } from './layouts.js';
 
 export type Renderer = 'docx' | 'xlsx' | 'pdflib';
 export type Variant = 'standard14' | 'no-ruling' | 'type0-gid' | 'producer-word' | 'producer-visma';
@@ -11,6 +12,8 @@ export type Variant = 'standard14' | 'no-ruling' | 'type0-gid' | 'producer-word'
 export interface Party {
   name: string;
   address: string[];
+  /** Printed by the fixed layouts only. */
+  orgnr?: string;
 }
 export interface Seller extends Party {
   orgnr: string;
@@ -28,6 +31,10 @@ export interface LineSpec {
   rate: number;
   /** Labour that counts for the ROT/RUT/grön teknik deduction. */
   labour?: boolean;
+  /** Fixed layouts: the UN/ECE unit code a Peppol viewer prints instead of `unit`. */
+  unitCode?: string;
+  /** Fixed layouts: note lines printed under the item (labelled "Anteckning:" by the Peppol viewer). */
+  note?: string[];
 }
 export interface CaseSpec {
   file: string;
@@ -58,6 +65,10 @@ export interface CaseSpec {
   rounding?: boolean;
   /** Reminder: fee added to the unpaid amount. */
   reminderFee?: string;
+  /** pdf-lib only: a fixed-position layout (layouts.ts) instead of the block layout. */
+  layout?: Layout;
+  buyerReference?: string;
+  orderReference?: string;
 }
 
 /** What the page shows. Renderers lay this out and add nothing. */
@@ -73,6 +84,8 @@ export interface Printed {
   notes: string[];
   payment: [string, string][];
   footer: string[];
+  /** A fixed-position layout: every text with its place; the fields above are then empty. */
+  placed?: Placed[];
 }
 
 const ore = (s: string) => Math.round(Number(s) * 100);
@@ -161,32 +174,55 @@ export function build(spec: CaseSpec): Model {
   if (spec.deduction) notes.push(DEDUCTION[spec.deduction.kind][1]);
 
   const credit = spec.document === 'credit-note';
-  const printed: Printed = {
-    title: credit ? 'KREDITFAKTURA' : 'FAKTURA',
-    seller: [s.name, ...s.address],
-    buyerLabel: 'Fakturaadress',
-    buyer: [spec.buyer.name, ...spec.buyer.address],
-    meta: [
-      ['Fakturanummer', spec.number],
-      ['Fakturadatum', spec.issueDate],
-      ['Förfallodatum', spec.dueDate],
-      ['Kundnummer', spec.customer],
-      ...(spec.credits ? ([['Krediterar faktura', spec.credits]] as [string, string][]) : []),
-    ],
-    items: {
-      header: ['Beskrivning', 'Antal', 'Enhet', 'À-pris', 'Moms %', 'Belopp'],
-      rows: spec.lines.map((l, i) => [l.name, sv(l.qty), l.unit, sv(l.price), String(l.rate), fmtAmount(nets[i])]),
-    },
-    vat: {
-      header: ['Momssats', 'Underlag', 'Moms'],
-      rows: vatRows.map((r) => [exempt && r.rate === 0 ? 'Momsfri' : `${r.rate} %`, fmtAmount(r.taxable), fmtAmount(r.tax)]),
-    },
-    totals,
-    notes,
-    payment,
-    footer: [s.name, `Org.nr ${orgnr(s.orgnr)}`, `Momsreg.nr ${vatId(s.orgnr)}`, ...(s.fskatt ? ['Godkänd för F-skatt'] : [])],
-  };
+  const layout = spec.layout;
+  const printed: Printed = layout
+    ? {
+        title: '',
+        seller: [],
+        buyerLabel: '',
+        buyer: [],
+        meta: [],
+        totals: [],
+        notes: [],
+        payment: [],
+        footer: [],
+        placed: placeLayout(spec, { nets, vatRows, lineNet, taxExcl, vatTotal, taxIncl, rounding, payable }, layout),
+      }
+    : {
+        title: credit ? 'KREDITFAKTURA' : 'FAKTURA',
+        seller: [s.name, ...s.address],
+        buyerLabel: 'Fakturaadress',
+        buyer: [spec.buyer.name, ...spec.buyer.address],
+        meta: [
+          ['Fakturanummer', spec.number],
+          ['Fakturadatum', spec.issueDate],
+          ['Förfallodatum', spec.dueDate],
+          ['Kundnummer', spec.customer],
+          ...(spec.credits ? ([['Krediterar faktura', spec.credits]] as [string, string][]) : []),
+        ],
+        items: {
+          header: ['Beskrivning', 'Antal', 'Enhet', 'À-pris', 'Moms %', 'Belopp'],
+          rows: spec.lines.map((l, i) => [l.name, sv(l.qty), l.unit, sv(l.price), String(l.rate), fmtAmount(nets[i])]),
+        },
+        vat: {
+          header: ['Momssats', 'Underlag', 'Moms'],
+          rows: vatRows.map((r) => [exempt && r.rate === 0 ? 'Momsfri' : `${r.rate} %`, fmtAmount(r.taxable), fmtAmount(r.tax)]),
+        },
+        totals,
+        notes,
+        payment,
+        footer: [s.name, `Org.nr ${orgnr(s.orgnr)}`, `Momsreg.nr ${vatId(s.orgnr)}`, ...(s.fskatt ? ['Godkänd för F-skatt'] : [])],
+      };
 
+  // What the fixed layouts print: the Peppol viewer prints the totals with and without VAT, the issuer layout always
+  // prints the rounding box but no total with or without VAT
+  const peppol = layout === 'peppol-viewer' || layout === 'peppol-and-issuer';
+  const shows = {
+    lineNet: layout ? true : netto,
+    excl: layout ? peppol : showExcl,
+    incl: layout ? peppol : true,
+    rounding: layout ? layout !== 'peppol-viewer' || !!spec.rounding : !!spec.rounding,
+  };
   const v = (x: string | undefined) => (x === undefined ? { status: 'absent' as const } : { value: x });
   // A credit note carries positive magnitudes in the canonical model (effectiveSign), whatever signs the page prints
   const sgn = credit ? -1 : 1;
@@ -215,15 +251,15 @@ export function build(spec: CaseSpec): Model {
       'payment.iban': v(spec.payee ? undefined : s.iban),
       'payment.bic': v(spec.payee ? undefined : s.bic),
       'payment.remittanceInformation': v(spec.ocr),
-      'totals.lineNetTotal': amount(lineNet, netto),
+      'totals.lineNetTotal': amount(lineNet, shows.lineNet),
       'totals.allowanceTotal': amount(A, A !== 0),
       'totals.chargeTotal': amount(C, C !== 0),
-      'totals.taxExclusive': amount(taxExcl, showExcl),
+      'totals.taxExclusive': amount(taxExcl, shows.excl),
       'totals.vatTotal': amount(vatTotal, true),
-      'totals.taxInclusive': amount(taxIncl, true),
+      'totals.taxInclusive': amount(taxIncl, shows.incl),
       'totals.prepaid': amount(prepaid, !!spec.deduction),
       'totals.prepaidNote': v(spec.deduction?.kind),
-      'totals.rounding': amount(rounding, !!spec.rounding),
+      'totals.rounding': amount(rounding, shows.rounding),
       'totals.payable': amount(payable, true),
     },
     vatBreakdown: {
@@ -239,7 +275,8 @@ export function build(spec: CaseSpec): Model {
       rows: spec.lines.map((l, i) => ({
         'item.name': { value: l.name },
         quantity: { value: credit ? String(-Number(l.qty)) : l.qty },
-        unitText: { value: l.unit },
+        // The Peppol viewer's table is read: its unit code
+        unitText: { value: peppol ? (l.unitCode ?? l.unit) : l.unit },
         'price.net': { value: l.price },
         'vat.rate': { value: String(l.rate) },
         netAmount: { value: mag(nets[i]) },
@@ -301,5 +338,7 @@ function validate(spec: CaseSpec) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(spec.issueDate) || !/^\d{4}-\d{2}-\d{2}$/.test(spec.dueDate)) fail('dates must be YYYY-MM-DD');
   if (!/^[a-z0-9-]+$/.test(spec.file)) fail('file name');
   for (const l of spec.lines) if (!/^-?\d+(\.\d+)?$/.test(l.qty) || !/^\d+(\.\d+)?$/.test(l.price)) fail(`line ${l.name}`);
+  if (spec.layout && spec.renderer !== 'pdflib') fail('fixed layouts are drawn by pdf-lib');
+  if (spec.buyer.orgnr && (!luhn(spec.buyer.orgnr) || containsPersonalNumber(spec.buyer.orgnr))) fail('buyer org.nr');
   if (spec.exemptReason !== undefined && spec.lines.some((l) => l.rate !== 0)) fail('exempt invoices have rate 0 lines only');
 }

@@ -37,6 +37,13 @@ const UNITS: Record<string, string> = {
   l: 'LTR',
   liter: 'LTR',
   kwh: 'KWH',
+  // UN/ECE Rec 20 codes printed as they are, as Peppol viewers do
+  ea: 'EA',
+  h87: 'H87',
+  c62: 'C62',
+  hur: 'HUR',
+  day: 'DAY',
+  mon: 'MON',
 };
 
 export function buildExtraction(printed: GenericRead, options: PdfExtractOptions): PdfExtraction {
@@ -303,7 +310,18 @@ function buildInvoice(
       endpoint: endpointId ? { value: endpointId, schemeId: '0007' } : undefined,
       address: sellerAddress,
     },
-    buyer: { name: buyerName, identifiers: [], nationalTaxIds: [], address: buyerAddress },
+    buyer: {
+      name: buyerName,
+      identifiers: [],
+      legalRegistrationId: get('/buyer/legalRegistrationId/value')
+        ? { value: get('/buyer/legalRegistrationId/value')!, schemeId: '0007' }
+        : undefined,
+      vatId: get('/buyer/vatId'),
+      nationalTaxIds: [],
+      address: buyerAddress,
+    },
+    buyerReference: get('/buyerReference'),
+    purchaseOrderRef: get('/purchaseOrderRef'),
     additionalParties: [],
     payments: transfers.length
       ? [

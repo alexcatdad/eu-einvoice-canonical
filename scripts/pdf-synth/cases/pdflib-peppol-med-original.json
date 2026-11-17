@@ -1,0 +1,41 @@
+{
+  "file": "pdflib-peppol-med-original",
+  "covers": "pdf-lib, Peppol viewer page followed by the issuer's own page: the viewer's table is read, the issuer page's unlabelled notes and other unit do not count",
+  "renderer": "pdflib",
+  "layout": "peppol-and-issuer",
+  "document": "invoice",
+  "pages": 2,
+  "number": "1123",
+  "issueDate": "2026-03-23",
+  "dueDate": "2026-04-22",
+  "customer": "K-523",
+  "ocr": "202611232",
+  "buyerReference": "REF-2026-0423",
+  "orderReference": "REF-2026-0423",
+  "seller": {
+    "name": "Provhiss Syntet AB",
+    "address": ["Box 4711", "999 31 Testby"],
+    "orgnr": "9999990071",
+    "fskatt": true,
+    "bankgiro": "99990095",
+    "iban": "SE9399900000000000000001",
+    "bic": "SYNTSESS"
+  },
+  "buyer": {
+    "name": "Fastighets AB Exempelhus",
+    "address": ["Provgatan 3", "c/o Fiktiv Förvaltning AB", "999 41 Teststad"],
+    "orgnr": "9999990089"
+  },
+  "lines": [
+    {
+      "name": "Besiktning hiss",
+      "qty": "1",
+      "unit": "tim",
+      "unitCode": "EA",
+      "price": "1655.00",
+      "rate": 25,
+      "note": ["2026-03-02, provhiss B", "Provgatan 3", "Testby"]
+    }
+  ],
+  "rounding": true
+}

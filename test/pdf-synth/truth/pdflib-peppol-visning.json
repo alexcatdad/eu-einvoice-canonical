@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "file": "pdflib-peppol-visning.pdf",
+  "sha256": "f718f7e0c91105f350225cb9f0c8a7fb7305ced5c3e2c1564307be00b4f8e2e1",
+  "documentType": "invoice",
+  "typeCode": "380",
+  "invoicePages": [1],
+  "pricesIncludeVat": false,
+  "fields": {
+    "id": {
+      "value": "1121"
+    },
+    "issueDate": {
+      "value": "2026-03-21"
+    },
+    "dueDate": {
+      "value": "2026-04-20"
+    },
+    "currency": {
+      "value": "SEK"
+    },
+    "seller.name": {
+      "value": "Provhiss Syntet AB"
+    },
+    "seller.legalRegistrationId": {
+      "value": "9999990071"
+    },
+    "seller.vatId": {
+      "value": "SE999999007101"
+    },
+    "seller.taxRegistrationId": {
+      "value": "Godkänd för F-skatt"
+    },
+    "buyer.name": {
+      "value": "Fastighets AB Exempelhus"
+    },
+    "payee.name": {
+      "status": "absent"
+    },
+    "payment.bankgiro": {
+      "value": "99990095"
+    },
+    "payment.plusgiro": {
+      "status": "absent"
+    },
+    "payment.iban": {
+      "value": "SE9399900000000000000001"
+    },
+    "payment.bic": {
+      "value": "SYNTSESS"
+    },
+    "payment.remittanceInformation": {
+      "value": "202611216"
+    },
+    "totals.lineNetTotal": {
+      "value": "2494.90"
+    },
+    "totals.allowanceTotal": {
+      "status": "absent"
+    },
+    "totals.chargeTotal": {
+      "status": "absent"
+    },
+    "totals.taxExclusive": {
+      "value": "2494.90"
+    },
+    "totals.vatTotal": {
+      "value": "577.59"
+    },
+    "totals.taxInclusive": {
+      "value": "3072.49"
+    },
+    "totals.prepaid": {
+      "status": "absent"
+    },
+    "totals.prepaidNote": {
+      "status": "absent"
+    },
+    "totals.rounding": {
+      "value": "-0.49"
+    },
+    "totals.payable": {
+      "value": "3072.00"
+    }
+  },
+  "vatBreakdown": {
+    "rows": [
+      {
+        "categoryCode": "S",
+        "rate": {
+          "value": "25"
+        },
+        "taxableAmount": {
+          "value": "2140.00"
+        },
+        "taxAmount": {
+          "value": "535.00"
+        }
+      },
+      {
+        "categoryCode": "S",
+        "rate": {
+          "value": "12"
+        },
+        "taxableAmount": {
+          "value": "354.90"
+        },
+        "taxAmount": {
+          "value": "42.59"
+        }
+      }
+    ]
+  },
+  "lines": {
+    "rows": [
+      {
+        "item.name": {
+          "value": "Årlig kontroll hiss"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "EA"
+        },
+        "price.net": {
+          "value": "2140.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "2140.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Lunch vid utbildning"
+        },
+        "quantity": {
+          "value": "3"
+        },
+        "unitText": {
+          "value": "EA"
+        },
+        "price.net": {
+          "value": "118.30"
+        },
+        "vat.rate": {
+          "value": "12"
+        },
+        "netAmount": {
+          "value": "354.90"
+        }
+      }
+    ]
+  },
+  "notes": "Synthetic (scripts/pdf-synth): pdf-lib, Swedish Peppol BIS viewer rendering: dot decimals, party blocks, two-line table header, line notes, VAT summary with two rates, payment instruction table, tall text boxes"
+}

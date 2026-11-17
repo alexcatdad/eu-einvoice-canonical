@@ -89,8 +89,14 @@ export function loadPdfRuleSet(json: unknown): PdfRuleSet {
     for (const k of MATCH_KEYS) if (m[k] !== undefined && !isTexts(m[k])) bad(`/match/${k}`, 'non-empty list of non-empty texts');
     const profile = m.producer !== undefined || m.creator !== undefined;
     const template = MATCH_KEYS.slice(2).some((k) => m[k] !== undefined);
-    if (json.kind === 'generator-profile' && (!profile || template))
-      bad('/match', 'a generator profile is selected by producer or creator only');
+    if (json.kind === 'generator-profile' && template)
+      bad('/match', 'a generator profile is selected by producer, creator or layout fingerprint only');
+    // Without producer or creator, the fingerprints alone select the profile: none may be empty
+    if (json.kind === 'generator-profile' && !profile && Array.isArray(json.layouts))
+      json.layouts.forEach((l: unknown, i) => {
+        if (isObj(l) && !(Array.isArray(l.fingerprint) && l.fingerprint.length))
+          bad(`/layouts/${i}/fingerprint`, 'a generator profile without producer or creator needs a fingerprint on every layout');
+      });
     if (json.kind === 'issuer-template' && (!template || profile))
       bad('/match', 'an issuer template is selected by identifiers or keywords only');
   }

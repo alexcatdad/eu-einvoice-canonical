@@ -49,6 +49,8 @@ export function applyRules(
     if (set.kind === 'generator-profile') {
       const has = (meta: string | undefined, texts: string[] | undefined) =>
         !!meta && !!texts?.some((t) => meta.toLowerCase().includes(t.toLowerCase()));
+      // Neither given: selected by its layouts' fingerprints alone
+      if (!m.producer && !m.creator) return true;
       return has(layout.producer, m.producer) || has(layout.creator, m.creator);
     }
     // The seller the generic rules read, if any, must be the template's issuer
@@ -60,8 +62,10 @@ export function applyRules(
     return ids.some(printed) || (!!m.keywords && m.keywords.every((k) => text.includes(normalize(k))));
   };
 
+  const fits = (l: PdfRuleLayout) => (l.fingerprint ?? []).every((f) => text.includes(normalize(f)));
   for (const layer of [profiles, templates]) {
-    const sets = layer.filter(selected);
+    // A set selected without a layout that fits the page is not applied, so it never makes the choice ambiguous
+    const sets = layer.filter((s) => selected(s) && s.layouts.some(fits));
     if (sets.length > 1) {
       out.problems.push({
         code: 'ambiguous-rules',
@@ -78,7 +82,7 @@ export function applyRules(
       });
       continue;
     }
-    const layouts = set.layouts.filter((l) => (l.fingerprint ?? []).every((f) => text.includes(normalize(f))));
+    const layouts = set.layouts.filter(fits);
     if (layouts.length > 1) {
       out.problems.push({
         code: 'ambiguous-rules',
@@ -186,6 +190,9 @@ function readField(rule: PdfFieldRule, type: string, rows: Cell[][], field: stri
 function parse(type: string, raw: string): ReturnType<typeof parseField> {
   const s = clean(raw);
   if (type === 'text') return s ? { value: s } : undefined;
+  // An identifier followed by its Peppol scheme in brackets, as Peppol viewers print it: "SE556677889901 [VAT]"
+  const id = /^(.*\S) \[(?:\d{4}|VAT|TAX)\]$/u.exec(s);
+  if (id && ['vatNumber', 'orgNumber'].includes(type)) return parseField(type as FieldKey, id[1]);
   if (type === 'postalCode') {
     const m = /^(?:SE-?)?(\d{3}) ?(\d{2})$/u.exec(s);
     return m ? { value: `${m[1]} ${m[2]}` } : undefined;
@@ -246,10 +253,13 @@ function readAddressBlock(tag: string, party: '/seller' | '/buyer', rule: PdfAdd
       });
       first = hits.length === 1 ? hits[0] : undefined;
     } else first = below(rows, a);
-    const block = first ? [first] : [];
-    for (let at = first; at && !POSTAL.test(at.text) && block.length < 6; ) {
+    // A sub-heading "Adress" inside the block is passed over
+    const heading = (c: Cell) => /^(?:post)?adress$/u.test(label(c.text));
+    let at = first && heading(first) ? below(rows, first) : first;
+    const block = at ? [at] : [];
+    while (at && !POSTAL.test(at.text) && block.length < 6) {
       at = below(rows, at);
-      if (at) block.push(at);
+      if (at && !heading(at)) block.push(at);
     }
     return block;
   });
