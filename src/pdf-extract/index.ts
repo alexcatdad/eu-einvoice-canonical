@@ -7,8 +7,8 @@
  * (generic.ts), rule layers (rules/: generator profile, then issuer template), payment QR codes (qr.ts), then reconciliation (generic/build.ts):
  * only a complete, reconciling result is `ok`.
  */
-import type { Attachment, CanonicalInvoice, PdfRegion, SourceWarning } from '../canonical.js';
-import { attachedPages, invoicePageCount, invoicePages } from './attachment.js';
+import type { CanonicalInvoice, PdfRegion, SourceWarning } from '../canonical.js';
+import { attachment, invoicePageCount, invoicePages } from './attachment.js';
 import { buildExtraction } from './generic/build.js';
 import { freeTextValues } from './generic/free-text.js';
 import { remarkNote, unmappedText } from './generic/unmapped.js';
@@ -114,26 +114,6 @@ export const extractPdfInvoice: PdfExtractor = async (bytes, options) => {
     throw error;
   }
 };
-
-/** The attached pages as one PDF, or the problem that kept them from being copied (the result is then a draft). */
-async function attachment(
-  bytes: Uint8Array,
-  from: number,
-  to: number,
-  filename?: string,
-): Promise<{ file?: Attachment; problem?: SourceWarning }> {
-  try {
-    return { file: await attachedPages(bytes, from, to, filename) };
-  } catch (error) {
-    return {
-      problem: {
-        code: 'attachment',
-        field: '/attachments',
-        message: `Pages ${from}-${to} are attached documents but could not be copied: ${error instanceof Error ? error.message : String(error)}`,
-      } satisfies SourceWarning,
-    };
-  }
-}
 
 const PDFJS_PARSE_ERRORS = new Set(['UnknownErrorException', 'InvalidPDFException', 'FormatError']);
 

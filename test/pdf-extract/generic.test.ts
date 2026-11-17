@@ -5,6 +5,7 @@ import { Ajv2020 } from 'ajv/dist/2020.js';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import { type CanonicalInvoice, effectiveSign } from '../../src/canonical.js';
 import { convert, schemaVersion } from '../../src/index.js';
+import { attachment } from '../../src/pdf-extract/attachment.js';
 import { type GenericRead, itemValues } from '../../src/pdf-extract/generic.js';
 import { extractPdfInvoice, type PdfExtraction } from '../../src/pdf-extract/index.js';
 import { analyseLines } from '../../src/relations/rules.js';
@@ -823,6 +824,10 @@ describe('item rows without an amount, page numbering and attached pages', () =>
     // Deterministic: the same file gives the same attachment
     const again = ok(await extract(bytes));
     expect(again.attachments).toEqual(inv.attachments);
+    // Pages that cannot be copied give the problem that makes the result a draft, never an invoice without them
+    expect(await attachment(new Uint8Array([1, 2, 3]), 2, 3)).toEqual({
+      problem: expect.objectContaining({ code: 'attachment', field: '/attachments' }),
+    });
     // Without the page numbering every page is read: two invoice numbers
     expect((await extract(await invoicePdf({}, [], [{ edit: { '5001': '9999' } }]))).status).toBe('draft');
   }, 30000);

@@ -1,10 +1,10 @@
 /**
  * Documents attached after the invoice in the same PDF (supplier invoices, delivery notes): the invoice pages are those
  * the page numbering counts ("Sida 1 av 3" on pages 1 to 3); every later page is an attachment. The attached pages are
- * copied unchanged, whatever their text quality, into one PDF that is embedded in the invoice (BG-24). pdf-lib is loaded
- * on demand, as in envelope-pdf.ts.
+ * copied unchanged, whatever their text quality, into one PDF that is embedded in the invoice (BG-24), by pdf-lib in
+ * envelope-pdf.ts, loaded on demand.
  */
-import type { Attachment } from '../canonical.js';
+import type { Attachment, SourceWarning } from '../canonical.js';
 import { base64 } from '../sha256.js';
 import type { LayoutDocument } from './layout.js';
 import { normalize } from './se/index.js';
@@ -37,23 +37,36 @@ export function invoicePages(layout: LayoutDocument, n: number): LayoutDocument 
   return { ...layout, pages: layout.pages.slice(0, n), quality: { supported: reasons.length === 0, reasons } };
 }
 
-/** Pages `from` to `to` (1-based) of the PDF, unchanged, as one embedded PDF. Deterministic: no dates or producer are added. */
-export async function attachedPages(bytes: Uint8Array, from: number, to: number, filename?: string): Promise<Attachment> {
-  const { PDFDocument } = await import('pdf-lib');
-  const source = await PDFDocument.load(bytes, { updateMetadata: false });
-  const out = await PDFDocument.create({ updateMetadata: false });
-  for (const page of await out.copyPages(
-    source,
-    Array.from({ length: to - from + 1 }, (_, i) => from - 1 + i),
-  ))
-    out.addPage(page);
-  const stem = filename?.replace(/\.pdf$/iu, '') || 'invoice';
-  return {
-    kind: 'embedded',
-    id: `${stem} p${from}-${to}`,
-    description: `Pages ${from}-${to} of the PDF: documents attached after the invoice`,
-    mimeCode: 'application/pdf',
-    filename: `${stem}-attachment.pdf`,
-    base64: base64(await out.save()),
-  };
+/**
+ * Pages `from` to `to` (1-based) of the PDF, unchanged, as one embedded PDF; or, when they cannot be copied (a file
+ * pdf-lib cannot open, such as an encrypted one), the problem that makes the result a draft.
+ */
+export async function attachment(
+  bytes: Uint8Array,
+  from: number,
+  to: number,
+  filename?: string,
+): Promise<{ file: Attachment; problem?: undefined } | { file?: undefined; problem: SourceWarning }> {
+  try {
+    const { copyPdfPages } = await import('../envelope-pdf.js');
+    const stem = filename?.replace(/\.pdf$/iu, '') || 'invoice';
+    return {
+      file: {
+        kind: 'embedded',
+        id: `${stem} p${from}-${to}`,
+        description: `Pages ${from}-${to} of the PDF: documents attached after the invoice`,
+        mimeCode: 'application/pdf',
+        filename: `${stem}-attachment.pdf`,
+        base64: base64(await copyPdfPages(bytes, from, to)),
+      },
+    };
+  } catch (error) {
+    return {
+      problem: {
+        code: 'attachment',
+        field: '/attachments',
+        message: `Pages ${from}-${to} are attached documents but could not be copied: ${error instanceof Error ? error.message : String(error)}`,
+      },
+    };
+  }
 }
