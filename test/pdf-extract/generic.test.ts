@@ -350,6 +350,55 @@ describe('generic PDF invoice extraction', () => {
     expect(d.problems).toContainEqual(expect.objectContaining({ code: 'identifier-check', field: '/seller/vatId' }));
   }, 30000);
 
+  test('printed Peppol IDs are the electronic addresses (BT-34, BT-49), read from the page and not derived', async () => {
+    const gln = '9999999000010';
+    const inv = ok(
+      await extract(
+        await invoicePdf({}, [
+          [60, 400, 'Säljarens PEPPOLID: 5599001236 [0007]'],
+          [60, 412, `Köparens Peppol-ID: ${gln} [0088]`],
+        ]),
+      ),
+    );
+    expect(inv.seller.endpoint).toEqual({ value: '5599001236', schemeId: '0007' });
+    expect(inv.buyer.endpoint).toEqual({ value: gln, schemeId: '0088' });
+    expect(inv.source.derived.some((d) => d.field.startsWith('/seller/endpoint'))).toBe(false);
+    expect(inv.source.valueOrigins?.['/seller/endpoint/value']).toBe('source');
+    expect(inv.source.pdfProvenance?.['/buyer/endpoint/value']).toMatchObject({ page: 1 });
+  }, 30000);
+
+  test('a Peppol ID failing its check digits or outside the EAS list is kept as printed and flagged; one without a party is not read', async () => {
+    for (const [text, value, scheme] of [
+      ['Köparens PEPPOL-ID: 9999999000011 [0088]', '9999999000011', '0088'],
+      ["Buyer's Peppol ID: 5599001236 [9955]", '5599001236', '9955'],
+    ]) {
+      const d = draft(await extract(await invoicePdf({}, [[60, 400, text]])));
+      expect(d.fields['/buyer/endpoint/value']).toBe(value);
+      expect(d.fields['/buyer/endpoint/schemeId']).toBe(scheme);
+      expect(d.problems).toContainEqual(expect.objectContaining({ code: 'identifier-check', field: '/buyer/endpoint' }));
+    }
+    const inv = ok(await extract(await invoicePdf({}, [[60, 400, 'Elektronisk adress: 5599001236 [0007]']])));
+    expect(inv.buyer.endpoint).toBeUndefined();
+    expect(inv.source.valueOrigins?.['/seller/endpoint']).toBe('derived');
+  }, 30000);
+
+  test('a labelled note under an item and the lines after it are the line note (BT-127); unlabelled lines stay unclear', async () => {
+    const inv = ok(
+      await extract(
+        await invoicePdf({}, [
+          [60, 226, 'Notering: avser mars'],
+          [60, 238, 'Projekt 7'],
+        ]),
+      ),
+    );
+    expect(inv.lines.map((l) => l.note)).toEqual([undefined, 'avser mars\nProjekt 7']);
+    expect(inv.lines[1].item.name).toBe('Licens');
+    expect(inv.source.pdfProvenance?.['/lines/1/note']).toMatchObject({ page: 1, x: 60 });
+    const d = draft(await extract(await invoicePdf({}, [[60, 226, 'avser mars']])));
+    expect(d.fields['/lines/1/note']).toBeUndefined();
+    expect(d.problems).toContainEqual(expect.objectContaining({ code: 'ambiguous', field: '/lines/1/item/name' }));
+  }, 30000);
+
   test('labels ending in an abbreviation full stop ("Org. nr.:") are read; a failing org.nr is kept and flagged', async () => {
     const d = draft(await extract(await invoicePdf({ 'Org.nr': 'ORG. NR.:', [ID.org]: '559900-1237' })));
     expect(d.fields['/seller/legalRegistrationId/value']).toBe('5599001237');

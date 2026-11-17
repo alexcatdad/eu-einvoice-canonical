@@ -11,6 +11,7 @@ import type { PdfRegion, SourceWarning } from '../canonical.js';
 import { below, belowAll, type Cell, cellRows, overlapX, regionOf, rightOf } from './generic/cells.js';
 import { type FieldKey, type FieldLabel, fieldLabel, inlinePair, type Parsed, parseField } from './generic/fields.js';
 import { findItemTables, type Item } from './generic/items.js';
+import { endpointValues, type PartyId, partyId } from './generic/party-ids.js';
 import { vatBreakdown, vatTable } from './generic/vat.js';
 import type { LayoutDocument, Line } from './layout.js';
 import { findLabels, isReminder, matchLabel, normalize } from './se/index.js';
@@ -111,8 +112,17 @@ function readPages(layout: LayoutDocument): GenericRead {
   const found = new Map<FieldKey, Hit[]>();
   const add = (key: FieldKey, hit: Hit) => found.set(key, [...(found.get(key) ?? []), hit]);
   const addresses: { key: 'buyer' | 'sellerAddress'; label: Cell }[] = [];
+  const partyIds: PartyId[] = [];
   for (const row of free)
     for (const cell of row) {
+      // "Köparens PEPPOL-ID: 9999990113 [0007]", "Organisationsnummer: 9999990113 [0007]" in a party block
+      const pid = partyId(rows, cell);
+      if (pid) {
+        if (pid.kind === 'orgNumber')
+          add(pid.party === 'seller' ? 'orgNumber' : 'buyerOrgNumber', { parsed: pid.parsed, value: cell, label: cell });
+        partyIds.push(pid);
+        continue;
+      }
       // "Datum" heading the column beside "Fakturanr" is the invoice date
       const label =
         fieldLabel(cell.text) ??
@@ -208,6 +218,8 @@ function readPages(layout: LayoutDocument): GenericRead {
     if (key === 'buyerOrgNumber') values['/buyer/legalRegistrationId/schemeId'] = { value: '0007', region: v.region };
     if (key === 'prepaid') prepaidNote(h.label, rows, v.region, values, problems);
   }
+
+  endpointValues(partyIds, values, problems);
 
   // Payment accounts, in a fixed order
   let transfer = 0;
@@ -332,6 +344,7 @@ export function itemValues(items: Item[], values: Record<string, ReadValue>, pro
     if (item.unitText) values[`${p}/unitText`] = item.unitText;
     if (item.price) values[`${p}/price/net`] = item.price;
     if (item.rate) values[`${p}/vat/rate`] = item.rate;
+    if (item.note) values[`${p}/note`] = item.note;
     values[`${p}/netAmount`] = item.amount;
     if (item.discount)
       problems.push({

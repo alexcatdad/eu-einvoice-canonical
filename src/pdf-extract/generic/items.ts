@@ -37,8 +37,8 @@ const TOTAL = /^(?:summa|totalt?|summa .*)$/u;
 const QTY_WITH_UNIT = /^-?\d[\d ]*(?:[,.]\d+)?\s*\p{L}/u;
 const DATE_ONLY = /^[\d\s.:/–-]+$/u;
 const QTY_UNIT = /^(-?\d[\d ]*(?:[,.]\d+)?)\s*(\p{L}[\p{L}.²³0-9]*)?$/u;
-/** A labelled note under an item ("Anteckning: ..."): it and the description lines after it are not the item's name. */
-const NOTE = /^(?:anteckning|notering|kommentar|not)\s?:/u;
+/** A labelled note under an item ("Anteckning: ..."): it and the description lines after it are the item's note (BT-127). */
+const NOTE = /^(?:anteckning|notering|kommentar|not) ?: ?/iu;
 
 const columnOf = (text: string) => COLUMNS.find(([, re]) => re.test(normalize(text)))?.[0];
 
@@ -55,6 +55,8 @@ export interface Item {
   rate?: ItemValue;
   discount?: ItemValue;
   amount: ItemValue & { value: Decimal };
+  /** A labelled note under the item and the description lines after it, one per text line (BT-127). */
+  note?: ItemValue;
   /** Text lines under the item that are neither a wrapped description nor a date: description or note, unknown. */
   unclearName?: PdfRegion;
 }
@@ -200,8 +202,17 @@ function readTable(rows: Cell[][], start: number, cols: (Column | undefined)[], 
       // Text that does not start at the description's edge is not part of the item, e.g. a page footer
       if (last.name && Math.abs(cells[0].x - last.name.region.x) > 2) break;
       const more = text(cells)!;
-      inNote ||= NOTE.test(normalize(more.value));
-      if (inNote || DATE_ONLY.test(more.value)) continue;
+      const label = NOTE.exec(more.value);
+      if (label || inNote) {
+        inNote = true;
+        const line = more.value.slice(label?.[0].length ?? 0);
+        if (line)
+          last.note = last.note
+            ? { value: `${last.note.value}\n${line}`, region: merge([last.note.region, more.region]) }
+            : { value: line, region: more.region };
+        continue;
+      }
+      if (DATE_ONLY.test(more.value)) continue;
       if (last.name && !last.unclearName && wraps(last.name.region.x, nameEnd.get(last) ?? 0, cells, spans[cols.indexOf('desc')])) {
         nameEnd.set(last, Math.max(...cells.map((c) => c.x + c.width)));
         last.name = { value: `${last.name.value} ${more.value}`, region: merge([last.name.region, more.region]) };
@@ -214,7 +225,7 @@ function readTable(rows: Cell[][], start: number, cols: (Column | undefined)[], 
 /**
  * A description line continues the item above only when its first word would not have fitted after the line above
  * within the description column (the text was wrapped), and it is text, not a date or period. Other lines under an
- * item are notes and are skipped.
+ * item are reported as unclear.
  */
 function wraps(nameX: number, nameEnd: number, cells: Cell[], span: { x: number; width: number }): boolean {
   const text = cells.map((c) => c.text).join(' ');
