@@ -805,7 +805,8 @@ export interface PdfRegion {
  */
 export interface PdfUnmappedText {
   text: string;
-  region: PdfRegion;
+  /** Absent for text drawn with no usable position (a zero-size or damaged text transform), kept as drawn. */
+  region?: PdfRegion;
 }
 
 /** A problem found while reading the source, with the canonical field and the place on the page when known. */

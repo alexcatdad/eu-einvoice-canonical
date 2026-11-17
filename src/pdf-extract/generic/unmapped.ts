@@ -273,6 +273,16 @@ export function unmappedText(layout: LayoutDocument, read: GenericRead): Generic
     message: `Printed text that maps to no invoice field (${b.lines.length} text segment${b.lines.length > 1 ? 's' : ''}), kept as printed`,
     region: b.region,
   }));
+  // Text with no usable position: after the positioned blocks, without a region
+  for (const p of layout.pages.slice(0, read.pages ?? layout.pages.length))
+    for (const text of p.unplaced) {
+      warnings.push({
+        code: 'unmapped-text',
+        field: `/source/unmappedText/${kept.length}`,
+        message: `Text on page ${p.number} whose position cannot be read (a zero-size or damaged text transform), kept as drawn without a region; spacing between its characters may be lost`,
+      });
+      kept.push({ text });
+    }
   return { ...read, warnings: [...read.warnings, ...warnings], ...(kept.length ? { unmappedText: kept } : {}) };
 }
 

@@ -12,6 +12,8 @@ export interface CoverageCheck {
   field: number;
   consumed: number;
   unmapped: number;
+  /** Texts with no usable position (`LayoutPage.unplaced`), each kept in an entry without a region. */
+  unplaced: number;
   /** Rule broken, with a count; empty when text in equals text out. */
   problems: Record<string, number>;
 }
@@ -34,7 +36,7 @@ function resolve(doc: unknown, pointer: string): string | undefined {
 export async function checkCoverage(bytes: Uint8Array): Promise<CoverageCheck | undefined> {
   const { result, layout, read } = await readPdf(bytes, { fileSha256: '0'.repeat(64) });
   if (!layout || !read || read.notAnInvoice || (result.status !== 'ok' && result.status !== 'draft')) return undefined;
-  const out: CoverageCheck = { status: result.status, runs: 0, field: 0, consumed: 0, unmapped: 0, problems: {} };
+  const out: CoverageCheck = { status: result.status, runs: 0, field: 0, consumed: 0, unmapped: 0, unplaced: 0, problems: {} };
   const fail = (rule: string) => {
     out.problems[rule] = (out.problems[rule] ?? 0) + 1;
   };
@@ -78,10 +80,16 @@ export async function checkCoverage(bytes: Uint8Array): Promise<CoverageCheck | 
   // Every unmapped run is kept once, verbatim: its segment is one line of the entry whose region holds it
   const bare = (t: string) => t.replace(/\s+/gu, '');
   const lines = entries.map((e) => e.text.split('\n').map(bare));
-  for (const u of unmapped) {
-    const k = entries.findIndex((e, i) => inside(u.region, e.region) && lines[i].includes(bare(u.text)));
+  const keep = (text: string, holds: (e: PdfUnmappedText) => boolean) => {
+    const k = entries.findIndex((e, i) => holds(e) && lines[i].includes(bare(text)));
     if (k < 0) fail('unmapped text not kept');
-    else lines[k].splice(lines[k].indexOf(bare(u.text)), 1);
+    else lines[k].splice(lines[k].indexOf(bare(text)), 1);
+  };
+  for (const u of unmapped) keep(u.text, (e) => !!e.region && inside(u.region, e.region));
+  // Text with no usable position is kept once, verbatim, in an entry without a region
+  for (const text of pages.flatMap((p) => p.unplaced)) {
+    out.unplaced++;
+    keep(text, (e) => !e.region);
   }
   if (lines.some((l) => l.length)) fail('unmapped text kept twice or not printed');
   // Each entry has its unmapped-text warning
