@@ -379,24 +379,29 @@ export async function withAttachments(invoice: Uint8Array, c: Construction, pdfO
       for (const page of await out.copyPages(src, src.getPageIndices())) out.addPage(page);
       continue;
     }
-    // A scanned supplier invoice: one grey image with a payment QR code of another payee, no text layer
-    const qr = encodeQR(JSON.stringify(SCAN_QR), 'raw', { border: 4 });
-    const scale = 5;
-    const [w, h] = [420, 594];
-    const image = await out.embedPng(
-      png(w, h, (x, y) => {
-        const [qx, qy] = [Math.floor((x - 40) / scale), Math.floor((y - 30) / scale)];
-        if (qx >= 0 && qy >= 0 && qy < qr.length && qx < qr.length) return qr[qy][qx] ? 0 : 255;
-        return y % 24 < 2 && x > 30 && x < 390 && y > 400 && y < 570 ? 90 : 245;
-      }),
-    );
-    const page = out.addPage([595.28, 841.89]);
-    page.drawImage(image, { x: 0, y: 0, width: 595.28, height: 841.89 });
+    // A scanned supplier invoice of another payee
+    await scanPage(out, JSON.stringify(SCAN_QR));
   }
   return out.save();
 }
 
 const SCAN_QR = { uqr: 1, tp: 1, nme: 'Fiktiv Leverantör AB', iref: '4417', due: 812.5, cur: 'SEK', pt: 'BG', acc: '9999-0111' };
+
+/** Adds a scanned A4 page: one grey image with the payment QR code `qr` and grey bars for text, no text layer. */
+export async function scanPage(doc: PDFDocument, qr: string) {
+  const code = encodeQR(qr, 'raw', { border: 4 });
+  const scale = 5;
+  const [w, h] = [420, 594];
+  const image = await doc.embedPng(
+    png(w, h, (x, y) => {
+      const [qx, qy] = [Math.floor((x - 40) / scale), Math.floor((y - 30) / scale)];
+      if (qx >= 0 && qy >= 0 && qy < code.length && qx < code.length) return code[qy][qx] ? 0 : 255;
+      return y % 24 < 2 && x > 30 && x < 390 && y > 400 && y < 570 ? 90 : 245;
+    }),
+  );
+  const page = doc.addPage([595.28, 841.89]);
+  page.drawImage(image, { x: 0, y: 0, width: 595.28, height: 841.89 });
+}
 
 /** A minimal 8-bit grey PNG for pdf-lib's embedPng. */
 function png(width: number, height: number, grey: (x: number, y: number) => number): Uint8Array {

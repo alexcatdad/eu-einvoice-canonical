@@ -5,6 +5,7 @@
  * - no-ruling: Helvetica, table without any lines
  * - type0-gid: embedded DejaVu Sans as a Type0/CIDFontType2 font, Identity-H with CID = glyph id, no ToUnicode
  * - producer-word / producer-visma: Helvetica with a Producer and Creator of another generator
+ * - scan-qr: one scanned image with a payment QR code and no text layer (construction.ts)
  * - fixed layouts (layouts.ts): Helvetica whose font descriptor declares a tall ascent and descent, so each text box is
  *   about twice as tall as its glyphs and reaches into the next line, as in some generators' output
  */
@@ -25,6 +26,7 @@ import {
   setFontAndSize,
   showText,
 } from 'pdf-lib';
+import { scanPage } from './construction.js';
 import type { Printed, Variant } from './model.js';
 
 interface Face {
@@ -42,6 +44,10 @@ export async function toPdfLib(p: Printed, variant: Variant, ttf?: Uint8Array): 
   const [producer, creator] = PRODUCERS[variant] ?? ['pdf-lib (https://github.com/Hopding/pdf-lib)', 'pdf-synth'];
   doc.setProducer(producer);
   doc.setCreator(creator);
+  if (variant === 'scan-qr') {
+    await scanPage(doc, p.qr!);
+    return doc.save({ useObjectStreams: false });
+  }
   if (p.placed) {
     await placed(doc, p);
     return doc.save({ useObjectStreams: false });
