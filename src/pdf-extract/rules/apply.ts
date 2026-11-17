@@ -210,9 +210,10 @@ function readLines(tag: string, rule: PdfTableRule, rows: Cell[][], out: Generic
   if (!tables.length && rule.optional) return;
   for (const k of Object.keys(out.values)) if (k.startsWith('/lines/')) delete out.values[k];
   out.problems = out.problems.filter((p) => p.field !== '/lines' && !p.field?.startsWith('/lines/'));
+  out.warnings = out.warnings.filter((p) => !p.field?.startsWith('/lines/'));
   const items = tables.flatMap((t) => t.items);
   out.lineCount = items.length;
-  if (items.length) itemValues(items, out.values, out.problems);
+  if (items.length) itemValues(items, out.values, out.problems, out.warnings);
   else
     out.problems.push({
       code: 'rule-no-match',

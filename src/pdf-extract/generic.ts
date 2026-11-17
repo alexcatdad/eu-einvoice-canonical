@@ -10,7 +10,8 @@
 import type { PdfRegion, SourceWarning } from '../canonical.js';
 import { below, belowAll, type Cell, cellRows, overlapX, regionOf, rightOf } from './generic/cells.js';
 import { type FieldKey, type FieldLabel, fieldLabel, inlinePair, type Parsed, parseField } from './generic/fields.js';
-import { findItemTables, type Item } from './generic/items.js';
+import { findItemTables, type Item, merge } from './generic/items.js';
+import { endpointValues, type PartyId, partyId } from './generic/party-ids.js';
 import { vatBreakdown, vatTable } from './generic/vat.js';
 import type { LayoutDocument, Line } from './layout.js';
 import { findLabels, isReminder, matchLabel, normalize } from './se/index.js';
@@ -34,6 +35,8 @@ export interface GenericRead {
   pages?: number;
   /** Values no page prints, set by a rule layer's defaults: used only when no value was read, and recorded as derived. */
   defaults?: Record<string, { value: string; rule: string }>;
+  /** Findings that do not stop an `ok` result: listed in `source.warnings`, or with the problems of a draft. */
+  warnings: SourceWarning[];
   /** Set by `buildExtraction` on a credit note printed with negative amounts, whose amounts it negated. */
   flipped?: true;
 }
@@ -95,10 +98,18 @@ export function readInvoice(layout: LayoutDocument): GenericRead {
 function readPages(layout: LayoutDocument): GenericRead {
   const rows = cellRows(layout);
   const problems: SourceWarning[] = [];
+  const warnings: SourceWarning[] = [];
   const values: Record<string, ReadValue> = {};
   const lineTexts = rows.map((r) => r.map((c) => c.text).join('\t'));
   if (lineTexts.some((t) => isReminder(t)))
-    return { notAnInvoice: 'Payment reminder (påminnelse), not an invoice', values, problems, pricesIncludeVat: false, lineCount: 0 };
+    return {
+      notAnInvoice: 'Payment reminder (påminnelse), not an invoice',
+      values,
+      problems,
+      warnings,
+      pricesIncludeVat: false,
+      lineCount: 0,
+    };
   const pricesIncludeVatAt = rows.flat().find((c) => PRICES_INCLUDE_VAT.test(normalize(c.text)));
   const pricesIncludeVat = pricesIncludeVatAt !== undefined;
 
@@ -111,8 +122,17 @@ function readPages(layout: LayoutDocument): GenericRead {
   const found = new Map<FieldKey, Hit[]>();
   const add = (key: FieldKey, hit: Hit) => found.set(key, [...(found.get(key) ?? []), hit]);
   const addresses: { key: 'buyer' | 'sellerAddress'; label: Cell }[] = [];
+  const partyIds: PartyId[] = [];
   for (const row of free)
     for (const cell of row) {
+      // "Köparens PEPPOL-ID: 9999990113 [0007]", "Organisationsnummer: 9999990113 [0007]" in a party block
+      const pid = partyId(rows, cell);
+      if (pid) {
+        if (pid.kind === 'orgNumber')
+          add(pid.party === 'seller' ? 'orgNumber' : 'buyerOrgNumber', { parsed: pid.parsed, value: cell, label: cell });
+        partyIds.push(pid);
+        continue;
+      }
       // "Datum" heading the column beside "Fakturanr" is the invoice date
       const label =
         fieldLabel(cell.text) ??
@@ -209,6 +229,8 @@ function readPages(layout: LayoutDocument): GenericRead {
     if (key === 'prepaid') prepaidNote(h.label, rows, v.region, values, problems);
   }
 
+  endpointValues(partyIds, values, problems);
+
   // Payment accounts, in a fixed order
   let transfer = 0;
   for (const [key, provider] of [
@@ -239,7 +261,7 @@ function readPages(layout: LayoutDocument): GenericRead {
   // Item lines; several invoice numbers on the same pages means several invoices, whose lines are not mixed
   const several = new Set((found.get('id') ?? []).map((h) => ('value' in h.parsed ? h.parsed.value : ''))).size > 1;
   const items = several ? [] : tables.flatMap((t) => t.items);
-  itemValues(items, values, problems);
+  itemValues(items, values, problems, warnings);
   if (!items.length && tables.length)
     problems.push({
       code: 'missing',
@@ -313,25 +335,36 @@ function readPages(layout: LayoutDocument): GenericRead {
       region: regionOf(pricesIncludeVatAt),
     });
 
-  return { values, problems, pricesIncludeVat, lineCount: items.length };
+  return { values, problems, warnings, pricesIncludeVat, lineCount: items.length };
 }
 
-/** Writes item lines as `/lines/k/...` values, with a problem where a line's description or net price is unclear. */
-export function itemValues(items: Item[], values: Record<string, ReadValue>, problems: SourceWarning[]) {
+/**
+ * Writes item lines as `/lines/k/...` values. Unlabelled text under an item is kept as its note: a problem when it may
+ * belong to the description, a warning when it is a date only. A problem also where a net price is unclear.
+ */
+export function itemValues(items: Item[], values: Record<string, ReadValue>, problems: SourceWarning[], warnings: SourceWarning[]) {
   items.forEach((item, i) => {
     const p = `/lines/${i}`;
-    if (item.unclearName)
+    if (item.unclearNote)
       problems.push({
         code: 'ambiguous',
-        field: `${p}/item/name`,
-        message: `Line ${i + 1}: text under the item may be part of its description or a note`,
-        region: item.unclearName,
+        field: `${p}/note`,
+        message: `Line ${i + 1}: unlabelled text under the item is kept as its note; it may belong to the description`,
+        region: merge(item.unclearNote),
       });
-    else if (item.name) values[`${p}/item/name`] = item.name;
+    if (item.datedNote)
+      warnings.push({
+        code: 'unlabelled-note',
+        field: `${p}/note`,
+        message: `Line ${i + 1}: an unlabelled date or period under the item is kept as its note`,
+        region: merge(item.datedNote),
+      });
+    if (item.name) values[`${p}/item/name`] = item.name;
     if (item.quantity) values[`${p}/quantity`] = item.quantity;
     if (item.unitText) values[`${p}/unitText`] = item.unitText;
     if (item.price) values[`${p}/price/net`] = item.price;
     if (item.rate) values[`${p}/vat/rate`] = item.rate;
+    if (item.note) values[`${p}/note`] = item.note;
     values[`${p}/netAmount`] = item.amount;
     if (item.discount)
       problems.push({

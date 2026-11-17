@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "file": "pdflib-peppol-id-orgnr.pdf",
+  "sha256": "4a0ea97635632f714eb2fe8d6bd6be8e31ad159f97d40caaf436368ba787a6be",
+  "documentType": "invoice",
+  "typeCode": "380",
+  "invoicePages": [1],
+  "pricesIncludeVat": false,
+  "fields": {
+    "id": {
+      "value": "1132"
+    },
+    "issueDate": {
+      "value": "2026-05-14"
+    },
+    "dueDate": {
+      "value": "2026-06-13"
+    },
+    "currency": {
+      "value": "SEK"
+    },
+    "seller.name": {
+      "value": "Provkontroll Syntet AB"
+    },
+    "seller.legalRegistrationId": {
+      "value": "9999990105"
+    },
+    "seller.vatId": {
+      "value": "SE999999010501"
+    },
+    "seller.taxRegistrationId": {
+      "value": "Godkänd för F-skatt"
+    },
+    "buyer.name": {
+      "value": "Fastighets AB Provhuset"
+    },
+    "payee.name": {
+      "status": "absent"
+    },
+    "payment.bankgiro": {
+      "value": "99990095"
+    },
+    "payment.plusgiro": {
+      "status": "absent"
+    },
+    "payment.iban": {
+      "value": "SE9399900000000000000001"
+    },
+    "payment.bic": {
+      "value": "SYNTSESS"
+    },
+    "payment.remittanceInformation": {
+      "value": "202611323"
+    },
+    "totals.lineNetTotal": {
+      "value": "3580.00"
+    },
+    "totals.allowanceTotal": {
+      "status": "absent"
+    },
+    "totals.chargeTotal": {
+      "status": "absent"
+    },
+    "totals.taxExclusive": {
+      "value": "3580.00"
+    },
+    "totals.vatTotal": {
+      "value": "845.60"
+    },
+    "totals.taxInclusive": {
+      "value": "4425.60"
+    },
+    "totals.prepaid": {
+      "status": "absent"
+    },
+    "totals.prepaidNote": {
+      "status": "absent"
+    },
+    "totals.rounding": {
+      "value": "0.40"
+    },
+    "totals.payable": {
+      "value": "4426.00"
+    }
+  },
+  "vatBreakdown": {
+    "rows": [
+      {
+        "categoryCode": "S",
+        "rate": {
+          "value": "25"
+        },
+        "taxableAmount": {
+          "value": "3200.00"
+        },
+        "taxAmount": {
+          "value": "800.00"
+        }
+      },
+      {
+        "categoryCode": "S",
+        "rate": {
+          "value": "12"
+        },
+        "taxableAmount": {
+          "value": "380.00"
+        },
+        "taxAmount": {
+          "value": "45.60"
+        }
+      }
+    ]
+  },
+  "lines": {
+    "rows": [
+      {
+        "item.name": {
+          "value": "Årlig besiktning"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "EA"
+        },
+        "price.net": {
+          "value": "3200.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "3200.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Fika vid utbildning"
+        },
+        "quantity": {
+          "value": "4"
+        },
+        "unitText": {
+          "value": "EA"
+        },
+        "price.net": {
+          "value": "95.00"
+        },
+        "vat.rate": {
+          "value": "12"
+        },
+        "netAmount": {
+          "value": "380.00"
+        }
+      }
+    ]
+  },
+  "notes": "Synthetic (scripts/pdf-synth): pdf-lib, Swedish Peppol BIS viewer rendering with printed Peppol IDs: both endpoints org.nr [0007], seller GLN party ID [0088] that is not an endpoint, two VAT rates, labelled item note (BT-127)"
+}

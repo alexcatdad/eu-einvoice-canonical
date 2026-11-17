@@ -71,20 +71,28 @@ function peppol(spec: CaseSpec, f: Figures, page: number): Placed[] {
   t(439, 86, `${dot(f.payable)} SEK`);
 
   // Party block: name, an "Adress" sub-heading, street lines, postal line without the space, country, identifiers
-  const party = (y: number, heading: string, name: string, address: string[], orgnr: string | undefined, extra: string[]) => {
+  const party = (y: number, heading: string, p: CaseSpec['buyer'], extra: string[]) => {
     t(16, y, heading, { bold: true });
-    const lines = [name, 'Adress', ...address.slice(0, -1), postal(address[address.length - 1]), 'SE'];
-    if (orgnr) lines.push(`ID: ${orgnr} [0007]`, `Organisationsnummer: ${orgnr} [0007]`);
+    const lines = [p.name, 'Adress', ...p.address.slice(0, -1), postal(p.address[p.address.length - 1]), 'SE'];
+    if (p.orgnr) lines.push(`ID: ${p.orgnr} [0007]`);
+    if (p.gln) lines.push(`ID: ${p.gln} [0088]`);
+    if (p.orgnr) lines.push(`Organisationsnummer: ${p.orgnr} [0007]`);
     lines.push(...extra);
     lines.forEach((l, i) => {
       t(16, y + 9 * (i + 1), l);
     });
     return y + 9 * (lines.length + 1);
   };
+  if (spec.invoiceNote) {
+    t(298, 112, 'Anteckning', { bold: true });
+    spec.invoiceNote.forEach((n, i) => {
+      t(298, 121 + 9 * i, n);
+    });
+  }
   t(157, 112, 'KÖPARENS KONTAKT', { bold: true });
   if (spec.buyerReference) t(157, 121, spec.buyerReference);
   t(157, 130, 'Telefon: 0100000000');
-  let y = party(112, 'KÖPAREN', b.name, b.address, b.orgnr, [`Köparens namn: ${b.name}`, ...(b.orgnr ? [vatId(b.orgnr)] : [])]);
+  let y = party(112, 'KÖPAREN', b, [`Köparens namn: ${b.name}`, ...(b.orgnr ? [vatId(b.orgnr)] : [])]);
 
   // Item table: a two-line header; each line, its quantity code and an optional note under it
   y += 12;
@@ -146,7 +154,7 @@ function peppol(spec: CaseSpec, f: Figures, page: number): Placed[] {
   total('Belopp att betala:', `${dot(f.payable)} SEK`);
   y += 6;
   t(16, y, 'Betalningsvillkor:');
-  t(16, y + 11, '30 dgr netto');
+  t(16, y + 11, spec.paymentTerms?.peppol ?? '30 dgr netto');
   y += 25;
 
   t(16, y, 'BETALINSTRUKTION', { bold: true });
@@ -171,11 +179,21 @@ function peppol(spec: CaseSpec, f: Figures, page: number): Placed[] {
   t(204, y, 'SÄLJARENS KONTAKT', { bold: true });
   t(204, y + 9, 'Kontakt: Testsson, Test');
   t(204, y + 18, 'Telefon: 0100000001');
-  party(y, 'SÄLJAREN', s.name, s.address, s.orgnr, [
+  y = party(y, 'SÄLJAREN', s, [
     s.name,
     `ID för säljarens skatteregistrering: ${vatId(s.orgnr)} [VAT]`,
     ...(s.fskatt ? ['ID för säljarens skatteregistrering: Godkänd för F-skatt [TAX]'] : []),
   ]);
+  // Electronic addresses, under the seller's block
+  for (const [label, id] of [
+    ['Säljarens PEPPOL-ID', s.peppolId],
+    ['Köparens PEPPOL-ID', b.peppolId],
+  ] as const) {
+    if (!id) continue;
+    const [scheme, value] = id.split(':');
+    t(16, y, `${label}: ${value} [${scheme}]`);
+    y += 9;
+  }
   return out;
 }
 
@@ -213,7 +231,7 @@ function issuer(spec: CaseSpec, f: Figures, page: number): Placed[] {
     t(342, 98 + 11 * i, l);
   });
   t(342, 194, 'Betalningsvillkor:');
-  t(431, 194, '30 dgr netto');
+  t(431, 194, spec.paymentTerms?.issuer ?? '30 dgr netto');
 
   t(52, 212, 'Fakturan avser', { bold: true });
   t(271, 212, 'Antal', { bold: true });

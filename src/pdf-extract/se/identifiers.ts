@@ -112,3 +112,12 @@ export function parseBic(raw: string): string | undefined {
   const s = strip(raw).toUpperCase();
   return /^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}(?:[A-Z0-9]{3})?$/.test(s) ? s : undefined;
 }
+
+/** GS1 Global Location Number: 13 digits with a GS1 mod-10 check digit (weights 3 and 1 from the right). */
+export function parseGln(raw: string): string | undefined {
+  const d = strip(raw);
+  if (!/^\d{13}$/u.test(d)) return undefined;
+  let sum = 0;
+  for (let i = 0; i < 12; i++) sum += Number(d[11 - i]) * (i % 2 ? 1 : 3);
+  return (10 - (sum % 10)) % 10 === Number(d[12]) ? d : undefined;
+}

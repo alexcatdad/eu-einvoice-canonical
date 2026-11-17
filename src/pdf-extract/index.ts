@@ -9,6 +9,8 @@
  */
 import type { CanonicalInvoice, PdfRegion, SourceWarning } from '../canonical.js';
 import { buildExtraction } from './generic/build.js';
+import { freeTextValues } from './generic/free-text.js';
+import { unmappedText } from './generic/unmapped.js';
 import { readInvoice } from './generic.js';
 import { DEFAULT_PDF_LIMITS, extractLayout, type PdfLimits } from './layout.js';
 import { applyPaymentQr, findQrCodes, qrPaymentFacts } from './qr.js';
@@ -85,9 +87,11 @@ export const extractPdfInvoice: PdfExtractor = async (bytes, options) => {
       }
       return { status: 'unsupported', reason, payment };
     }
-    const read = applyRules(layout, readInvoice(layout), BUNDLED_PROFILES, templates);
+    const ruled = applyRules(layout, readInvoice(layout), BUNDLED_PROFILES, templates);
+    const read = ruled.notAnInvoice ? ruled : freeTextValues(layout, ruled);
     const codes = read.notAnInvoice ? [] : await findQrCodes(bytes, read.pages);
-    return buildExtraction(applyPaymentQr(read, codes), options);
+    const paid = applyPaymentQr(read, codes);
+    return buildExtraction(read.notAnInvoice ? paid : unmappedText(layout, paid), options);
   } catch (error) {
     // pdf.js reports a damaged file it opened (a page tree or object it cannot parse) with these exceptions
     if (error instanceof Error && PDFJS_PARSE_ERRORS.has(error.name))

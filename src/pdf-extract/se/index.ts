@@ -10,6 +10,7 @@ export {
   type PartyNumber,
   parseBankgiro,
   parseBic,
+  parseGln,
   parseIban,
   parseOcr,
   parseOrgNumber,

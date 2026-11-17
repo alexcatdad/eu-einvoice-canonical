@@ -105,13 +105,13 @@
   "bundles": [
     {
       "name": "converter/initial.js",
-      "bytes": 909096,
-      "gzipBytes": 292994
+      "bytes": 909821,
+      "gzipBytes": 293348
     },
     {
       "name": "converter/all.js",
-      "bytes": 3616905,
-      "gzipBytes": 1142955
+      "bytes": 3629729,
+      "gzipBytes": 1147278
     },
     {
       "name": "_astro/Annotations.js",
@@ -225,8 +225,8 @@
     },
     {
       "name": "_astro/pdf-extract.js",
-      "bytes": 67734,
-      "gzipBytes": 25213
+      "bytes": 79833,
+      "gzipBytes": 29176
     },
     {
       "name": "_astro/pdf.js",
@@ -270,8 +270,8 @@
     },
     {
       "name": "_astro/src.js",
-      "bytes": 424502,
-      "gzipBytes": 138004
+      "bytes": 425237,
+      "gzipBytes": 138348
     },
     {
       "name": "_astro/starlight-toc.js",
