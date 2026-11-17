@@ -3,7 +3,7 @@
  * the result the caller gets. Returns counts and the problems found, never the text, so that it can run on private files.
  */
 import type { PdfRegion, PdfUnmappedText, SourceWarning } from '../src/canonical.js';
-import { inside, textCoverage, textHeld } from '../src/pdf-extract/generic/unmapped.js';
+import { inside, runInFields, textCoverage } from '../src/pdf-extract/generic/unmapped.js';
 import { readPdf } from '../src/pdf-extract/index.js';
 
 export interface CoverageCheck {
@@ -65,9 +65,11 @@ export async function checkCoverage(bytes: Uint8Array): Promise<CoverageCheck | 
       out[c.kinds[i]]++;
       // In a field: in the region of a field the result holds, which holds the run's text
       if (c.kinds[i] === 'field') {
-        const held = fields.filter((f) => inside(at(c.page, run), f.region));
-        if (!held.some((f) => valueAt(f.pointer) !== undefined && textHeld(f.pointer, valueAt(f.pointer)!, run.text)))
-          fail('field run not in the result');
+        const held = fields.flatMap((f) => {
+          const value = valueAt(f.pointer);
+          return inside(at(c.page, run), f.region) && value !== undefined ? [{ pointer: f.pointer, value }] : [];
+        });
+        if (!runInFields(held, run.text)) fail('field run not in the result');
       }
     });
     const runs = c.segment.runs.filter((_, i) => c.kinds[i] === 'unmapped');

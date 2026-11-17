@@ -62,20 +62,34 @@ const box = (page: number, b: { x: number; y: number; width: number; height: num
 });
 
 /**
- * Whether the field at `pointer` holding `value` holds the printed `run`: the run holds the value (a footer line with
- * several values), the value holds the run (after a label: "Telefon: 010-000 00 00"), by digits for a value held
- * normalised ("1 250,00 kr", "20.03.2026"), or the name printed with a code ("(Standard)" after the VAT category "S").
+ * How the field at `pointer` holding `value` holds the printed `run`: whole when the value holds the run (after a
+ * label: "Telefon: 010-000 00 00"), by digits for a value held normalised ("1 250,00 kr", "20.03.2026") or as the name
+ * printed with a code ("(Standard)" after the VAT category "S"); in part when the run holds the value (a footer line
+ * with several values).
  */
-export function textHeld(pointer: string, value: string, run: string): boolean {
-  if (/\/(?:categoryCode|meansCode)$/u.test(pointer) && /^\([^()]+\)[,.]?$/u.test(run.trim())) return true;
+function textHeld(pointer: string, value: string, run: string): 'whole' | 'part' | undefined {
+  if (/\/(?:categoryCode|meansCode)$/u.test(pointer) && /^\([^()]+\)[,.]?$/u.test(run.trim())) return 'whole';
   const t = letters(run.replace(/^[^:]{1,40}:\s*/u, ''));
   const v = letters(value);
   const d = t.replace(/\D/gu, '');
-  return (
-    (!!t && v.includes(t)) ||
-    (v.length >= 2 && letters(run).includes(v)) ||
-    (!!d && t.length - d.length <= 3 && value.replace(/\D/gu, '').includes(d))
-  );
+  if ((!!t && v.includes(t)) || (!!d && t.length - d.length <= 3 && value.replace(/\D/gu, '').includes(d))) return 'whole';
+  return v.length >= 2 && letters(run).includes(v) ? 'part' : undefined;
+}
+
+/**
+ * Whether the fields whose regions hold a printed run hold its text: one holds it whole, or the values held in part
+ * leave only labels, units and separators (no number of three digits or more: another fact in the same run).
+ */
+export function runInFields(fields: readonly { pointer: string; value: string }[], run: string): boolean {
+  const parts: string[] = [];
+  for (const f of fields) {
+    const held = textHeld(f.pointer, f.value, run);
+    if (held === 'whole') return true;
+    if (held === 'part') parts.push(letters(f.value));
+  }
+  let rest = letters(run);
+  for (const p of parts.sort((x, y) => y.length - x.length)) rest = rest.split(p).join('');
+  return parts.length > 0 && !/\d{3}/u.test(rest);
 }
 
 /** Where every text run on the invoice pages (all pages, or the first `read.pages`) ended, segment by segment. */
@@ -154,7 +168,13 @@ export function textCoverage(layout: LayoutDocument, read: GenericRead): Covered
         const kinds = segment.runs.map((r): TextCoverage => {
           const at = box(p.number, r);
           // In a field: in the field's region, and the field holds the run's text
-          if (fields.some((f) => inside(at, f.region) && textHeld(f.pointer, f.value, r.text))) return 'field';
+          if (
+            runInFields(
+              fields.filter((f) => inside(at, f.region)),
+              r.text,
+            )
+          )
+            return 'field';
           // Layout text: the segment, or a label printed as a run of it ("Anteckning:" before a note's text)
           return layoutText || label(r.text.trim()) || consumed.some((c) => inside(at, c)) ? 'consumed' : 'unmapped';
         });
