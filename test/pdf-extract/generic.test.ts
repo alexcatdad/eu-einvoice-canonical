@@ -795,6 +795,40 @@ describe('item rows without an amount, page numbering and attached pages', () =>
     expect(ok(await extract(await invoicePdf({}, [[60, 400, 'Kundnr: K-101']]))).buyer.identifiers).toEqual([{ value: 'K-101' }]);
   }, 30000);
 
+  test('a value reported and not used for its field stays in unmappedText as printed, never only in a warning', async () => {
+    const cases: [Text[], string[]][] = [
+      // A customer number printed with two values
+      [
+        [
+          [60, 400, 'Kundnr'],
+          [140, 400, 'KND-101'],
+          [60, 430, 'Kundnr'],
+          [140, 430, 'KND-102'],
+        ],
+        ['KND-101', 'KND-102'],
+      ],
+      // A remark in capitals with a number is not a heading
+      [[[60, 400, 'OBS! NYTT BANKGIRO 123-4567']], ['OBS! NYTT BANKGIRO 123-4567']],
+      // A buyer organisation number that is a personal identity number
+      [[[60, 400, 'Ert org.nr: 811218-9876']], ['Ert org.nr: 811218-9876']],
+      // Two different buyer electronic addresses
+      [
+        [
+          [60, 400, 'Köparens PEPPOL-ID: 5560000001 [0007]'],
+          [60, 430, 'Köparens PEPPOL-ID: 5599001244 [0007]'],
+        ],
+        ['Köparens PEPPOL-ID: 5560000001 [0007]', 'Köparens PEPPOL-ID: 5599001244 [0007]'],
+      ],
+    ];
+    for (const [extra, kept] of cases) {
+      const r = await extract(await invoicePdf({}, extra));
+      const texts = (r.status === 'ok' ? r.invoice.source.unmappedText : r.status === 'draft' ? r.draft.unmappedText : [])?.flatMap((u) =>
+        u.text.split('\n'),
+      );
+      expect(texts).toEqual(expect.arrayContaining(kept));
+    }
+  }, 60000);
+
   test('"Konteringsreferens" is the buyer accounting reference (BT-19), on its own or in the buyer contact block', async () => {
     const inv = ok(await extract(await invoicePdf({}, [[60, 400, 'Konteringsreferens: 4010-77']])));
     expect(inv.accountingRef).toBe('4010-77');

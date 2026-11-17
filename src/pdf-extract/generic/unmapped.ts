@@ -17,8 +17,8 @@ import { columnOf, merge } from './items.js';
 const DATED = /^(?:\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?) +\p{L}/u;
 /** Document titles and page numbers. */
 const TITLE = /^(?:faktura|kreditfaktura|invoice|sida \d+(?: \(\d+\)| av \d+)?|\d+ ?\(\d+\))$/u;
-/** Section headings and titles in capitals ("SKATTESAMMANRÄKNING", "FAKTURA"). */
-const HEADING = /^[^\p{Ll}]*\p{Lu}{3}[^\p{Ll}]*$/u;
+/** Section headings and titles in capitals ("SKATTESAMMANRÄKNING", "FAKTURA"); never a text with a digit ("REF-2026-01"). */
+const HEADING = /^[^\p{Ll}\d]*\p{Lu}{3}[^\p{Ll}\d]*$/u;
 const letters = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
 const compact = (s: string) => normalize(s).replace(/[\s.:-]/gu, '');
 /** A document-level discount or fee total as Peppol viewers print it ("Summa rabatter (huvudnivå):"). */
@@ -127,6 +127,8 @@ export function textCoverage(layout: LayoutDocument, read: GenericRead): Covered
     const q = m && parseAmount(m[1]);
     return !!q && quantities.some((x) => x.region.page !== page && cmp(q, x.value) === 0);
   };
+  // A label or column heading on its own
+  const label = (text: string) => !!fieldLabel(text) || !!matchLabel(text) || !!columnOf(text) || isFreeTextLabel(text);
   // Layout text: no letter or digit, a label or column heading, a section heading, or a value read elsewhere ("Label: value" too)
   const known = (printed: string, page: number): boolean => {
     // "Organisationsnummer: 5560000001 [0007]": the scheme suffix aside
@@ -137,12 +139,9 @@ export function textCoverage(layout: LayoutDocument, read: GenericRead): Covered
       texts.has(compact(text)) ||
       isAmount(text, page) ||
       isQuantity(text, page) ||
-      !!fieldLabel(text) ||
-      !!matchLabel(text) ||
-      !!columnOf(text) ||
+      label(text) ||
       HEADING.test(text) ||
       TITLE.test(normalize(text)) ||
-      isFreeTextLabel(text) ||
       texts.has(compact(inlinePair(text)?.value ?? pair?.[2] ?? '')) ||
       partOf(text) ||
       headings(text)
@@ -156,8 +155,8 @@ export function textCoverage(layout: LayoutDocument, read: GenericRead): Covered
           const at = box(p.number, r);
           // In a field: in the field's region, and the field holds the run's text
           if (fields.some((f) => inside(at, f.region) && textHeld(f.pointer, f.value, r.text))) return 'field';
-          // Layout text: the segment, or this run of it ("Anteckning:" before a note's text)
-          return layoutText || known(r.text.trim(), p.number) || consumed.some((c) => inside(at, c)) ? 'consumed' : 'unmapped';
+          // Layout text: the segment, or a label printed as a run of it ("Anteckning:" before a note's text)
+          return layoutText || label(r.text.trim()) || consumed.some((c) => inside(at, c)) ? 'consumed' : 'unmapped';
         });
         return { page: p.number, segment, kinds };
       }),
