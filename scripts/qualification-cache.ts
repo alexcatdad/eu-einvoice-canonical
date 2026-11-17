@@ -1,7 +1,7 @@
 /** Private CI cache only; public distributions still use validation/distribution.json. */
 import { createHash } from 'node:crypto';
 import { appendFileSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { unzipSync, zipSync } from 'fflate';
 import { loadDistribution } from './validation-distribution.js';
 
@@ -26,15 +26,33 @@ function runtime(): string {
   return `${process.platform}/${process.arch}/bun-${Bun.version}/node-${node.stdout.toString().trim()}`;
 }
 
+/** Bundle recipes: the build and cache scripts plus every local module they import, so unrelated scripts keep the cache. */
+function recipes(root: string): string[] {
+  const transpiler = new Bun.Transpiler({ loader: 'ts' });
+  const seen = new Set<string>();
+  const pending = ['scripts/build-validation-bundles.ts', 'scripts/qualification-cache.ts'];
+  for (let input = pending.pop(); input; input = pending.pop()) {
+    if (seen.has(input)) continue;
+    seen.add(input);
+    if (!input.endsWith('.ts')) continue;
+    for (const { path } of transpiler.scanImports(readFileSync(join(root, input), 'utf8'))) {
+      if (!path.startsWith('.')) continue;
+      const target = relative(root, join(root, dirname(input), path.replace(/\.js$/, '.ts')));
+      if (!safe(target) || !existsSync(join(root, target))) throw new Error(`Unresolved recipe import: ${input} -> ${path}`);
+      pending.push(target);
+    }
+  }
+  return [...seen];
+}
+
 export function qualificationCacheKey(root: string, engines = runtime()): string {
   const inputs = [
     'bun.lock',
     'package.json',
-    'src/hash.ts',
     'validation/local-source-pins.json',
     'validation/distribution.json',
     'validation/NOTICE',
-    ...files(join(root, 'scripts')).map((name) => `scripts/${name}`),
+    ...recipes(root),
     ...files(join(root, 'validation/licenses')).map((name) => `validation/licenses/${name}`),
   ].sort();
   const hash = createHash('sha256').update(`qualification-v1\0${engines}\0`);

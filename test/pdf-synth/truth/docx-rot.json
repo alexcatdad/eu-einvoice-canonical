@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "file": "docx-rot.pdf",
+  "sha256": "16d18da3e99d9b026c1261c7b7ea7031f522f39ebd465d070f06a80a5a123964",
+  "documentType": "invoice",
+  "typeCode": "380",
+  "invoicePages": [1],
+  "pricesIncludeVat": false,
+  "fields": {
+    "id": {
+      "value": "1108"
+    },
+    "issueDate": {
+      "value": "2026-03-02"
+    },
+    "dueDate": {
+      "value": "2026-04-02"
+    },
+    "currency": {
+      "value": "SEK"
+    },
+    "seller.name": {
+      "value": "Exempelbygg Syntet AB"
+    },
+    "seller.legalRegistrationId": {
+      "value": "9999990030"
+    },
+    "seller.vatId": {
+      "value": "SE999999003001"
+    },
+    "seller.taxRegistrationId": {
+      "value": "Godkänd för F-skatt"
+    },
+    "buyer.name": {
+      "value": "Kim Exempelsson"
+    },
+    "payee.name": {
+      "status": "absent"
+    },
+    "payment.bankgiro": {
+      "value": "99990020"
+    },
+    "payment.plusgiro": {
+      "status": "absent"
+    },
+    "payment.iban": {
+      "value": "SE9399900000000000000001"
+    },
+    "payment.bic": {
+      "value": "SYNTSESS"
+    },
+    "payment.remittanceInformation": {
+      "value": "202611083"
+    },
+    "totals.lineNetTotal": {
+      "value": "28800.00"
+    },
+    "totals.allowanceTotal": {
+      "status": "absent"
+    },
+    "totals.chargeTotal": {
+      "status": "absent"
+    },
+    "totals.taxExclusive": {
+      "status": "absent"
+    },
+    "totals.vatTotal": {
+      "value": "7200.00"
+    },
+    "totals.taxInclusive": {
+      "value": "36000.00"
+    },
+    "totals.prepaid": {
+      "value": "7800.00"
+    },
+    "totals.prepaidNote": {
+      "value": "ROT"
+    },
+    "totals.rounding": {
+      "status": "absent"
+    },
+    "totals.payable": {
+      "value": "28200.00"
+    }
+  },
+  "vatBreakdown": {
+    "rows": [
+      {
+        "categoryCode": "S",
+        "rate": {
+          "value": "25"
+        },
+        "taxableAmount": {
+          "value": "28800.00"
+        },
+        "taxAmount": {
+          "value": "7200.00"
+        }
+      }
+    ]
+  },
+  "lines": {
+    "rows": [
+      {
+        "item.name": {
+          "value": "Snickeriarbete badrum"
+        },
+        "quantity": {
+          "value": "40"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "520.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "20800.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Material kakel och fix"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "8000.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "8000.00"
+        }
+      }
+    ]
+  },
+  "notes": "Synthetic (scripts/pdf-synth): Word, ROT deduction: total kept, deduction as prepaid amount"
+}

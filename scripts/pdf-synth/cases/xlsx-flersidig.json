@@ -1,0 +1,587 @@
+{
+  "file": "xlsx-flersidig",
+  "covers": "Excel, item table over several pages with print titles and wrapped cells",
+  "renderer": "xlsx",
+  "document": "invoice",
+  "number": "1106",
+  "issueDate": "2026-03-27",
+  "dueDate": "2026-04-27",
+  "customer": "K-506",
+  "ocr": "202611067",
+  "seller": {
+    "name": "Exempelbygg Syntet AB",
+    "address": ["Exempelgatan 3", "999 03 Testby"],
+    "orgnr": "9999990030",
+    "fskatt": true,
+    "bankgiro": "99990020",
+    "iban": "SE9399900000000000000001",
+    "bic": "SYNTSESS"
+  },
+  "buyer": {
+    "name": "Fiktiv Kund AB",
+    "address": ["Provvägen 2", "999 12 Testby"]
+  },
+  "lines": [
+    {
+      "name": "Artikel 100 specialutförande med förlängd garanti och installation på plats hos kunden",
+      "qty": "1",
+      "unit": "st",
+      "price": "49.90",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 101 standardutförande",
+      "qty": "2",
+      "unit": "st",
+      "price": "129.00",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 102 standardutförande",
+      "qty": "3",
+      "unit": "st",
+      "price": "315.50",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 103 standardutförande",
+      "qty": "4",
+      "unit": "st",
+      "price": "22.40",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 104 standardutförande",
+      "qty": "1",
+      "unit": "st",
+      "price": "49.90",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 105 standardutförande",
+      "qty": "2",
+      "unit": "st",
+      "price": "129.00",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 106 standardutförande",
+      "qty": "3",
+      "unit": "st",
+      "price": "315.50",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 107 specialutförande med förlängd garanti och installation på plats hos kunden",
+      "qty": "4",
+      "unit": "st",
+      "price": "22.40",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 108 standardutförande",
+      "qty": "1",
+      "unit": "st",
+      "price": "49.90",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 109 standardutförande",
+      "qty": "2",
+      "unit": "st",
+      "price": "129.00",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 110 standardutförande",
+      "qty": "3",
+      "unit": "st",
+      "price": "315.50",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 111 standardutförande",
+      "qty": "4",
+      "unit": "st",
+      "price": "22.40",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 112 standardutförande",
+      "qty": "1",
+      "unit": "st",
+      "price": "49.90",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 113 standardutförande",
+      "qty": "2",
+      "unit": "st",
+      "price": "129.00",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 114 specialutförande med förlängd garanti och installation på plats hos kunden",
+      "qty": "3",
+      "unit": "st",
+      "price": "315.50",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 115 standardutförande",
+      "qty": "4",
+      "unit": "st",
+      "price": "22.40",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 116 standardutförande",
+      "qty": "1",
+      "unit": "st",
+      "price": "49.90",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 117 standardutförande",
+      "qty": "2",
+      "unit": "st",
+      "price": "129.00",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 118 standardutförande",
+      "qty": "3",
+      "unit": "st",
+      "price": "315.50",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 119 standardutförande",
+      "qty": "4",
+      "unit": "st",
+      "price": "22.40",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 120 standardutförande",
+      "qty": "1",
+      "unit": "st",
+      "price": "49.90",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 121 specialutförande med förlängd garanti och installation på plats hos kunden",
+      "qty": "2",
+      "unit": "st",
+      "price": "129.00",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 122 standardutförande",
+      "qty": "3",
+      "unit": "st",
+      "price": "315.50",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 123 standardutförande",
+      "qty": "4",
+      "unit": "st",
+      "price": "22.40",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 124 standardutförande",
+      "qty": "1",
+      "unit": "st",
+      "price": "49.90",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 125 standardutförande",
+      "qty": "2",
+      "unit": "st",
+      "price": "129.00",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 126 standardutförande",
+      "qty": "3",
+      "unit": "st",
+      "price": "315.50",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 127 standardutförande",
+      "qty": "4",
+      "unit": "st",
+      "price": "22.40",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 128 specialutförande med förlängd garanti och installation på plats hos kunden",
+      "qty": "1",
+      "unit": "st",
+      "price": "49.90",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 129 standardutförande",
+      "qty": "2",
+      "unit": "st",
+      "price": "129.00",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 130 standardutförande",
+      "qty": "3",
+      "unit": "st",
+      "price": "315.50",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 131 standardutförande",
+      "qty": "4",
+      "unit": "st",
+      "price": "22.40",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 132 standardutförande",
+      "qty": "1",
+      "unit": "st",
+      "price": "49.90",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 133 standardutförande",
+      "qty": "2",
+      "unit": "st",
+      "price": "129.00",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 134 standardutförande",
+      "qty": "3",
+      "unit": "st",
+      "price": "315.50",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 135 specialutförande med förlängd garanti och installation på plats hos kunden",
+      "qty": "4",
+      "unit": "st",
+      "price": "22.40",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 136 standardutförande",
+      "qty": "1",
+      "unit": "st",
+      "price": "49.90",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 137 standardutförande",
+      "qty": "2",
+      "unit": "st",
+      "price": "129.00",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 138 standardutförande",
+      "qty": "3",
+      "unit": "st",
+      "price": "315.50",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 139 standardutförande",
+      "qty": "4",
+      "unit": "st",
+      "price": "22.40",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 140 standardutförande",
+      "qty": "1",
+      "unit": "st",
+      "price": "49.90",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 141 standardutförande",
+      "qty": "2",
+      "unit": "st",
+      "price": "129.00",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 142 specialutförande med förlängd garanti och installation på plats hos kunden",
+      "qty": "3",
+      "unit": "st",
+      "price": "315.50",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 143 standardutförande",
+      "qty": "4",
+      "unit": "st",
+      "price": "22.40",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 144 standardutförande",
+      "qty": "1",
+      "unit": "st",
+      "price": "49.90",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 145 standardutförande",
+      "qty": "2",
+      "unit": "st",
+      "price": "129.00",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 146 standardutförande",
+      "qty": "3",
+      "unit": "st",
+      "price": "315.50",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 147 standardutförande",
+      "qty": "4",
+      "unit": "st",
+      "price": "22.40",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 148 standardutförande",
+      "qty": "1",
+      "unit": "st",
+      "price": "49.90",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 149 specialutförande med förlängd garanti och installation på plats hos kunden",
+      "qty": "2",
+      "unit": "st",
+      "price": "129.00",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 150 standardutförande",
+      "qty": "3",
+      "unit": "st",
+      "price": "315.50",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 151 standardutförande",
+      "qty": "4",
+      "unit": "st",
+      "price": "22.40",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 152 standardutförande",
+      "qty": "1",
+      "unit": "st",
+      "price": "49.90",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 153 standardutförande",
+      "qty": "2",
+      "unit": "st",
+      "price": "129.00",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 154 standardutförande",
+      "qty": "3",
+      "unit": "st",
+      "price": "315.50",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 155 standardutförande",
+      "qty": "4",
+      "unit": "st",
+      "price": "22.40",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 156 specialutförande med förlängd garanti och installation på plats hos kunden",
+      "qty": "1",
+      "unit": "st",
+      "price": "49.90",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 157 standardutförande",
+      "qty": "2",
+      "unit": "st",
+      "price": "129.00",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 158 standardutförande",
+      "qty": "3",
+      "unit": "st",
+      "price": "315.50",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 159 standardutförande",
+      "qty": "4",
+      "unit": "st",
+      "price": "22.40",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 160 standardutförande",
+      "qty": "1",
+      "unit": "st",
+      "price": "49.90",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 161 standardutförande",
+      "qty": "2",
+      "unit": "st",
+      "price": "129.00",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 162 standardutförande",
+      "qty": "3",
+      "unit": "st",
+      "price": "315.50",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 163 specialutförande med förlängd garanti och installation på plats hos kunden",
+      "qty": "4",
+      "unit": "st",
+      "price": "22.40",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 164 standardutförande",
+      "qty": "1",
+      "unit": "st",
+      "price": "49.90",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 165 standardutförande",
+      "qty": "2",
+      "unit": "st",
+      "price": "129.00",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 166 standardutförande",
+      "qty": "3",
+      "unit": "st",
+      "price": "315.50",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 167 standardutförande",
+      "qty": "4",
+      "unit": "st",
+      "price": "22.40",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 168 standardutförande",
+      "qty": "1",
+      "unit": "st",
+      "price": "49.90",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 169 standardutförande",
+      "qty": "2",
+      "unit": "st",
+      "price": "129.00",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 170 specialutförande med förlängd garanti och installation på plats hos kunden",
+      "qty": "3",
+      "unit": "st",
+      "price": "315.50",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 171 standardutförande",
+      "qty": "4",
+      "unit": "st",
+      "price": "22.40",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 172 standardutförande",
+      "qty": "1",
+      "unit": "st",
+      "price": "49.90",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 173 standardutförande",
+      "qty": "2",
+      "unit": "st",
+      "price": "129.00",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 174 standardutförande",
+      "qty": "3",
+      "unit": "st",
+      "price": "315.50",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 175 standardutförande",
+      "qty": "4",
+      "unit": "st",
+      "price": "22.40",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 176 standardutförande",
+      "qty": "1",
+      "unit": "st",
+      "price": "49.90",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 177 specialutförande med förlängd garanti och installation på plats hos kunden",
+      "qty": "2",
+      "unit": "st",
+      "price": "129.00",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 178 standardutförande",
+      "qty": "3",
+      "unit": "st",
+      "price": "315.50",
+      "rate": 25
+    },
+    {
+      "name": "Artikel 179 standardutförande",
+      "qty": "4",
+      "unit": "st",
+      "price": "22.40",
+      "rate": 25
+    }
+  ],
+  "pages": 3
+}

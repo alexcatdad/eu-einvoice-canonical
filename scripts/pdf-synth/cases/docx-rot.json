@@ -1,0 +1,45 @@
+{
+  "file": "docx-rot",
+  "covers": "Word, ROT deduction: total kept, deduction as prepaid amount",
+  "renderer": "docx",
+  "document": "invoice",
+  "number": "1108",
+  "issueDate": "2026-03-02",
+  "dueDate": "2026-04-02",
+  "customer": "K-508",
+  "ocr": "202611083",
+  "seller": {
+    "name": "Exempelbygg Syntet AB",
+    "address": ["Exempelgatan 3", "999 03 Testby"],
+    "orgnr": "9999990030",
+    "fskatt": true,
+    "bankgiro": "99990020",
+    "iban": "SE9399900000000000000001",
+    "bic": "SYNTSESS"
+  },
+  "buyer": {
+    "name": "Kim Exempelsson",
+    "address": ["Låtsasstigen 7", "999 13 Testby"]
+  },
+  "lines": [
+    {
+      "name": "Snickeriarbete badrum",
+      "qty": "40",
+      "unit": "tim",
+      "price": "520.00",
+      "rate": 25,
+      "labour": true
+    },
+    {
+      "name": "Material kakel och fix",
+      "qty": "1",
+      "unit": "st",
+      "price": "8000.00",
+      "rate": 25
+    }
+  ],
+  "deduction": {
+    "kind": "ROT",
+    "percent": 30
+  }
+}

@@ -1,0 +1,392 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://alexcatdad.github.io/eu-einvoice-canonical/schemas/pdf-rule-set.v1.schema.json",
+  "title": "PdfRuleSet",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "URL of the JSON Schema, for editors."
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "generator-profile",
+        "issuer-template"
+      ]
+    },
+    "id": {
+      "type": "string",
+      "description": "Lower-case letters, digits and hyphens.",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "version": {
+      "type": "integer",
+      "description": "The rule set's own version, a positive integer raised on each change.",
+      "minimum": 1
+    },
+    "pdfjsVersion": {
+      "type": "string",
+      "description": "Exact pdfjs-dist version the rules were written and tested against. A rule set for another version is not applied; the result reports it.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "description": {
+      "type": "string"
+    },
+    "match": {
+      "$ref": "#/$defs/PdfRuleMatch"
+    },
+    "layouts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/PdfRuleLayout"
+      },
+      "description": "Layouts. The one whose fingerprint matches applies; when none matches, the rule set is not applied; when several match, none applies and the result reports it.",
+      "minItems": 1
+    }
+  },
+  "required": [
+    "kind",
+    "id",
+    "version",
+    "pdfjsVersion",
+    "match",
+    "layouts"
+  ],
+  "description": "A generator profile or issuer template.",
+  "$defs": {
+    "PdfAddressRule": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "$ref": "#/$defs/PdfRuleText"
+        },
+        "labelMatch": {
+          "type": "string",
+          "enum": [
+            "whole",
+            "start"
+          ]
+        },
+        "region": {
+          "$ref": "#/$defs/PdfRuleRegion"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "const": "auto"
+            }
+          ],
+          "description": "`true`: the first line is the party's name. `auto`: it is the name when it equals the name read by an earlier layer, or when three lines stand above the postal line and the first ends in a company form (AB, HB, ...); otherwise, with no name read earlier, the block is ambiguous and reported. Absent or `false`: no name line."
+        },
+        "optional": {
+          "type": "boolean",
+          "description": "When the label is not printed, keep what earlier layers read instead of reporting a problem."
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "description": "A party's address block: the first line is under the label, or the one text in `region` relative to the label's top-left corner; each next line is directly under the previous one, down to the postal line \"NNN NN City\". Replaces the party's address (and name, with `name`) read by earlier layers."
+    },
+    "PdfFieldRule": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "$ref": "#/$defs/PdfRuleText",
+          "description": "Literal label text."
+        },
+        "labelMatch": {
+          "type": "string",
+          "enum": [
+            "whole",
+            "start"
+          ],
+          "description": "How the label is compared: the whole text (default) or its start, for labels followed by varying text such as \"Förfallodatum (30 dagar netto)\"."
+        },
+        "value": {
+          "type": "string",
+          "enum": [
+            "right",
+            "below",
+            "inline"
+          ],
+          "description": "Where the value stands relative to the label."
+        },
+        "region": {
+          "$ref": "#/$defs/PdfRuleRegion",
+          "description": "Region relative to the label's top-left corner, or in page coordinates when there is no label."
+        },
+        "page": {
+          "type": "integer",
+          "description": "Page (1-based) of a region in page coordinates; default 1.",
+          "minimum": 1
+        },
+        "optional": {
+          "type": "boolean",
+          "description": "When the label is not printed, keep what the earlier layers read instead of reporting a problem."
+        }
+      },
+      "description": "Where one field's value is printed. With `label`: the value is right of the label on its line (`right`, the default), directly under it (`below`), in the same text after it (`inline`, as in \"Fakturanr: 123\"), or inside a region relative to the label's top-left corner. Without `label`: inside `region` on page `page`. The value is parsed as the field's type (date, amount, identifier with check digits, text); every occurrence must give the same value. When it cannot be read, the field gets a problem and no value."
+    },
+    "PdfRuleDefaults": {
+      "type": "object",
+      "properties": {
+        "currency": {
+          "type": "string",
+          "description": "ISO 4217 code, e.g. \"SEK\".",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "paymentMeansCode": {
+          "type": "string",
+          "description": "UNTDID 4461 payment means code, e.g. \"30\".",
+          "pattern": "^\\d{1,3}$"
+        }
+      },
+      "description": "Values used when no layer read the field; recorded as derived, never as printed."
+    },
+    "PdfRuleLayout": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/PdfRuleText",
+          "description": "Short name, reported with problems."
+        },
+        "fingerprint": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PdfRuleText"
+          },
+          "description": "Texts that must all be printed on the read pages for this layout to apply. Empty or absent: always applies."
+        },
+        "fields": {
+          "type": "object",
+          "properties": {
+            "/id": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/issueDate": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/dueDate": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/seller/name": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/seller/vatId": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/seller/legalRegistrationId/value": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/seller/taxRegistrationId": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/seller/address/line1": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/seller/address/line2": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/seller/address/postalCode": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/seller/address/city": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/buyer/name": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/buyer/address/line1": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/buyer/address/line2": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/buyer/address/postalCode": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/buyer/address/city": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/payments/0/remittanceInformation": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/payments/0/bankgiro": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/payments/0/plusgiro": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/payments/0/iban": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/payments/0/bic": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/totals/lineNetTotal": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/totals/allowanceTotal": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/totals/chargeTotal": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/totals/taxExclusive": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/totals/vatTotal": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/totals/taxInclusive": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/totals/prepaid": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/totals/rounding": {
+              "$ref": "#/$defs/PdfFieldRule"
+            },
+            "/totals/payable": {
+              "$ref": "#/$defs/PdfFieldRule"
+            }
+          }
+        },
+        "addresses": {
+          "type": "object",
+          "properties": {
+            "seller": {
+              "$ref": "#/$defs/PdfAddressRule"
+            },
+            "buyer": {
+              "$ref": "#/$defs/PdfAddressRule"
+            }
+          },
+          "description": "Address blocks of the seller and the buyer."
+        },
+        "lines": {
+          "$ref": "#/$defs/PdfTableRule"
+        },
+        "defaults": {
+          "$ref": "#/$defs/PdfRuleDefaults"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "description": "One layout of the rule set, chosen by its fingerprint."
+    },
+    "PdfRuleMatch": {
+      "type": "object",
+      "properties": {
+        "producer": {
+          "$ref": "#/$defs/PdfRuleTexts"
+        },
+        "creator": {
+          "$ref": "#/$defs/PdfRuleTexts"
+        },
+        "sellerVatId": {
+          "$ref": "#/$defs/PdfRuleTexts"
+        },
+        "orgNumber": {
+          "$ref": "#/$defs/PdfRuleTexts"
+        },
+        "bankgiro": {
+          "$ref": "#/$defs/PdfRuleTexts"
+        },
+        "plusgiro": {
+          "$ref": "#/$defs/PdfRuleTexts"
+        },
+        "iban": {
+          "$ref": "#/$defs/PdfRuleTexts"
+        },
+        "keywords": {
+          "$ref": "#/$defs/PdfRuleTexts"
+        }
+      },
+      "description": "Selects a rule set. A generator profile is selected when the PDF's Producer or Creator contains one of the given texts (case-insensitive). An issuer template is selected when one of the issuer's identifiers is printed on the page (and the seller identifiers the generic rules read, if any, are among them), or when every keyword is printed."
+    },
+    "PdfRuleRegion": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "width",
+        "height"
+      ],
+      "description": "A rectangle in PDF points, x to the right and y down (the layout model's coordinates)."
+    },
+    "PdfRuleText": {
+      "type": "string",
+      "description": "A non-empty text.",
+      "minLength": 1
+    },
+    "PdfRuleTexts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/PdfRuleText"
+      },
+      "description": "A non-empty list of non-empty texts.",
+      "minItems": 1
+    },
+    "PdfTableColumn": {
+      "type": "string",
+      "enum": [
+        "desc",
+        "pos",
+        "vat",
+        "artnr",
+        "qty",
+        "qtyUnit",
+        "unit",
+        "price",
+        "rate",
+        "discount",
+        "amount",
+        "date"
+      ],
+      "description": "Column kinds of an item table."
+    },
+    "PdfTableRule": {
+      "type": "object",
+      "properties": {
+        "columns": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/PdfTableColumn"
+          }
+        },
+        "optional": {
+          "type": "boolean",
+          "description": "When no such header is printed, keep the lines read by earlier layers instead of reporting a problem."
+        }
+      },
+      "required": [
+        "columns"
+      ],
+      "description": "The item table, by its header: every cell of the header line, by its literal text, and the column it names. Must name a `desc` and an `amount` column. The table's lines replace the lines read by earlier layers."
+    }
+  }
+}

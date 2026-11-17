@@ -1,0 +1,22 @@
+{
+  "$schema": "../../../schemas/pdf-rule-set.v1.schema.json",
+  "kind": "generator-profile",
+  "id": "visma-spcs",
+  "version": 1,
+  "pdfjsVersion": "6.5.438",
+  "description": "Visma Spcs / Spiris invoice print layouts (Visma Administration, Visma Fakturering).",
+  "match": { "producer": ["cairo", "PDFlib"] },
+  "layouts": [
+    {
+      "name": "footer address block",
+      "fingerprint": ["företagets säte", "organisationsnr", "fakturaadress", "vår referens"],
+      "addresses": { "seller": { "label": "Adress", "name": "auto" } }
+    },
+    {
+      "name": "sender block",
+      "fingerprint": ["att betala sek", "förfallodatum (", "fakturaadress", "vår referens", "företagets säte:"],
+      "fields": { "/dueDate": { "label": "Förfallodatum (", "labelMatch": "start", "value": "right" } },
+      "addresses": { "seller": { "label": "Fakturadatum", "region": { "x": -15, "y": -75, "width": 200, "height": 12 }, "name": true } }
+    }
+  ]
+}

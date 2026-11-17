@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "file": "docx-gron-teknik.pdf",
+  "sha256": "b7d77f2010531d1ddfc52be5c70bce2b09290dab915e67a19483e9ea9396f60c",
+  "documentType": "invoice",
+  "typeCode": "380",
+  "invoicePages": [1],
+  "pricesIncludeVat": false,
+  "fields": {
+    "id": {
+      "value": "1110"
+    },
+    "issueDate": {
+      "value": "2026-03-04"
+    },
+    "dueDate": {
+      "value": "2026-04-04"
+    },
+    "currency": {
+      "value": "SEK"
+    },
+    "seller.name": {
+      "value": "Fiktiv Energiteknik AB"
+    },
+    "seller.legalRegistrationId": {
+      "value": "9999990063"
+    },
+    "seller.vatId": {
+      "value": "SE999999006301"
+    },
+    "seller.taxRegistrationId": {
+      "value": "Godkänd för F-skatt"
+    },
+    "buyer.name": {
+      "value": "Kim Exempelsson"
+    },
+    "payee.name": {
+      "status": "absent"
+    },
+    "payment.bankgiro": {
+      "status": "absent"
+    },
+    "payment.plusgiro": {
+      "value": "9999020"
+    },
+    "payment.iban": {
+      "status": "absent"
+    },
+    "payment.bic": {
+      "status": "absent"
+    },
+    "payment.remittanceInformation": {
+      "value": "202611109"
+    },
+    "totals.lineNetTotal": {
+      "value": "96000.00"
+    },
+    "totals.allowanceTotal": {
+      "status": "absent"
+    },
+    "totals.chargeTotal": {
+      "status": "absent"
+    },
+    "totals.taxExclusive": {
+      "status": "absent"
+    },
+    "totals.vatTotal": {
+      "value": "24000.00"
+    },
+    "totals.taxInclusive": {
+      "value": "120000.00"
+    },
+    "totals.prepaid": {
+      "value": "18000.00"
+    },
+    "totals.prepaidNote": {
+      "value": "GRON_TEKNIK"
+    },
+    "totals.rounding": {
+      "status": "absent"
+    },
+    "totals.payable": {
+      "value": "102000.00"
+    }
+  },
+  "vatBreakdown": {
+    "rows": [
+      {
+        "categoryCode": "S",
+        "rate": {
+          "value": "25"
+        },
+        "taxableAmount": {
+          "value": "96000.00"
+        },
+        "taxAmount": {
+          "value": "24000.00"
+        }
+      }
+    ]
+  },
+  "lines": {
+    "rows": [
+      {
+        "item.name": {
+          "value": "Solcellsanläggning 10 kW inklusive installation"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "96000.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "96000.00"
+        }
+      }
+    ]
+  },
+  "notes": "Synthetic (scripts/pdf-synth): Word, grön teknik deduction (solar installation)"
+}

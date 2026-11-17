@@ -9,6 +9,8 @@ import { checkTotals } from './checks.js';
 import { type Detection, detectXml } from './detect.js';
 import { type Skipped, type UnwrapLimits, type UnwrapOptions, unwrap, type XmlPayload } from './envelope.js';
 import { NotImplementedError, PARSERS, ParseError } from './parsers/index.js';
+import type { InvoiceDraft, PdfPaymentFacts } from './pdf-extract/index.js';
+import { PdfRuleError } from './pdf-extract/rules/load.js';
 import { clearProbeCache } from './probe.js';
 import { applyRelations } from './relations/rules.js';
 import { signatureFindings, signatureStatus } from './signature/index.js';
@@ -33,6 +35,9 @@ export {
 } from './formats.js';
 export { CREDIT_TYPE_CODES } from './parsers/context.js';
 export { IMPLEMENTED_FAMILIES, NotImplementedError, ParseError } from './parsers/index.js';
+export type { InvoiceDraft, PdfExtraction, PdfExtractOptions, PdfExtractor, PdfPaymentFacts } from './pdf-extract/index.js';
+export { loadPdfRuleSet, PdfRuleError } from './pdf-extract/rules/load.js';
+export type * from './pdf-extract/rules/types.js';
 export {
   ANNOTATION_KINDS,
   AnnotationInputError,
@@ -111,6 +116,14 @@ export async function inspect(
   return { fileSha256, documents, skipped };
 }
 
+/** The PDF an outcome of `convert(..., { extractPdf: true })` was read from. */
+export interface PdfSource {
+  filename?: string;
+  /** SHA-256 (hex) of the PDF. */
+  sha256: string;
+  byteLength: number;
+}
+
 export type ConvertOutcome = (
   | { status: 'ok'; invoices: CanonicalInvoice[]; detection: Detection; payload: Omit<XmlPayload, 'xml'> }
   | { status: 'not-an-invoice'; detection: Detection; payload: Omit<XmlPayload, 'xml'> }
@@ -118,10 +131,24 @@ export type ConvertOutcome = (
   | { status: 'error'; detection: Detection; payload: Omit<XmlPayload, 'xml'>; error: string }
 ) & { validation?: ValidationSummary };
 
+/**
+ * The outcome for a PDF without embedded XML, read from its text layer (`convert(..., { extractPdf: true })`).
+ * `draft` holds the values read from the page that did not make a complete, reconciling invoice; it is never a valid invoice.
+ */
+export type PdfOutcome =
+  | { status: 'ok'; invoices: CanonicalInvoice[]; pdf: PdfSource }
+  | { status: 'draft'; draft: InvoiceDraft; pdf: PdfSource }
+  | { status: 'not-an-invoice'; pdf: PdfSource; reason: string }
+  /** `payment`: payment QR facts only, when the text cannot be read but a payment QR code can; the status stays unsupported. */
+  | { status: 'unsupported'; pdf: PdfSource; reason: string; payment?: PdfPaymentFacts }
+  | { status: 'error'; pdf: PdfSource; error: string };
+
 export interface ConvertResult {
   fileSha256: string;
   /** One outcome per XML document found in the file. Empty when nothing usable was found; see `skipped`. */
   outcomes: ConvertOutcome[];
+  /** Only with `extractPdf`: one outcome for a received PDF without usable embedded XML, which is then not in `skipped`. */
+  pdfOutcomes?: PdfOutcome[];
   skipped: Skipped[];
 }
 
@@ -141,6 +168,14 @@ export interface ConvertOptions extends UnwrapOptions {
   relations?: boolean;
   /** Where the validator bundles are read from. */
   validation?: ValidateOptions;
+  /**
+   * Read invoices from the text layer of a received PDF that has no usable embedded XML, instead of skipping it.
+   * The result is in `pdfOutcomes`; incomplete results are `draft` outcomes.
+   * Deterministic: no OCR, no language model, no network. Off by default. Only the received file itself is read
+   * this way, not PDFs inside a ZIP. `{ templates }` also applies the caller's issuer templates (JSON following
+   * schemas/pdf-rule-set.v1.schema.json); an invalid template makes `convert()` throw `PdfRuleError`.
+   */
+  extractPdf?: boolean | { templates?: readonly unknown[] };
 }
 
 /** Loaded lazily: compiled CLI includes the module, while browser hosts supply worker adapters. */
@@ -228,6 +263,9 @@ export async function convert(
     }
   });
   clearProbeCache();
+  const pdfOutcomes = options.extractPdf
+    ? await extractFromPdf(bytes, filename, fileSha256, skipped, options.extractPdf === true ? undefined : options.extractPdf.templates)
+    : undefined;
   if (options.validate) {
     let validation: typeof import('./validation/index.js') | undefined;
     let loadError = '';
@@ -257,5 +295,33 @@ export async function convert(
       }),
     );
   }
-  return { fileSha256, outcomes, skipped };
+  return pdfOutcomes ? { fileSha256, outcomes, pdfOutcomes, skipped } : { fileSha256, outcomes, skipped };
+}
+
+/** The reason `unwrap()` gives for a PDF without embedded XML. */
+const PDF_WITHOUT_XML = 'PDF without a usable embedded XML (not a hybrid e-invoice)';
+
+/** Reads the received file itself when `unwrap()` skipped it as a readable PDF without XML; that skip entry is replaced by the outcome. */
+async function extractFromPdf(
+  bytes: Uint8Array,
+  filename: string | undefined,
+  fileSha256: string,
+  skipped: Skipped[],
+  templates: readonly unknown[] | undefined,
+): Promise<PdfOutcome[] | undefined> {
+  const isPdf = bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46;
+  const own = (s: Skipped) => s.name === filename;
+  const i = skipped.findIndex((s) => own(s) && s.reason === PDF_WITHOUT_XML);
+  if (!isPdf || i < 0 || skipped.some((s) => own(s) && s.reason.startsWith('PDF unreadable'))) return undefined;
+  skipped.splice(i, 1);
+  const pdf: PdfSource = { filename, sha256: fileSha256, byteLength: bytes.length };
+  try {
+    // Loaded on demand and, like validation, left out of browser bundles: pdf.js and its worker are large.
+    const { extractPdfInvoice } = await import(/* @vite-ignore */ './pdf-extract/index.js');
+    const r = await extractPdfInvoice(bytes, { fileSha256, filename, templates });
+    return [r.status === 'ok' ? { status: 'ok', invoices: [r.invoice], pdf } : { ...r, pdf }];
+  } catch (e) {
+    if (e instanceof PdfRuleError) throw e;
+    return [{ status: 'error', pdf, error: `Internal error: ${e instanceof Error ? e.message : String(e)}` }];
+  }
 }

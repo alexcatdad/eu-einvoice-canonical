@@ -93,49 +93,58 @@ const COUNTRY3: Record<string, string> = {
 };
 
 /** Facturae UnitOfMeasure -> UN/ECE Rec 20/21. Codes without a certain match (05 other, 07 trays...) stay in `unitText`. */
-const UNITS: Record<string, string> = {
-  '01': 'H87',
-  '02': 'HUR',
-  '03': 'KGM',
-  '04': 'LTR',
-  '06': 'XBX',
-  '15': 'CLT',
-  '16': 'CMT',
-  '18': 'DZN',
-  '21': 'GRM',
-  '22': 'KMT',
-  '25': 'MTR',
-  '26': 'MMT',
-  '33': 'MTQ',
-  '34': 'SEC',
-  '35': 'WTT',
-  '36': 'KWH',
-};
+const UNITS: Record<string, string> = Object.setPrototypeOf(
+  {
+    '01': 'H87',
+    '02': 'HUR',
+    '03': 'KGM',
+    '04': 'LTR',
+    '06': 'XBX',
+    '15': 'CLT',
+    '16': 'CMT',
+    '18': 'DZN',
+    '21': 'GRM',
+    '22': 'KMT',
+    '25': 'MTR',
+    '26': 'MMT',
+    '33': 'MTQ',
+    '34': 'SEC',
+    '35': 'WTT',
+    '36': 'KWH',
+  } satisfies Record<string, string>,
+  null,
+);
 
 /** Facturae PaymentMeans -> UNCL 4461; the rest become ZZZ with the Facturae label in `meansText`. */
-const MEANS: Record<string, string> = {
-  '01': '10',
-  '02': '49',
-  '04': '30',
-  '09': '60',
-  '10': '60',
-  '11': '20',
-  '16': '25',
-  '17': '21',
-  '19': '48',
-};
-const MEANS_LABEL: Record<string, string> = {
-  '03': 'Recibo',
-  '05': 'Aceptación de efecto',
-  '06': 'Crédito documentario',
-  '07': 'Contrato adjudicación',
-  '08': 'Letra de cambio',
-  '12': 'Pago por cuenta ajena',
-  '13': 'Pago especial',
-  '14': 'Compensación',
-  '15': 'Giro postal',
-  '18': 'Contra reembolso',
-};
+const MEANS: Record<string, string> = Object.setPrototypeOf(
+  {
+    '01': '10',
+    '02': '49',
+    '04': '30',
+    '09': '60',
+    '10': '60',
+    '11': '20',
+    '16': '25',
+    '17': '21',
+    '19': '48',
+  } satisfies Record<string, string>,
+  null,
+);
+const MEANS_LABEL: Record<string, string> = Object.setPrototypeOf(
+  {
+    '03': 'Recibo',
+    '05': 'Aceptación de efecto',
+    '06': 'Crédito documentario',
+    '07': 'Contrato adjudicación',
+    '08': 'Letra de cambio',
+    '12': 'Pago por cuenta ajena',
+    '13': 'Pago especial',
+    '14': 'Compensación',
+    '15': 'Giro postal',
+    '18': 'Contra reembolso',
+  } satisfies Record<string, string>,
+  null,
+);
 
 const TAX_VAT_LIKE = new Set(['01', '02', '03']);
 
@@ -488,14 +497,17 @@ function invoice(input: ParseInput, root: Element, inv: Element, index: number, 
   return finish(out);
 }
 
-const CLASS_LABEL: Record<string, string> = {
-  OO: 'Original',
-  OR: 'Original rectificativa',
-  OC: 'Original recapitulativa',
-  CO: 'Copia del original',
-  CR: 'Copia de la rectificativa',
-  CC: 'Copia de la recapitulativa',
-};
+const CLASS_LABEL: Record<string, string> = Object.setPrototypeOf(
+  {
+    OO: 'Original',
+    OR: 'Original rectificativa',
+    OC: 'Original recapitulativa',
+    CO: 'Copia del original',
+    CR: 'Copia de la rectificativa',
+    CC: 'Copia de la recapitulativa',
+  } satisfies Record<string, string>,
+  null,
+);
 
 /** VAT category for IVA (01), IPSI (02) and IGIC (03). Zero-rated IVA is E/O when a line says it is exempt / not subject. */
 function category(type: string, rate: Decimal | undefined, event?: { code: string }): string {
@@ -751,17 +763,20 @@ function account(c: Ctx, e: Element | undefined): { id: string; bic?: string } |
   return id ? { id, bic: c.text(e, 'BIC') } : undefined;
 }
 
-const MIME: Record<string, string> = {
-  pdf: 'application/pdf',
-  xml: 'application/xml',
-  gif: 'image/gif',
-  jpg: 'image/jpeg',
-  bmp: 'image/bmp',
-  tiff: 'image/tiff',
-  doc: 'application/msword',
-  rtf: 'application/rtf',
-  xls: 'application/vnd.ms-excel',
-};
+const MIME: Record<string, string> = Object.setPrototypeOf(
+  {
+    pdf: 'application/pdf',
+    xml: 'application/xml',
+    gif: 'image/gif',
+    jpg: 'image/jpeg',
+    bmp: 'image/bmp',
+    tiff: 'image/tiff',
+    doc: 'application/msword',
+    rtf: 'application/rtf',
+    xls: 'application/vnd.ms-excel',
+  } satisfies Record<string, string>,
+  null,
+);
 
 function attachment(c: Ctx, a: Element, index: number): Attachment {
   const format = (c.text(a, 'AttachmentFormat') ?? '').toLowerCase();

@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "file": "pdflib-producent-word.pdf",
+  "sha256": "414c0a4834ebabeaa35e72fb33b412ea0bec9b41051e192fb7fa6c520147c291",
+  "documentType": "invoice",
+  "typeCode": "380",
+  "invoicePages": [1],
+  "pricesIncludeVat": false,
+  "fields": {
+    "id": {
+      "value": "1119"
+    },
+    "issueDate": {
+      "value": "2026-03-13"
+    },
+    "dueDate": {
+      "value": "2026-04-13"
+    },
+    "currency": {
+      "value": "SEK"
+    },
+    "seller.name": {
+      "value": "Provkonsult Syntet AB"
+    },
+    "seller.legalRegistrationId": {
+      "value": "9999990048"
+    },
+    "seller.vatId": {
+      "value": "SE999999004801"
+    },
+    "seller.taxRegistrationId": {
+      "value": "Godkänd för F-skatt"
+    },
+    "buyer.name": {
+      "value": "Fiktiv Kund AB"
+    },
+    "payee.name": {
+      "status": "absent"
+    },
+    "payment.bankgiro": {
+      "value": "99990046"
+    },
+    "payment.plusgiro": {
+      "status": "absent"
+    },
+    "payment.iban": {
+      "status": "absent"
+    },
+    "payment.bic": {
+      "status": "absent"
+    },
+    "payment.remittanceInformation": {
+      "value": "202611190"
+    },
+    "totals.lineNetTotal": {
+      "value": "13035.00"
+    },
+    "totals.allowanceTotal": {
+      "status": "absent"
+    },
+    "totals.chargeTotal": {
+      "status": "absent"
+    },
+    "totals.taxExclusive": {
+      "status": "absent"
+    },
+    "totals.vatTotal": {
+      "value": "3258.75"
+    },
+    "totals.taxInclusive": {
+      "value": "16293.75"
+    },
+    "totals.prepaid": {
+      "status": "absent"
+    },
+    "totals.prepaidNote": {
+      "status": "absent"
+    },
+    "totals.rounding": {
+      "status": "absent"
+    },
+    "totals.payable": {
+      "value": "16293.75"
+    }
+  },
+  "vatBreakdown": {
+    "rows": [
+      {
+        "categoryCode": "S",
+        "rate": {
+          "value": "25"
+        },
+        "taxableAmount": {
+          "value": "13035.00"
+        },
+        "taxAmount": {
+          "value": "3258.75"
+        }
+      }
+    ]
+  },
+  "lines": {
+    "rows": [
+      {
+        "item.name": {
+          "value": "Ramverksavtal support"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "mån"
+        },
+        "price.net": {
+          "value": "4500.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "4500.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Licens användare"
+        },
+        "quantity": {
+          "value": "15"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "89.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "1335.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Utbildning halvdag"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "7200.00"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "7200.00"
+        }
+      }
+    ]
+  },
+  "notes": "Synthetic (scripts/pdf-synth): pdf-lib layout with a spoofed Microsoft Word Producer and Creator"
+}

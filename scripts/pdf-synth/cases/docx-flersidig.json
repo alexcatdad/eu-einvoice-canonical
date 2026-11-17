@@ -1,0 +1,515 @@
+{
+  "file": "docx-flersidig",
+  "covers": "Word, item table over several pages with the header row repeated",
+  "renderer": "docx",
+  "document": "invoice",
+  "number": "1105",
+  "issueDate": "2026-03-26",
+  "dueDate": "2026-04-26",
+  "customer": "K-505",
+  "ocr": "202611059",
+  "seller": {
+    "name": "Provkonsult Syntet AB",
+    "address": ["Exempelgatan 4", "999 04 Testby"],
+    "orgnr": "9999990048",
+    "fskatt": true,
+    "bankgiro": "99990046"
+  },
+  "buyer": {
+    "name": "Fiktiv Kund AB",
+    "address": ["Provvägen 2", "999 12 Testby"]
+  },
+  "lines": [
+    {
+      "name": "Konsulttimme analys vecka 1",
+      "qty": "2",
+      "unit": "tim",
+      "price": "950.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme utveckling vecka 1",
+      "qty": "3",
+      "unit": "tim",
+      "price": "1100.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme test vecka 1",
+      "qty": "4",
+      "unit": "tim",
+      "price": "875.00",
+      "rate": 25
+    },
+    {
+      "name": "Resetid vecka 1",
+      "qty": "5",
+      "unit": "tim",
+      "price": "650.00",
+      "rate": 25
+    },
+    {
+      "name": "Projektledning vecka 1",
+      "qty": "6",
+      "unit": "tim",
+      "price": "950.00",
+      "rate": 25
+    },
+    {
+      "name": "Dokumentation vecka 1",
+      "qty": "2",
+      "unit": "tim",
+      "price": "1100.00",
+      "rate": 25
+    },
+    {
+      "name": "Granskning av underlag vecka 1",
+      "qty": "3",
+      "unit": "tim",
+      "price": "875.00",
+      "rate": 25
+    },
+    {
+      "name": "Mötestid kund vecka 1",
+      "qty": "4",
+      "unit": "tim",
+      "price": "650.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme analys vecka 2",
+      "qty": "5",
+      "unit": "tim",
+      "price": "950.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme utveckling vecka 2",
+      "qty": "6",
+      "unit": "tim",
+      "price": "1100.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme test vecka 2",
+      "qty": "2",
+      "unit": "tim",
+      "price": "875.00",
+      "rate": 25
+    },
+    {
+      "name": "Resetid vecka 2",
+      "qty": "3",
+      "unit": "tim",
+      "price": "650.00",
+      "rate": 25
+    },
+    {
+      "name": "Projektledning vecka 2",
+      "qty": "4",
+      "unit": "tim",
+      "price": "950.00",
+      "rate": 25
+    },
+    {
+      "name": "Dokumentation vecka 2",
+      "qty": "5",
+      "unit": "tim",
+      "price": "1100.00",
+      "rate": 25
+    },
+    {
+      "name": "Granskning av underlag vecka 2",
+      "qty": "6",
+      "unit": "tim",
+      "price": "875.00",
+      "rate": 25
+    },
+    {
+      "name": "Mötestid kund vecka 2",
+      "qty": "2",
+      "unit": "tim",
+      "price": "650.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme analys vecka 3",
+      "qty": "3",
+      "unit": "tim",
+      "price": "950.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme utveckling vecka 3",
+      "qty": "4",
+      "unit": "tim",
+      "price": "1100.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme test vecka 3",
+      "qty": "5",
+      "unit": "tim",
+      "price": "875.00",
+      "rate": 25
+    },
+    {
+      "name": "Resetid vecka 3",
+      "qty": "6",
+      "unit": "tim",
+      "price": "650.00",
+      "rate": 25
+    },
+    {
+      "name": "Projektledning vecka 3",
+      "qty": "2",
+      "unit": "tim",
+      "price": "950.00",
+      "rate": 25
+    },
+    {
+      "name": "Dokumentation vecka 3",
+      "qty": "3",
+      "unit": "tim",
+      "price": "1100.00",
+      "rate": 25
+    },
+    {
+      "name": "Granskning av underlag vecka 3",
+      "qty": "4",
+      "unit": "tim",
+      "price": "875.00",
+      "rate": 25
+    },
+    {
+      "name": "Mötestid kund vecka 3",
+      "qty": "5",
+      "unit": "tim",
+      "price": "650.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme analys vecka 4",
+      "qty": "6",
+      "unit": "tim",
+      "price": "950.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme utveckling vecka 4",
+      "qty": "2",
+      "unit": "tim",
+      "price": "1100.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme test vecka 4",
+      "qty": "3",
+      "unit": "tim",
+      "price": "875.00",
+      "rate": 25
+    },
+    {
+      "name": "Resetid vecka 4",
+      "qty": "4",
+      "unit": "tim",
+      "price": "650.00",
+      "rate": 25
+    },
+    {
+      "name": "Projektledning vecka 4",
+      "qty": "5",
+      "unit": "tim",
+      "price": "950.00",
+      "rate": 25
+    },
+    {
+      "name": "Dokumentation vecka 4",
+      "qty": "6",
+      "unit": "tim",
+      "price": "1100.00",
+      "rate": 25
+    },
+    {
+      "name": "Granskning av underlag vecka 4",
+      "qty": "2",
+      "unit": "tim",
+      "price": "875.00",
+      "rate": 25
+    },
+    {
+      "name": "Mötestid kund vecka 4",
+      "qty": "3",
+      "unit": "tim",
+      "price": "650.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme analys vecka 5",
+      "qty": "4",
+      "unit": "tim",
+      "price": "950.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme utveckling vecka 5",
+      "qty": "5",
+      "unit": "tim",
+      "price": "1100.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme test vecka 5",
+      "qty": "6",
+      "unit": "tim",
+      "price": "875.00",
+      "rate": 25
+    },
+    {
+      "name": "Resetid vecka 5",
+      "qty": "2",
+      "unit": "tim",
+      "price": "650.00",
+      "rate": 25
+    },
+    {
+      "name": "Projektledning vecka 5",
+      "qty": "3",
+      "unit": "tim",
+      "price": "950.00",
+      "rate": 25
+    },
+    {
+      "name": "Dokumentation vecka 5",
+      "qty": "4",
+      "unit": "tim",
+      "price": "1100.00",
+      "rate": 25
+    },
+    {
+      "name": "Granskning av underlag vecka 5",
+      "qty": "5",
+      "unit": "tim",
+      "price": "875.00",
+      "rate": 25
+    },
+    {
+      "name": "Mötestid kund vecka 5",
+      "qty": "6",
+      "unit": "tim",
+      "price": "650.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme analys vecka 6",
+      "qty": "2",
+      "unit": "tim",
+      "price": "950.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme utveckling vecka 6",
+      "qty": "3",
+      "unit": "tim",
+      "price": "1100.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme test vecka 6",
+      "qty": "4",
+      "unit": "tim",
+      "price": "875.00",
+      "rate": 25
+    },
+    {
+      "name": "Resetid vecka 6",
+      "qty": "5",
+      "unit": "tim",
+      "price": "650.00",
+      "rate": 25
+    },
+    {
+      "name": "Projektledning vecka 6",
+      "qty": "6",
+      "unit": "tim",
+      "price": "950.00",
+      "rate": 25
+    },
+    {
+      "name": "Dokumentation vecka 6",
+      "qty": "2",
+      "unit": "tim",
+      "price": "1100.00",
+      "rate": 25
+    },
+    {
+      "name": "Granskning av underlag vecka 6",
+      "qty": "3",
+      "unit": "tim",
+      "price": "875.00",
+      "rate": 25
+    },
+    {
+      "name": "Mötestid kund vecka 6",
+      "qty": "4",
+      "unit": "tim",
+      "price": "650.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme analys vecka 7",
+      "qty": "5",
+      "unit": "tim",
+      "price": "950.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme utveckling vecka 7",
+      "qty": "6",
+      "unit": "tim",
+      "price": "1100.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme test vecka 7",
+      "qty": "2",
+      "unit": "tim",
+      "price": "875.00",
+      "rate": 25
+    },
+    {
+      "name": "Resetid vecka 7",
+      "qty": "3",
+      "unit": "tim",
+      "price": "650.00",
+      "rate": 25
+    },
+    {
+      "name": "Projektledning vecka 7",
+      "qty": "4",
+      "unit": "tim",
+      "price": "950.00",
+      "rate": 25
+    },
+    {
+      "name": "Dokumentation vecka 7",
+      "qty": "5",
+      "unit": "tim",
+      "price": "1100.00",
+      "rate": 25
+    },
+    {
+      "name": "Granskning av underlag vecka 7",
+      "qty": "6",
+      "unit": "tim",
+      "price": "875.00",
+      "rate": 25
+    },
+    {
+      "name": "Mötestid kund vecka 7",
+      "qty": "2",
+      "unit": "tim",
+      "price": "650.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme analys vecka 8",
+      "qty": "3",
+      "unit": "tim",
+      "price": "950.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme utveckling vecka 8",
+      "qty": "4",
+      "unit": "tim",
+      "price": "1100.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme test vecka 8",
+      "qty": "5",
+      "unit": "tim",
+      "price": "875.00",
+      "rate": 25
+    },
+    {
+      "name": "Resetid vecka 8",
+      "qty": "6",
+      "unit": "tim",
+      "price": "650.00",
+      "rate": 25
+    },
+    {
+      "name": "Projektledning vecka 8",
+      "qty": "2",
+      "unit": "tim",
+      "price": "950.00",
+      "rate": 25
+    },
+    {
+      "name": "Dokumentation vecka 8",
+      "qty": "3",
+      "unit": "tim",
+      "price": "1100.00",
+      "rate": 25
+    },
+    {
+      "name": "Granskning av underlag vecka 8",
+      "qty": "4",
+      "unit": "tim",
+      "price": "875.00",
+      "rate": 25
+    },
+    {
+      "name": "Mötestid kund vecka 8",
+      "qty": "5",
+      "unit": "tim",
+      "price": "650.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme analys vecka 9",
+      "qty": "6",
+      "unit": "tim",
+      "price": "950.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme utveckling vecka 9",
+      "qty": "2",
+      "unit": "tim",
+      "price": "1100.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimme test vecka 9",
+      "qty": "3",
+      "unit": "tim",
+      "price": "875.00",
+      "rate": 25
+    },
+    {
+      "name": "Resetid vecka 9",
+      "qty": "4",
+      "unit": "tim",
+      "price": "650.00",
+      "rate": 25
+    },
+    {
+      "name": "Projektledning vecka 9",
+      "qty": "5",
+      "unit": "tim",
+      "price": "950.00",
+      "rate": 25
+    },
+    {
+      "name": "Dokumentation vecka 9",
+      "qty": "6",
+      "unit": "tim",
+      "price": "1100.00",
+      "rate": 25
+    }
+  ],
+  "pages": 2
+}

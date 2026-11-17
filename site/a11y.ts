@@ -2,7 +2,7 @@
  * The site's accessibility and privacy gate, run in CI on the built site (dist/), in Chromium:
  *
  *   - axe-core finds no violation, in the light and the dark theme, on the converter (every result tab, with the example
- *     sample converted) and on the docs and reference pages;
+ *     sample converted, and a PDF read as a draft) and on the docs and reference pages;
  *   - nothing scrolls sideways at 320 and 375 px;
  *   - every element the keyboard reaches on the converter shows a visible focus indicator;
  *   - the pages request nothing from other hosts except the fonts.
@@ -114,6 +114,10 @@ async function converter(browser: Browser, scheme: 'light' | 'dark') {
     await page.waitForTimeout(100);
     await axe(page, `converter ${tab} tab (${scheme})`);
   }
+  // A PDF without embedded XML that reads as a draft (synthetic, test/pdf-synth/).
+  await page.locator('.slot input[type=file]').setInputFiles(join(import.meta.dir, '../test/pdf-synth/xlsx-blandade-momssatser.pdf'));
+  await page.locator('.file-name', { hasText: 'xlsx-blandade-momssatser.pdf' }).waitFor({ timeout: 60_000 });
+  await axe(page, `converter PDF draft (${scheme})`);
   await page.close();
 }
 

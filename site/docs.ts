@@ -64,6 +64,14 @@ export const PAGES: PageDef[] = [
     sections: ['Command line'],
   },
   {
+    slug: 'pdf-extraction',
+    title: 'PDF text extraction',
+    description:
+      'Opt-in, deterministic reading of invoices from PDFs without embedded XML: outcomes, drafts, payment QR codes, rule layers, Swedish mapping and runtimes.',
+    group: 'Use it',
+    sections: ['PDF text extraction (opt-in)'],
+  },
+  {
     slug: 'pdf-invoice-skill',
     title: 'PDF invoice conversion skill',
     description:

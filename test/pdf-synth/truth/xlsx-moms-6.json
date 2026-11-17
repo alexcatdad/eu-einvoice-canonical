@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "file": "xlsx-moms-6.pdf",
+  "sha256": "50db7b02d02dc695e08cb7b95eb647d4dd499d2798cc6c9af4d77c225662378d",
+  "documentType": "invoice",
+  "typeCode": "380",
+  "invoicePages": [1],
+  "pricesIncludeVat": false,
+  "fields": {
+    "id": {
+      "value": "1101"
+    },
+    "issueDate": {
+      "value": "2026-03-22"
+    },
+    "dueDate": {
+      "value": "2026-04-22"
+    },
+    "currency": {
+      "value": "SEK"
+    },
+    "seller.name": {
+      "value": "Testförlaget Syntet AB"
+    },
+    "seller.legalRegistrationId": {
+      "value": "9999990022"
+    },
+    "seller.vatId": {
+      "value": "SE999999002201"
+    },
+    "seller.taxRegistrationId": {
+      "value": "Godkänd för F-skatt"
+    },
+    "buyer.name": {
+      "value": "Fiktiv Kund AB"
+    },
+    "payee.name": {
+      "status": "absent"
+    },
+    "payment.bankgiro": {
+      "status": "absent"
+    },
+    "payment.plusgiro": {
+      "value": "9999012"
+    },
+    "payment.iban": {
+      "status": "absent"
+    },
+    "payment.bic": {
+      "status": "absent"
+    },
+    "payment.remittanceInformation": {
+      "value": "202611018"
+    },
+    "totals.lineNetTotal": {
+      "status": "absent"
+    },
+    "totals.allowanceTotal": {
+      "status": "absent"
+    },
+    "totals.chargeTotal": {
+      "status": "absent"
+    },
+    "totals.taxExclusive": {
+      "value": "11256.00"
+    },
+    "totals.vatTotal": {
+      "value": "675.36"
+    },
+    "totals.taxInclusive": {
+      "value": "11931.36"
+    },
+    "totals.prepaid": {
+      "status": "absent"
+    },
+    "totals.prepaidNote": {
+      "status": "absent"
+    },
+    "totals.rounding": {
+      "status": "absent"
+    },
+    "totals.payable": {
+      "value": "11931.36"
+    }
+  },
+  "vatBreakdown": {
+    "rows": [
+      {
+        "categoryCode": "S",
+        "rate": {
+          "value": "6"
+        },
+        "taxableAmount": {
+          "value": "11256.00"
+        },
+        "taxAmount": {
+          "value": "675.36"
+        }
+      }
+    ]
+  },
+  "lines": {
+    "rows": [
+      {
+        "item.name": {
+          "value": "Kursbok Grundläggande bokföring"
+        },
+        "quantity": {
+          "value": "12"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "389.00"
+        },
+        "vat.rate": {
+          "value": "6"
+        },
+        "netAmount": {
+          "value": "4668.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Arbetsbok Moms i praktiken"
+        },
+        "quantity": {
+          "value": "12"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "149.00"
+        },
+        "vat.rate": {
+          "value": "6"
+        },
+        "netAmount": {
+          "value": "1788.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Busstransport studieresa"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "4800.00"
+        },
+        "vat.rate": {
+          "value": "6"
+        },
+        "netAmount": {
+          "value": "4800.00"
+        }
+      }
+    ]
+  },
+  "notes": "Synthetic (scripts/pdf-synth): Excel, 6 % VAT only (books and passenger transport), PlusGiro, no Netto line"
+}

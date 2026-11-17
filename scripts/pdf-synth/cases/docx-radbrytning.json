@@ -1,0 +1,47 @@
+{
+  "file": "docx-radbrytning",
+  "covers": "Word, long item descriptions that wrap inside the description cell",
+  "renderer": "docx",
+  "document": "invoice",
+  "number": "1107",
+  "issueDate": "2026-03-01",
+  "dueDate": "2026-04-01",
+  "customer": "K-507",
+  "ocr": "202611075",
+  "seller": {
+    "name": "Exempelbygg Syntet AB",
+    "address": ["Exempelgatan 3", "999 03 Testby"],
+    "orgnr": "9999990030",
+    "fskatt": true,
+    "bankgiro": "99990020",
+    "iban": "SE9399900000000000000001",
+    "bic": "SYNTSESS"
+  },
+  "buyer": {
+    "name": "Fiktiv Kund AB",
+    "address": ["Provvägen 2", "999 12 Testby"]
+  },
+  "lines": [
+    {
+      "name": "Installation av ventilationsaggregat i fläktrum plan 2 inklusive injustering av luftflöden och protokoll",
+      "qty": "1",
+      "unit": "st",
+      "price": "18450.00",
+      "rate": 25
+    },
+    {
+      "name": "Servicebesök",
+      "qty": "2",
+      "unit": "tim",
+      "price": "850.00",
+      "rate": 25
+    },
+    {
+      "name": "Byte av filter i samtliga tilluftsdon i kontorsdelen samt rengöring av kanalsystem enligt besiktningsprotokollet",
+      "qty": "1",
+      "unit": "st",
+      "price": "6200.00",
+      "rate": 25
+    }
+  ]
+}

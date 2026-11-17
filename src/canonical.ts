@@ -786,8 +786,37 @@ export interface ValidationSummary {
 /** Origin of a canonical value; absence of an entry means unrecorded, never implicitly source-supplied. */
 export type ValueOrigin = 'source' | 'derived' | 'defaulted';
 
+/**
+ * A rectangle on a PDF page that a value was read from. `page` is 1-based. Coordinates are PDF points (1/72 inch)
+ * in the page as displayed (crop box, page rotation applied), with the origin at the top-left corner, x to the right
+ * and y downwards.
+ */
+export interface PdfRegion {
+  page: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** A problem found while reading the source, with the canonical field and the place on the page when known. */
+export interface SourceWarning {
+  code: string;
+  message: string;
+  path?: string;
+  /** Canonical JSON Pointer, when a specific value is affected. */
+  field?: string;
+  /** Where on the page, for invoices read from a PDF text layer (`format: 'pdf-text'`). */
+  region?: PdfRegion;
+}
+
 export interface SourceMeta {
-  format: FormatId;
+  /**
+   * The detected e-invoice format, or `'pdf-text'` for an invoice read from the text layer of a PDF without embedded
+   * XML (`convert(..., { extractPdf: true })`). For `'pdf-text'`, `syntaxDocumentType` is `'PDF'`, `rootNamespace`
+   * is empty, `payloadSha256` is the SHA-256 of the PDF, and `pdfProvenance` replaces `provenance`.
+   */
+  format: FormatId | 'pdf-text';
   formatVersion?: string; // '1.2', '3.2.2', 'FA (3)', '6.1'...
   syntaxDocumentType: string; // root local name: 'Invoice', 'CreditNote', 'CrossIndustryInvoice', 'FatturaElettronica'...
   rootNamespace: string;
@@ -810,14 +839,10 @@ export interface SourceMeta {
   valueOrigins?: Record<string, ValueOrigin>;
   /** Optional field-level provenance: canonical path -> source XPath (e.g. '/totals/payable' -> '/Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount'). */
   provenance?: Record<string, string>;
+  /** Field-level provenance for `format: 'pdf-text'`: canonical path -> the region of the page the value was read from. */
+  pdfProvenance?: Record<string, PdfRegion>;
   validation?: ValidationSummary;
-  warnings: {
-    code: string;
-    message: string;
-    path?: string;
-    /** Canonical JSON Pointer, when a specific value is affected. */
-    field?: string;
-  }[];
+  warnings: SourceWarning[];
 }
 
 // ---------------------------------------------------------------------------

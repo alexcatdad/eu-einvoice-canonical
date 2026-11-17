@@ -1,5 +1,5 @@
 # Build with a reviewed validation inventory; held local artifacts never enter the final image.
-FROM oven/bun:1.4.3-slim AS validation-assets
+FROM oven/bun:1.4.4-slim AS validation-assets
 WORKDIR /build
 COPY scripts/validation-distribution.ts ./scripts/validation-distribution.ts
 COPY validation ./validation
@@ -11,7 +11,7 @@ RUN bun scripts/validation-distribution.ts /build /published-validation/bundles 
 #   docker build -t einvoice-api .
 #   docker run --rm -p 8080:8080 einvoice-api
 # Stateless: nothing is written to disk, so the container can run with --read-only.
-FROM oven/bun:1.4.3-slim
+FROM oven/bun:1.4.4-slim
 
 WORKDIR /app
 COPY package.json bun.lock ./

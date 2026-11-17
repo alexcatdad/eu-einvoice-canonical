@@ -1,0 +1,48 @@
+name: Swedish PDF evaluation
+description: Score PDF extraction against the private Swedish answer key; fail on any wrong value or results below the committed baseline. Logs and summary hold counts only.
+inputs:
+  ssh-key:
+    description: Read-only deploy key for the private cache; absent on fork PRs and Dependabot runs.
+    required: false
+    default: ''
+runs:
+  using: composite
+  steps:
+    - name: Skip without the private cache key
+      if: inputs.ssh-key == ''
+      shell: bash
+      run: echo "::notice::Swedish PDF evaluation skipped; the private answer key is not available to this run (fork or Dependabot)."
+    - name: Check out the Swedish answer key
+      if: inputs.ssh-key != ''
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        repository: alexcatdad/eu-einvoice-validation-cache
+        ref: main
+        ssh-key: ${{ inputs.ssh-key }}
+        persist-credentials: false
+        path: .se-pdf-cache
+        sparse-checkout: |
+          /se-pdf/
+        sparse-checkout-cone-mode: false
+    - name: Evaluate with the zero-wrong and baseline gate (counts only)
+      if: inputs.ssh-key != ''
+      shell: bash
+      run: |
+        d=.se-pdf-cache
+        status=0
+        bun scripts/pdf-eval.ts swedish "$d/se-pdf" --baseline scripts/pdf-eval/baseline-swedish.json --out "$d/report.json" --md "$d/report.md" --gate --counts-only > "$d/eval.log" 2>&1 || status=$?
+        if [ ! -f "$d/report.md" ]; then
+          echo "::error::Swedish PDF evaluation did not complete (exit $status); output withheld because it may hold corpus text."
+          exit 1
+        fi
+        tee -a "$GITHUB_STEP_SUMMARY" < "$d/report.md"
+        scored=$(bun -e "console.log(JSON.parse(await Bun.file('$d/report.json').text()).totals.scored)")
+        if [ "$scored" = 0 ]; then
+          echo "::error::Swedish PDF evaluation scored no values; check the answer key checkout."
+          exit 1
+        fi
+        exit "$status"
+    - name: Remove the private checkout before other build steps
+      if: always()
+      shell: bash
+      run: rm -rf .se-pdf-cache

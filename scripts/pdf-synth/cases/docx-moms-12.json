@@ -1,0 +1,24 @@
+{
+  "file": "docx-moms-12",
+  "covers": "Word, 12 % VAT only (food and catering)",
+  "renderer": "docx",
+  "document": "invoice",
+  "number": "1001",
+  "issueDate": "2026-03-02",
+  "dueDate": "2026-04-01",
+  "customer": "K-501",
+  "ocr": "20260014",
+  "seller": {
+    "name": "Syntetisk Catering AB",
+    "address": ["Exempelgatan 1", "999 01 Testby"],
+    "orgnr": "9999990014",
+    "fskatt": true,
+    "bankgiro": "99990012"
+  },
+  "buyer": { "name": "Fiktiv Kund AB", "address": ["Provvägen 2", "999 02 Testby"] },
+  "lines": [
+    { "name": "Lunchbuffé", "qty": "24", "unit": "st", "price": "125.00", "rate": 12 },
+    { "name": "Smörgåstårta", "qty": "2", "unit": "st", "price": "689.50", "rate": 12 },
+    { "name": "Kaffe och bulle", "qty": "30", "unit": "st", "price": "38.00", "rate": 12 }
+  ]
+}

@@ -9,6 +9,7 @@ import pkg from '../package.json' with { type: 'json' };
 import canonicalInvoiceSchema from '../schemas/canonical-invoice.v1.schema.json' with { type: 'json' };
 import convertResultSchema from '../schemas/convert-result.v1.schema.json' with { type: 'json' };
 import inspectResultSchema from '../schemas/inspect-result.v1.schema.json' with { type: 'json' };
+import pdfRuleSetSchema from '../schemas/pdf-rule-set.v1.schema.json' with { type: 'json' };
 import {
   type ConvertOptions,
   type ConvertResult,
@@ -46,6 +47,7 @@ const SCHEMAS: Record<string, unknown> = {
   'canonical-invoice': canonicalInvoiceSchema,
   'convert-result': convertResultSchema,
   'inspect-result': inspectResultSchema,
+  'pdf-rule-set': pdfRuleSetSchema,
 };
 
 /** Overhead allowed on top of `maxFileBytes` for the multipart framing around the file part. */

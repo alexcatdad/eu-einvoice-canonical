@@ -1,0 +1,52 @@
+{
+  "file": "xlsx-blandade-momssatser",
+  "covers": "Excel, mixed 25 % and 12 % VAT",
+  "renderer": "xlsx",
+  "document": "invoice",
+  "number": "1103",
+  "issueDate": "2026-03-24",
+  "dueDate": "2026-04-24",
+  "customer": "K-503",
+  "ocr": "202611034",
+  "seller": {
+    "name": "Provkonsult Syntet AB",
+    "address": ["Exempelgatan 4", "999 04 Testby"],
+    "orgnr": "9999990048",
+    "fskatt": true,
+    "bankgiro": "99990046"
+  },
+  "buyer": {
+    "name": "Fiktiv Kund AB",
+    "address": ["Provvägen 2", "999 12 Testby"]
+  },
+  "lines": [
+    {
+      "name": "Hotellrum enkel",
+      "qty": "3",
+      "unit": "natt",
+      "price": "1150.00",
+      "rate": 12
+    },
+    {
+      "name": "Frukost",
+      "qty": "3",
+      "unit": "st",
+      "price": "145.00",
+      "rate": 12
+    },
+    {
+      "name": "Parkering",
+      "qty": "3",
+      "unit": "dygn",
+      "price": "180.00",
+      "rate": 25
+    },
+    {
+      "name": "Konsulttimmar workshop",
+      "qty": "6",
+      "unit": "tim",
+      "price": "1250.00",
+      "rate": 25
+    }
+  ]
+}

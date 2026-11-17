@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import { convert, effectiveSign } from '../src/index.js';
+import { checkCase } from './fuzz/properties.js';
 import { fixture, parseOne, utf8, warningCodes } from './helpers.js';
 
 const IBAN = 'ES9121000418450200051332';
@@ -354,5 +355,28 @@ describe('Facturae: edge cases', () => {
     const xml = new TextDecoder().decode(mini()).replace(/<Invoices>[\s\S]*<\/Invoices>/, '<Invoices/>');
     const r = await convert(utf8(xml), 'a.xml');
     assert.equal(r.outcomes[0].status, 'error');
+  });
+});
+
+describe('Facturae: codes named like Object.prototype members are unknown codes', () => {
+  test('PaymentMeans, InvoiceClass and UnitOfMeasure', async () => {
+    const xml = new TextDecoder()
+      .decode(fixture('facturae-322-batch.xml'))
+      .replaceAll(/<PaymentMeans>\d+/g, '<PaymentMeans>__proto__')
+      .replaceAll(/<InvoiceClass>\w+/g, '<InvoiceClass>constructor')
+      .replaceAll(/<UnitOfMeasure>\d+/g, '<UnitOfMeasure>toString');
+    await checkCase({ label: 'facturae prototype keys', bytes: utf8(xml) });
+    const r = await convert(utf8(xml), 'batch.xml');
+    const o = r.outcomes[0];
+    assert.equal(o.status, 'ok');
+    if (o.status !== 'ok') return;
+    const inv = o.invoices[0];
+    if (inv.kind !== 'invoice') return assert.fail(inv.kind);
+    assert.equal(inv.payments[0].meansCode, 'ZZZ');
+    assert.equal(inv.payments[0].meansText, undefined);
+    assert.equal(inv.payments[0].nationalMeansCode, '__proto__');
+    assert.equal(inv.nationalType?.label, undefined);
+    assert.equal(inv.lines[0].unitCode, undefined);
+    assert.equal(inv.lines[0].unitText, 'toString');
   });
 });

@@ -4,6 +4,9 @@
  * Normal runs use a fixed seed and a few dozen cases per strategy (well under a minute). The nightly workflow
  * sets FUZZ_RUNS, FUZZ_ISOLATE=1 (each conversion runs in a terminable worker) and a random FUZZ_SEED.
  *
+ * The PDF strategy mutates the synthetic invoices in test/pdf-synth and converts them with `extractPdf`: no crash, no hang,
+ * no internal error, and no `ok` result whose amounts do not reconcile.
+ *
  * Every XML fixture gets one deterministic case before random sampling starts, so even the bounded run touches all of them.
  *
  * To replay a failure, either re-run the seed (FUZZ_SEED, FUZZ_PATH and FUZZ_RUNS from fuzz-failures/summary.md, with -t set to the
@@ -23,6 +26,9 @@ import {
   generatedXml,
   generatedXmlWith,
   onePerFixture,
+  PDF_SEEDS,
+  pdfMutation,
+  pdfMutationWith,
   shapedXml,
   XML_FIXTURES,
   xmlMutation,
@@ -129,6 +135,7 @@ const NAME = {
   grammar: 'XML generated from each parser grammar',
   shaped: 'deeply nested and very wide documents',
   envelope: 'envelope recursion up to and beyond maxDepth',
+  pdf: 'byte-level mutation of the synthetic PDF invoices, read with extractPdf',
 };
 
 describe('fuzz: hostile input never crashes, hangs or reports an internal error', () => {
@@ -153,6 +160,8 @@ describe('fuzz: hostile input never crashes, hangs or reports an internal error'
   test(NAME.shaped, () => fuzz(NAME.shaped, shapedXml, (c) => c), limit);
 
   test(NAME.envelope, () => fuzz(NAME.envelope, envelopeSpec, buildEnvelope), limit);
+
+  test(NAME.pdf, () => fuzz(NAME.pdf, pdfMutation, (c) => c, onePerFixture(pdfMutationWith, PDF_SEEDS.length, SEED)), limit);
 });
 
 const REPLAY = process.env.FUZZ_REPLAY;

@@ -34,6 +34,15 @@ jobs:
         uses: ./.github/actions/qualification
         with:
           ssh-key: ${{ secrets.VALIDATION_CACHE_SSH_KEY }}
+      - name: Swedish PDF extraction answer key (zero wrong values; skipped without the private cache key)
+        if: matrix.gate == 'tests'
+        uses: ./.github/actions/swedish-pdf-eval
+        with:
+          ssh-key: ${{ secrets.VALIDATION_CACHE_SSH_KEY }}
+      - name: Synthetic Swedish PDF answer key (public; zero wrong values, no errors, not below the baseline)
+        if: matrix.gate == 'tests'
+        shell: bash
+        run: bun scripts/pdf-eval.ts swedish test/pdf-synth --baseline scripts/pdf-eval/baseline-synthetic.json --out "$RUNNER_TEMP/pdf-eval-synthetic.json" --gate | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Library static, coverage and package checks
         if: matrix.gate == 'tests'
         run: bun run check:lib:static && bun run check:lib:tests
@@ -107,10 +116,10 @@ jobs:
         env:
           VALIDATION_BROWSER: ${{ matrix.browser }}
         run: bun check-validation.ts validation-acceptance.ts
-      - name: Factur-X, edition selection and fault browser gates
+      - name: Factur-X, edition selection, fault and PDF extraction browser gates
         if: matrix.browser == 'chromium'
         working-directory: site
-        run: bun check-validation.ts facturx-validation-acceptance.ts edition-selection-acceptance.ts validation-faults.ts
+        run: bun check-validation.ts facturx-validation-acceptance.ts edition-selection-acceptance.ts validation-faults.ts pdf-extraction-acceptance.ts
       - name: Rebuild the distributable site from the approved inventory
         if: matrix.browser == 'chromium'
         run: bun run build:site

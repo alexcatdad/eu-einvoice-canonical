@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "file": "docx-moms-12.pdf",
+  "sha256": "6b1e8d5f2d6940f74ece392e8b516cfbf4091329e5822d99816926872a710c71",
+  "documentType": "invoice",
+  "typeCode": "380",
+  "invoicePages": [1],
+  "pricesIncludeVat": false,
+  "fields": {
+    "id": {
+      "value": "1001"
+    },
+    "issueDate": {
+      "value": "2026-03-02"
+    },
+    "dueDate": {
+      "value": "2026-04-01"
+    },
+    "currency": {
+      "value": "SEK"
+    },
+    "seller.name": {
+      "value": "Syntetisk Catering AB"
+    },
+    "seller.legalRegistrationId": {
+      "value": "9999990014"
+    },
+    "seller.vatId": {
+      "value": "SE999999001401"
+    },
+    "seller.taxRegistrationId": {
+      "value": "Godkänd för F-skatt"
+    },
+    "buyer.name": {
+      "value": "Fiktiv Kund AB"
+    },
+    "payee.name": {
+      "status": "absent"
+    },
+    "payment.bankgiro": {
+      "value": "99990012"
+    },
+    "payment.plusgiro": {
+      "status": "absent"
+    },
+    "payment.iban": {
+      "status": "absent"
+    },
+    "payment.bic": {
+      "status": "absent"
+    },
+    "payment.remittanceInformation": {
+      "value": "20260014"
+    },
+    "totals.lineNetTotal": {
+      "value": "5519.00"
+    },
+    "totals.allowanceTotal": {
+      "status": "absent"
+    },
+    "totals.chargeTotal": {
+      "status": "absent"
+    },
+    "totals.taxExclusive": {
+      "status": "absent"
+    },
+    "totals.vatTotal": {
+      "value": "662.28"
+    },
+    "totals.taxInclusive": {
+      "value": "6181.28"
+    },
+    "totals.prepaid": {
+      "status": "absent"
+    },
+    "totals.prepaidNote": {
+      "status": "absent"
+    },
+    "totals.rounding": {
+      "status": "absent"
+    },
+    "totals.payable": {
+      "value": "6181.28"
+    }
+  },
+  "vatBreakdown": {
+    "rows": [
+      {
+        "categoryCode": "S",
+        "rate": {
+          "value": "12"
+        },
+        "taxableAmount": {
+          "value": "5519.00"
+        },
+        "taxAmount": {
+          "value": "662.28"
+        }
+      }
+    ]
+  },
+  "lines": {
+    "rows": [
+      {
+        "item.name": {
+          "value": "Lunchbuffé"
+        },
+        "quantity": {
+          "value": "24"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "125.00"
+        },
+        "vat.rate": {
+          "value": "12"
+        },
+        "netAmount": {
+          "value": "3000.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Smörgåstårta"
+        },
+        "quantity": {
+          "value": "2"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "689.50"
+        },
+        "vat.rate": {
+          "value": "12"
+        },
+        "netAmount": {
+          "value": "1379.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Kaffe och bulle"
+        },
+        "quantity": {
+          "value": "30"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "38.00"
+        },
+        "vat.rate": {
+          "value": "12"
+        },
+        "netAmount": {
+          "value": "1140.00"
+        }
+      }
+    ]
+  },
+  "notes": "Synthetic (scripts/pdf-synth): Word, 12 % VAT only (food and catering)"
+}

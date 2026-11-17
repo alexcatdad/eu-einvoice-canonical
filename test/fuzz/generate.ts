@@ -562,6 +562,18 @@ export const byteMutation = (
       return { label: `byte-mutation of ${fixture.name}`, filename: fixture.name, bytes: mutateBytes(fixture.bytes, ops) };
     });
 
+/** The synthetic Swedish PDF invoices (test/pdf-synth), byte-mutated and read with `extractPdf`. */
+const PDF_SYNTH_DIR = join(import.meta.dir, '..', 'pdf-synth');
+export const PDF_SEEDS: Fixture[] = readdirSync(PDF_SYNTH_DIR)
+  .filter((f) => f.endsWith('.pdf'))
+  .sort()
+  .map((name) => ({ name, bytes: new Uint8Array(readFileSync(join(PDF_SYNTH_DIR, name))) }));
+
+export const pdfMutationWith = (f: fc.Arbitrary<number>): fc.Arbitrary<FuzzCase> =>
+  byteMutation(PDF_SEEDS, f, fc.constant(false)).map((c) => ({ ...c, label: `${c.label}, extractPdf`, options: { extractPdf: true } }));
+
+export const pdfMutation = pdfMutationWith(fc.nat());
+
 // ---------------------------------------------------------------------------
 // Grammar-generated XML, deep and wide documents
 // ---------------------------------------------------------------------------

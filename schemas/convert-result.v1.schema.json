@@ -14,6 +14,13 @@
       },
       "description": "One outcome per XML document found in the file. Empty when nothing usable was found; see `skipped`."
     },
+    "pdfOutcomes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/PdfOutcome"
+      },
+      "description": "Only with `extractPdf`: one outcome for a received PDF without usable embedded XML, which is then not in `skipped`."
+    },
     "skipped": {
       "type": "array",
       "items": {
@@ -1886,6 +1893,38 @@
         "value"
       ]
     },
+    "InvoiceDraft": {
+      "type": "object",
+      "properties": {
+        "fields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Canonical JSON Pointer -> value as read and normalised (Decimal, IsoDate, identifier...), e.g. `'/totals/payable': '1250.00'`."
+        },
+        "pdfProvenance": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/PdfRegion"
+          },
+          "description": "Canonical JSON Pointer -> the region of the page the value was read from. Same keys as `fields`."
+        },
+        "problems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceWarning"
+          },
+          "description": "Why the draft is not an invoice: missing, ambiguous or contradictory fields and failed reconciliation, with page and position when known."
+        }
+      },
+      "required": [
+        "fields",
+        "pdfProvenance",
+        "problems"
+      ],
+      "description": "The values read from a PDF that did not give a complete invoice: fields are missing, ambiguous or contradictory, or the amounts do not reconcile. A draft is never a valid invoice; it is a starting point for a person to finish."
+    },
     "InvoiceTypeCode": {
       "type": "string",
       "examples": [
@@ -2672,6 +2711,189 @@
       ],
       "description": "UNCL 4461 payment means (BT-81)."
     },
+    "PdfOutcome": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "const": "ok"
+            },
+            "invoices": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/CanonicalInvoice"
+              }
+            },
+            "pdf": {
+              "$ref": "#/$defs/PdfSource"
+            }
+          },
+          "required": [
+            "status",
+            "invoices",
+            "pdf"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "const": "draft"
+            },
+            "draft": {
+              "$ref": "#/$defs/InvoiceDraft"
+            },
+            "pdf": {
+              "$ref": "#/$defs/PdfSource"
+            }
+          },
+          "required": [
+            "status",
+            "draft",
+            "pdf"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "const": "not-an-invoice"
+            },
+            "pdf": {
+              "$ref": "#/$defs/PdfSource"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "status",
+            "pdf",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "const": "unsupported"
+            },
+            "pdf": {
+              "$ref": "#/$defs/PdfSource"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "payment": {
+              "$ref": "#/$defs/PdfPaymentFacts"
+            }
+          },
+          "required": [
+            "status",
+            "pdf",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "const": "error"
+            },
+            "pdf": {
+              "$ref": "#/$defs/PdfSource"
+            },
+            "error": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "status",
+            "pdf",
+            "error"
+          ]
+        }
+      ],
+      "description": "The outcome for a PDF without embedded XML, read from its text layer (`convert(..., { extractPdf: true })`). `draft` holds the values read from the page that did not make a complete, reconciling invoice; it is never a valid invoice."
+    },
+    "PdfPaymentFacts": {
+      "type": "object",
+      "properties": {
+        "fields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Canonical JSON Pointer -> value as read and normalised (Decimal, IsoDate, identifier...), e.g. `'/totals/payable': '1250.00'`."
+        },
+        "pdfProvenance": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/PdfRegion"
+          },
+          "description": "Canonical JSON Pointer -> the region of the page the value was read from. Same keys as `fields`."
+        }
+      },
+      "required": [
+        "fields",
+        "pdfProvenance"
+      ],
+      "description": "Payment facts decoded from a payment QR code (Swedish UsingQR) on a PDF whose text could not be read: amount due, due date, currency and the Bankgiro, Plusgiro or IBAN account, keyed by the same canonical JSON Pointers as  {@link  InvoiceDraft }  fields, with the QR code's region as provenance. Nothing else is read from such a file."
+    },
+    "PdfRegion": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "number"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "page",
+        "x",
+        "y",
+        "width",
+        "height"
+      ],
+      "description": "A rectangle on a PDF page that a value was read from. `page` is 1-based. Coordinates are PDF points (1/72 inch) in the page as displayed (crop box, page rotation applied), with the origin at the top-left corner, x to the right and y downwards."
+    },
+    "PdfSource": {
+      "type": "object",
+      "properties": {
+        "filename": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "description": "SHA-256 (hex) of the PDF."
+        },
+        "byteLength": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "sha256",
+        "byteLength"
+      ],
+      "description": "The PDF an outcome of `convert(..., { extractPdf: true })` was read from."
+    },
     "Percentage": {
       "$ref": "#/$defs/Decimal"
     },
@@ -3302,7 +3524,18 @@
       "type": "object",
       "properties": {
         "format": {
-          "$ref": "#/$defs/FormatId"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FormatId"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "pdf-text"
+              ]
+            }
+          ],
+          "description": "The detected e-invoice format, or `'pdf-text'` for an invoice read from the text layer of a PDF without embedded XML (`convert(..., { extractPdf: true })`). For `'pdf-text'`, `syntaxDocumentType` is `'PDF'`, `rootNamespace` is empty, `payloadSha256` is the SHA-256 of the PDF, and `pdfProvenance` replaces `provenance`."
         },
         "formatVersion": {
           "type": "string"
@@ -3390,32 +3623,20 @@
           },
           "description": "Optional field-level provenance: canonical path -> source XPath (e.g. '/totals/payable' -> '/Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount')."
         },
+        "pdfProvenance": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/PdfRegion"
+          },
+          "description": "Field-level provenance for `format: 'pdf-text'`: canonical path -> the region of the page the value was read from."
+        },
         "validation": {
           "$ref": "#/$defs/ValidationSummary"
         },
         "warnings": {
           "type": "array",
           "items": {
-            "type": "object",
-            "properties": {
-              "code": {
-                "type": "string"
-              },
-              "message": {
-                "type": "string"
-              },
-              "path": {
-                "type": "string"
-              },
-              "field": {
-                "type": "string",
-                "description": "Canonical JSON Pointer, when a specific value is affected."
-              }
-            },
-            "required": [
-              "code",
-              "message"
-            ]
+            "$ref": "#/$defs/SourceWarning"
           }
         }
       },
@@ -3431,6 +3652,33 @@
         "derived",
         "warnings"
       ]
+    },
+    "SourceWarning": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "field": {
+          "type": "string",
+          "description": "Canonical JSON Pointer, when a specific value is affected."
+        },
+        "region": {
+          "$ref": "#/$defs/PdfRegion",
+          "description": "Where on the page, for invoices read from a PDF text layer (`format: 'pdf-text'`)."
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "description": "A problem found while reading the source, with the canonical field and the place on the page when known."
     },
     "TaxRepresentative": {
       "type": "object",

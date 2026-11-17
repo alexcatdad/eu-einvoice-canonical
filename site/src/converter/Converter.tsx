@@ -2,12 +2,13 @@
  * The browser converter. Everything runs locally through the same `convert()` the library exports: files are never
  * uploaded. The published EU trust snapshot is loaded only when the reader switches it on; this converter makes no model requests.
  */
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, type ReactNode, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import {
   type CanonicalInvoice,
   type ConvertOutcome,
   type ConvertResult,
   convert,
+  type PdfOutcome,
   type TrustSnapshot,
   unwrap,
   type ValidationSuite,
@@ -22,7 +23,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } fr
 import { Dropzone } from '../components/ui/dropzone';
 import { Toaster, toast } from '../components/ui/sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { ChecksPanel } from './Checks';
+import { ChecksPanel, Notes } from './Checks';
 import { Html, useLang } from './i18n';
 import { JsonText } from './Json';
 import { LinesTable } from './Lines';
@@ -34,12 +35,12 @@ const Annotations = lazy(() => import('./Annotations'));
 const ACCEPT = '.xml,.pdf,.p7m,.zip,.xsig,.isdoc,.isdocx,.ubl,.cii,text/xml,application/xml,application/pdf,application/zip';
 const BASE = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 
-interface Item {
-  outcome: ConvertOutcome;
+/** One tab: an XML document's outcome, or the outcome read from the text layer of a PDF without embedded XML. */
+type Item = {
   invoice?: CanonicalInvoice;
   /** Position of the outcome in the file, for the "Document n" tab. */
   n: number;
-}
+} & ({ outcome: ConvertOutcome; pdf?: never } | { pdf: PdfOutcome; outcome?: never });
 interface Shown {
   result: ConvertResult;
   filename: string;
@@ -66,14 +67,39 @@ function save(data: BlobPart, type: string, name: string) {
 
 const fileBase = (id: string) => id.replace(/[^\w.-]+/g, '_');
 
+/**
+ * The built-ins PDF extraction calls (missingRuntimeFeatures in src/pdf-extract/layout.ts). Without them the library
+ * answers `unsupported`, and the converter says so in plain words.
+ */
+const PDF_BUILT_INS: [object, string, string][] = [
+  [Math, 'sumPrecise', 'Math.sumPrecise'],
+  [Map.prototype, 'getOrInsertComputed', 'Map.prototype.getOrInsertComputed'],
+  [Uint8Array.prototype, 'toHex', 'Uint8Array.prototype.toHex'],
+  [Promise, 'try', 'Promise.try'],
+];
+const missingPdfBuiltIns = () =>
+  PDF_BUILT_INS.filter(([owner, key]) => typeof (owner as Record<string, unknown>)[key] !== 'function').map(([, , name]) => name);
+
 function stampFor(item: Item): { cls: string; title: string; note: string } {
-  const o = item.outcome;
+  if (item.invoice) {
+    const det = item.outcome?.detection;
+    const n = item.invoice.source.warnings.length;
+    return {
+      cls: n ? 'warn' : '',
+      title: det?.kind === 'invoice' ? shortName(det.format) : t('stamp.pdf'),
+      note: n ? t('stamp.convertedWarnings', { count: n }) : t('stamp.converted'),
+    };
+  }
+  const p = item.pdf;
+  if (p) {
+    if (p.status === 'draft') return { cls: 'bad', title: t('stamp.draft'), note: t('stamp.draftNote') };
+    if (p.status === 'not-an-invoice') return { cls: 'warn', title: t('stamp.notInvoice'), note: '' };
+    if (p.status === 'unsupported') return { cls: 'warn', title: t('stamp.pdf'), note: t('stamp.unreadable') };
+    return { cls: 'bad', title: t('stamp.pdf'), note: t('stamp.failed') };
+  }
+  const o = item.outcome!;
   const det = o.detection;
   const title = det.kind === 'invoice' ? shortName(det.format) : t(det.kind === 'other-document' ? 'stamp.notInvoice' : 'stamp.unknown');
-  if (o.status === 'ok') {
-    const n = item.invoice!.source.warnings.length;
-    return { cls: n ? 'warn' : '', title, note: n ? t('stamp.convertedWarnings', { count: n }) : t('stamp.converted') };
-  }
   if (o.status === 'unsupported') return { cls: 'warn', title, note: t(det.kind === 'invoice' ? 'stamp.noParser' : 'stamp.notRecognised') };
   if (o.status === 'not-an-invoice')
     return { cls: 'warn', title, note: det.kind === 'other-document' ? (det.label.split(':')[0] ?? '') : '' };
@@ -140,11 +166,17 @@ export default function Converter() {
         announce(t('result.reading', { name: filename }));
       }
       try {
-        const result = await convert(bytes, filename, undefined, { relations: true, euTrust: trustRef.current });
+        const result = await convert(bytes, filename, undefined, { relations: true, euTrust: trustRef.current, extractPdf: true });
         if (generation !== runId.current) return;
-        const items = result.outcomes.flatMap((o, n): Item[] =>
-          o.status === 'ok' ? o.invoices.map((invoice) => ({ outcome: o, invoice, n })) : [{ outcome: o, n }],
-        );
+        const items = [
+          ...result.outcomes.flatMap((o, n): Item[] =>
+            o.status === 'ok' ? o.invoices.map((invoice) => ({ outcome: o, invoice, n })) : [{ outcome: o, n }],
+          ),
+          ...(result.pdfOutcomes ?? []).flatMap((pdf, i): Item[] => {
+            const n = result.outcomes.length + i;
+            return pdf.status === 'ok' ? pdf.invoices.map((invoice) => ({ pdf, invoice, n })) : [{ pdf, n }];
+          }),
+        ];
         setShown({ result, filename, items, isExample });
         setStatus({});
         setIndex(0);
@@ -630,7 +662,7 @@ function Result(props: {
   const tabLabel = (it: Item) =>
     it.invoice
       ? t(it.invoice.kind === 'creditNote' ? 'tab.creditNote' : 'tab.invoice', { id: it.invoice.id })
-      : t('tab.document', { n: it.n + 1 });
+      : t(it.pdf?.status === 'draft' ? 'tab.draft' : 'tab.document', { n: it.n + 1 });
   const sheets = (item: Item) => <Sheets {...props} item={item} result={result} filename={filename} />;
   return (
     <>
@@ -661,7 +693,11 @@ function Sheets(props: Parameters<typeof Result>[0] & { item: Item; result: Conv
   const { item, result, view, setView } = props;
   const [annotationDraft, setAnnotationDraft] = useState({ invoice: item.invoice, text: '', checked: false });
   if (annotationDraft.invoice !== item.invoice) setAnnotationDraft({ invoice: item.invoice, text: '', checked: false });
-  const views: View[] = item.invoice ? ['invoice', 'json', 'checks', 'lines'] : ['invoice', 'json', 'checks'];
+  const views: View[] = item.invoice
+    ? ['invoice', 'json', 'checks', 'lines']
+    : item.pdf
+      ? ['invoice', 'json']
+      : ['invoice', 'json', 'checks'];
   const active = views.includes(view) ? view : 'invoice';
   return (
     <Tabs value={active} onValueChange={(v) => setView(v as View)} className="sheets">
@@ -678,9 +714,11 @@ function Sheets(props: Parameters<typeof Result>[0] & { item: Item; result: Conv
       <TabsContent value="json" className="panel sheet-json">
         <JsonPanel item={item} result={result} filename={props.filename} onNotice={props.onNotice} />
       </TabsContent>
-      <TabsContent value="checks" className="panel sheet-checks">
-        <ChecksPanel outcome={item.outcome} invoice={item.invoice} result={result} />
-      </TabsContent>
+      {views.includes('checks') && (
+        <TabsContent value="checks" className="panel sheet-checks">
+          <ChecksPanel outcome={item.outcome} invoice={item.invoice} result={result} />
+        </TabsContent>
+      )}
       {item.invoice && (
         <TabsContent value="lines" className="panel sheet-lines">
           <div className="lines-view">
@@ -703,7 +741,6 @@ function Sheets(props: Parameters<typeof Result>[0] & { item: Item; result: Conv
 }
 
 function InvoiceSheet({ item, fresh }: { item: Item; fresh: boolean }) {
-  const o = item.outcome;
   const inv = item.invoice;
   const s = stampFor(item);
   const stamp = (
@@ -713,6 +750,8 @@ function InvoiceSheet({ item, fresh }: { item: Item; fresh: boolean }) {
     </div>
   );
   if (!inv) {
+    if (item.pdf) return <PdfSheet pdf={item.pdf} stamp={stamp} />;
+    const o = item.outcome!;
     const reason =
       o.status === 'error'
         ? o.error
@@ -741,6 +780,69 @@ function InvoiceSheet({ item, fresh }: { item: Item; fresh: boolean }) {
   );
 }
 
+/** A PDF read from its text layer that gave no invoice: a draft, an unread or other document, or an error. A draft is never shown as valid. */
+function PdfSheet({ pdf, stamp }: { pdf: PdfOutcome; stamp: ReactNode }) {
+  if (pdf.status === 'ok') return null;
+  const missing = pdf.status === 'unsupported' ? missingPdfBuiltIns() : [];
+  const reason =
+    pdf.status === 'error'
+      ? pdf.error
+      : pdf.status === 'draft'
+        ? t('pdf.draftIntro')
+        : missing.length
+          ? t('pdf.runtime', { features: missing.join(', ') })
+          : pdf.reason;
+  const facts = pdf.status === 'draft' ? pdf.draft : pdf.status === 'unsupported' ? pdf.payment : undefined;
+  const where = (r?: { page: number; x: number; y: number }) =>
+    r ? t('pdf.where', { page: r.page, x: Math.round(r.x), y: Math.round(r.y) }) : '';
+  return (
+    <article className="sheet">
+      <div className="sheet-top">
+        <h3 className="doc-title">
+          {t(
+            pdf.status === 'draft'
+              ? 'pdf.draftTitle'
+              : pdf.status === 'not-an-invoice'
+                ? 'doc.notInvoice'
+                : pdf.status === 'unsupported'
+                  ? 'pdf.unread'
+                  : 'doc.notConverted',
+          )}
+        </h3>
+        {stamp}
+      </div>
+      <p className="reason">{reason}</p>
+      {pdf.status === 'draft' && pdf.draft.problems.length > 0 && (
+        <div className="pen pdf-problems">
+          <Notes
+            title={t('pdf.problems')}
+            rows={pdf.draft.problems.map((p) => ({
+              code: p.code,
+              message: [p.message, p.field, where(p.region)].filter(Boolean).join(' · '),
+            }))}
+          />
+        </div>
+      )}
+      {facts && Object.keys(facts.fields).length > 0 && (
+        <section className="pdf-fields">
+          <h4>{t(pdf.status === 'draft' ? 'pdf.fields' : 'pdf.payment')}</h4>
+          <dl className="provenance">
+            {Object.entries(facts.fields).map(([field, value]) => (
+              <div key={field}>
+                <dt>{field}</dt>
+                <dd>
+                  {value}
+                  {facts.pdfProvenance[field] && <small> · {where(facts.pdfProvenance[field])}</small>}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
+    </article>
+  );
+}
+
 /** The library's <Invoice> component, in the site language. */
 function InvoiceView({ invoice }: { invoice: CanonicalInvoice }) {
   return <Invoice invoice={invoice} lang={currentLang()} idPrefix="inv" />;
@@ -758,7 +860,8 @@ function JsonPanel({
   onNotice: (title: string, detail: string) => void;
 }) {
   const [which, setWhich] = useState<'invoice' | 'full'>(item.invoice ? 'invoice' : 'full');
-  const data = which === 'invoice' ? item.invoice : { fileSha256: result.fileSha256, ...item.outcome, skipped: result.skipped };
+  const data =
+    which === 'invoice' ? item.invoice : { fileSha256: result.fileSha256, ...(item.outcome ?? item.pdf), skipped: result.skipped };
   const inv = item.invoice;
   const write = (target: 'ubl' | 'cii') => {
     if (!inv) return;
