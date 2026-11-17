@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "file": "pdflib-peppol-kontakter-referenser.pdf",
+  "sha256": "ef0a061fa146811ed93e4dab77eaf02090c3cff765b901a8d393edcfa9456573",
+  "documentType": "invoice",
+  "typeCode": "380",
+  "invoicePages": [1, 2],
+  "pricesIncludeVat": false,
+  "fields": {
+    "id": {
+      "value": "1141"
+    },
+    "issueDate": {
+      "value": "2026-06-02"
+    },
+    "dueDate": {
+      "value": "2026-07-02"
+    },
+    "currency": {
+      "value": "SEK"
+    },
+    "seller.name": {
+      "value": "Provhiss Syntet AB"
+    },
+    "seller.legalRegistrationId": {
+      "value": "9999990105"
+    },
+    "seller.vatId": {
+      "value": "SE999999010501"
+    },
+    "seller.taxRegistrationId": {
+      "value": "Godkänd för F-skatt"
+    },
+    "buyer.name": {
+      "value": "Fastighets AB Exempelhus"
+    },
+    "payee.name": {
+      "status": "absent"
+    },
+    "payment.bankgiro": {
+      "value": "99990095"
+    },
+    "payment.plusgiro": {
+      "status": "absent"
+    },
+    "payment.iban": {
+      "value": "SE9399900000000000000001"
+    },
+    "payment.bic": {
+      "value": "SYNTSESS"
+    },
+    "payment.remittanceInformation": {
+      "value": "202611414"
+    },
+    "totals.lineNetTotal": {
+      "value": "1648.40"
+    },
+    "totals.allowanceTotal": {
+      "status": "absent"
+    },
+    "totals.chargeTotal": {
+      "status": "absent"
+    },
+    "totals.taxExclusive": {
+      "value": "1648.40"
+    },
+    "totals.vatTotal": {
+      "value": "412.10"
+    },
+    "totals.taxInclusive": {
+      "value": "2060.50"
+    },
+    "totals.prepaid": {
+      "status": "absent"
+    },
+    "totals.prepaidNote": {
+      "status": "absent"
+    },
+    "totals.rounding": {
+      "value": "0.50"
+    },
+    "totals.payable": {
+      "value": "2061.00"
+    }
+  },
+  "vatBreakdown": {
+    "rows": [
+      {
+        "categoryCode": "S",
+        "rate": {
+          "value": "25"
+        },
+        "taxableAmount": {
+          "value": "1648.40"
+        },
+        "taxAmount": {
+          "value": "412.10"
+        }
+      }
+    ]
+  },
+  "lines": {
+    "rows": [
+      {
+        "item.name": {
+          "value": "Besiktning hiss"
+        },
+        "quantity": {
+          "value": "1"
+        },
+        "unitText": {
+          "value": "EA"
+        },
+        "price.net": {
+          "value": "1648.40"
+        },
+        "vat.rate": {
+          "value": "25"
+        },
+        "netAmount": {
+          "value": "1648.40"
+        }
+      }
+    ]
+  },
+  "notes": "Synthetic (scripts/pdf-synth): pdf-lib, Peppol viewer page followed by the issuer's own page: buyer and seller contact blocks (BT-56-58, BT-41-43) with three different phone numbers, seller GLN party ID (BT-29), a buyer GLN besides the customer number (BT-46 holds one: reported, not kept), invoiced object (BT-18), document reference without its file (BG-24), payment means code and text (BT-81/82), terms sentences joined to the payment terms (BT-20), bank name in the note (BT-22), visiting address (BT-33), table headings, zero document-level totals and repeated values that are not unmapped text"
+}

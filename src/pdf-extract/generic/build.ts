@@ -138,7 +138,8 @@ function buildInvoice(
       });
       return undefined;
     }
-    derive(`${party}/address/countryCode`, 'Swedish postal code format NNN NN on a Swedish-language invoice');
+    if (!v[`${party}/address/countryCode`])
+      derive(`${party}/address/countryCode`, 'Swedish postal code format NNN NN on a Swedish-language invoice');
     return {
       line1: get(`${party}/address/line1`),
       line2: get(`${party}/address/line2`),
@@ -294,7 +295,7 @@ function buildInvoice(
   const meansCode = get('/payments/0/meansCode') ?? '30';
   // Without an account there is no payment instruction for a means code default to describe
   if (!transfers.length) derived.splice(0, derived.length, ...derived.filter((d) => d.field !== '/payments/0/meansCode'));
-  if (transfers.length && !defaults.some(([k]) => k === '/payments/0/meansCode'))
+  if (transfers.length && !v['/payments/0/meansCode'] && !defaults.some(([k]) => k === '/payments/0/meansCode'))
     derive('/payments/0/meansCode', 'Bankgiro, Plusgiro or IBAN printed: credit transfer (30)');
   const orgNumber = get('/seller/legalRegistrationId/value');
   // BT-34 (Peppol R020): the printed org.nr, else the org.nr inside a seller SE VAT number that passes its check digits
@@ -313,6 +314,12 @@ function buildInvoice(
     derive('/seller/endpoint', 'Organisation number from the seller SE VAT number (SE + org.nr + 01) as Peppol endpoint (scheme 0007)');
   const notes = [0, 1].flatMap((k) => (get(`/notes/${k}/text`) ? [{ text: get(`/notes/${k}/text`)! }] : []));
 
+  const identifiers = (party: '/seller' | '/buyer') =>
+    [0, 1, 2, 3].flatMap((k) => {
+      const value = get(`${party}/identifiers/${k}/value`);
+      const schemeId = get(`${party}/identifiers/${k}/schemeId`);
+      return value ? [schemeId ? { value, schemeId } : { value }] : [];
+    });
   const contact = (party: '/seller' | '/buyer') => {
     const c = { name: get(`${party}/contact/name`), phone: get(`${party}/contact/phone`), email: get(`${party}/contact/email`) };
     return c.name || c.phone || c.email ? c : undefined;
@@ -331,7 +338,7 @@ function buildInvoice(
     precedingInvoices: [],
     seller: {
       name: sellerName,
-      identifiers: [],
+      identifiers: identifiers('/seller'),
       legalRegistrationId: orgNumber ? { value: orgNumber, schemeId: '0007' } : undefined,
       vatId: get('/seller/vatId'),
       taxRegistrationId: get('/seller/taxRegistrationId'),
@@ -343,7 +350,7 @@ function buildInvoice(
     },
     buyer: {
       name: buyerName,
-      identifiers: get('/buyer/identifiers/0/value') ? [{ value: get('/buyer/identifiers/0/value')! }] : [],
+      identifiers: identifiers('/buyer'),
       legalRegistrationId: get('/buyer/legalRegistrationId/value')
         ? { value: get('/buyer/legalRegistrationId/value')!, schemeId: '0007' }
         : undefined,
@@ -355,11 +362,13 @@ function buildInvoice(
     },
     buyerReference: get('/buyerReference'),
     purchaseOrderRef: get('/purchaseOrderRef'),
+    ...(get('/invoicedObjectId/value') ? { invoicedObjectId: { value: get('/invoicedObjectId/value')! } } : {}),
     additionalParties: [],
     payments: transfers.length
       ? [
           {
             meansCode: meansCode as never,
+            meansText: get('/payments/0/meansText'),
             remittanceInformation: get('/payments/0/remittanceInformation'),
             creditTransfers: transfers.map((t) => ({ accountId: t.accountId, serviceProviderId: t.serviceProviderId })),
           },
@@ -382,7 +391,12 @@ function buildInvoice(
     vatBreakdown,
     otherTaxes: [],
     withholdings: [],
-    attachments: [],
+    // Supporting documents printed as references only (BG-24 without content)
+    attachments: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((k) =>
+      get(`/attachments/${k}/id`)
+        ? [{ kind: 'reference' as const, id: get(`/attachments/${k}/id`)!, description: get(`/attachments/${k}/description`) }]
+        : [],
+    ),
     lines,
     clearance: [],
     extensions: {},

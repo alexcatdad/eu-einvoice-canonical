@@ -76,6 +76,7 @@ function peppol(spec: CaseSpec, f: Figures, page: number): Placed[] {
     const lines = [p.name, 'Adress', ...p.address.slice(0, -1), postal(p.address[p.address.length - 1]), 'SE'];
     if (p.orgnr) lines.push(`ID: ${p.orgnr} [0007]`);
     if (p.gln) lines.push(`ID: ${p.gln} [0088]`);
+    for (const id of p.ids ?? []) lines.push(`ID: ${id.slice(id.indexOf(':') + 1)} [${id.slice(0, id.indexOf(':'))}]`);
     if (p.orgnr) lines.push(`Organisationsnummer: ${p.orgnr} [0007]`);
     lines.push(...extra);
     lines.forEach((l, i) => {
@@ -83,16 +84,46 @@ function peppol(spec: CaseSpec, f: Figures, page: number): Placed[] {
     });
     return y + 9 * (lines.length + 1);
   };
+  // Right column: invoice note, a terms text, document references and the invoiced object, each after a gap
+  let right = 112;
   if (spec.invoiceNote) {
     t(298, 112, 'Anteckning', { bold: true });
     spec.invoiceNote.forEach((n, i) => {
       t(298, 121 + 9 * i, n);
     });
+    right = 121 + 9 * spec.invoiceNote.length;
+  }
+  if (spec.peppolTerms) {
+    right += 16;
+    t(298, right, spec.peppolTerms);
+  }
+  const ref = spec.documentReference;
+  if (ref) {
+    right += 20;
+    t(298, right, 'ÖVRIGA DOKUMENTREFERENSER', { bold: true });
+    const lines = [
+      `Referens: ${ref.id} - ${ref.description}`,
+      ...(ref.file ? [`- Filtyp: ${ref.file.type}`, `- Filnamn: ${ref.file.name}`] : []),
+    ];
+    for (const l of lines) {
+      right += 9;
+      t(298, right, l);
+    }
+  }
+  if (spec.invoicedObject) {
+    right += 17;
+    t(298, right, `Faktureringsobjekt: ${spec.invoicedObject}`);
   }
   t(157, 112, 'KÖPARENS KONTAKT', { bold: true });
   if (spec.buyerReference) t(157, 121, spec.buyerReference);
-  t(157, 130, 'Telefon: 0100000000');
+  const bc = spec.buyerContact
+    ? [spec.buyerContact.phone && `Telefon: ${spec.buyerContact.phone}`, spec.buyerContact.email]
+    : ['Telefon: 0100000000'];
+  bc.filter((l): l is string => !!l).forEach((l, i) => {
+    t(157, 130 + 9 * i, l);
+  });
   let y = party(112, 'KÖPAREN', b, [`Köparens namn: ${b.name}`, ...(b.orgnr ? [vatId(b.orgnr)] : [])]);
+  if (ref || spec.invoicedObject) y = Math.max(y, right + 9);
 
   // Item table: a two-line header; each line, its quantity code and an optional note under it
   y += 12;
@@ -178,7 +209,8 @@ function peppol(spec: CaseSpec, f: Figures, page: number): Placed[] {
 
   t(204, y, 'SÄLJARENS KONTAKT', { bold: true });
   t(204, y + 9, 'Kontakt: Testsson, Test');
-  t(204, y + 18, 'Telefon: 0100000001');
+  t(204, y + 18, `Telefon: ${spec.sellerContact?.phone ?? '0100000001'}`);
+  if (spec.sellerContact) t(204, y + 27, `E-mail: ${spec.sellerContact.email}`);
   y = party(y, 'SÄLJAREN', s, [
     s.name,
     `ID för säljarens skatteregistrering: ${vatId(s.orgnr)} [VAT]`,
@@ -223,10 +255,13 @@ function issuer(spec: CaseSpec, f: Figures, page: number): Placed[] {
     ['Ert momsregnr:', b.orgnr && vatId(b.orgnr)],
     ['Vår referens:', 'Testsson, Test'],
   ];
+  if (spec.sellerContact) refs.push(['Frågor ang. fakturan:', spec.sellerContact.phone]);
   refs.forEach(([k, v], i) => {
     t(52, 91 + 12.5 * i, k);
     if (v) t(142, 91 + 12.5 * i, v);
   });
+  if (spec.sellerContact) t(142, 91 + 12.5 * refs.length, spec.sellerContact.email);
+  if (spec.originalInvoiceLabel) t(52, 190, 'Urspr. faktura:');
   [b.name, ...b.address].forEach((l, i) => {
     t(342, 98 + 11 * i, l);
   });
@@ -282,7 +317,7 @@ function issuer(spec: CaseSpec, f: Figures, page: number): Placed[] {
   t(270, 729, 'Org. nr');
   t(358, 729, 'Bank');
   t(486, 729, 'Bankgiro');
-  t(187, 740, '010-000 0000');
+  t(187, 740, spec.footerPhone ?? '010-000 0000');
   t(270, 740, `${s.orgnr.slice(0, 6)}-${s.orgnr.slice(6)}`);
   t(358, 740, 'Testbanken');
   if (s.bankgiro) t(486, 740, `${s.bankgiro.slice(0, -4)}-${s.bankgiro.slice(-4)}`);
@@ -296,5 +331,9 @@ function issuer(spec: CaseSpec, f: Figures, page: number): Placed[] {
   if (s.bic) t(486, 760, s.bic);
   if (s.fskatt) t(270, 770, 'Godkänd för F-skatt');
   t(358, 770, 'Allmänna villkor lämnas på begäran.');
+  if (spec.visitingAddress) {
+    t(52, 782, 'Besöksadress:');
+    t(52, 792, spec.visitingAddress);
+  }
   return out;
 }

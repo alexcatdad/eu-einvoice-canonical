@@ -11,7 +11,7 @@ import type { CanonicalInvoice, PdfRegion, SourceWarning } from '../canonical.js
 import { attachment, invoicePageCount, invoicePages } from './attachment.js';
 import { buildExtraction } from './generic/build.js';
 import { freeTextValues } from './generic/free-text.js';
-import { remarkNote, unmappedText } from './generic/unmapped.js';
+import { remarkNote, termsSentences, unmappedText } from './generic/unmapped.js';
 import { readInvoice } from './generic.js';
 import { DEFAULT_PDF_LIMITS, extractLayout, type PdfLimits } from './layout.js';
 import { applyPaymentQr, findQrCodes, qrPaymentFacts } from './qr.js';
@@ -93,7 +93,7 @@ export const extractPdfInvoice: PdfExtractor = async (bytes, options) => {
     }
     const ruled = applyRules(layout, readInvoice(layout), BUNDLED_PROFILES, templates);
     if (pages) ruled.pages ??= pages;
-    const read = ruled.notAnInvoice ? ruled : remarkNote(layout, freeTextValues(layout, ruled));
+    const read = ruled.notAnInvoice ? ruled : termsSentences(layout, remarkNote(layout, freeTextValues(layout, ruled)));
     const codes = read.notAnInvoice ? [] : await findQrCodes(bytes, read.pages);
     const paid = applyPaymentQr(read, codes);
     const attached = pages && !read.notAnInvoice ? await attachment(bytes, pages + 1, whole.pages.length, options.filename) : undefined;

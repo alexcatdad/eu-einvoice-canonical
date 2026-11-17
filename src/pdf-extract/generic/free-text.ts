@@ -62,6 +62,21 @@ function blocks(rows: Cell[][], free: Cell[][], re: RegExp): Block[] {
   return out;
 }
 
+/** Appends `text` to `field` on a new line (or writes it), recording an appended text with its own region. */
+export function appendText(field: string, text: ReadValue, values: Record<string, ReadValue>, warnings: SourceWarning[]) {
+  if (!values[field]) {
+    values[field] = text;
+    return;
+  }
+  values[field] = { ...values[field], value: `${values[field].value}\n${text.value}` };
+  warnings.push({
+    code: 'joined-text',
+    field,
+    message: 'Another printed text for this field is kept after the first, on a new line',
+    region: text.region,
+  });
+}
+
 /** Writes the distinct texts as one value, in page order; each further text is recorded with its own region. */
 function joined(field: string, found: Block[], values: Record<string, ReadValue>, warnings: SourceWarning[]) {
   const distinct = found.filter((b, i) => found.findIndex((o) => o.text === b.text) === i);
@@ -103,5 +118,7 @@ export function freeTextValues(layout: LayoutDocument, read: GenericRead): Gener
     warnings,
   );
   joined(values['/notes/0/text'] ? '/notes/1/text' : '/notes/0/text', blocks(rows, free, NOTE), values, warnings);
+  // The bank's name has no field of its own: it is kept in the invoice note
+  if (read.bankName) appendText(values['/notes/1/text'] ? '/notes/1/text' : '/notes/0/text', read.bankName, values, warnings);
   return { ...read, values, warnings };
 }

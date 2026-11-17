@@ -1,0 +1,54 @@
+{
+  "file": "pdflib-peppol-kontakter-referenser",
+  "covers": "pdf-lib, Peppol viewer page followed by the issuer's own page: buyer and seller contact blocks (BT-56-58, BT-41-43) with three different phone numbers, seller GLN party ID (BT-29), a buyer GLN besides the customer number (BT-46 holds one: reported, not kept), invoiced object (BT-18), document reference without its file (BG-24), payment means code and text (BT-81/82), terms sentences joined to the payment terms (BT-20), bank name in the note (BT-22), visiting address (BT-33), table headings, zero document-level totals and repeated values that are not unmapped text",
+  "renderer": "pdflib",
+  "layout": "peppol-and-issuer",
+  "document": "invoice",
+  "pages": 2,
+  "number": "1141",
+  "issueDate": "2026-06-02",
+  "dueDate": "2026-07-02",
+  "customer": "K-541",
+  "ocr": "202611414",
+  "buyerReference": "REF-2026-0602",
+  "orderReference": "REF-2026-0602",
+  "invoiceNote": ["Avser besiktning 2026", "Provgatan 3, hiss A"],
+  "peppolTerms": "Allmänna villkor lämnas på begäran. Dröjsmålsränta: referensränta + 8 %.",
+  "documentReference": { "id": "1141.pdf", "description": "COMMERCIAL INVOICE", "file": { "type": "application/pdf", "name": "1141.pdf" } },
+  "invoicedObject": "OBJ-4711",
+  "buyerContact": { "phone": "0100000020", "email": "faktura@exempelhus.invalid" },
+  "sellerContact": { "phone": "010-000 00 21", "email": "kundtjanst@provhiss.invalid" },
+  "footerPhone": "010-000 00 22",
+  "visitingAddress": "Provgatan 9",
+  "originalInvoiceLabel": true,
+  "rounding": true,
+  "seller": {
+    "name": "Provhiss Syntet AB",
+    "address": ["Box 4711", "999 31 Testby"],
+    "orgnr": "9999990105",
+    "gln": "9999999000010",
+    "peppolId": "0007:9999990105",
+    "fskatt": true,
+    "bankgiro": "99990095",
+    "iban": "SE9399900000000000000001",
+    "bic": "SYNTSESS"
+  },
+  "buyer": {
+    "name": "Fastighets AB Exempelhus",
+    "address": ["Provgatan 3", "c/o Fiktiv Förvaltning AB", "999 41 Teststad"],
+    "orgnr": "9999990113",
+    "gln": "9999999000034",
+    "peppolId": "0007:9999990113"
+  },
+  "lines": [
+    {
+      "name": "Besiktning hiss",
+      "qty": "1",
+      "unit": "st",
+      "unitCode": "EA",
+      "price": "1648.40",
+      "rate": 25,
+      "note": ["2026-05-28, hiss A", "Provgatan 3"]
+    }
+  ]
+}
