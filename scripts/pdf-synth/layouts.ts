@@ -76,7 +76,9 @@ function peppol(spec: CaseSpec, f: Figures, page: number): Placed[] {
     const lines = [name, 'Adress', ...address.slice(0, -1), postal(address[address.length - 1]), 'SE'];
     if (orgnr) lines.push(`ID: ${orgnr} [0007]`, `Organisationsnummer: ${orgnr} [0007]`);
     lines.push(...extra);
-    lines.forEach((l, i) => t(16, y + 9 * (i + 1), l));
+    lines.forEach((l, i) => {
+      t(16, y + 9 * (i + 1), l);
+    });
     return y + 9 * (lines.length + 1);
   };
   t(157, 112, 'KÖPARENS KONTAKT', { bold: true });
@@ -207,7 +209,9 @@ function issuer(spec: CaseSpec, f: Figures, page: number): Placed[] {
     t(52, 91 + 12.5 * i, k);
     if (v) t(142, 91 + 12.5 * i, v);
   });
-  [b.name, ...b.address].forEach((l, i) => t(342, 98 + 11 * i, l));
+  [b.name, ...b.address].forEach((l, i) => {
+    t(342, 98 + 11 * i, l);
+  });
   t(342, 194, 'Betalningsvillkor:');
   t(431, 194, '30 dgr netto');
 
