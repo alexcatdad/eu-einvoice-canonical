@@ -64,7 +64,12 @@ export function buildExtraction(printed: GenericRead, options: PdfExtractOptions
   )
     return { status: 'unsupported', reason: 'No invoice fields were recognised in the PDF text (layout not covered by the rules)' };
   const draft = (extra: SourceWarning[]): PdfExtraction => {
-    const d: InvoiceDraft = { fields: {}, pdfProvenance: {}, problems: [...read.problems, ...extra, ...read.warnings] };
+    const d: InvoiceDraft = {
+      fields: {},
+      pdfProvenance: {},
+      problems: [...read.problems, ...extra, ...read.warnings],
+      ...(read.unmappedText ? { unmappedText: read.unmappedText } : {}),
+    };
     for (const [k, { value, region }] of Object.entries(v)) {
       d.fields[k] = value;
       d.pdfProvenance[k] = region;
@@ -107,6 +112,13 @@ function buildInvoice(
   // A rule layer's default stands only where no value was read, and is recorded as derived
   const defaults = Object.entries(read.defaults ?? {}).filter(([k]) => !v[k]);
   const get = (k: string) => v[k]?.value ?? read.defaults?.[k]?.value;
+  // The indexes 0..n of a repeated field read under `prefix` ("/notes" for /notes/0/text, /notes/1/text, ...)
+  const indexes = (prefix: string) => {
+    const at = [...Object.keys(v), ...Object.keys(read.defaults ?? {})].map((k) =>
+      k.startsWith(`${prefix}/`) ? Number.parseInt(k.slice(prefix.length + 1), 10) : -1,
+    );
+    return Array.from({ length: Math.max(-1, ...at) + 1 }, (_, k) => k);
+  };
   const problems: SourceWarning[] = [];
   const derived: { field: string; rule: string }[] = defaults.map(([field, d]) => ({ field, rule: d.rule }));
   if (read.flipped) derived.push({ field: '/totals', rule: CREDIT_NOTE_RULE });
@@ -288,7 +300,7 @@ function buildInvoice(
   const charges = chargeTotal && cmp(chargeTotal, '0') !== 0 ? [{ amount: chargeTotal, reason: 'Avgift', vat: lines[0]?.vat }] : [];
   const allowances =
     allowanceTotal && cmp(allowanceTotal, '0') !== 0 ? [{ amount: allowanceTotal, reason: 'Rabatt', vat: lines[0]?.vat }] : [];
-  const transfers = [0, 1, 2].flatMap((k) => {
+  const transfers = indexes('/payments/0/creditTransfers').flatMap((k) => {
     const accountId = get(`/payments/0/creditTransfers/${k}/accountId`);
     return accountId ? [{ accountId, serviceProviderId: get(`/payments/0/creditTransfers/${k}/serviceProviderId`) }] : [];
   });
@@ -312,10 +324,10 @@ function buildInvoice(
   if (!printedSeller && orgNumber) derive('/seller/endpoint', 'Organisation number as Peppol endpoint (scheme 0007)');
   else if (!printedSeller && endpointId)
     derive('/seller/endpoint', 'Organisation number from the seller SE VAT number (SE + org.nr + 01) as Peppol endpoint (scheme 0007)');
-  const notes = [0, 1].flatMap((k) => (get(`/notes/${k}/text`) ? [{ text: get(`/notes/${k}/text`)! }] : []));
+  const notes = indexes('/notes').flatMap((k) => (get(`/notes/${k}/text`) ? [{ text: get(`/notes/${k}/text`)! }] : []));
 
   const identifiers = (party: '/seller' | '/buyer') =>
-    [0, 1, 2, 3].flatMap((k) => {
+    indexes(`${party}/identifiers`).flatMap((k) => {
       const value = get(`${party}/identifiers/${k}/value`);
       const schemeId = get(`${party}/identifiers/${k}/schemeId`);
       return value ? [schemeId ? { value, schemeId } : { value }] : [];
@@ -361,6 +373,7 @@ function buildInvoice(
       contact: contact('/buyer'),
     },
     buyerReference: get('/buyerReference'),
+    accountingRef: get('/accountingRef'),
     purchaseOrderRef: get('/purchaseOrderRef'),
     ...(get('/invoicedObjectId/value') ? { invoicedObjectId: { value: get('/invoicedObjectId/value')! } } : {}),
     additionalParties: [],
@@ -392,7 +405,7 @@ function buildInvoice(
     otherTaxes: [],
     withholdings: [],
     // Supporting documents printed as references only (BG-24 without content)
-    attachments: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((k) =>
+    attachments: indexes('/attachments').flatMap((k) =>
       get(`/attachments/${k}/id`)
         ? [{ kind: 'reference' as const, id: get(`/attachments/${k}/id`)!, description: get(`/attachments/${k}/description`) }]
         : [],
@@ -413,6 +426,7 @@ function buildInvoice(
       derived,
       valueOrigins: Object.fromEntries([...Object.keys(v).map((k) => [k, 'source']), ...derived.map((d) => [d.field, 'derived'])]),
       pdfProvenance: Object.fromEntries(Object.entries(v).map(([k, r]) => [k, r.region])) as Record<string, PdfRegion>,
+      ...(read.unmappedText ? { unmappedText: read.unmappedText } : {}),
       warnings: read.warnings,
     },
   };

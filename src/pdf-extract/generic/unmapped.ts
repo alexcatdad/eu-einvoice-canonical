@@ -1,13 +1,14 @@
 /**
- * Printed text that maps to no invoice field, so that none is dropped silently: every text segment on the pages read
- * that is neither inside the region of a value, problem or warning, nor the text of a value read elsewhere, nor a label
- * or heading. Vertically adjacent segments form one block; each block is one `unmapped-text` warning with its region.
- * The messages are generic: the text itself is not copied, as it may carry personal data.
+ * Text coverage of the invoice pages: every text run ends in exactly one place. A run inside the region of a value (or of
+ * a further text joined to a value, recorded by a `joined-text` warning) is in a field; a run of layout text (a label,
+ * column or section heading, title, page number, separator, or a value printed again) is consumed; every other run is
+ * unmapped and kept verbatim in `unmappedText` (canonical result only), with one `unmapped-text` warning per block.
+ * Problems and warnings never cover text: a value they report as not kept stays as unmapped text.
  */
-import type { PdfRegion, SourceWarning } from '../../canonical.js';
+import type { PdfRegion, PdfUnmappedText, SourceWarning } from '../../canonical.js';
 import { cmp, isZero } from '../../values.js';
 import type { GenericRead } from '../generic.js';
-import type { LayoutDocument } from '../layout.js';
+import type { LayoutDocument, Segment as LayoutSegment, TextRun } from '../layout.js';
 import { matchLabel, normalize } from '../se/index.js';
 import { fieldLabel, inlinePair, parseAmount, parseRate } from './fields.js';
 import { appendText, isFreeTextLabel } from './free-text.js';
@@ -16,15 +17,17 @@ import { columnOf, merge } from './items.js';
 const DATED = /^(?:\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?) +\p{L}/u;
 /** Document titles and page numbers. */
 const TITLE = /^(?:faktura|kreditfaktura|invoice|sida \d+(?: \(\d+\)| av \d+)?|\d+ ?\(\d+\))$/u;
-/** Section headings and titles in capitals ("SKATTESAMMANRÄKNING", "FAKTURA"). */
-const HEADING = /^[^\p{Ll}]*\p{Lu}{3}[^\p{Ll}]*$/u;
+/** Section headings and titles in capitals ("SKATTESAMMANRÄKNING", "FAKTURA"); never a text with a digit ("REF-2026-01"). */
+const HEADING = /^[^\p{Ll}\d]*\p{Lu}{3}[^\p{Ll}\d]*$/u;
+const letters = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
 const compact = (s: string) => normalize(s).replace(/[\s.:-]/gu, '');
 /** A document-level discount or fee total as Peppol viewers print it ("Summa rabatter (huvudnivå):"). */
 const LEVEL_TOTAL = /^summa (rabatter|avgifter) \(huvudnivå\):?$/u;
 /** A sentence on payment terms printed outside the labelled terms: late-payment interest, or the seller's general terms. */
 const TERMS = /dröjsmålsränta|efter förfallo(?:dagen|datum)\b.*\bränta\b|\ballmänna (?:avtals|leverans)?villkor\b/u;
 
-const inside = (a: PdfRegion, b: PdfRegion) => {
+/** Whether at least half of `a` lies in `b`, on the same page. */
+export const inside = (a: PdfRegion, b: PdfRegion) => {
   const w = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
   const h = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
   return a.page === b.page && w > 0 && h > 0 && w * h >= 0.5 * a.width * a.height;
@@ -41,14 +44,67 @@ function headings(text: string, parts = 3): boolean {
   return words.slice(1).some((_, i) => heading(words.slice(0, i + 1).join(' ')) && headings(words.slice(i + 1).join(' '), parts - 1));
 }
 
-/** The text segments on the pages read that map to no field, in reading order. */
-export function unmappedSegments(layout: LayoutDocument, read: GenericRead): Segment[] {
-  const used = [
-    ...Object.values(read.values).map((v) => v.region),
-    ...[...read.problems, ...read.warnings].map((p) => p.region),
-    ...(read.consumed ?? []),
-  ].filter((r): r is PdfRegion => !!r);
+export type TextCoverage = 'field' | 'consumed' | 'unmapped';
+
+/** One text segment of an invoice page and where each of its runs ended, in the order of `segment.runs`. */
+export interface CoveredSegment {
+  page: number;
+  segment: LayoutSegment;
+  kinds: TextCoverage[];
+}
+
+const box = (page: number, b: { x: number; y: number; width: number; height: number }): PdfRegion => ({
+  page,
+  x: b.x,
+  y: b.y,
+  width: b.width,
+  height: b.height,
+});
+
+/**
+ * How the field at `pointer` holding `value` holds the printed `run`: whole when the value holds the run (after a
+ * label: "Telefon: 010-000 00 00"), by digits for a value held normalised ("1 250,00 kr", "20.03.2026") or as the name
+ * printed with a code ("(Standard)" after the VAT category "S"); in part when the run holds the value (a footer line
+ * with several values).
+ */
+function textHeld(pointer: string, value: string, run: string): 'whole' | 'part' | undefined {
+  if (/\/(?:categoryCode|meansCode)$/u.test(pointer) && /^\([^()]+\)[,.]?$/u.test(run.trim())) return 'whole';
+  const t = letters(run.replace(/^[^:]{1,40}:\s*/u, ''));
+  const v = letters(value);
+  const d = t.replace(/\D/gu, '');
+  if ((!!t && v.includes(t)) || (!!d && t.length - d.length <= 3 && value.replace(/\D/gu, '').includes(d))) return 'whole';
+  return v.length >= 2 && letters(run).includes(v) ? 'part' : undefined;
+}
+
+/**
+ * Whether the fields whose regions hold a printed run hold its text: one holds it whole, or the values held in part
+ * leave only labels, units and separators (no number of three digits or more: another fact in the same run).
+ */
+export function runInFields(fields: readonly { pointer: string; value: string }[], run: string): boolean {
+  const parts: string[] = [];
+  for (const f of fields) {
+    const held = textHeld(f.pointer, f.value, run);
+    if (held === 'whole') return true;
+    if (held === 'part') parts.push(letters(f.value));
+  }
+  let rest = letters(run);
+  for (const p of parts.sort((x, y) => y.length - x.length)) rest = rest.split(p).join('');
+  return parts.length > 0 && !/\d{3}/u.test(rest);
+}
+
+/** Where every text run on the invoice pages (all pages, or the first `read.pages`) ended, segment by segment. */
+export function textCoverage(layout: LayoutDocument, read: GenericRead): CoveredSegment[] {
   const v = read.values;
+  // Each value's region, and the region of each further text joined to it, with the text the value holds
+  const fields = [
+    ...Object.entries(v).map(([pointer, x]) => ({ pointer, region: x.region, value: x.value })),
+    ...read.warnings.flatMap((w) =>
+      w.code === 'joined-text' && w.region && w.field && v[w.field]
+        ? [{ pointer: w.field, region: w.region, value: v[w.field].value }]
+        : [],
+    ),
+  ];
+  const consumed = [...(read.consumed ?? [])];
   // A zero document-level discount or fee total, where none is read: it states what the result holds
   const none = (key: string) => !v[`/totals/${key}`] || isZero(v[`/totals/${key}`].value);
   for (const p of layout.pages)
@@ -57,7 +113,7 @@ export function unmappedSegments(layout: LayoutDocument, read: GenericRead): Seg
       const kind = LEVEL_TOTAL.exec(normalize(label?.text ?? ''))?.[1];
       const a = amount && parseAmount(amount.text);
       if (kind && !rest.length && a && isZero(a) && none(kind === 'rabatter' ? 'allowanceTotal' : 'chargeTotal'))
-        used.push(...[label, amount].map((s) => ({ page: p.number, x: s.x, y: s.y, width: s.width, height: s.height })));
+        consumed.push(...[label, amount].map((s) => box(p.number, s)));
     }
   const postal = (p: string) =>
     v[`${p}/address/postalCode`] ? [`${v[`${p}/address/postalCode`].value} ${v[`${p}/address/city`]?.value ?? ''}`] : [];
@@ -85,34 +141,65 @@ export function unmappedSegments(layout: LayoutDocument, read: GenericRead): Seg
     const q = m && parseAmount(m[1]);
     return !!q && quantities.some((x) => x.region.page !== page && cmp(q, x.value) === 0);
   };
-  // A whole text that is a label or column heading, a section heading, or a value read elsewhere ("Label: value" too)
+  // A label or column heading on its own
+  const label = (text: string) => !!fieldLabel(text) || !!matchLabel(text) || !!columnOf(text) || isFreeTextLabel(text);
+  // Layout text: no letter or digit, a label or column heading, a section heading, or a value read elsewhere ("Label: value" too)
   const known = (printed: string, page: number): boolean => {
     // "Organisationsnummer: 5560000001 [0007]": the scheme suffix aside
     const text = printed.replace(/\s*\[[0-9A-Z]{2,4}\]$/u, '');
     const pair = /^([^:]{2,40}):\s*(\S.*)$/u.exec(text);
     return (
+      !/[\p{L}\p{N}]/u.test(text) ||
       texts.has(compact(text)) ||
       isAmount(text, page) ||
       isQuantity(text, page) ||
-      !!fieldLabel(text) ||
-      !!matchLabel(text) ||
-      !!columnOf(text) ||
+      label(text) ||
       HEADING.test(text) ||
       TITLE.test(normalize(text)) ||
-      isFreeTextLabel(text) ||
       texts.has(compact(inlinePair(text)?.value ?? pair?.[2] ?? '')) ||
       partOf(text) ||
       headings(text)
     );
   };
-  return layout.pages
-    .slice(0, read.pages ?? layout.pages.length)
-    .flatMap((p) =>
-      p.lines.flatMap((l) =>
-        l.segments.map((s) => ({ page: p.number, x: s.x, y: s.y, width: s.width, height: s.height, text: s.text.trim() })),
-      ),
-    )
-    .filter((s) => /[\p{L}\p{N}]/u.test(s.text) && !used.some((r) => inside(s, r)) && !known(s.text, s.page))
+  return layout.pages.slice(0, read.pages ?? layout.pages.length).flatMap((p) =>
+    p.lines.flatMap((l) =>
+      l.segments.map((segment) => {
+        const layoutText = known(segment.text.trim(), p.number);
+        const kinds = segment.runs.map((r): TextCoverage => {
+          const at = box(p.number, r);
+          // In a field: in the field's region, and the field holds the run's text
+          if (
+            runInFields(
+              fields.filter((f) => inside(at, f.region)),
+              r.text,
+            )
+          )
+            return 'field';
+          // Layout text: the segment, or a label printed as a run of it ("Anteckning:" before a note's text)
+          return layoutText || label(r.text.trim()) || consumed.some((c) => inside(at, c)) ? 'consumed' : 'unmapped';
+        });
+        return { page: p.number, segment, kinds };
+      }),
+    ),
+  );
+}
+
+/** Joins runs of one segment with a space where they do not touch, as the layout model does. */
+const joinRuns = (runs: TextRun[]) =>
+  runs
+    .map((r, i) => (i && r.x - (runs[i - 1].x + runs[i - 1].width) > 0.2 * r.fontSize ? ' ' : '') + r.text)
+    .join('')
+    .trim();
+
+/** The text segments (or their runs) on the invoice pages that map to no field and are not layout text, in reading order. */
+export function unmappedSegments(layout: LayoutDocument, read: GenericRead): Segment[] {
+  return textCoverage(layout, read)
+    .flatMap(({ page, segment, kinds }) => {
+      const runs = segment.runs.filter((_, i) => kinds[i] === 'unmapped');
+      if (!runs.length) return [];
+      const text = runs.length === segment.runs.length ? segment.text.trim() : joinRuns(runs);
+      return [{ ...box(page, runs.length === segment.runs.length ? segment : merge(runs.map((r) => box(page, r)))), text }];
+    })
     .sort((a, b) => a.page - b.page || a.y - b.y || a.x - b.x);
 }
 
@@ -161,9 +248,12 @@ export function remarkNote(layout: LayoutDocument, read: GenericRead): GenericRe
   return { ...read, values };
 }
 
-/** Adds one `unmapped-text` warning per block of vertically adjacent unmapped segments in a column. */
+/**
+ * Keeps each block of vertically adjacent unmapped segments in a column verbatim in `unmappedText` (one line per segment),
+ * with one `unmapped-text` warning pointing at it. The warning message does not copy the text.
+ */
 export function unmappedText(layout: LayoutDocument, read: GenericRead): GenericRead {
-  const blocks: { region: PdfRegion; lines: number; last: Segment }[] = [];
+  const blocks: { region: PdfRegion; lines: string[]; last: Segment }[] = [];
   for (const s of unmappedSegments(layout, read)) {
     const block = [...blocks]
       .reverse()
@@ -172,16 +262,18 @@ export function unmappedText(layout: LayoutDocument, read: GenericRead): Generic
       );
     if (block) {
       block.region = merge([block.region, s]);
-      block.lines++;
+      block.lines.push(s.text);
       block.last = s;
-    } else blocks.push({ region: merge([s]), lines: 1, last: s });
+    } else blocks.push({ region: merge([s]), lines: [s.text], last: s });
   }
-  const warnings: SourceWarning[] = blocks.map((b) => ({
+  const kept: PdfUnmappedText[] = blocks.map((b) => ({ text: b.lines.join('\n'), region: b.region }));
+  const warnings: SourceWarning[] = blocks.map((b, i) => ({
     code: 'unmapped-text',
-    message: `Printed text that maps to no invoice field (${b.lines} text segment${b.lines > 1 ? 's' : ''})`,
+    field: `/source/unmappedText/${i}`,
+    message: `Printed text that maps to no invoice field (${b.lines.length} text segment${b.lines.length > 1 ? 's' : ''}), kept as printed`,
     region: b.region,
   }));
-  return { ...read, warnings: [...read.warnings, ...warnings] };
+  return { ...read, warnings: [...read.warnings, ...warnings], ...(kept.length ? { unmappedText: kept } : {}) };
 }
 
 /**

@@ -54,6 +54,7 @@ export type FieldKey =
   | 'buyerPhone'
   | 'buyerEmail'
   | 'invoicedObject'
+  | 'accountingRef'
   | 'bankName';
 
 /** Labels the shared lexicon does not cover: address blocks, fees and discounts beside the totals, VAT base. */
@@ -89,6 +90,8 @@ const BUYER: [FieldKey, RegExp][] = [
   ['buyerReference', /^(?:er referens(?:kod)?|beställarreferens|köparens referens)$/u],
   ['buyerContact', /^(?:er|kundens) kontakt(?:person)?$/u],
   ['orderReference', /^(?:ert (?:beställnings|order) ?(?:nr|nummer)|orderreferens)$/u],
+  // The buyer's accounting reference (BT-19)
+  ['accountingRef', /^konteringsreferens$/u],
   ['buyerOrgNumber', /^(?:ert|kundens|köparens) org(?:anisations)?[ .:-]{0,3}(?:nr|nummer)$/u],
   [
     'buyerVatNumber',
@@ -294,9 +297,15 @@ export function parseField(key: FieldKey, raw: string): Parsed | undefined {
       return undefined;
     // Free text, but never another label ("Vår referens", "Betalningsvillkor:"); an order number has a digit
     case 'buyerReference':
+    case 'accountingRef':
     case 'orderReference':
     case 'invoicedObject':
-      return s && s.length <= 60 && !/:$/u.test(s) && !fieldLabel(s) && !findLabels(s).length && (key === 'buyerReference' || /\d/u.test(s))
+      return s &&
+        s.length <= 60 &&
+        !/:$/u.test(s) &&
+        !fieldLabel(s) &&
+        !findLabels(s).length &&
+        (key === 'buyerReference' || key === 'accountingRef' || /\d/u.test(s))
         ? { value: s }
         : undefined;
     // Names and other free text: never another label

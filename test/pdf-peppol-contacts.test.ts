@@ -34,7 +34,7 @@ test('contact blocks, party IDs, invoiced object, document reference, means text
     email: 'kundtjanst@provhiss.invalid',
   });
   expect(inv.seller.identifiers).toEqual([{ value: '9999999000010', schemeId: '0088' }]);
-  // The customer number is the buyer identifier; BT-46 holds one, so the printed GLN is reported, not kept
+  // The customer number is the buyer identifier; BT-46 holds one, so the printed GLN is reported and kept as unmapped text
   expect(inv.buyer.identifiers).toEqual([{ value: 'K-541' }]);
   expect(inv.source.warnings).toContainEqual(expect.objectContaining({ code: 'ambiguous', field: '/buyer/identifiers' }));
   expect(inv.buyer.vatId).toBe('SE999999011301');
@@ -49,8 +49,14 @@ test('contact blocks, party IDs, invoiced object, document reference, means text
   );
   expect(inv.notes).toEqual([{ text: 'Avser besiktning 2026\nProvgatan 3, hiss A\nBank: Testbanken' }]);
   expect(inv.seller.additionalLegalInfo).toBe('Besöksadress: Provgatan 9');
-  // Only the issuer's remark under its item table header has no field
-  expect(unmapped(inv).map((w) => w.region?.page)).toEqual([2]);
+  // Text with no field is kept verbatim: the second buyer ID, the attached file's type and the issuer's remark
+  expect(unmapped(inv).map((w) => w.region?.page)).toEqual([1, 1, 2]);
+  expect(inv.source.unmappedText?.map((u) => u.text)).toEqual([
+    'ID: 9999999000034 [0088]',
+    '- Filtyp: application/pdf',
+    'Från och med i år skickar vi fakturor i ny form.',
+  ]);
+  expect(toUbl(inv)).not.toContain('9999999000034');
 
   const ubl = toUbl(inv);
   expect(ubl).toContain('<cbc:ID schemeID="0088">9999999000010</cbc:ID>');

@@ -10,14 +10,16 @@ import { type FieldKey, type Parsed, parseField } from './fields.js';
 
 const HEADING = /^(köparens|säljarens) kontakt$/u;
 const QUESTIONS = /^frågor ang(?:ående|\.)? fakturan$/u;
-const LABELS: [RegExp, 'name' | 'phone' | 'email'][] = [
+const LABELS: [RegExp, 'name' | 'phone' | 'email' | 'accountingRef'][] = [
   [/^kontakt(?:person)?$/u, 'name'],
+  // The buyer's accounting reference (BT-19), printed in the buyer's contact block
+  [/^konteringsreferens$/u, 'accountingRef'],
   [/^(?:telefon(?:nummer)?|tfn|tel)$/u, 'phone'],
   [/^(?:e-?post(?:adress)?|e-?mail)$/u, 'email'],
 ];
 const KEYS = {
-  buyer: { name: 'buyerContact', phone: 'buyerPhone', email: 'buyerEmail' },
-  seller: { name: 'sellerContact', phone: 'phone', email: 'email' },
+  buyer: { name: 'buyerContact', phone: 'buyerPhone', email: 'buyerEmail', accountingRef: 'accountingRef' },
+  seller: { name: 'sellerContact', phone: 'phone', email: 'email', accountingRef: 'accountingRef' },
 } as const satisfies Record<string, Record<string, FieldKey>>;
 /** A heading in capitals ends a block; a reference such as "REF-2026-01" does not. */
 const CAPITALS = /^[^\p{Ll}\d]*\p{Lu}{3}[^\p{Ll}\d]*$/u;
