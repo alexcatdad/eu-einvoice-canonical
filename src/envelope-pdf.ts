@@ -1,4 +1,7 @@
-/** PDF/A-3 attachment extraction. Loaded on demand by envelope.ts so pdf-lib stays out of the initial bundle. */
+/**
+ * PDF/A-3 attachment extraction, and page copying for PDF text extraction. Loaded on demand by envelope.ts and
+ * pdf-extract/attachment.ts, so pdf-lib stays out of the initial bundle and in one chunk.
+ */
 import { Inflate, Unzlib } from 'fflate';
 
 import { PDFArray, PDFDict, PDFDocument, PDFHexString, PDFName, type PDFObject, PDFRawStream, PDFString } from 'pdf-lib';
@@ -9,6 +12,15 @@ export interface PdfCtx {
   out: UnwrapResult;
   limits: UnwrapLimits;
   unpacked: number;
+}
+
+/** Pages `from` to `to` (1-based) of a PDF, unchanged, as a new PDF. Deterministic: no dates or producer are added. */
+export async function copyPdfPages(bytes: Uint8Array, from: number, to: number): Promise<Uint8Array> {
+  const source = await PDFDocument.load(bytes, { updateMetadata: false });
+  const out = await PDFDocument.create({ updateMetadata: false });
+  const indices = Array.from({ length: to - from + 1 }, (_, i) => from - 1 + i);
+  for (const page of await out.copyPages(source, indices)) out.addPage(page);
+  return out.save();
 }
 
 export async function pdfAttachments(

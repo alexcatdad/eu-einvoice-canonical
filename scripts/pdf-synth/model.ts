@@ -4,6 +4,7 @@
  */
 import { containsPersonalNumber, luhn, parseGln, parseIban } from '../../src/pdf-extract/se/identifiers.js';
 import type { Truth } from '../pdf-eval/score.js';
+import { buildConstruction, type Construction } from './construction.js';
 import { type Layout, type Placed, placeLayout } from './layouts.js';
 
 export type Renderer = 'docx' | 'xlsx' | 'pdflib';
@@ -77,6 +78,8 @@ export interface CaseSpec {
   invoiceNote?: string[];
   /** Fixed layouts: the payment terms text (BT-20) on the Peppol viewer page and on the issuer page. Default "30 dgr netto". */
   paymentTerms?: { peppol?: string; issuer?: string };
+  /** A multi-page construction invoice with attached documents (construction.ts); `lines` is then unused. */
+  construction?: Construction;
 }
 
 /** What the page shows. Renderers lay this out and add nothing. */
@@ -123,6 +126,7 @@ export interface Model {
 }
 
 export function build(spec: CaseSpec): Model {
+  if (spec.construction) return buildConstruction(spec);
   validate(spec);
   if (spec.document === 'reminder') return { spec, printed: reminder(spec) };
   const s = spec.seller;

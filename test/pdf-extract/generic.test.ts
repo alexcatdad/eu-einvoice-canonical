@@ -5,13 +5,19 @@ import { Ajv2020 } from 'ajv/dist/2020.js';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import { type CanonicalInvoice, effectiveSign } from '../../src/canonical.js';
 import { convert, schemaVersion } from '../../src/index.js';
+import { attachment } from '../../src/pdf-extract/attachment.js';
+import { type GenericRead, itemValues } from '../../src/pdf-extract/generic.js';
 import { extractPdfInvoice, type PdfExtraction } from '../../src/pdf-extract/index.js';
+import { analyseLines } from '../../src/relations/rules.js';
+import { toDecimal } from '../../src/values.js';
 import { toUbl } from '../../src/writers/ubl.js';
 
 /** Synthetic identifiers with valid check digits; no real company. */
 const ID = { org: '559900-1236', vat: 'SE559900123601', bankgiro: '123-4566', ocr: '12345678903' };
 
 type Text = [x: number, y: number, text: string, size?: number];
+/** Every text the base page prints (filled in by `invoicePdf`), to blank a page. */
+const ALL: string[] = [];
 
 /** A Swedish invoice drawn with pdf-lib; `edit` replaces or drops texts by their content. `more` adds pages, each edited the same way. */
 // Edits match texts by content, so texts added by a test differ from the ones it removes (e.g. "Moms%" for "Moms %").
@@ -72,6 +78,7 @@ async function invoicePdf(
     [200, 736, 'OCR'],
     [230, 736, ID.ocr],
   ];
+  if (!ALL.length) ALL.push(...texts.map((t) => t[2]));
   const doc = await PDFDocument.create();
   const font = await doc.embedFont(StandardFonts.Helvetica);
   for (const p of [{ edit, extra }, ...more]) {
@@ -700,5 +707,128 @@ describe('generic PDF invoice extraction', () => {
     const doc = await PDFDocument.create();
     doc.addPage().drawText('Hej', { font: await doc.embedFont(StandardFonts.Helvetica) });
     expect(await extract(await doc.save())).toMatchObject({ status: 'unsupported' });
+  }, 30000);
+});
+
+describe('item rows without an amount, page numbering and attached pages', () => {
+  test('a fee row under an item ("Avgift" with a unit price) included in its amount is a line charge (BG-28), not a line', async () => {
+    const inv = ok(
+      await extract(
+        await invoicePdf({ '500,00': '475,00' }, [
+          [60, 226, 'Avgift'],
+          [400, 226, '50,00'],
+        ]),
+      ),
+    );
+    expect(inv.lines).toHaveLength(2);
+    expect(inv.lines[1]).toMatchObject({
+      quantity: '2',
+      price: { net: '475.00' },
+      netAmount: '1000.00',
+      charges: [{ amount: '50.00', reason: 'Avgift' }],
+    });
+    expect(inv.source.pdfProvenance?.['/lines/1/charges/0/amount']).toMatchObject({ page: 1, x: 400 });
+    // A fee that is not part of the amount above is no charge; its row stays reported
+    const other = ok(
+      await extract(
+        await invoicePdf({}, [
+          [60, 226, 'Avgift'],
+          [400, 226, '50,00'],
+        ]),
+      ),
+    );
+    expect(other.lines[1].charges).toEqual([]);
+    expect(other.source.warnings.some((w) => w.code === 'unmapped-text' && Math.abs((w.region?.y ?? 0) - 226) < 6)).toBe(true);
+  }, 30000);
+
+  test('a heading priced 0,00 is a line of amount 0 with quantity 0, marked derived, and the heading role in relations', async () => {
+    const inv = ok(
+      await extract(
+        await invoicePdf({}, [
+          [60, 226, 'ÖVRIGT'],
+          [400, 226, '0,00'],
+        ]),
+      ),
+    );
+    expect(inv.lines[2]).toMatchObject({ quantity: '0', price: { net: '0.00' }, netAmount: '0.00', item: { name: 'ÖVRIGT' } });
+    expect(inv.source.valueOrigins?.['/lines/2/netAmount']).toBe('derived');
+    expect(inv.source.valueOrigins?.['/lines/2/item/name']).toBe('source');
+    expect(analyseLines(inv).lineRoles['3']).toBe('heading');
+  }, 30000);
+
+  test('one order number under every line is the purchase order reference (BT-13); different ones stay on their lines (BT-132)', () => {
+    const at = { page: 1, x: 0, y: 0, width: 1, height: 1 };
+    const values = (orders: string[]) => {
+      const read = { values: {}, problems: [], warnings: [] } as Pick<GenericRead, 'values' | 'problems' | 'warnings' | 'defaults'>;
+      itemValues(
+        orders.map((o) => ({
+          amount: { value: toDecimal('1.00'), region: at },
+          name: { value: 'x', region: at },
+          orderRef: { value: o, region: at },
+        })),
+        read,
+      );
+      return read.values;
+    };
+    const same = values(['AO-1', 'AO-1']);
+    expect(same['/purchaseOrderRef']?.value).toBe('AO-1');
+    expect(same['/lines/0/orderLineRef']).toBeUndefined();
+    const different = values(['AO-1', 'AO-2']);
+    expect(different['/purchaseOrderRef']).toBeUndefined();
+    expect([different['/lines/0/orderLineRef']?.value, different['/lines/1/orderLineRef']?.value]).toEqual(['AO-1', 'AO-2']);
+    expect(different['/lines/1/national/orderReference']?.value).toBe('AO-2');
+  });
+
+  test('an identifier printed with two different values (customer number) is not kept, with a warning only', async () => {
+    const inv = ok(
+      await extract(
+        await invoicePdf({}, [
+          [60, 400, 'Kundnr: K-101'],
+          [60, 412, 'Kundnr: K-102'],
+        ]),
+      ),
+    );
+    expect(inv.buyer.identifiers).toEqual([]);
+    expect(inv.source.warnings).toContainEqual(expect.objectContaining({ code: 'ambiguous', field: '/buyer/identifiers/0/value' }));
+    expect(ok(await extract(await invoicePdf({}, [[60, 400, 'Kundnr: K-101']]))).buyer.identifiers).toEqual([{ value: 'K-101' }]);
+  }, 30000);
+
+  test('an OCR reference that is the invoice number without a check digit is kept with a warning, not a problem', async () => {
+    const inv = ok(await extract(await invoicePdf({ [ID.ocr]: '5001' })));
+    expect(inv.payments[0].remittanceInformation).toBe('5001');
+    expect(inv.source.warnings).toContainEqual(
+      expect.objectContaining({ code: 'identifier-check', field: '/payments/0/remittanceInformation' }),
+    );
+  }, 30000);
+
+  test('pages after those the page numbering counts are attached as one PDF (BG-24), unread and unchanged', async () => {
+    // Page 2 is a supplier invoice with its own invoice number; a third page has no text
+    const bytes = await invoicePdf(
+      {},
+      [[500, 20, 'Sida 1 av 1']],
+      [{ edit: { '5001': '9999' } }, { edit: Object.fromEntries(ALL.map((t) => [t, null])) }],
+    );
+    const inv = ok(await extract(bytes));
+    expect(inv.id).toBe('5001');
+    expect(inv.attachments).toHaveLength(1);
+    const [a] = inv.attachments;
+    if (a.kind !== 'embedded') throw new Error('not embedded');
+    expect(a).toMatchObject({
+      mimeCode: 'application/pdf',
+      filename: 'synthetic-attachment.pdf',
+      description: expect.stringContaining('Pages 2-3'),
+    });
+    const attached = await PDFDocument.load(Uint8Array.from(atob(a.base64), (c) => c.charCodeAt(0)));
+    expect(attached.getPageCount()).toBe(2);
+    expect(inv.source.derived.some((d) => d.field === '/attachments/0')).toBe(true);
+    // Deterministic: the same file gives the same attachment
+    const again = ok(await extract(bytes));
+    expect(again.attachments).toEqual(inv.attachments);
+    // Pages that cannot be copied give the problem that makes the result a draft, never an invoice without them
+    expect(await attachment(new Uint8Array([1, 2, 3]), 2, 3)).toEqual({
+      problem: expect.objectContaining({ code: 'attachment', field: '/attachments' }),
+    });
+    // Without the page numbering every page is read: two invoice numbers
+    expect((await extract(await invoicePdf({}, [], [{ edit: { '5001': '9999' } }]))).status).toBe('draft');
   }, 30000);
 });

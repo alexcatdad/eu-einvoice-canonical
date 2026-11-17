@@ -39,7 +39,17 @@ export interface GenericRead {
   warnings: SourceWarning[];
   /** Set by `buildExtraction` on a credit note printed with negative amounts, whose amounts it negated. */
   flipped?: true;
+  /** The late-payment interest as printed with its label ("Dröjsmålsränta 12 %"): part of the payment terms (BT-20), never VAT. */
+  lateInterest?: ReadValue;
 }
+
+/** Keys whose differently printed values are all kept, joined in reading order, instead of making the field ambiguous. */
+const SELLER_FOOTER = new Set<FieldKey>(['phone', 'email', 'legalInfo']);
+/** A label's own text: without a trailing colon, or without the value printed after its colon in the same cell. */
+const labelOf = (c: Cell) => c.text.replace(/\s*:.*$/u, '');
+/** Free text, joined when printed differently; the other text keys are identifiers, never joined. */
+const JOINED_KEYS = new Set<FieldKey>(['buyerContact', 'sellerContact', 'legalInfo']);
+const TEXT_KEYS = new Set<FieldKey>(['buyerId', 'buyerContact', 'sellerContact', 'phone', 'email', 'legalInfo', 'lateInterest']);
 
 const POINTER: Partial<Record<FieldKey, string>> = {
   id: '/id',
@@ -61,6 +71,12 @@ const POINTER: Partial<Record<FieldKey, string>> = {
   orderReference: '/purchaseOrderRef',
   buyerOrgNumber: '/buyer/legalRegistrationId/value',
   buyerVatNumber: '/buyer/vatId',
+  buyerId: '/buyer/identifiers/0/value',
+  buyerContact: '/buyer/contact/name',
+  sellerContact: '/seller/contact/name',
+  phone: '/seller/contact/phone',
+  email: '/seller/contact/email',
+  legalInfo: '/seller/additionalLegalInfo',
 };
 
 const TITLE = /^(?:faktura\p{L}*|kreditfaktura|invoice|kvitto|orderbekräftelse|sida \d.*|\d+ ?\(\d+\))$/u;
@@ -99,6 +115,14 @@ function readPages(layout: LayoutDocument): GenericRead {
   const rows = cellRows(layout);
   const problems: SourceWarning[] = [];
   const warnings: SourceWarning[] = [];
+  let lateInterest: ReadValue | undefined;
+  const identityRows = new Set(
+    rows
+      .filter((r) => r.some((c) => fieldLabel(c.text)?.keys.some((k) => k === 'orgNumber' || k === 'vatNumber' || k === 'bankgiro')))
+      .map((r) => r[0].line),
+  );
+  const inFooter = (c: Cell) =>
+    identityRows.has(c.line) || c.y > 0.75 * (layout.pages.find((p) => p.number === c.page)?.height ?? Infinity);
   const values: Record<string, ReadValue> = {};
   const lineTexts = rows.map((r) => r.map((c) => c.text).join('\t'));
   if (lineTexts.some((t) => isReminder(t)))
@@ -191,7 +215,7 @@ function readPages(layout: LayoutDocument): GenericRead {
       );
   }
   for (const [key, all] of found) {
-    if (key === 'vatRate' || key === 'vatBase') continue;
+    if (key === 'vatRate' || key === 'vatBase' || key === 'exemptBase') continue;
     const hits = key === 'vatTotal' ? all.filter((h) => !h.rate) : all;
     if (!hits.length) continue;
     if (key === 'lineNetTotal' && pricesIncludeVat) continue;
@@ -199,6 +223,42 @@ function readPages(layout: LayoutDocument): GenericRead {
     for (const h of hits) distinct.set('personal' in h.parsed ? '' : h.parsed.value, h);
     const pointer = key === 'bankgiro' || key === 'plusgiro' || key === 'iban' || key === 'bic' ? undefined : POINTER[key];
     const field = pointer ?? `/payments/0/${key}`;
+    // Contact details and free text printed differently in several places are all kept, in reading order
+    if (TEXT_KEYS.has(key)) {
+      // The seller's phone, e-mail and registered seat stand in a footer: low on the page, or beside the seller's identifiers
+      const own = SELLER_FOOTER.has(key) ? [...distinct.values()].filter((h) => inFooter(h.label)) : [...distinct.values()];
+      if (!own.length) continue;
+      const texts = own.map((h) => ({
+        value:
+          key === 'legalInfo' ? `${labelOf(h.label)}: ${(h.parsed as { value: string }).value}` : (h.parsed as { value: string }).value,
+        region: regionOfValue(h.value),
+        label: h.label,
+      }));
+      if (key === 'lateInterest') {
+        const [t] = texts;
+        lateInterest = { value: `${labelOf(t.label)} ${t.value}`, region: merge([regionOf(t.label), t.region]) };
+        continue;
+      }
+      // Identifiers printed with different values are not joined: none is kept, which does not stop an ok result
+      if (texts.length > 1 && !JOINED_KEYS.has(key)) {
+        warnings.push({
+          code: 'ambiguous',
+          field: pointer,
+          message: `Different values printed for ${key}; none is kept`,
+          region: texts[0].region,
+        });
+        continue;
+      }
+      values[pointer!] = { value: texts.map((t) => t.value).join('\n'), region: texts[0].region };
+      for (const t of texts.slice(1))
+        warnings.push({
+          code: 'joined-text',
+          field: pointer,
+          message: 'Another printed text for this field is kept after the first, on a new line',
+          region: t.region,
+        });
+      continue;
+    }
     if (distinct.size > 1) {
       problems.push({
         code: 'ambiguous',
@@ -221,8 +281,18 @@ function readPages(layout: LayoutDocument): GenericRead {
       continue;
     }
     const v = { value: h.parsed.value, region: regionOfValue(h.value) };
+    // An OCR reference that is the invoice number itself, without a check digit, is kept with a warning only
+    const ids = new Set((found.get('id') ?? []).map((i) => ('value' in i.parsed ? i.parsed.value : '')));
+    const invoiceNumber = key === 'ocr' && ids.size === 1 && ids.has(v.value);
     if (h.parsed.checkFailed)
-      problems.push({ code: 'identifier-check', field, message: `The ${key} fails its check digits; kept as printed`, region: v.region });
+      (invoiceNumber ? warnings : problems).push({
+        code: 'identifier-check',
+        field,
+        message: invoiceNumber
+          ? 'The OCR reference is the invoice number and has no valid check digit; kept as printed'
+          : `The ${key} fails its check digits; kept as printed`,
+        region: v.region,
+      });
     if (pointer) values[pointer] = v;
     if (key === 'orgNumber') values['/seller/legalRegistrationId/schemeId'] = { value: '0007', region: v.region };
     if (key === 'buyerOrgNumber') values['/buyer/legalRegistrationId/schemeId'] = { value: '0007', region: v.region };
@@ -261,7 +331,8 @@ function readPages(layout: LayoutDocument): GenericRead {
   // Item lines; several invoice numbers on the same pages means several invoices, whose lines are not mixed
   const several = new Set((found.get('id') ?? []).map((h) => ('value' in h.parsed ? h.parsed.value : ''))).size > 1;
   const items = several ? [] : tables.flatMap((t) => t.items);
-  itemValues(items, values, problems, warnings);
+  const defaults: NonNullable<GenericRead['defaults']> = {};
+  itemValues(items, { values, problems, warnings, defaults });
   if (!items.length && tables.length)
     problems.push({
       code: 'missing',
@@ -283,6 +354,7 @@ function readPages(layout: LayoutDocument): GenericRead {
   for (const a of addresses) if (a.key === 'sellerAddress') readAddress('/seller', a.label, rows, values, false);
   // A letterhead: the seller's address printed under its name
   if (sellerName && !values['/seller/address/postalCode']) readAddress('/seller', sellerName, rows, values, false, false);
+  if (!sellerName) letterhead(layout, rows, values);
   addressWindow(layout, rows, values);
   // "Godkänd för F-skatt" alone in a cell, or between "·" separators in a footer line; failing that, as a Peppol viewer
   // prints it: "ID för säljarens skatteregistrering: Godkänd för F-skatt [TAX]"
@@ -335,14 +407,26 @@ function readPages(layout: LayoutDocument): GenericRead {
       region: regionOf(pricesIncludeVatAt),
     });
 
-  return { values, problems, warnings, pricesIncludeVat, lineCount: items.length };
+  return {
+    values,
+    problems,
+    warnings,
+    pricesIncludeVat,
+    lineCount: items.length,
+    ...(Object.keys(defaults).length ? { defaults } : {}),
+    ...(lateInterest ? { lateInterest } : {}),
+  };
 }
 
 /**
  * Writes item lines as `/lines/k/...` values. Unlabelled text under an item is kept as its note: a problem when it may
  * belong to the description, a warning when it is a date only. A problem also where a net price is unclear.
  */
-export function itemValues(items: Item[], values: Record<string, ReadValue>, problems: SourceWarning[], warnings: SourceWarning[]) {
+export function itemValues(items: Item[], read: Pick<GenericRead, 'values' | 'problems' | 'warnings' | 'defaults'>) {
+  const { values, problems, warnings } = read;
+  read.defaults ??= {};
+  const defaults = read.defaults;
+  for (const k of Object.keys(defaults)) if (k.startsWith('/lines/')) delete defaults[k];
   items.forEach((item, i) => {
     const p = `/lines/${i}`;
     if (item.unclearNote)
@@ -360,12 +444,22 @@ export function itemValues(items: Item[], values: Record<string, ReadValue>, pro
         region: merge(item.datedNote),
       });
     if (item.name) values[`${p}/item/name`] = item.name;
+    if (item.sellerId) values[`${p}/item/sellerId`] = item.sellerId;
     if (item.quantity) values[`${p}/quantity`] = item.quantity;
     if (item.unitText) values[`${p}/unitText`] = item.unitText;
     if (item.price) values[`${p}/price/net`] = item.price;
     if (item.rate) values[`${p}/vat/rate`] = item.rate;
     if (item.note) values[`${p}/note`] = item.note;
-    values[`${p}/netAmount`] = item.amount;
+    if (item.charge) {
+      values[`${p}/charges/0/amount`] = item.charge.amount;
+      values[`${p}/charges/0/reason`] = item.charge.reason;
+    }
+    if (item.orderRef) values[`${p}/national/orderReference`] = item.orderRef;
+    if (item.zero) {
+      // No amount printed: a heading (no quantity) or a line priced at zero
+      defaults[`${p}/netAmount`] = { value: '0.00', rule: 'No line amount printed; unit price 0: line amount 0' };
+      if (item.zero.heading) defaults[`${p}/quantity`] = { value: '0', rule: 'Heading line (text and a zero price only): quantity 0' };
+    } else values[`${p}/netAmount`] = item.amount;
     if (item.discount)
       problems.push({
         code: 'line-discount',
@@ -374,6 +468,13 @@ export function itemValues(items: Item[], values: Record<string, ReadValue>, pro
         region: item.discount.region,
       });
   });
+  // One order number printed under every line is the purchase order reference (BT-13); different ones stay per line (BT-132)
+  const orders = items.flatMap((item) => (item.orderRef ? [item.orderRef] : []));
+  if (new Set(orders.map((o) => o.value)).size === 1 && !values['/purchaseOrderRef']) values['/purchaseOrderRef'] = orders[0];
+  else if (orders.length)
+    items.forEach((item, i) => {
+      if (item.orderRef && item.orderRef.value !== values['/purchaseOrderRef']?.value) values[`/lines/${i}/orderLineRef`] = item.orderRef;
+    });
 }
 
 /**
@@ -458,6 +559,44 @@ function findSellerName(layout: LayoutDocument, rows: Cell[][], buyerName: strin
 }
 
 /**
+ * A letterhead whose company name runs over several lines: at the top left of the first page, a stack of left-aligned
+ * lines ending in a postal line; the line above the postal line is the street (it has a digit) and the lines before it
+ * join to a company name.
+ */
+function letterhead(layout: LayoutDocument, rows: Cell[][], values: Record<string, ReadValue>) {
+  const first = layout.pages[0];
+  if (!first) return;
+  const stacks = rows
+    .flat()
+    .filter((c) => c.page === first.number && c.index === 0 && c.y < first.height * 0.2 && /\p{L}{2}/u.test(c.text) && !fieldLabel(c.text))
+    .flatMap((start) => {
+      const stack = [start];
+      for (let at = below(rows, start); at && stack.length < 6; at = below(rows, at)) {
+        if (Math.abs(at.x - start.x) > 2 || fieldLabel(at.text)) break;
+        stack.push(at);
+        if (POSTAL.test(at.text)) break;
+      }
+      const [street, postal] = stack.slice(-2);
+      const name = stack.slice(0, -2);
+      const text = name.map((c) => c.text).join(' ');
+      return name.length >= 2 &&
+        POSTAL.test(postal.text) &&
+        /\d/u.test(street.text) &&
+        COMPANY_FORM.test(normalize(text)) &&
+        text !== values['/buyer/name']?.value
+        ? [{ name, text, street, postal }]
+        : [];
+    });
+  if (stacks.length !== 1) return;
+  const [{ name, text, street, postal }] = stacks;
+  const m = POSTAL.exec(postal.text)!;
+  values['/seller/name'] = { value: text, region: merge(name.map(regionOf)) };
+  values['/seller/address/line1'] = { value: street.text, region: regionOf(street) };
+  values['/seller/address/postalCode'] = { value: `${m[1]} ${m[2]}`, region: regionOf(postal) };
+  values['/seller/address/city'] = { value: m[3], region: regionOf(postal) };
+}
+
+/**
  * The buyer's block in an address window when no label names it: the one stack of left-aligned lines in the upper part
  * of the first page that starts with a company name and ends in a postal line, and is not the seller's.
  */
@@ -476,7 +615,13 @@ function addressWindow(layout: LayoutDocument, rows: Cell[][], values: Record<st
       }
       return [];
     })
-    .filter((b, _, all) => b[0].text !== values['/seller/name']?.value && !all.some((o) => o.indexOf(b[0]) > 0));
+    .filter(
+      (b, _, all) =>
+        b[0].text !== values['/seller/name']?.value &&
+        !all.some((o) => o.indexOf(b[0]) > 0) &&
+        // Not the seller's own letterhead
+        JSON.stringify(regionOf(b[b.length - 1])) !== JSON.stringify(values['/seller/address/postalCode']?.region),
+    );
   // The name, one or two street lines and the postal line
   if (blocks.length !== 1 || blocks[0].length < 3 || blocks[0].length > 4) return;
   const [name, ...rest] = blocks[0];

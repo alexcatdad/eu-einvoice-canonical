@@ -51,7 +51,9 @@ function blocks(rows: Cell[][], free: Cell[][], re: RegExp): Block[] {
     const column = lines[0]?.cell ?? cell;
     for (let at = column, n = 0; n < 12; n++) {
       const next = below(rows, at);
-      if (!next || isLabel(rows, next) || Math.abs(next.x - column.x) > 2) break;
+      // A cell with a field label left of it on its line is that label's value ("Förfallodatum 2026-04-30")
+      const left = next?.index ? rows.find((r) => r[0].line === next.line)?.[next.index - 1] : undefined;
+      if (!next || isLabel(rows, next) || Math.abs(next.x - column.x) > 2 || (left && fieldLabel(left.text))) break;
       lines.push({ text: next.text, cell: next });
       at = next;
     }
@@ -93,7 +95,13 @@ export function freeTextValues(layout: LayoutDocument, read: GenericRead): Gener
   });
   const values = { ...read.values };
   const warnings = [...read.warnings];
-  joined('/paymentTerms', blocks(rows, free, TERMS), values, warnings);
+  // The late-payment interest belongs to the payment terms
+  joined(
+    '/paymentTerms',
+    [...blocks(rows, free, TERMS), ...(read.lateInterest ? [{ text: read.lateInterest.value, region: read.lateInterest.region }] : [])],
+    values,
+    warnings,
+  );
   joined(values['/notes/0/text'] ? '/notes/1/text' : '/notes/0/text', blocks(rows, free, NOTE), values, warnings);
   return { ...read, values, warnings };
 }

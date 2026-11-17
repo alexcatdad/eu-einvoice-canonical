@@ -1,0 +1,477 @@
+{
+  "schemaVersion": 1,
+  "file": "docx-bygg-bilagor.pdf",
+  "sha256": "9976c2b18349e63391a8a1c98d0a93abf445e34a6d820dd65b34b9f4f6cf6db2",
+  "documentType": "invoice",
+  "typeCode": "380",
+  "invoicePages": [1, 2, 3],
+  "pricesIncludeVat": false,
+  "fields": {
+    "id": {
+      "value": "70418"
+    },
+    "issueDate": {
+      "value": "2026-03-20"
+    },
+    "dueDate": {
+      "value": "2026-04-19"
+    },
+    "currency": {
+      "value": "SEK"
+    },
+    "seller.name": {
+      "value": "Provservice VVS och Ventilation i Exempelstad Aktiebolag"
+    },
+    "seller.legalRegistrationId": {
+      "value": "9999990139"
+    },
+    "seller.vatId": {
+      "value": "SE999999013901"
+    },
+    "seller.taxRegistrationId": {
+      "value": "Godkänd för F-Skatt"
+    },
+    "buyer.name": {
+      "value": "Testbostäder i Provby AB"
+    },
+    "payee.name": {
+      "status": "absent"
+    },
+    "payment.bankgiro": {
+      "value": "99990103"
+    },
+    "payment.plusgiro": {
+      "status": "absent"
+    },
+    "payment.iban": {
+      "status": "absent"
+    },
+    "payment.bic": {
+      "status": "absent"
+    },
+    "payment.remittanceInformation": {
+      "value": "70418"
+    },
+    "totals.lineNetTotal": {
+      "status": "absent"
+    },
+    "totals.allowanceTotal": {
+      "status": "absent"
+    },
+    "totals.chargeTotal": {
+      "status": "absent"
+    },
+    "totals.taxExclusive": {
+      "value": "23809.02"
+    },
+    "totals.vatTotal": {
+      "status": "absent"
+    },
+    "totals.taxInclusive": {
+      "status": "absent"
+    },
+    "totals.prepaid": {
+      "status": "absent"
+    },
+    "totals.prepaidNote": {
+      "status": "absent"
+    },
+    "totals.rounding": {
+      "value": "-0.02"
+    },
+    "totals.payable": {
+      "value": "23809.00"
+    }
+  },
+  "vatBreakdown": {
+    "rows": [
+      {
+        "categoryCode": "AE",
+        "rate": {
+          "status": "absent"
+        },
+        "taxableAmount": {
+          "value": "23809.02"
+        },
+        "taxAmount": {
+          "status": "absent"
+        },
+        "exemptionReason": {
+          "value": "Omvänd betalningsskyldighet"
+        }
+      }
+    ]
+  },
+  "lines": {
+    "rows": [
+      {
+        "item.name": {
+          "value": "MATERIAL OCH UNDERLEVERANTÖRER"
+        },
+        "quantity": {
+          "status": "absent"
+        },
+        "unitText": {
+          "status": "absent"
+        },
+        "price.net": {
+          "value": "0.00"
+        },
+        "vat.rate": {
+          "status": "absent"
+        },
+        "netAmount": {
+          "status": "absent"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Maskinhyra"
+        },
+        "quantity": {
+          "status": "absent"
+        },
+        "unitText": {
+          "status": "absent"
+        },
+        "price.net": {
+          "value": "0.00"
+        },
+        "vat.rate": {
+          "status": "absent"
+        },
+        "netAmount": {
+          "status": "absent"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Exempel Liftuthyrning AB [61504]"
+        },
+        "quantity": {
+          "value": "1.00"
+        },
+        "unitText": {
+          "status": "absent"
+        },
+        "price.net": {
+          "value": "2350.00"
+        },
+        "vat.rate": {
+          "status": "absent"
+        },
+        "netAmount": {
+          "value": "2444.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Rör och ventilationsmaterial"
+        },
+        "quantity": {
+          "status": "absent"
+        },
+        "unitText": {
+          "status": "absent"
+        },
+        "price.net": {
+          "value": "0.00"
+        },
+        "vat.rate": {
+          "status": "absent"
+        },
+        "netAmount": {
+          "status": "absent"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Prov VVS-grossist AB [88213]"
+        },
+        "quantity": {
+          "value": "1.00"
+        },
+        "unitText": {
+          "status": "absent"
+        },
+        "price.net": {
+          "value": "6725.50"
+        },
+        "vat.rate": {
+          "status": "absent"
+        },
+        "netAmount": {
+          "value": "6994.52"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Underleverantör ventilation"
+        },
+        "quantity": {
+          "status": "absent"
+        },
+        "unitText": {
+          "status": "absent"
+        },
+        "price.net": {
+          "value": "0.00"
+        },
+        "vat.rate": {
+          "status": "absent"
+        },
+        "netAmount": {
+          "status": "absent"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Testventilation i Provby AB [4410]"
+        },
+        "quantity": {
+          "value": "1.00"
+        },
+        "unitText": {
+          "status": "absent"
+        },
+        "price.net": {
+          "value": "9800.00"
+        },
+        "vat.rate": {
+          "status": "absent"
+        },
+        "netAmount": {
+          "value": "10192.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "ARBETSTID"
+        },
+        "quantity": {
+          "status": "absent"
+        },
+        "unitText": {
+          "status": "absent"
+        },
+        "price.net": {
+          "value": "0.00"
+        },
+        "vat.rate": {
+          "status": "absent"
+        },
+        "netAmount": {
+          "status": "absent"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Anna"
+        },
+        "quantity": {
+          "status": "absent"
+        },
+        "unitText": {
+          "status": "absent"
+        },
+        "price.net": {
+          "value": "0.00"
+        },
+        "vat.rate": {
+          "status": "absent"
+        },
+        "netAmount": {
+          "status": "absent"
+        }
+      },
+      {
+        "item.name": {
+          "value": "2026-03-02, Planering och beställning av material inför start"
+        },
+        "quantity": {
+          "value": "1.00"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "0.00"
+        },
+        "vat.rate": {
+          "status": "absent"
+        },
+        "netAmount": {
+          "status": "absent"
+        }
+      },
+      {
+        "item.name": {
+          "value": "2026-03-03, Inmätning av ytor i trapphus och källarförråd"
+        },
+        "quantity": {
+          "value": "2.00"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "655.00"
+        },
+        "vat.rate": {
+          "status": "absent"
+        },
+        "netAmount": {
+          "value": "1310.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Bertil"
+        },
+        "quantity": {
+          "status": "absent"
+        },
+        "unitText": {
+          "status": "absent"
+        },
+        "price.net": {
+          "value": "0.00"
+        },
+        "vat.rate": {
+          "status": "absent"
+        },
+        "netAmount": {
+          "status": "absent"
+        }
+      },
+      {
+        "item.name": {
+          "value": "2026-03-09, Byte av ventilationsdon i lägenhet 3 och 4"
+        },
+        "quantity": {
+          "value": "3.00"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "325.00"
+        },
+        "vat.rate": {
+          "status": "absent"
+        },
+        "netAmount": {
+          "value": "975.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "2026-03-10, Injustering av flöden"
+        },
+        "quantity": {
+          "value": "1.50"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "325.00"
+        },
+        "vat.rate": {
+          "status": "absent"
+        },
+        "netAmount": {
+          "value": "487.50"
+        }
+      },
+      {
+        "item.name": {
+          "value": "2026-03-11, Slutkontroll och protokoll."
+        },
+        "quantity": {
+          "value": "2.00"
+        },
+        "unitText": {
+          "value": "tim"
+        },
+        "price.net": {
+          "value": "325.00"
+        },
+        "vat.rate": {
+          "status": "absent"
+        },
+        "netAmount": {
+          "value": "650.00"
+        }
+      },
+      {
+        "item.name": {
+          "value": "RAPPORTERAT I PROJEKTPORTAL"
+        },
+        "quantity": {
+          "status": "absent"
+        },
+        "unitText": {
+          "status": "absent"
+        },
+        "price.net": {
+          "value": "0.00"
+        },
+        "vat.rate": {
+          "status": "absent"
+        },
+        "netAmount": {
+          "status": "absent"
+        }
+      },
+      {
+        "item.name": {
+          "value": "P-14, Etapp ett"
+        },
+        "quantity": {
+          "status": "absent"
+        },
+        "unitText": {
+          "status": "absent"
+        },
+        "price.net": {
+          "value": "0.00"
+        },
+        "vat.rate": {
+          "status": "absent"
+        },
+        "netAmount": {
+          "status": "absent"
+        }
+      },
+      {
+        "item.name": {
+          "value": "Rörklammer 22 mm 10 st [2026-03-11]"
+        },
+        "quantity": {
+          "value": "4.00"
+        },
+        "unitText": {
+          "value": "st"
+        },
+        "price.net": {
+          "value": "189.00"
+        },
+        "vat.rate": {
+          "status": "absent"
+        },
+        "netAmount": {
+          "value": "756.00"
+        }
+      }
+    ]
+  },
+  "expectedProblems": [
+    {
+      "path": "fields.payment.remittanceInformation",
+      "kind": "identifier-check",
+      "detail": "OCR reference is the invoice number, no check digit"
+    }
+  ],
+  "notes": "Synthetic (scripts/pdf-synth): Word, 3-page maintenance invoice with attached supplier invoices: page numbering, repeated header and footer, two-row item header with order numbers, headings priced 0,00, fee rows included in re-invoiced costs, wrapped dated time lines, reverse charge (Ej momspl.), negative öresavrundning, dated remark under the amount due. One order number on every line: AO-77031."
+}

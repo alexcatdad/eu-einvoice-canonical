@@ -12,6 +12,7 @@ import { fieldLabel, inlinePair, parseAmount, parseRate } from './fields.js';
 import { isFreeTextLabel } from './free-text.js';
 import { columnOf, merge } from './items.js';
 
+const DATED = /^(?:\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?) +\p{L}/u;
 /** Document titles and page numbers. */
 const TITLE = /^(?:faktura|kreditfaktura|invoice|sida \d+(?: \(\d+\)| av \d+)?|\d+ ?\(\d+\))$/u;
 /** Section headings and titles in capitals ("SKATTESAMMANRÄKNING", "FAKTURA"). */
@@ -26,6 +27,15 @@ const inside = (a: PdfRegion, b: PdfRegion) => {
 
 type Segment = PdfRegion & { text: string };
 
+/** One heading, or two or three headings printed so close that they form one segment ("À-pris Rabatt"). */
+const heading = (t: string) => !!columnOf(t) || !!fieldLabel(t) || !!matchLabel(t);
+function headings(text: string, parts = 3): boolean {
+  const words = text.split(' ');
+  if (heading(text)) return true;
+  if (parts === 1 || words.length < 2) return false;
+  return words.slice(1).some((_, i) => heading(words.slice(0, i + 1).join(' ')) && headings(words.slice(i + 1).join(' '), parts - 1));
+}
+
 /** The text segments on the pages read that map to no field, in reading order. */
 export function unmappedSegments(layout: LayoutDocument, read: GenericRead): Segment[] {
   const used = [...Object.values(read.values).map((v) => v.region), ...[...read.problems, ...read.warnings].map((p) => p.region)].filter(
@@ -39,9 +49,14 @@ export function unmappedSegments(layout: LayoutDocument, read: GenericRead): Seg
       compact(t).length >= 2 ? [compact(t)] : [],
     ),
   );
+  // Part of a value printed again elsewhere, split differently: a name over two lines, terms repeated on every page
+  const partOf = (t: string) => {
+    const c = compact(t);
+    return c.length >= 5 && [...texts].some((v) => v.length > c.length && v.includes(c));
+  };
   const amounts = new Set<string>(Object.values(read.values).flatMap((v) => parseAmount(v.value) ?? []));
   // A whole text that is a label or column heading, a section heading, or a value read elsewhere ("Label: value" too)
-  const known = (printed: string) => {
+  const known = (printed: string): boolean => {
     // "Organisationsnummer: 5560000001 [0007]": the scheme suffix aside
     const text = printed.replace(/\s*\[[0-9A-Z]{2,4}\]$/u, '');
     const pair = /^([^:]{2,40}):\s*(\S.*)$/u.exec(text);
@@ -54,7 +69,9 @@ export function unmappedSegments(layout: LayoutDocument, read: GenericRead): Seg
       HEADING.test(text) ||
       TITLE.test(normalize(text)) ||
       isFreeTextLabel(text) ||
-      texts.has(compact(inlinePair(text)?.value ?? pair?.[2] ?? ''))
+      texts.has(compact(inlinePair(text)?.value ?? pair?.[2] ?? '')) ||
+      partOf(text) ||
+      headings(text)
     );
   };
   return layout.pages
@@ -66,6 +83,51 @@ export function unmappedSegments(layout: LayoutDocument, read: GenericRead): Seg
     )
     .filter((s) => /[\p{L}\p{N}]/u.test(s.text) && !used.some((r) => inside(s, r)) && !known(s.text))
     .sort((a, b) => a.page - b.page || a.y - b.y || a.x - b.x);
+}
+
+/**
+ * A dated remark printed right under the amount due ("2026-03-20 ab"): when the text that maps to no field there, down to
+ * the first wide gap, is one line of a date followed by text, it is an invoice note (BT-22). Joined to a note already
+ * read, as Peppol allows one invoice note.
+ */
+export function remarkNote(layout: LayoutDocument, read: GenericRead): GenericRead {
+  const due = read.values['/totals/payable']?.region;
+  if (!due) return read;
+  const page = layout.pages.find((p) => p.number === due.page);
+  const free = new Set(unmappedSegments(layout, read).map((s) => `${s.page}:${s.x}:${s.y}`));
+  const lines: Segment[] = [];
+  let bottom = due.y + due.height;
+  for (const line of page?.lines ?? []) {
+    if (line.y < bottom - 1) continue;
+    if (line.y - bottom > 1.6 * Math.max(line.height, 8)) break;
+    bottom = line.y + line.height;
+    for (const s of line.segments)
+      if (free.has(`${due.page}:${s.x}:${s.y}`))
+        lines.push({ page: due.page, x: s.x, y: s.y, width: s.width, height: s.height, text: s.text.trim() });
+  }
+  // One line: a date and the text after it, as a sign-off ("2026-03-20 ab")
+  if (lines.length !== 1 || !DATED.test(lines[0].text)) return read;
+  const field = '/notes/0/text';
+  const values = { ...read.values };
+  const note = { value: lines.map((l) => l.text).join('\n'), region: merge(lines) };
+  if (values[field]) {
+    values[field] = { ...values[field], value: `${values[field].value}\n${note.value}` };
+    return {
+      ...read,
+      values,
+      warnings: [
+        ...read.warnings,
+        {
+          code: 'joined-text',
+          field,
+          message: 'Another printed text for this field is kept after the first, on a new line',
+          region: note.region,
+        },
+      ],
+    };
+  }
+  values[field] = note;
+  return { ...read, values };
 }
 
 /** Adds one `unmapped-text` warning per block of vertically adjacent unmapped segments in a column. */
